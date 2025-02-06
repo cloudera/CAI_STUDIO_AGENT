@@ -38,45 +38,48 @@ const UpgradeModal: React.FC = () => {
   const handleUpgrade = async () => {
     upgradeStudio();
     notificationsApi.info({
-      message: "Upgrade In Progress",
-      description: "Agent Studio is upgrading in the background. Agent Studio will restart once upgrades are complete. During the upgrade, you may experience downtime using the Studio. Once the application restarts, you can refresh this page to see the upgraded Studio.",
-      placement: "topRight"
+      message: 'Upgrade In Progress',
+      description:
+        'Agent Studio is upgrading in the background. Agent Studio will restart once upgrades are complete. During the upgrade, you may experience downtime using the Studio. Once the application restarts, you can refresh this page to see the upgraded Studio.',
+      placement: 'topRight',
     });
     setIsOpen(false);
-  }
+  };
 
-  return (<>
-    <Modal
-      open={isOpen}
-      onCancel={() => setIsOpen(false)}
-      onClose={() => setIsOpen(false)}
-      onOk={handleUpgrade}
-      footer={[
-        <Button key="cancel" onClick={() => setIsOpen(false)}>
-          Cancel
-        </Button>,
-        <Button key="upgrade" type="primary" onClick={handleUpgrade}>
-          Upgrade
-        </Button>,
-      ]}
-    >
-      <Layout style={{
-        background: "transparent",
-        flexDirection: "column",
-        gap: 24
-      }}>
-        <Title level={4}>
-          Upgrade Agent Studio <SyncOutlined style={{marginLeft: 12}}/>
-        </Title>
-        Your version of Agent Studio is out of date. Upgrading Agent Studio 
-        will pull down the most recent version into your project, and 
-        restart the main Agent Studio application. Your existing workflows
-        will not be lost. Do you wish to continue?
-      </Layout>
-      
-    </Modal>
-  </>)
-}
+  return (
+    <>
+      <Modal
+        open={isOpen}
+        onCancel={() => setIsOpen(false)}
+        onClose={() => setIsOpen(false)}
+        onOk={handleUpgrade}
+        footer={[
+          <Button key="cancel" onClick={() => setIsOpen(false)}>
+            Cancel
+          </Button>,
+          <Button key="upgrade" type="primary" onClick={handleUpgrade}>
+            Upgrade
+          </Button>,
+        ]}
+      >
+        <Layout
+          style={{
+            background: 'transparent',
+            flexDirection: 'column',
+            gap: 24,
+          }}
+        >
+          <Title level={4}>
+            Upgrade Agent Studio <SyncOutlined style={{ marginLeft: 12 }} />
+          </Title>
+          Your version of Agent Studio is out of date. Upgrading Agent Studio will pull down the
+          most recent version into your project, and restart the main Agent Studio application. Your
+          existing workflows will not be lost. Do you wish to continue?
+        </Layout>
+      </Modal>
+    </>
+  );
+};
 
 const ContactPage: React.FC = () => {
   const { data: workflows, refetch: refetchWorkflows } = useListWorkflowsQuery({});
@@ -303,7 +306,7 @@ const ContactPage: React.FC = () => {
         background: 'transparent',
       }}
     >
-      {upgradeStatus?.out_of_date && (<UpgradeModal />)}
+      {upgradeStatus?.out_of_date && <UpgradeModal />}
       <CommonBreadCrumb items={[{ title: 'Agentic Workflows' }]} />
       <NoDefaultModelModal />
       <Layout>

@@ -272,7 +272,8 @@
       "tool_template_ids": [
         "abcdd1d9-abcd-4b89-bbbb-6934c8d9010"
       ],
-      "pre_packaged": true
+      "pre_packaged": true,
+      "agent_image_path": ""
     },
     {
       "id": "0ba29977-5441-49e7-a776-1b1dea0edaaf",
@@ -290,7 +291,8 @@
         "5d61f046-425c-4b89-b023-a9ed53b048aa",
         "2cbafffb-f874-4505-a7d0-c13990be8bef"
       ],
-      "pre_packaged": true
+      "pre_packaged": true,
+      "agent_image_path": ""
     },
     {
       "id": "e4195dfd-fae5-453c-8b66-5367173964ef",
@@ -307,7 +309,8 @@
       "tool_template_ids": [
         "dfedd1d9-6b90-4b89-98a2-6934c8dcc077"
       ],
-      "pre_packaged": true
+      "pre_packaged": true,
+      "agent_image_path": ""
     },
     {
       "id": "5db2f37c-e36e-4fa5-95bf-3bfe8bbfc681",
@@ -322,7 +325,8 @@
       "temperature": 0.1,
       "max_iter": 10,
       "tool_template_ids": [],
-      "pre_packaged": true
+      "pre_packaged": true,
+      "agent_image_path": ""
     },
     {
       "id": "4d84a505-430c-4d39-95e2-afe64d7cecf9",
@@ -337,7 +341,8 @@
       "temperature": 0.1,
       "max_iter": 10,
       "tool_template_ids": [],
-      "pre_packaged": true
+      "pre_packaged": true,
+      "agent_image_path": ""
     },
     {
       "id": "14296df9-f03b-4729-aa5d-2c334c071e51",
@@ -352,7 +357,8 @@
       "temperature": 0.1,
       "max_iter": 10,
       "tool_template_ids": [],
-      "pre_packaged": true
+      "pre_packaged": true,
+      "agent_image_path": ""
     },
     {
       "id": "a4d71bcc-094f-4870-89a1-bfcc20e78b61",
@@ -367,7 +373,8 @@
       "temperature": 0.1,
       "max_iter": 10,
       "tool_template_ids": [],
-      "pre_packaged": true
+      "pre_packaged": true,
+      "agent_image_path": ""
     },
     {
       "id": "bc7e5cb3-815d-47a7-af05-c6da6dba94b3",
@@ -398,7 +405,8 @@
       "max_iter": 10,
       "workflow_template_id":"po90dff2-703a-43f0-847d-e2647595dde2",
       "tool_template_ids": [],
-      "pre_packaged": true
+      "pre_packaged": true,
+      "agent_image_path": ""
     },
     {
       "id": "17013d0a-ca8c-4621-8c3f-b8c41a88ca8e",
@@ -413,7 +421,8 @@
       "temperature": 0.1,
       "max_iter": 10,
       "tool_template_ids": [],
-      "pre_packaged": true
+      "pre_packaged": true,
+      "agent_image_path": ""
     },
     {
       "id": "29813d0a-fg8c-4621-8c3f-b8v41p88ca8e",
@@ -429,7 +438,8 @@
       "max_iter": 10,
       "tool_template_ids": ["2159600d-p09c-5524-af42-9911e05dd017","2159600d-p09c-5524-af32-9922e05dd017" ],
       "workflow_template_id":"po90dff2-703a-43f0-847d-e2647595dde2",
-      "pre_packaged": true
+      "pre_packaged": true,
+      "agent_image_path": ""
     },
     {
       "id": "56413d0a-fg8c-4621-8f3f-b8v41p88ca8e",
@@ -445,7 +455,8 @@
       "max_iter": 10,
       "tool_template_ids": [ "5759600d-a09c-4624-af42-6911f05dd817","0d65d035-30ff-45a8-98c6-be307feba1af"],
       "workflow_template_id":"po90dff2-703a-43f0-847d-e2647595dde2",
-      "pre_packaged": true
+      "pre_packaged": true,
+      "agent_image_path": ""
     },
     {
       "id": "7b408440-efdb-4ad2-92e3-3ce61abc50f3",
@@ -463,7 +474,8 @@
       "cache": false,
       "temperature": 0.1,
       "max_iter": 1,
-      "pre_packaged": true
+      "pre_packaged": true,
+      "agent_image_path": ""
     },
     {
       "id": "7454f27b-9758-4b52-9c96-c8b1ae315c1e",
@@ -481,7 +493,8 @@
       "temperature": 0.1,
       "max_iter": 0,
       "workflow_template_id": "4274629b-159e-4434-b779-93442528f71e",
-      "pre_packaged": false
+      "pre_packaged": false,
+      "agent_image_path": ""
     },
     {
       "id": "3d11b7ce-cdb3-4a9a-ad77-feac1b4f196e",
@@ -500,7 +513,8 @@
       "temperature": 0.1,
       "max_iter": 0,
       "workflow_template_id": "4274629b-159e-4434-b779-93442528f71e",
-      "pre_packaged": false
+      "pre_packaged": false,
+      "agent_image_path": ".studio-data/dynamic_assets/agent_template_icons/communications_icon.png"
     },
     {
       "id": "5d826de3-69bf-405d-8a8a-ecbbeafcb391",
@@ -519,7 +533,8 @@
       "temperature": 0.1,
       "max_iter": 0,
       "workflow_template_id": "4274629b-159e-4434-b779-93442528f71e",
-      "pre_packaged": false
+      "pre_packaged": false,
+      "agent_image_path": ".studio-data/dynamic_assets/agent_template_icons/cdv_icon.png"
     },
     {
       "id": "3616ba1a-b05c-47b0-a79b-c1a6ba7cea8e",
@@ -534,7 +549,8 @@
       "temperature": 0.1,
       "max_iter": 10,
       "tool_template_ids": [],
-      "pre_packaged": true
+      "pre_packaged": true,
+      "agent_image_path": ".studio-data/dynamic_assets/agent_template_icons/cloudera.png"
     },
     {
       "id": "5a033be9-b70c-4820-988b-0f50a0334cd9",
@@ -552,7 +568,8 @@
       "temperature": 0.10000000149011612,
       "max_iter": 0,
       "workflow_template_id": "a77aed0a-7d43-48ec-9495-8728dd97e66d",
-      "pre_packaged": true
+      "pre_packaged": true,
+      "agent_image_path": ""
     },
     {
       "id": "5f04af28-52c6-4fdb-9357-06c0a5083587",
@@ -568,7 +585,8 @@
       "temperature": 0.10000000149011612,
       "max_iter": 0,
       "workflow_template_id": "a77aed0a-7d43-48ec-9495-8728dd97e66d",
-      "pre_packaged": true
+      "pre_packaged": true,
+      "agent_image_path": ""
     },
     {
       "id": "f3f729d6-cfc4-454b-a67c-14018d54a6ff",
@@ -584,7 +602,8 @@
       "temperature": 0.10000000149011612,
       "max_iter": 0,
       "workflow_template_id": "a77aed0a-7d43-48ec-9495-8728dd97e66d",
-      "pre_packaged": true
+      "pre_packaged": true,
+      "agent_image_path": ""
     },
     {
       "id": "835b622c-ca33-4a6c-b1c4-ef7b86ba6c81",
@@ -603,7 +622,8 @@
       "temperature": 0.1,
       "max_iter": 0,
       "workflow_template_id": "6eccbfa6-66f9-418a-bc6c-74516ac8219d",
-      "pre_packaged": true
+      "pre_packaged": true,
+      "agent_image_path": ""
     },
     {
       "id": "879f13f2-d84a-43d3-baf3-1f41116efc18",
@@ -621,7 +641,8 @@
       "temperature": 0.1,
       "max_iter": 0,
       "workflow_template_id": "6eccbfa6-66f9-418a-bc6c-74516ac8219d",
-      "pre_packaged": true
+      "pre_packaged": true,
+      "agent_image_path": ""
     },
     {
       "id": "7a0e3869-79bb-445a-a1cd-56f85727bd28",
@@ -639,7 +660,8 @@
       "temperature": 0.100000001490116,
       "max_iter": 0,
       "workflow_template_id": "6eccbfa6-66f9-418a-bc6c-74516ac8219d",
-      "pre_packaged": true
+      "pre_packaged": true,
+      "agent_image_path": ""
     },
     {
       "id": "2b53cad3-81be-447c-8819-f9cdea1310c0",
@@ -657,7 +679,8 @@
       "temperature": 0.100000001490116,
       "max_iter": 0,
       "workflow_template_id": "6eccbfa6-66f9-418a-bc6c-74516ac8219d",
-      "pre_packaged": false
+      "pre_packaged": false,
+      "agent_image_path": ""
     }
   ],
   "workflow_templates": [

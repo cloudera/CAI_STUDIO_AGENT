@@ -297,6 +297,7 @@ const SelectOrAddManagerAgentModal: React.FC<SelectOrAddManagerAgentModalProps> 
         tools_id: [],
         llm_provider_model_id: '',
         tool_template_ids: [],
+        tmp_agent_image_path: '',
       }).unwrap();
 
       dispatch(updatedEditorWorkflowManagerAgentId(newAgent));
@@ -358,6 +359,7 @@ const SelectOrAddManagerAgentModal: React.FC<SelectOrAddManagerAgentModalProps> 
           tools_id: existingManagerAgent.tools_id || [],
           llm_provider_model_id: '',
           tool_template_ids: [],
+          tmp_agent_image_path: '',
         }).unwrap();
 
         notificationApi.success({

@@ -1,8 +1,11 @@
+import os
 from sqlalchemy import Column, String, Text, Float, JSON, ForeignKey, Integer, Boolean
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.inspection import inspect
 from google.protobuf.message import Message
+from studio import consts
 from studio.api import *
+
 
 # Define the declarative base
 Base = declarative_base()
@@ -152,6 +155,9 @@ class Agent(Base, MappedProtobuf, MappedDict):
     # List of Tool Instance IDs stored as JSON
     tool_ids = Column(JSON, nullable=True)
 
+    # Image path for the agent
+    agent_image_path = Column(Text, nullable=True)
+
 
 class Task(Base, MappedProtobuf, MappedDict):
     __tablename__ = "tasks"
@@ -272,11 +278,19 @@ class AgentTemplate(Base, MappedProtobuf, MappedDict):
     # Is the template shipped as part of the studio
     pre_packaged = Column(Boolean, default=False)
 
+    # Image path for the agent
+    agent_image_path = Column(Text, nullable=True)
+
     # Manual dict middleman to handle JSON -> repeated string conversions
     def to_protobuf(self):
         self_dict = self.to_dict()
+        agent_image_uri = ""
+        if self.agent_image_path:
+            agent_image_uri = os.path.relpath(self.agent_image_path, consts.DYNAMIC_ASSETS_LOCATION)
+        self_dict.pop("agent_image_path", None)
         return AgentTemplateMetadata(
-            **self_dict
+            **self_dict,
+            agent_image_uri=agent_image_uri
         )
 
 

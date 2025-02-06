@@ -450,6 +450,7 @@ class AddAgentRequest(_message.Message):
         "crew_ai_agent_metadata",
         "template_id",
         "workflow_id",
+        "tmp_agent_image_path",
         "tool_template_ids",
     )
     NAME_FIELD_NUMBER: _ClassVar[int]
@@ -458,6 +459,7 @@ class AddAgentRequest(_message.Message):
     CREW_AI_AGENT_METADATA_FIELD_NUMBER: _ClassVar[int]
     TEMPLATE_ID_FIELD_NUMBER: _ClassVar[int]
     WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
+    TMP_AGENT_IMAGE_PATH_FIELD_NUMBER: _ClassVar[int]
     TOOL_TEMPLATE_IDS_FIELD_NUMBER: _ClassVar[int]
     name: str
     llm_provider_model_id: str
@@ -465,6 +467,7 @@ class AddAgentRequest(_message.Message):
     crew_ai_agent_metadata: CrewAIAgentMetadata
     template_id: str
     workflow_id: str
+    tmp_agent_image_path: str
     tool_template_ids: _containers.RepeatedScalarFieldContainer[str]
     def __init__(
         self,
@@ -474,6 +477,7 @@ class AddAgentRequest(_message.Message):
         crew_ai_agent_metadata: _Optional[_Union[CrewAIAgentMetadata, _Mapping]] = ...,
         template_id: _Optional[str] = ...,
         workflow_id: _Optional[str] = ...,
+        tmp_agent_image_path: _Optional[str] = ...,
         tool_template_ids: _Optional[_Iterable[str]] = ...,
     ) -> None: ...
 
@@ -484,18 +488,28 @@ class AddAgentResponse(_message.Message):
     def __init__(self, agent_id: _Optional[str] = ...) -> None: ...
 
 class UpdateAgentRequest(_message.Message):
-    __slots__ = ("agent_id", "name", "llm_provider_model_id", "tools_id", "crew_ai_agent_metadata", "tool_template_ids")
+    __slots__ = (
+        "agent_id",
+        "name",
+        "llm_provider_model_id",
+        "tools_id",
+        "crew_ai_agent_metadata",
+        "tmp_agent_image_path",
+        "tool_template_ids",
+    )
     AGENT_ID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
     LLM_PROVIDER_MODEL_ID_FIELD_NUMBER: _ClassVar[int]
     TOOLS_ID_FIELD_NUMBER: _ClassVar[int]
     CREW_AI_AGENT_METADATA_FIELD_NUMBER: _ClassVar[int]
+    TMP_AGENT_IMAGE_PATH_FIELD_NUMBER: _ClassVar[int]
     TOOL_TEMPLATE_IDS_FIELD_NUMBER: _ClassVar[int]
     agent_id: str
     name: str
     llm_provider_model_id: str
     tools_id: _containers.RepeatedScalarFieldContainer[str]
     crew_ai_agent_metadata: CrewAIAgentMetadata
+    tmp_agent_image_path: str
     tool_template_ids: _containers.RepeatedScalarFieldContainer[str]
     def __init__(
         self,
@@ -504,6 +518,7 @@ class UpdateAgentRequest(_message.Message):
         llm_provider_model_id: _Optional[str] = ...,
         tools_id: _Optional[_Iterable[str]] = ...,
         crew_ai_agent_metadata: _Optional[_Union[CrewAIAgentMetadata, _Mapping]] = ...,
+        tmp_agent_image_path: _Optional[str] = ...,
         tool_template_ids: _Optional[_Iterable[str]] = ...,
     ) -> None: ...
 
@@ -522,12 +537,22 @@ class RemoveAgentResponse(_message.Message):
     def __init__(self) -> None: ...
 
 class AgentMetadata(_message.Message):
-    __slots__ = ("id", "name", "llm_provider_model_id", "tools_id", "crew_ai_agent_metadata", "is_valid", "workflow_id")
+    __slots__ = (
+        "id",
+        "name",
+        "llm_provider_model_id",
+        "tools_id",
+        "crew_ai_agent_metadata",
+        "agent_image_uri",
+        "is_valid",
+        "workflow_id",
+    )
     ID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
     LLM_PROVIDER_MODEL_ID_FIELD_NUMBER: _ClassVar[int]
     TOOLS_ID_FIELD_NUMBER: _ClassVar[int]
     CREW_AI_AGENT_METADATA_FIELD_NUMBER: _ClassVar[int]
+    AGENT_IMAGE_URI_FIELD_NUMBER: _ClassVar[int]
     IS_VALID_FIELD_NUMBER: _ClassVar[int]
     WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
     id: str
@@ -535,6 +560,7 @@ class AgentMetadata(_message.Message):
     llm_provider_model_id: str
     tools_id: _containers.RepeatedScalarFieldContainer[str]
     crew_ai_agent_metadata: CrewAIAgentMetadata
+    agent_image_uri: str
     is_valid: bool
     workflow_id: str
     def __init__(
@@ -544,6 +570,7 @@ class AgentMetadata(_message.Message):
         llm_provider_model_id: _Optional[str] = ...,
         tools_id: _Optional[_Iterable[str]] = ...,
         crew_ai_agent_metadata: _Optional[_Union[CrewAIAgentMetadata, _Mapping]] = ...,
+        agent_image_uri: _Optional[str] = ...,
         is_valid: bool = ...,
         workflow_id: _Optional[str] = ...,
     ) -> None: ...
@@ -1143,6 +1170,7 @@ class AddAgentTemplateRequest(_message.Message):
         "cache",
         "temperature",
         "max_iter",
+        "tmp_agent_image_path",
         "workflow_template_id",
     )
     NAME_FIELD_NUMBER: _ClassVar[int]
@@ -1156,6 +1184,7 @@ class AddAgentTemplateRequest(_message.Message):
     CACHE_FIELD_NUMBER: _ClassVar[int]
     TEMPERATURE_FIELD_NUMBER: _ClassVar[int]
     MAX_ITER_FIELD_NUMBER: _ClassVar[int]
+    TMP_AGENT_IMAGE_PATH_FIELD_NUMBER: _ClassVar[int]
     WORKFLOW_TEMPLATE_ID_FIELD_NUMBER: _ClassVar[int]
     name: str
     description: str
@@ -1168,6 +1197,7 @@ class AddAgentTemplateRequest(_message.Message):
     cache: bool
     temperature: float
     max_iter: int
+    tmp_agent_image_path: str
     workflow_template_id: str
     def __init__(
         self,
@@ -1182,6 +1212,7 @@ class AddAgentTemplateRequest(_message.Message):
         cache: bool = ...,
         temperature: _Optional[float] = ...,
         max_iter: _Optional[int] = ...,
+        tmp_agent_image_path: _Optional[str] = ...,
         workflow_template_id: _Optional[str] = ...,
     ) -> None: ...
 
@@ -1205,6 +1236,7 @@ class UpdateAgentTemplateRequest(_message.Message):
         "cache",
         "temperature",
         "max_iter",
+        "tmp_agent_image_path",
     )
     AGENT_TEMPLATE_ID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
@@ -1218,6 +1250,7 @@ class UpdateAgentTemplateRequest(_message.Message):
     CACHE_FIELD_NUMBER: _ClassVar[int]
     TEMPERATURE_FIELD_NUMBER: _ClassVar[int]
     MAX_ITER_FIELD_NUMBER: _ClassVar[int]
+    TMP_AGENT_IMAGE_PATH_FIELD_NUMBER: _ClassVar[int]
     agent_template_id: str
     name: str
     description: str
@@ -1230,6 +1263,7 @@ class UpdateAgentTemplateRequest(_message.Message):
     cache: bool
     temperature: float
     max_iter: int
+    tmp_agent_image_path: str
     def __init__(
         self,
         agent_template_id: _Optional[str] = ...,
@@ -1244,6 +1278,7 @@ class UpdateAgentTemplateRequest(_message.Message):
         cache: bool = ...,
         temperature: _Optional[float] = ...,
         max_iter: _Optional[int] = ...,
+        tmp_agent_image_path: _Optional[str] = ...,
     ) -> None: ...
 
 class UpdateAgentTemplateResponse(_message.Message):
@@ -1276,6 +1311,7 @@ class AgentTemplateMetadata(_message.Message):
         "cache",
         "temperature",
         "max_iter",
+        "agent_image_uri",
         "workflow_template_id",
         "pre_packaged",
     )
@@ -1291,6 +1327,7 @@ class AgentTemplateMetadata(_message.Message):
     CACHE_FIELD_NUMBER: _ClassVar[int]
     TEMPERATURE_FIELD_NUMBER: _ClassVar[int]
     MAX_ITER_FIELD_NUMBER: _ClassVar[int]
+    AGENT_IMAGE_URI_FIELD_NUMBER: _ClassVar[int]
     WORKFLOW_TEMPLATE_ID_FIELD_NUMBER: _ClassVar[int]
     PRE_PACKAGED_FIELD_NUMBER: _ClassVar[int]
     id: str
@@ -1305,6 +1342,7 @@ class AgentTemplateMetadata(_message.Message):
     cache: bool
     temperature: float
     max_iter: int
+    agent_image_uri: str
     workflow_template_id: str
     pre_packaged: bool
     def __init__(
@@ -1321,6 +1359,7 @@ class AgentTemplateMetadata(_message.Message):
         cache: bool = ...,
         temperature: _Optional[float] = ...,
         max_iter: _Optional[int] = ...,
+        agent_image_uri: _Optional[str] = ...,
         workflow_template_id: _Optional[str] = ...,
         pre_packaged: bool = ...,
     ) -> None: ...

@@ -242,6 +242,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ visible, on
             tools_id: [...(agent.tools_id || []), response],
             tool_template_ids: [],
             llm_provider_model_id: '',
+            tmp_agent_image_path: '',
           }).unwrap();
         }
       }

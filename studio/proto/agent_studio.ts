@@ -334,6 +334,8 @@ export interface AddAgentRequest {
     | undefined;
   /** mandatory attach to workflow */
   workflow_id: string;
+  /** Image of the agent */
+  tmp_agent_image_path: string;
   /** Create tool instances from tool template ids */
   tool_template_ids: string[];
 }
@@ -356,6 +358,8 @@ export interface UpdateAgentRequest {
   crew_ai_agent_metadata:
     | CrewAIAgentMetadata
     | undefined;
+  /** Image of the agent */
+  tmp_agent_image_path: string;
   /** Create tool instances from tool template ids */
   tool_template_ids: string[];
 }
@@ -384,6 +388,8 @@ export interface AgentMetadata {
   crew_ai_agent_metadata:
     | CrewAIAgentMetadata
     | undefined;
+  /** Image of the agent */
+  agent_image_uri: string;
   /** Is the activated tool valid based on whether the linked tool & model is still active in the studio. */
   is_valid: boolean;
   /** mandatory owner workflow */
@@ -821,6 +827,8 @@ export interface AddAgentTemplateRequest {
   temperature: number;
   /** Maximum iterations */
   max_iter: number;
+  /** Image of the agent */
+  tmp_agent_image_path: string;
   /** Optional assignment to a workflow template */
   workflow_template_id?: string | undefined;
 }
@@ -841,7 +849,11 @@ export interface UpdateAgentTemplateRequest {
   verbose?: boolean | undefined;
   cache?: boolean | undefined;
   temperature?: number | undefined;
-  max_iter?: number | undefined;
+  max_iter?:
+    | number
+    | undefined;
+  /** Image of the agent */
+  tmp_agent_image_path?: string | undefined;
 }
 
 export interface UpdateAgentTemplateResponse {
@@ -879,6 +891,8 @@ export interface AgentTemplateMetadata {
   temperature: number;
   /** Maximum iterations */
   max_iter: number;
+  /** Image of the agent */
+  agent_image_uri: string;
   /** Optional assignment to a workflow template */
   workflow_template_id?: string | undefined;
   pre_packaged: boolean;
@@ -4243,6 +4257,7 @@ function createBaseAddAgentRequest(): AddAgentRequest {
     crew_ai_agent_metadata: undefined,
     template_id: undefined,
     workflow_id: "",
+    tmp_agent_image_path: "",
     tool_template_ids: [],
   };
 }
@@ -4267,8 +4282,11 @@ export const AddAgentRequest: MessageFns<AddAgentRequest> = {
     if (message.workflow_id !== "") {
       writer.uint32(50).string(message.workflow_id);
     }
+    if (message.tmp_agent_image_path !== "") {
+      writer.uint32(58).string(message.tmp_agent_image_path);
+    }
     for (const v of message.tool_template_ids) {
-      writer.uint32(58).string(v!);
+      writer.uint32(66).string(v!);
     }
     return writer;
   },
@@ -4333,6 +4351,14 @@ export const AddAgentRequest: MessageFns<AddAgentRequest> = {
             break;
           }
 
+          message.tmp_agent_image_path = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
           message.tool_template_ids.push(reader.string());
           continue;
         }
@@ -4355,6 +4381,7 @@ export const AddAgentRequest: MessageFns<AddAgentRequest> = {
         : undefined,
       template_id: isSet(object.template_id) ? globalThis.String(object.template_id) : undefined,
       workflow_id: isSet(object.workflow_id) ? globalThis.String(object.workflow_id) : "",
+      tmp_agent_image_path: isSet(object.tmp_agent_image_path) ? globalThis.String(object.tmp_agent_image_path) : "",
       tool_template_ids: globalThis.Array.isArray(object?.tool_template_ids)
         ? object.tool_template_ids.map((e: any) => globalThis.String(e))
         : [],
@@ -4381,6 +4408,9 @@ export const AddAgentRequest: MessageFns<AddAgentRequest> = {
     if (message.workflow_id !== "") {
       obj.workflow_id = message.workflow_id;
     }
+    if (message.tmp_agent_image_path !== "") {
+      obj.tmp_agent_image_path = message.tmp_agent_image_path;
+    }
     if (message.tool_template_ids?.length) {
       obj.tool_template_ids = message.tool_template_ids;
     }
@@ -4401,6 +4431,7 @@ export const AddAgentRequest: MessageFns<AddAgentRequest> = {
         : undefined;
     message.template_id = object.template_id ?? undefined;
     message.workflow_id = object.workflow_id ?? "";
+    message.tmp_agent_image_path = object.tmp_agent_image_path ?? "";
     message.tool_template_ids = object.tool_template_ids?.map((e) => e) || [];
     return message;
   },
@@ -4471,6 +4502,7 @@ function createBaseUpdateAgentRequest(): UpdateAgentRequest {
     llm_provider_model_id: "",
     tools_id: [],
     crew_ai_agent_metadata: undefined,
+    tmp_agent_image_path: "",
     tool_template_ids: [],
   };
 }
@@ -4491,6 +4523,9 @@ export const UpdateAgentRequest: MessageFns<UpdateAgentRequest> = {
     }
     if (message.crew_ai_agent_metadata !== undefined) {
       CrewAIAgentMetadata.encode(message.crew_ai_agent_metadata, writer.uint32(42).fork()).join();
+    }
+    if (message.tmp_agent_image_path !== "") {
+      writer.uint32(50).string(message.tmp_agent_image_path);
     }
     for (const v of message.tool_template_ids) {
       writer.uint32(58).string(v!);
@@ -4545,6 +4580,14 @@ export const UpdateAgentRequest: MessageFns<UpdateAgentRequest> = {
           message.crew_ai_agent_metadata = CrewAIAgentMetadata.decode(reader, reader.uint32());
           continue;
         }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.tmp_agent_image_path = reader.string();
+          continue;
+        }
         case 7: {
           if (tag !== 58) {
             break;
@@ -4571,6 +4614,7 @@ export const UpdateAgentRequest: MessageFns<UpdateAgentRequest> = {
       crew_ai_agent_metadata: isSet(object.crew_ai_agent_metadata)
         ? CrewAIAgentMetadata.fromJSON(object.crew_ai_agent_metadata)
         : undefined,
+      tmp_agent_image_path: isSet(object.tmp_agent_image_path) ? globalThis.String(object.tmp_agent_image_path) : "",
       tool_template_ids: globalThis.Array.isArray(object?.tool_template_ids)
         ? object.tool_template_ids.map((e: any) => globalThis.String(e))
         : [],
@@ -4594,6 +4638,9 @@ export const UpdateAgentRequest: MessageFns<UpdateAgentRequest> = {
     if (message.crew_ai_agent_metadata !== undefined) {
       obj.crew_ai_agent_metadata = CrewAIAgentMetadata.toJSON(message.crew_ai_agent_metadata);
     }
+    if (message.tmp_agent_image_path !== "") {
+      obj.tmp_agent_image_path = message.tmp_agent_image_path;
+    }
     if (message.tool_template_ids?.length) {
       obj.tool_template_ids = message.tool_template_ids;
     }
@@ -4613,6 +4660,7 @@ export const UpdateAgentRequest: MessageFns<UpdateAgentRequest> = {
       (object.crew_ai_agent_metadata !== undefined && object.crew_ai_agent_metadata !== null)
         ? CrewAIAgentMetadata.fromPartial(object.crew_ai_agent_metadata)
         : undefined;
+    message.tmp_agent_image_path = object.tmp_agent_image_path ?? "";
     message.tool_template_ids = object.tool_template_ids?.map((e) => e) || [];
     return message;
   },
@@ -4769,6 +4817,7 @@ function createBaseAgentMetadata(): AgentMetadata {
     llm_provider_model_id: "",
     tools_id: [],
     crew_ai_agent_metadata: undefined,
+    agent_image_uri: "",
     is_valid: false,
     workflow_id: "",
   };
@@ -4791,11 +4840,14 @@ export const AgentMetadata: MessageFns<AgentMetadata> = {
     if (message.crew_ai_agent_metadata !== undefined) {
       CrewAIAgentMetadata.encode(message.crew_ai_agent_metadata, writer.uint32(42).fork()).join();
     }
+    if (message.agent_image_uri !== "") {
+      writer.uint32(50).string(message.agent_image_uri);
+    }
     if (message.is_valid !== false) {
-      writer.uint32(48).bool(message.is_valid);
+      writer.uint32(56).bool(message.is_valid);
     }
     if (message.workflow_id !== "") {
-      writer.uint32(58).string(message.workflow_id);
+      writer.uint32(66).string(message.workflow_id);
     }
     return writer;
   },
@@ -4848,15 +4900,23 @@ export const AgentMetadata: MessageFns<AgentMetadata> = {
           continue;
         }
         case 6: {
-          if (tag !== 48) {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.agent_image_uri = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 56) {
             break;
           }
 
           message.is_valid = reader.bool();
           continue;
         }
-        case 7: {
-          if (tag !== 58) {
+        case 8: {
+          if (tag !== 66) {
             break;
           }
 
@@ -4881,6 +4941,7 @@ export const AgentMetadata: MessageFns<AgentMetadata> = {
       crew_ai_agent_metadata: isSet(object.crew_ai_agent_metadata)
         ? CrewAIAgentMetadata.fromJSON(object.crew_ai_agent_metadata)
         : undefined,
+      agent_image_uri: isSet(object.agent_image_uri) ? globalThis.String(object.agent_image_uri) : "",
       is_valid: isSet(object.is_valid) ? globalThis.Boolean(object.is_valid) : false,
       workflow_id: isSet(object.workflow_id) ? globalThis.String(object.workflow_id) : "",
     };
@@ -4902,6 +4963,9 @@ export const AgentMetadata: MessageFns<AgentMetadata> = {
     }
     if (message.crew_ai_agent_metadata !== undefined) {
       obj.crew_ai_agent_metadata = CrewAIAgentMetadata.toJSON(message.crew_ai_agent_metadata);
+    }
+    if (message.agent_image_uri !== "") {
+      obj.agent_image_uri = message.agent_image_uri;
     }
     if (message.is_valid !== false) {
       obj.is_valid = message.is_valid;
@@ -4925,6 +4989,7 @@ export const AgentMetadata: MessageFns<AgentMetadata> = {
       (object.crew_ai_agent_metadata !== undefined && object.crew_ai_agent_metadata !== null)
         ? CrewAIAgentMetadata.fromPartial(object.crew_ai_agent_metadata)
         : undefined;
+    message.agent_image_uri = object.agent_image_uri ?? "";
     message.is_valid = object.is_valid ?? false;
     message.workflow_id = object.workflow_id ?? "";
     return message;
@@ -9497,6 +9562,7 @@ function createBaseAddAgentTemplateRequest(): AddAgentTemplateRequest {
     cache: false,
     temperature: 0,
     max_iter: 0,
+    tmp_agent_image_path: "",
     workflow_template_id: undefined,
   };
 }
@@ -9536,8 +9602,11 @@ export const AddAgentTemplateRequest: MessageFns<AddAgentTemplateRequest> = {
     if (message.max_iter !== 0) {
       writer.uint32(88).int32(message.max_iter);
     }
+    if (message.tmp_agent_image_path !== "") {
+      writer.uint32(98).string(message.tmp_agent_image_path);
+    }
     if (message.workflow_template_id !== undefined) {
-      writer.uint32(98).string(message.workflow_template_id);
+      writer.uint32(106).string(message.workflow_template_id);
     }
     return writer;
   },
@@ -9642,6 +9711,14 @@ export const AddAgentTemplateRequest: MessageFns<AddAgentTemplateRequest> = {
             break;
           }
 
+          message.tmp_agent_image_path = reader.string();
+          continue;
+        }
+        case 13: {
+          if (tag !== 106) {
+            break;
+          }
+
           message.workflow_template_id = reader.string();
           continue;
         }
@@ -9669,6 +9746,7 @@ export const AddAgentTemplateRequest: MessageFns<AddAgentTemplateRequest> = {
       cache: isSet(object.cache) ? globalThis.Boolean(object.cache) : false,
       temperature: isSet(object.temperature) ? globalThis.Number(object.temperature) : 0,
       max_iter: isSet(object.max_iter) ? globalThis.Number(object.max_iter) : 0,
+      tmp_agent_image_path: isSet(object.tmp_agent_image_path) ? globalThis.String(object.tmp_agent_image_path) : "",
       workflow_template_id: isSet(object.workflow_template_id)
         ? globalThis.String(object.workflow_template_id)
         : undefined,
@@ -9710,6 +9788,9 @@ export const AddAgentTemplateRequest: MessageFns<AddAgentTemplateRequest> = {
     if (message.max_iter !== 0) {
       obj.max_iter = Math.round(message.max_iter);
     }
+    if (message.tmp_agent_image_path !== "") {
+      obj.tmp_agent_image_path = message.tmp_agent_image_path;
+    }
     if (message.workflow_template_id !== undefined) {
       obj.workflow_template_id = message.workflow_template_id;
     }
@@ -9732,6 +9813,7 @@ export const AddAgentTemplateRequest: MessageFns<AddAgentTemplateRequest> = {
     message.cache = object.cache ?? false;
     message.temperature = object.temperature ?? 0;
     message.max_iter = object.max_iter ?? 0;
+    message.tmp_agent_image_path = object.tmp_agent_image_path ?? "";
     message.workflow_template_id = object.workflow_template_id ?? undefined;
     return message;
   },
@@ -9809,6 +9891,7 @@ function createBaseUpdateAgentTemplateRequest(): UpdateAgentTemplateRequest {
     cache: undefined,
     temperature: undefined,
     max_iter: undefined,
+    tmp_agent_image_path: undefined,
   };
 }
 
@@ -9849,6 +9932,9 @@ export const UpdateAgentTemplateRequest: MessageFns<UpdateAgentTemplateRequest> 
     }
     if (message.max_iter !== undefined) {
       writer.uint32(96).int32(message.max_iter);
+    }
+    if (message.tmp_agent_image_path !== undefined) {
+      writer.uint32(106).string(message.tmp_agent_image_path);
     }
     return writer;
   },
@@ -9956,6 +10042,14 @@ export const UpdateAgentTemplateRequest: MessageFns<UpdateAgentTemplateRequest> 
           message.max_iter = reader.int32();
           continue;
         }
+        case 13: {
+          if (tag !== 106) {
+            break;
+          }
+
+          message.tmp_agent_image_path = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -9981,6 +10075,9 @@ export const UpdateAgentTemplateRequest: MessageFns<UpdateAgentTemplateRequest> 
       cache: isSet(object.cache) ? globalThis.Boolean(object.cache) : undefined,
       temperature: isSet(object.temperature) ? globalThis.Number(object.temperature) : undefined,
       max_iter: isSet(object.max_iter) ? globalThis.Number(object.max_iter) : undefined,
+      tmp_agent_image_path: isSet(object.tmp_agent_image_path)
+        ? globalThis.String(object.tmp_agent_image_path)
+        : undefined,
     };
   },
 
@@ -10022,6 +10119,9 @@ export const UpdateAgentTemplateRequest: MessageFns<UpdateAgentTemplateRequest> 
     if (message.max_iter !== undefined) {
       obj.max_iter = Math.round(message.max_iter);
     }
+    if (message.tmp_agent_image_path !== undefined) {
+      obj.tmp_agent_image_path = message.tmp_agent_image_path;
+    }
     return obj;
   },
 
@@ -10042,6 +10142,7 @@ export const UpdateAgentTemplateRequest: MessageFns<UpdateAgentTemplateRequest> 
     message.cache = object.cache ?? undefined;
     message.temperature = object.temperature ?? undefined;
     message.max_iter = object.max_iter ?? undefined;
+    message.tmp_agent_image_path = object.tmp_agent_image_path ?? undefined;
     return message;
   },
 };
@@ -10219,6 +10320,7 @@ function createBaseAgentTemplateMetadata(): AgentTemplateMetadata {
     cache: false,
     temperature: 0,
     max_iter: 0,
+    agent_image_uri: "",
     workflow_template_id: undefined,
     pre_packaged: false,
   };
@@ -10262,11 +10364,14 @@ export const AgentTemplateMetadata: MessageFns<AgentTemplateMetadata> = {
     if (message.max_iter !== 0) {
       writer.uint32(96).int32(message.max_iter);
     }
+    if (message.agent_image_uri !== "") {
+      writer.uint32(106).string(message.agent_image_uri);
+    }
     if (message.workflow_template_id !== undefined) {
-      writer.uint32(106).string(message.workflow_template_id);
+      writer.uint32(114).string(message.workflow_template_id);
     }
     if (message.pre_packaged !== false) {
-      writer.uint32(112).bool(message.pre_packaged);
+      writer.uint32(120).bool(message.pre_packaged);
     }
     return writer;
   },
@@ -10379,11 +10484,19 @@ export const AgentTemplateMetadata: MessageFns<AgentTemplateMetadata> = {
             break;
           }
 
-          message.workflow_template_id = reader.string();
+          message.agent_image_uri = reader.string();
           continue;
         }
         case 14: {
-          if (tag !== 112) {
+          if (tag !== 114) {
+            break;
+          }
+
+          message.workflow_template_id = reader.string();
+          continue;
+        }
+        case 15: {
+          if (tag !== 120) {
             break;
           }
 
@@ -10415,6 +10528,7 @@ export const AgentTemplateMetadata: MessageFns<AgentTemplateMetadata> = {
       cache: isSet(object.cache) ? globalThis.Boolean(object.cache) : false,
       temperature: isSet(object.temperature) ? globalThis.Number(object.temperature) : 0,
       max_iter: isSet(object.max_iter) ? globalThis.Number(object.max_iter) : 0,
+      agent_image_uri: isSet(object.agent_image_uri) ? globalThis.String(object.agent_image_uri) : "",
       workflow_template_id: isSet(object.workflow_template_id)
         ? globalThis.String(object.workflow_template_id)
         : undefined,
@@ -10460,6 +10574,9 @@ export const AgentTemplateMetadata: MessageFns<AgentTemplateMetadata> = {
     if (message.max_iter !== 0) {
       obj.max_iter = Math.round(message.max_iter);
     }
+    if (message.agent_image_uri !== "") {
+      obj.agent_image_uri = message.agent_image_uri;
+    }
     if (message.workflow_template_id !== undefined) {
       obj.workflow_template_id = message.workflow_template_id;
     }
@@ -10486,6 +10603,7 @@ export const AgentTemplateMetadata: MessageFns<AgentTemplateMetadata> = {
     message.cache = object.cache ?? false;
     message.temperature = object.temperature ?? 0;
     message.max_iter = object.max_iter ?? 0;
+    message.agent_image_uri = object.agent_image_uri ?? "";
     message.workflow_template_id = object.workflow_template_id ?? undefined;
     message.pre_packaged = object.pre_packaged ?? false;
     return message;

@@ -384,9 +384,10 @@ message AddAgentRequest {
   CrewAIAgentMetadata crew_ai_agent_metadata = 4; // Crew AI agent metadata 
   optional string template_id = 5; // OPTIONAL build from template
   string workflow_id = 6; // mandatory attach to workflow
+  string tmp_agent_image_path = 7; // Image of the agent
 
   // Create tool instances from tool template ids
-  repeated string tool_template_ids = 7;
+  repeated string tool_template_ids = 8;
 }
 
 message AddAgentResponse {
@@ -399,7 +400,7 @@ message UpdateAgentRequest {
   string llm_provider_model_id = 3;  // LLM Provider and Model
   repeated string tools_id = 4;     // List of tool IDs
   CrewAIAgentMetadata crew_ai_agent_metadata = 5; // Crew AI agent metadata 
-
+  string tmp_agent_image_path = 6; // Image of the agent
 
   // Create tool instances from tool template ids
   repeated string tool_template_ids = 7;
@@ -419,8 +420,9 @@ message AgentMetadata {
   string llm_provider_model_id = 3;  // LLM Provider and Model
   repeated string tools_id = 4;     // List of tool IDs
   CrewAIAgentMetadata crew_ai_agent_metadata = 5; // Crew AI agent metadata 
-  bool is_valid = 6;     // Is the activated tool valid based on whether the linked tool & model is still active in the studio.
-  string workflow_id = 7; // mandatory owner workflow
+  string agent_image_uri = 6; // Image of the agent
+  bool is_valid = 7;     // Is the activated tool valid based on whether the linked tool & model is still active in the studio.
+  string workflow_id = 8; // mandatory owner workflow
 }
 
 message CrewAIAgentMetadata {
@@ -777,7 +779,8 @@ message AddAgentTemplateRequest {
   bool cache = 9;                 // Cache flag
   float temperature = 10;         // Temperature setting
   int32 max_iter = 11;            // Maximum iterations
-  optional string workflow_template_id = 12; // Optional assignment to a workflow template
+  string tmp_agent_image_path = 12; // Image of the agent
+  optional string workflow_template_id = 13; // Optional assignment to a workflow template
 }
 
 message AddAgentTemplateResponse {
@@ -797,6 +800,7 @@ message UpdateAgentTemplateRequest {
   optional bool cache = 10;
   optional float temperature = 11;
   optional int32 max_iter = 12;
+  optional string tmp_agent_image_path = 13; // Image of the agent
 }
 
 message UpdateAgentTemplateResponse {
@@ -823,9 +827,10 @@ message AgentTemplateMetadata {
   bool cache = 10;                 // Cache flag
   float temperature = 11;         // Temperature setting
   int32 max_iter = 12;            // Maximum iterations
+  string agent_image_uri = 13; // Image of the agent
   // Optional assignment to a workflow template
-  optional string workflow_template_id = 13;
-  bool pre_packaged = 14;
+  optional string workflow_template_id = 14;
+  bool pre_packaged = 15;
 }
 
 

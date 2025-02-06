@@ -8,8 +8,8 @@ from studio.api import *
 from studio.proto.utils import is_field_set
 from studio.task.task import extract_placeholders
 from studio.task.task import remove_task
-from studio.agents.agent import remove_agent
-from studio.tools.tool_instance import remove_tool_instance, create_tool_instance
+from studio.agents.agent import remove_agent, add_agent
+from studio.tools.tool_instance import remove_tool_instance
 import studio.tools.utils as tool_utils
 from studio.consts import WORKFLOWS_LOCATION
 from cmlapi import CMLServiceApi
@@ -150,42 +150,22 @@ def add_workflow_from_template(
         workflow.is_draft = True
 
         # Create all agents
-        agent_templates_to_agent: dict[str, db_model.Agent] = {}
+        agent_templates_to_created_agent_id: dict[str, str] = {}
         for agent_template_id in list(workflow_template.agent_template_ids):
             agent_template: db_model.AgentTemplate = (
                 session.query(db_model.AgentTemplate).filter_by(id=agent_template_id).one()
             )
 
-            # For a list of tool template, create a tool.
-            tool_instances: list[str] = []
-            for tool_template_id in list(agent_template.tool_template_ids):
-                tool_template = session.query(db_model.ToolTemplate).filter_by(id=tool_template_id).one()
-                response: CreateToolInstanceResponse = create_tool_instance(
-                    CreateToolInstanceRequest(
-                        workflow_id=workflow_id, name=tool_template.name, tool_template_id=tool_template.id
-                    ),
-                    cml=cml,
-                    dao=None,
-                    preexisting_db_session=session,
-                )
-                tool_instances.append(response.tool_instance_id)
-
-            agent: db_model.Agent = db_model.Agent(
-                id=str(uuid4()),
-                workflow_id=workflow_id,
-                name=agent_template.name,
-                crew_ai_role=agent_template.role,
-                crew_ai_backstory=agent_template.backstory,
-                crew_ai_goal=agent_template.goal,
-                crew_ai_allow_delegation=agent_template.allow_delegation,
-                crew_ai_verbose=agent_template.verbose,
-                crew_ai_cache=agent_template.cache,
-                crew_ai_temperature=agent_template.temperature,
-                crew_ai_max_iter=agent_template.max_iter,
-                tool_ids=tool_instances,
+            add_agent_resp = add_agent(
+                AddAgentRequest(
+                    template_id=agent_template_id,
+                    workflow_id=workflow_id,
+                ),
+                cml=cml,
+                dao=None,
+                preexisting_db_session=session,
             )
-            session.add(agent)
-            agent_templates_to_agent[agent_template_id] = agent
+            agent_templates_to_created_agent_id[agent_template_id] = add_agent_resp.agent_id
 
         # Create all associated tasks
         tasks: list[db_model.Task] = []
@@ -202,14 +182,14 @@ def add_workflow_from_template(
             )
             # Assign the task to the created agent
             if task_template.assigned_agent_template_id:
-                task.assigned_agent_id = agent_templates_to_agent[task_template.assigned_agent_template_id].id
+                task.assigned_agent_id = agent_templates_to_created_agent_id[task_template.assigned_agent_template_id]
 
             # Add the task
             session.add(task)
             tasks.append(task)
 
         # Add all agent IDs and task IDs to the workflow
-        workflow.crew_ai_agents = [X.id for X in agent_templates_to_agent.values()]
+        workflow.crew_ai_agents = list(agent_templates_to_created_agent_id.values())
         workflow.crew_ai_tasks = [X.id for X in tasks]
 
         # Add the manager agent if appropriate.

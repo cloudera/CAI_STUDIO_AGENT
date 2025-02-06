@@ -64,11 +64,7 @@ from studio.models.models import (
     get_studio_default_model,
     set_studio_default_model,
 )
-from studio.cross_cutting.upgrades import (
-    check_studio_upgrade_status,
-    upgrade_studio,
-    restart_studio_application
-)
+from studio.cross_cutting.upgrades import check_studio_upgrade_status, upgrade_studio, restart_studio_application
 
 import os
 import sys
@@ -306,19 +302,19 @@ class AgentStudioApp(AgentStudioServicer):
         Get the project details where the studio is deployed.
         """
         return get_parent_project_details(request, self.cml, dao=self.dao)
-    
+
     def CheckStudioUpgradeStatus(self, request, context):
         """
         Check the current update status of the studio.
         """
         return check_studio_upgrade_status(request, self.cml, dao=self.dao)
-    
+
     def UpgradeStudio(self, request, context):
         """
         Run upgrade functionality on Studio.
         """
         return upgrade_studio(request, self.cml, dao=self.dao)
-    
+
     def RestartStudioApplication(self, request, context):
         """
         Restart Agent Studio application.

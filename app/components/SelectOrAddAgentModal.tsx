@@ -317,7 +317,6 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
           }),
         );
       }
-
     } catch (error: unknown) {
       const errorMessage =
         (error as { data?: { error?: string } })?.data?.error ||
@@ -1203,6 +1202,7 @@ const SelectOrAddAgentModal: React.FC = () => {
           tools_id: selectedAssignedAgent.tools_id || [],
           tool_template_ids: [],
           llm_provider_model_id: '',
+          tmp_agent_image_path: '',
         }).unwrap();
 
         notificationApi.success({
@@ -1236,6 +1236,7 @@ const SelectOrAddAgentModal: React.FC = () => {
           tools_id: createAgentState?.tools || [],
           llm_provider_model_id: '',
           tool_template_ids: toolTemplateIds,
+          tmp_agent_image_path: '',
         }).unwrap();
 
         // Show workflow update notification

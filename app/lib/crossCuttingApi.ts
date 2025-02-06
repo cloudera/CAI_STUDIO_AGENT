@@ -51,10 +51,10 @@ export const crossCuttingApi = apiSlice.injectEndpoints({
   }),
 });
 
-export const { 
-  useGetAssetDataQuery, 
+export const {
+  useGetAssetDataQuery,
   useGetParentProjectDetailsQuery,
   useCheckStudioUpgradeStatusQuery,
   useUpgradeStudioMutation,
-  useRestartStudioApplicationMutation
+  useRestartStudioApplicationMutation,
 } = crossCuttingApi;

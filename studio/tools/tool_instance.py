@@ -15,8 +15,8 @@ import studio.consts as consts
 def create_tool_instance(
     request: CreateToolInstanceRequest,
     cml: CMLServiceApi,
-    dao: AgentStudioDao = None,
-    preexisting_db_session: DbSession = None,
+    dao: Optional[AgentStudioDao] = None,
+    preexisting_db_session: Optional[DbSession] = None,
 ) -> CreateToolInstanceResponse:
     """
     Create a tool instance from a tool template

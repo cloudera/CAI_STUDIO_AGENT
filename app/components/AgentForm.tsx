@@ -145,6 +145,7 @@ const AgentTemplateForm = ({ agentTemplateId }: { agentTemplateId?: string }) =>
         cache: false,
         temperature: 0.7,
         max_iter: 10,
+        tmp_agent_image_path: '',
       };
 
       if (agentTemplateId) {
