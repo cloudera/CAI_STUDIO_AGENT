@@ -24,7 +24,6 @@ import {
   Workflow,
 } from '@/studio/proto/agent_studio';
 import ChatMessages from '../ChatMessages';
-import axios from 'axios';
 import {
   selectWorkflowConfiguration,
   selectWorkflowGenerationConfig,
@@ -113,9 +112,12 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow, tas
           context: JSON.stringify(context),
         },
       });
-      const kickoffResponse = await axios.post(
-        `${workflowModelUrl}`,
-        {
+      const kickoffResponse = await fetch(`${workflowModelUrl}`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({
           request: {
             action_type: 'kickoff',
             kickoff_inputs: base64Encode({
@@ -123,10 +125,10 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow, tas
               context: JSON.stringify(context),
             }),
           },
-        },
-        { headers: { 'Content-Type': 'application/json' } },
-      );
-      traceId = kickoffResponse.data.response.trace_id;
+        })
+      })
+      const kickoffResponseData = (await kickoffResponse.json()) as any;
+      traceId = kickoffResponseData.response.trace_id;
     }
 
     if (traceId) {

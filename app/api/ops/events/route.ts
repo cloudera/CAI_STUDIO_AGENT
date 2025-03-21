@@ -6,9 +6,8 @@ import fs from 'fs';
 import https from 'https';
 
 // Use the CA bundle
-const ca = fs.readFileSync('/etc/ssl/certs/ca-certificates.crt');
 const agent = new https.Agent({
-  ca,
+  ca: fs.readFileSync('/etc/ssl/certs/ca-certificates.crt'),
 });
 
 // Custom fetch function that uses the agent

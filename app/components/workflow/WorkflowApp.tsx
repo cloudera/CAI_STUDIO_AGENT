@@ -15,7 +15,7 @@ import {
   updatedCurrentPhoenixProjectId,
   updatedIsRunning,
 } from '@/app/workflows/workflowAppSlice';
-import axios from 'axios';
+import fetch from 'node-fetch';
 import { WorkflowEvent } from '@/app/lib/workflow';
 import WorkflowDiagramView from './WorkflowDiagramView';
 import {
@@ -34,6 +34,7 @@ import {
 } from '@ant-design/icons';
 import { useGetDefaultModelQuery } from '@/app/models/modelsApi';
 import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
+import { useGetEventsMutation } from '@/app/ops/opsApi';
 
 const { Title, Text } = Typography;
 
@@ -128,6 +129,8 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
   const dispatch = useAppDispatch();
   const currentEvents = useAppSelector(selectCurrentEvents);
 
+  const [ getEvents ] = useGetEventsMutation();
+
   // NOTE: because we also run our workflow app in "standalone" mode, his
   // specific query may fail. Becuase of this, we also check our workflow
   // data to see if we are rendering in studio model. Making this actual api
@@ -172,10 +175,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
     // Set the interval function
     const fetchEvents = async () => {
       try {
-        // TODO: migrage this to RTK query
-        const { projectId, events: allEvents } = (
-          await axios.get(`/api/ops/events?traceId=${currentTraceId}`)
-        ).data;
+        const { projectId, events: allEvents } = await getEvents({traceId: currentTraceId}).unwrap();
         dispatch(updatedCurrentEvents(allEvents));
         dispatch(updatedCurrentEventIndex(allEvents.length - 1));
         dispatch(updatedCurrentPhoenixProjectId(projectId)); // TODO: there's a more graceful place for this
@@ -238,6 +238,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
     const startPolling = () => {
       if (intervalRef.current) return; // Prevent duplicate polling
       intervalRef.current = setInterval(fetchEvents, 1000);
+      setSliderValue(0);
       dispatch(updatedCrewOutput(undefined));
       dispatch(updatedCurrentEvents([]));
       dispatch(updatedCurrentEventIndex(0));
@@ -468,12 +469,12 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
               <Title level={5}>Playback</Title>
               <Slider
                 min={0}
-                max={!currentEvents ? 0 : currentEvents.length - 1}
+                max={(!currentEvents || currentEvents.length == 0) ? 0 : currentEvents.length - 1}
                 value={sliderValue}
                 onChange={handleSliderChange}
                 marks={{
                   0: 'Start',
-                  [!currentEvents ? 0 : currentEvents.length - 1]: 'End',
+                  [(!currentEvents || currentEvents.length == 0) ? 0 : currentEvents.length - 1]: 'End',
                 }}
                 tooltip={{ formatter: (val) => `Event ${val}` }}
               />

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import axios from 'axios';
+import fetch from 'node-fetch';
 import https from 'https';
 import fs from 'fs';
 
-const httpsAgent = new https.Agent({
+const agent = new https.Agent({
   ca: fs.readFileSync('/etc/ssl/certs/ca-certificates.crt'),
 });
 
@@ -22,13 +22,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const apiUrl = `https://${CDSW_DOMAIN}/api/v2/projects/${CDSW_PROJECT_ID}/files/${encodedFilePath}`;
 
   try {
-    const response = await axios.get(apiUrl, {
+    const response = await fetch(apiUrl, {
       headers: {
         Authorization: `Bearer ${CDSW_APIV2_KEY}`,
       },
-      httpsAgent: httpsAgent,
-    });
-    const responseData = response.data;
+      agent
+    })
+    const responseData = (await response.json()) as any;
 
     if (response.status === 200) {
       if (

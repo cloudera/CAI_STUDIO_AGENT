@@ -23,7 +23,6 @@ import {
   ToolInstance,
   Workflow,
 } from '@/studio/proto/agent_studio';
-import axios from 'axios';
 import showdown from 'showdown';
 import {
   selectWorkflowConfiguration,
@@ -99,17 +98,20 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
       }).unwrap();
       traceId = response.trace_id;
     } else {
-      const kickoffResponse = await axios.post(
-        `${workflowModelUrl}`,
-        {
+      const kickoffResponse = await fetch(`${workflowModelUrl}`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({
           request: {
             action_type: 'kickoff',
             kickoff_inputs: base64Encode(finalInputs), // Use finalInputs instead of inputs
           },
-        },
-        { headers: { 'Content-Type': 'application/json' } },
-      );
-      traceId = kickoffResponse.data.response.trace_id;
+        })
+      });
+      const kickoffResponseData = (await kickoffResponse.json()) as any;
+      traceId = kickoffResponseData.response.trace_id;
     }
 
     if (traceId) {

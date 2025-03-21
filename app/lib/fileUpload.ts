@@ -19,6 +19,7 @@ export async function uploadFile(
 
     base64Content = btoa(base64Content);
 
+    // TODO: all /api/grpc calls should be routed through RTK
     const response = await fetch('/api/grpc/nonStreamingTemporaryFileUpload', {
       method: 'POST',
       headers: {

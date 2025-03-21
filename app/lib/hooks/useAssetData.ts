@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useGetAssetDataQuery } from '../crossCuttingApi';
-import axios from 'axios';
 import { useAppSelector } from './hooks';
 import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
 
@@ -29,13 +28,20 @@ export const useImageAssetsData = (uris: (string | undefined)[]) => {
 
       try {
         setWorkflowRenderModeError(false);
-        const response = await axios.post(workflowModelUrl, {
-          request: {
-            action_type: 'get-asset-data',
-            get_asset_data_inputs: urisToActuallyFetch,
+        const response = await fetch(workflowModelUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
+          body: JSON.stringify({
+            request: {
+              action_type: 'get-asset-data',
+              get_asset_data_inputs: urisToActuallyFetch,
+            },
+          })
         });
-        const asset_data = response.data.response?.asset_data;
+        const responseData = (await response.json()) as any;
+        const asset_data = responseData.response?.asset_data;
         if (asset_data) {
           setImageData((prevData) => ({
             ...prevData,

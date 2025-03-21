@@ -22,7 +22,6 @@
     "@types/react-router-dom": "^5.3.3",
     "@types/semver": "^7.5.8",
     "@xyflow/react": "^12.3.6",
-    "axios": "^1.7.9",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "graphql-request": "^7.1.2",

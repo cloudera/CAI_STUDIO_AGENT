@@ -131,9 +131,8 @@ export const fetchOpsUrl = async (): Promise<string | null> => {
   }
 
   // Use the CA bundle
-  const ca = fs.readFileSync('/etc/ssl/certs/ca-certificates.crt');
   const agent = new https.Agent({
-    ca,
+    ca: fs.readFileSync('/etc/ssl/certs/ca-certificates.crt'),
   });
 
   try {

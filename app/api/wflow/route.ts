@@ -8,9 +8,9 @@ import {
 } from '@/studio/proto/agent_studio';
 import fs from 'fs';
 import https from 'https';
-import axios from 'axios';
+import fetch from 'node-fetch';
 
-const httpsAgent = new https.Agent({
+const agent = new https.Agent({
   ca: fs.readFileSync('/etc/ssl/certs/ca-certificates.crt'),
 });
 
@@ -35,17 +35,15 @@ const fetchModelUrl = async (cml_model_id: string): Promise<string | null> => {
   }
 
   try {
-    const response = await axios.get<ListModelsResponse>(`https://${CDSW_DOMAIN}/api/v2/models`, {
-      params: {
-        page_size: 1000,
-      },
+    const response = await fetch(`https://${CDSW_DOMAIN}/api/v2/models?page_size=1000`, {
       headers: {
         authorization: `Bearer ${CDSW_APIV2_KEY}`,
       },
-      httpsAgent: httpsAgent,
-    });
+      agent
+    })
+    const responseData = (await response.json()) as ListModelsResponse;
 
-    const model = response.data.models.find((model: CMLModel) => model.id === cml_model_id);
+    const model = responseData.models.find((model: CMLModel) => model.id === cml_model_id);
 
     if (!model) {
       console.error('Model is not found.');
@@ -69,19 +67,20 @@ export async function GET(request: NextRequest) {
     const deployedModelId = process.env.AGENT_STUDIO_DEPLOYED_MODEL_ID;
     const modelUrl = await fetchModelUrl(deployedModelId as string);
 
-    const getConfigurationResponse = await axios.post(
-      `${modelUrl}`,
-      {
+    const getConfigurationResponse = await fetch(`${modelUrl}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
         request: {
           action_type: 'get-configuration',
-        },
-      },
-      {
-        headers: { 'Content-Type': 'application/json' },
-        httpsAgent: httpsAgent,
-      },
-    );
-    const configuration = getConfigurationResponse.data?.response?.configuration;
+        }
+      }),
+      agent
+    })
+    const getConfigurationResponseData = (await getConfigurationResponse.json()) as any;
+    const configuration = getConfigurationResponseData.response?.configuration;
 
     const toolInstances: ToolInstance[] = configuration.tool_instances.map((tool: any) => ({
       id: tool.id,
