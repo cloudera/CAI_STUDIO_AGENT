@@ -694,17 +694,6 @@ dev = [
     { name = "pytest-cov" },
     { name = "ruff" },
 ]
-workflow-deployment = [
-    { name = "arize-phoenix" },
-    { name = "arize-phoenix-otel" },
-    { name = "crewai" },
-    { name = "gql" },
-    { name = "openinference-instrumentation-crewai" },
-    { name = "openinference-instrumentation-litellm" },
-    { name = "opentelemetry-api" },
-    { name = "pydantic" },
-    { name = "pysqlite3-binary" },
-]
 
 [package.metadata]
 requires-dist = [
@@ -735,17 +724,6 @@ dev = [
     { name = "pytest", specifier = "==8.2.2" },
     { name = "pytest-cov", specifier = "==5.0.0" },
     { name = "ruff", specifier = "==0.9.4" },
-]
-workflow-deployment = [
-    { name = "arize-phoenix", specifier = "==7.12.0" },
-    { name = "arize-phoenix-otel", specifier = "==0.7.1" },
-    { name = "crewai", specifier = "==0.100.0" },
-    { name = "gql", specifier = "==3.5.0" },
-    { name = "openinference-instrumentation-crewai", specifier = "==0.1.4" },
-    { name = "openinference-instrumentation-litellm", specifier = "==0.1.9" },
-    { name = "opentelemetry-api", specifier = "==1.28.2" },
-    { name = "pydantic", specifier = "==2.10.6" },
-    { name = "pysqlite3-binary", specifier = "==0.5.4" },
 ]
 
 [[package]]

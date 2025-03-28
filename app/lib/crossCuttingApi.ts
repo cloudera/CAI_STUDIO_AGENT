@@ -64,6 +64,12 @@ export const crossCuttingApi = apiSlice.injectEndpoints({
         return false;
       },
     }),
+    workbenchDetails: builder.query<any, void>({
+      query: () => ({
+        url: '/workbench',
+        method: 'GET',
+      }),
+    }),
   }),
 });
 
@@ -74,4 +80,5 @@ export const {
   useUpgradeStudioMutation,
   useRestartStudioApplicationMutation,
   useHealthCheckQuery,
+  useWorkbenchDetailsQuery,
 } = crossCuttingApi;

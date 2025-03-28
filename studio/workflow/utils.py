@@ -6,6 +6,7 @@ import sys
 import studio.cross_cutting.input_types as input_types
 from contextlib import contextmanager
 import os
+import requests
 import importlib
 from opentelemetry.context import attach, detach, Context
 import asyncio
@@ -17,6 +18,23 @@ from studio.models.utils import get_crewai_llm_object_direct, get_crewai_llm_obj
 from studio.workflow.ops_wrappers import WrappedAgent
 from studio.cross_cutting import utils as cc_utils
 from studio import consts
+
+
+def is_custom_model_root_dir_feature_enabled() -> bool:
+    """
+    Currently custom model root dirs for Workbench models are hidden behind
+    the ML_ENABLE_COMPOSABLE_AMPS entitlement, which can be checked with
+    unauthenticated access at our /sense-bootstrap.json endpoint.
+    """
+
+    # Grab the bootstrap data
+    bootstrap_data: dict = requests.get(f"https://{os.getenv('CDSW_DOMAIN')}/sense-bootstrap.json").json()
+
+    # Return the result of the entitlement we are looking for
+    # and default this to false (for older workbenches). "enable_ai_studios"
+    # is translated upstream from ML_ENABLE_COMPOSABLE_AMPS, which is the
+    # entitlement that blocks the model root dir feature.
+    return bootstrap_data.get("enable_ai_studios", False)
 
 
 def _import_module_with_isolation(module_name: str, module_path: str):

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, Typography, Layout, Image, Modal } from 'antd';
 import { ArrowRightOutlined, SyncOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation'; // Use Next.js router
@@ -29,10 +29,14 @@ import DeleteWorkflowModal from '../components/DeleteWorkflowModal';
 import CommonBreadCrumb from '../components/CommonBreadCrumb';
 import { useListAgentsQuery, useListGlobalAgentTemplatesQuery } from '../agents/agentApi';
 import NoDefaultModelModal from '../components/NoDefaultModelModal';
-import { useGlobalNotification } from '../components/Notifications';
+import { useGlobalMessage, useGlobalNotification } from '../components/Notifications';
 import WorkflowGetStartModal from '../components/WorkflowGetStartModal';
 import { clearedWorkflowApp } from './workflowAppSlice';
-import { useCheckStudioUpgradeStatusQuery, useUpgradeStudioMutation } from '../lib/crossCuttingApi';
+import {
+  useCheckStudioUpgradeStatusQuery,
+  useUpgradeStudioMutation,
+  useWorkbenchDetailsQuery,
+} from '../lib/crossCuttingApi';
 
 import * as semver from 'semver';
 import ContentWithHealthCheck from '../components/ContentWithHealthCheck';
@@ -115,6 +119,26 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ upgradeStatus }) => {
   );
 };
 
+function compareMainSemverVersions(a: string, b: string) {
+  const sanitizedA = a.split('-')[0];
+  const sanitizedB = b.split('-')[0];
+
+  const [aMajor, aMinor, aPatch] = sanitizedA.split('.').map(Number);
+  const [bMajor, bMinor, bPatch] = sanitizedB.split('.').map(Number);
+
+  if (aMajor > bMajor) return 1;
+  if (aMajor < bMajor) return -1;
+
+  if (aMinor > bMinor) return 1;
+  if (aMinor < bMinor) return -1;
+
+  if (aPatch > bPatch) return 1;
+  if (aPatch < bPatch) return -1;
+
+  // Versions are the same
+  return 0;
+}
+
 const WorkflowsPageContent: React.FC = () => {
   const { data: workflows, refetch: refetchWorkflows } = useListWorkflowsQuery({});
   const { data: deployedWorkflowInstances, refetch: refetchDeployedWorkflowInstances } =
@@ -139,8 +163,47 @@ const WorkflowsPageContent: React.FC = () => {
   const [getWorkflow] = useGetWorkflowMutation();
   const [addWorkflow] = useAddWorkflowMutation();
   const notificationApi = useGlobalNotification();
+  const messagesApi = useGlobalMessage();
   const [isGetStartModalVisible, setGetStartModalVisible] = useState(false);
   const { data: upgradeStatus } = useCheckStudioUpgradeStatusQuery();
+  const { data: workbenchDetails } = useWorkbenchDetailsQuery();
+
+  useEffect(() => {
+    if (!workbenchDetails) {
+      return;
+    }
+
+    if (compareMainSemverVersions(workbenchDetails.gitSha, '2.0.47') < 0) {
+      messagesApi.open({
+        type: 'error',
+        content: (
+          <>
+            You are running Cloudera AI Workbench version <b>{workbenchDetails.gitSha}</b>. <br />
+            Agent Studio has known compatibility issues with Workbenches older than <b>
+              2.0.47
+            </b>. <br />
+            Please upgrade your Cloudera AI Workbench to at least <b>2.0.47</b>.{' '}
+          </>
+        ),
+        duration: 30,
+      });
+    }
+
+    if (!workbenchDetails.enable_ai_studios) {
+      messagesApi.open({
+        type: 'warning',
+        content: (
+          <>
+            You are running Agent Studio without the <b>ML_ENABLE_COMPOSABLE_AMPS</b> entitlement
+            enabled for your account. <br />
+            This may lead to degraded performance of deployed workflows. Please work with your
+            administrator to enable the <b>ML_ENABLE_COMPOSABLE_AMPS</b> entitlement.
+          </>
+        ),
+        duration: 30,
+      });
+    }
+  }, [workbenchDetails]);
 
   const handleGetStarted = () => {
     setGetStartModalVisible(true);

@@ -19,6 +19,7 @@ from studio.cross_cutting.utils import get_studio_subdirectory
 import studio.workflow.utils as workflow_utils
 import studio.consts as consts
 from studio.ops import get_ops_endpoint
+from studio.workflow.utils import is_custom_model_root_dir_feature_enabled
 from datetime import datetime
 from opentelemetry.context import get_current
 import requests
@@ -332,6 +333,25 @@ def create_application_for_deployed_workflow(
     return application
 
 
+def get_deployed_workflow_config(deployable_workflow_dir: str) -> dict:
+    if is_custom_model_root_dir_feature_enabled():
+        return {
+            "model_root_dir": os.path.join(get_studio_subdirectory(), deployable_workflow_dir),
+            "model_file_path": "src/engine/entry/workbench.py",
+            "deployed_workflow_model_config_location": "/home/cdsw/workflow/config.json",
+        }
+    else:
+        return {
+            "model_root_dir": None,
+            "model_file_path": os.path.join(
+                get_studio_subdirectory(), deployable_workflow_dir, "src/engine/entry/workbench.py"
+            ),
+            "deployed_workflow_model_config_location": os.path.join(
+                "/home/cdsw", get_studio_subdirectory(), deployable_workflow_dir, "workflow", "config.json"
+            ),
+        }
+
+
 def deploy_workflow(
     request: DeployWorkflowRequest, cml: CMLServiceApi, dao: AgentStudioDao = None
 ) -> DeployWorkflowResponse:
@@ -401,6 +421,9 @@ def deploy_workflow(
 
         # Copy over our workflow engine code into our deployed workflow directory
         # NOTE: this will go away once we move to a dedicated repo for workflow engines
+        # NOTE: for workbenches without the model root dir feature enabled, we are technically installing
+        # the workflow_engine package directly as part of the cdsw-build.sh script, so this copy may
+        # not be necessary.
         shutil.copytree(os.path.join("studio", "workflow_engine"), deployable_workflow_dir, dirs_exist_ok=True)
 
         # Copy over the workflow directory into the deployed workflow directory.
@@ -417,11 +440,16 @@ def deploy_workflow(
             "studio-data", os.path.join(deployable_workflow_dir, "studio-data"), ignore=studio_data_workflow_ignore
         )
 
+        # Get some deployed workflow configuration parameters based on the version
+        # of workbench running, deployment pattern, and entitlements that are currently enabled
+        deployed_workflow_config = get_deployed_workflow_config(deployable_workflow_dir)
+        print(json.dumps(deployed_workflow_config, indent=2))
+
         env_vars_for_cml_model.update(
             {
                 "AGENT_STUDIO_OPS_ENDPOINT": get_ops_endpoint(),
                 "AGENT_STUDIO_WORKFLOW_ARTIFACT_TYPE": "config_file",
-                "AGENT_STUDIO_WORKFLOW_ARTIFACT_LOCATION": "/home/cdsw/workflow/config.json",
+                "AGENT_STUDIO_WORKFLOW_ARTIFACT": deployed_workflow_config["deployed_workflow_model_config_location"],
                 "AGENT_STUDIO_WORKFLOW_NAME": deployed_workflow_instance_name,
                 "CDSW_APIV2_KEY": os.getenv("CDSW_APIV2_KEY"),
             }
@@ -433,8 +461,8 @@ def deploy_workflow(
             model_name=cml_model_name,
             model_description=f"Model for workflow {deployed_workflow_instance_name}",
             model_build_comment=f"Build for workflow {deployed_workflow_instance_name}",
-            model_root_dir=os.path.join(get_studio_subdirectory(), deployable_workflow_dir),
-            model_file_path="src/engine/entry/workbench.py",
+            model_root_dir=deployed_workflow_config["model_root_dir"],
+            model_file_path=deployed_workflow_config["model_file_path"],
             function_name="api_wrapper",
             runtime_identifier=cc_utils.get_deployed_workflow_runtime_identifier(cml),
             deployment_config=cmlapi.ShortCreateModelDeployment(
