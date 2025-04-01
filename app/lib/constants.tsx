@@ -71,7 +71,7 @@ export const VERSION_WARNING_OUT_OF_DATE = (openModal: () => void) => {
     <>
       Agent Studio is out of date.{' '}
       <Link href={''} onClick={openModal}>
-        Upgrade Studio
+        Upgrade Agent Studio
       </Link>
     </>
   );
