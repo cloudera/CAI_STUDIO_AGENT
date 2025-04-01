@@ -109,9 +109,6 @@ def api_wrapper(args: Union[dict, str]) -> str:
             parent_span.add_event("Parent span ending early for visibility")
             parent_span.end()
 
-            # Create our listener
-            # listener = PhoenixEventListener(parent_span)
-
             # Capture the current OpenTelemetry context
             parent_context = get_current()
 
