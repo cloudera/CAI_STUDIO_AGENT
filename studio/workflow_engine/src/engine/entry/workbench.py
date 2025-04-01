@@ -28,7 +28,6 @@ import engine.types as input_types
 from engine import consts
 from engine.crewai.run import run_workflow_async
 from engine.crewai.tracing import instrument_crewai_workflow, reset_crewai_instrumentation
-from engine.crewai.events import PhoenixEventListener
 
 import cml.models_v1 as cml_models
 
@@ -109,7 +108,7 @@ def api_wrapper(args: Union[dict, str]) -> str:
             # End the parent span early
             parent_span.add_event("Parent span ending early for visibility")
             parent_span.end()
-            
+
             # Create our listener
             # listener = PhoenixEventListener(parent_span)
 

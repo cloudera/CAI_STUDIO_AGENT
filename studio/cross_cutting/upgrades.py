@@ -1,12 +1,14 @@
 from cmlapi import CMLServiceApi
+import cmlapi
 
+from studio.consts import AGENT_STUDIO_UPGRADE_JOB_NAME
+from studio.cross_cutting.utils import get_job_by_name, get_deployed_workflow_runtime_identifier
 from studio.db.dao import AgentStudioDao
 from studio.api import *
 
 import subprocess
-
-import subprocess
 import re
+import os
 
 
 SEMVER_REGEX = re.compile(
@@ -196,3 +198,28 @@ def check_studio_upgrade_status(
         local_version=local_version,
         newest_version=newest_version,
     )
+
+
+def upgrade_studio(
+    request: UpgradeStudioRequest, cml: CMLServiceApi = None, dao: AgentStudioDao = None
+) -> UpgradeStudioResponse:
+    # Determine if the job exists
+    job: cmlapi.Job = get_job_by_name(cml, AGENT_STUDIO_UPGRADE_JOB_NAME)
+
+    # If this job doesn't exist, then create it!
+    if job == None:
+        job: cmlapi.Job = cml.create_job(
+            {
+                "name": AGENT_STUDIO_UPGRADE_JOB_NAME,
+                "project_id": os.getenv("CDSW_PROJECT_ID"),
+                "script": "bin/upgrade-studio.py",
+                "cpu": 2,
+                "memory": 4,
+                "nvidia_gpu": 0,
+                "runtime_identifier": get_deployed_workflow_runtime_identifier(cml),
+            },
+            project_id=os.getenv("CDSW_PROJECT_ID"),
+        )
+
+    # Now run the job
+    cml.create_job_run({}, project_id=os.getenv("CDSW_PROJECT_ID"), job_id=job.id)

@@ -250,11 +250,7 @@ def get_application_by_name(cml: cmlapi.CMLServiceApi, name: str, only_running: 
             and "running" in app.status.lower()  # Changed to check if "running" is in status
         ]
     else:
-        running_apps = [
-            app
-            for app in applications
-            if ((app.name == name) or (name + " v") in app.name)
-        ]
+        running_apps = [app for app in applications if ((app.name == name) or (name + " v") in app.name)]
 
     if not running_apps:
         raise ValueError(f"No running applications found matching '{name}'")
@@ -269,6 +265,29 @@ def get_application_by_name(cml: cmlapi.CMLServiceApi, name: str, only_running: 
 
     # Return the most recent version
     return sorted(running_apps, key=lambda x: get_version(x.name))[-1]
+
+
+def get_job_by_name(cml: cmlapi.CMLServiceApi, name: str) -> Union[cmlapi.Job, None]:
+    jobs: list[cmlapi.Job] = cml.list_jobs(
+        project_id=os.getenv("CDSW_PROJECT_ID"),
+        page_size=5000,
+    ).jobs
+
+    jobs = [job for job in jobs if ((job.name == name) or (name + " v") in job.name)]
+
+    if len(jobs) == 0:
+        return None
+
+    # Sort by version number (assuming format "Name vX.Y")
+    def get_version(name: str) -> tuple:
+        try:
+            version = name.split("v")[-1]
+            return tuple(map(int, version.split(".")))
+        except (IndexError, ValueError):
+            return (0, 0)  # Default for apps without version
+
+    # Return the most recent version
+    return sorted(jobs, key=lambda x: get_version(x.name))[-1]
 
 
 def get_deployed_workflow_runtime_identifier(cml: cmlapi.CMLServiceApi) -> Union[Any, None]:

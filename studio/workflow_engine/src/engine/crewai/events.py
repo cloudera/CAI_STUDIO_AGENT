@@ -48,13 +48,12 @@ EVENT_TYPES = [
 
 
 class PhoenixEventListener(BaseEventListener):
-
     def __init__(self):
         super().__init__()
 
     def setup_listeners(self, crewai_event_bus):
-        
         for event_type in EVENT_TYPES:
+
             @crewai_event_bus.on(event_type)
             def event_forwarder(source, event):
                 print("AHHHHHHHH IT'S WORKING")

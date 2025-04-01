@@ -29,11 +29,7 @@ def get_application_by_name(cml: cmlapi.CMLServiceApi, name: str, only_running: 
             and "running" in app.status.lower()  # Changed to check if "running" is in status
         ]
     else:
-        running_apps = [
-            app
-            for app in applications
-            if ((app.name == name) or (name + " v") in app.name)
-        ]
+        running_apps = [app for app in applications if ((app.name == name) or (name + " v") in app.name)]
 
     if not running_apps:
         raise ValueError(f"No running applications found matching '{name}'")

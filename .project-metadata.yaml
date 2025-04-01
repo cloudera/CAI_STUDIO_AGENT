@@ -34,6 +34,16 @@ tasks:
     kernel: python3
     cpu: 1
     memory: 4
+  - type: create_job
+    name: "Agent Studio - Upgrade" 
+    script: bin/upgrade-studio.py
+    short_summary: Upgrade Agent Studio
+    long_summary: Fully upgrade Agent Studio and all dependencies
+    kernel: python3
+    cpu: 1
+    memory: 4
+    environment:
+      TASK_TYPE: CREATE/RUN_JOB
   - type: start_application
     name: "Agent Studio - Agent Ops & Metrics"
     short_summary: View observability data from agents running on AI studio.
@@ -56,5 +66,4 @@ tasks:
     memory: 8
     is_embedded: true
     environment_variables:
-      IS_EMBEDDED: true
       TASK_TYPE: START_APPLICATION
