@@ -65,3 +65,14 @@ export const ENTITLEMENT_WARNING_ML_ENABLE_COMPOSABLE_AMPS: React.ReactNode = (
     administrator to enable the <b>ML_ENABLE_COMPOSABLE_AMPS</b> entitlement.
   </>
 );
+
+export const VERSION_WARNING_OUT_OF_DATE = (openModal: () => void) => {
+  return (
+    <>
+      Agent Studio is out of date.{' '}
+      <Link href={''} onClick={openModal}>
+        Upgrade Studio
+      </Link>
+    </>
+  );
+};

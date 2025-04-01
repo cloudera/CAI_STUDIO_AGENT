@@ -1079,12 +1079,6 @@ export interface UpgradeStudioRequest {
 export interface UpgradeStudioResponse {
 }
 
-export interface RestartStudioApplicationRequest {
-}
-
-export interface RestartStudioApplicationResponse {
-}
-
 export interface HealthCheckRequest {
 }
 
@@ -12749,92 +12743,6 @@ export const UpgradeStudioResponse: MessageFns<UpgradeStudioResponse> = {
   },
 };
 
-function createBaseRestartStudioApplicationRequest(): RestartStudioApplicationRequest {
-  return {};
-}
-
-export const RestartStudioApplicationRequest: MessageFns<RestartStudioApplicationRequest> = {
-  encode(_: RestartStudioApplicationRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): RestartStudioApplicationRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseRestartStudioApplicationRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(_: any): RestartStudioApplicationRequest {
-    return {};
-  },
-
-  toJSON(_: RestartStudioApplicationRequest): unknown {
-    const obj: any = {};
-    return obj;
-  },
-
-  create(base?: DeepPartial<RestartStudioApplicationRequest>): RestartStudioApplicationRequest {
-    return RestartStudioApplicationRequest.fromPartial(base ?? {});
-  },
-  fromPartial(_: DeepPartial<RestartStudioApplicationRequest>): RestartStudioApplicationRequest {
-    const message = createBaseRestartStudioApplicationRequest();
-    return message;
-  },
-};
-
-function createBaseRestartStudioApplicationResponse(): RestartStudioApplicationResponse {
-  return {};
-}
-
-export const RestartStudioApplicationResponse: MessageFns<RestartStudioApplicationResponse> = {
-  encode(_: RestartStudioApplicationResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): RestartStudioApplicationResponse {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseRestartStudioApplicationResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(_: any): RestartStudioApplicationResponse {
-    return {};
-  },
-
-  toJSON(_: RestartStudioApplicationResponse): unknown {
-    const obj: any = {};
-    return obj;
-  },
-
-  create(base?: DeepPartial<RestartStudioApplicationResponse>): RestartStudioApplicationResponse {
-    return RestartStudioApplicationResponse.fromPartial(base ?? {});
-  },
-  fromPartial(_: DeepPartial<RestartStudioApplicationResponse>): RestartStudioApplicationResponse {
-    const message = createBaseRestartStudioApplicationResponse();
-    return message;
-  },
-};
-
 function createBaseHealthCheckRequest(): HealthCheckRequest {
   return {};
 }
@@ -13378,17 +13286,6 @@ export const AgentStudioService = {
     responseSerialize: (value: UpgradeStudioResponse) => Buffer.from(UpgradeStudioResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer) => UpgradeStudioResponse.decode(value),
   },
-  restartStudioApplication: {
-    path: "/agent_studio.AgentStudio/RestartStudioApplication",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: RestartStudioApplicationRequest) =>
-      Buffer.from(RestartStudioApplicationRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer) => RestartStudioApplicationRequest.decode(value),
-    responseSerialize: (value: RestartStudioApplicationResponse) =>
-      Buffer.from(RestartStudioApplicationResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer) => RestartStudioApplicationResponse.decode(value),
-  },
   healthCheck: {
     path: "/agent_studio.AgentStudio/HealthCheck",
     requestStream: false,
@@ -13616,7 +13513,6 @@ export interface AgentStudioServer extends UntypedServiceImplementation {
   getParentProjectDetails: handleUnaryCall<GetParentProjectDetailsRequest, GetParentProjectDetailsResponse>;
   checkStudioUpgradeStatus: handleUnaryCall<CheckStudioUpgradeStatusRequest, CheckStudioUpgradeStatusResponse>;
   upgradeStudio: handleUnaryCall<UpgradeStudioRequest, UpgradeStudioResponse>;
-  restartStudioApplication: handleUnaryCall<RestartStudioApplicationRequest, RestartStudioApplicationResponse>;
   healthCheck: handleUnaryCall<HealthCheckRequest, HealthCheckResponse>;
   /** Agent templates operations */
   listAgentTemplates: handleUnaryCall<ListAgentTemplatesRequest, ListAgentTemplatesResponse>;
@@ -14317,21 +14213,6 @@ export interface AgentStudioClient extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: UpgradeStudioResponse) => void,
-  ): ClientUnaryCall;
-  restartStudioApplication(
-    request: RestartStudioApplicationRequest,
-    callback: (error: ServiceError | null, response: RestartStudioApplicationResponse) => void,
-  ): ClientUnaryCall;
-  restartStudioApplication(
-    request: RestartStudioApplicationRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: RestartStudioApplicationResponse) => void,
-  ): ClientUnaryCall;
-  restartStudioApplication(
-    request: RestartStudioApplicationRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: RestartStudioApplicationResponse) => void,
   ): ClientUnaryCall;
   healthCheck(
     request: HealthCheckRequest,

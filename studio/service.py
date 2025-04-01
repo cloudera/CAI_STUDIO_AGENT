@@ -65,7 +65,7 @@ from studio.models.models import (
     get_studio_default_model,
     set_studio_default_model,
 )
-from studio.cross_cutting.upgrades import check_studio_upgrade_status, upgrade_studio, restart_studio_application
+from studio.cross_cutting.upgrades import check_studio_upgrade_status, upgrade_studio
 
 import os
 import sys
@@ -309,12 +309,6 @@ class AgentStudioApp(AgentStudioServicer):
         Run upgrade functionality on Studio.
         """
         return upgrade_studio(request, self.cml, dao=self.dao)
-
-    def RestartStudioApplication(self, request, context):
-        """
-        Restart Agent Studio application.
-        """
-        return restart_studio_application(request, self.cml, dao=self.dao)
 
     def HealthCheck(self, request, context):
         """

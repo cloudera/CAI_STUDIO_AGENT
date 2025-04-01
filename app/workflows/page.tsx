@@ -37,87 +37,11 @@ import {
   useWorkbenchDetailsQuery,
 } from '../lib/crossCuttingApi';
 
-import * as semver from 'semver';
 import ContentWithHealthCheck from '../components/ContentWithHealthCheck';
 import TopNav from '../components/TopNav';
 import { compareWorkbenchVersions } from '../lib/workbench';
 
 const { Text, Title, Paragraph } = Typography;
-
-export interface UpgradeModalProps {
-  upgradeStatus?: CheckStudioUpgradeStatusResponse;
-}
-
-const UpgradeModal: React.FC<UpgradeModalProps> = ({ upgradeStatus }) => {
-  const [upgradeStudio] = useUpgradeStudioMutation();
-  const [isOpen, setIsOpen] = useState(true);
-  const notificationsApi = useGlobalNotification();
-
-  const handleUpgrade = async () => {
-    upgradeStudio();
-    notificationsApi.info({
-      message: 'Upgrade In Progress',
-      description:
-        'Agent Studio is upgrading in the background. Agent Studio will restart once upgrades are complete. During the upgrade, you may experience downtime using the Studio. Once the application restarts, you can refresh this page to see the upgraded Studio.',
-      placement: 'topRight',
-    });
-    setIsOpen(false);
-  };
-
-  const isValidSemver = (version: string | undefined) => {
-    return version && Boolean(semver.valid(version));
-  };
-
-  return (
-    <>
-      <Modal
-        open={isOpen}
-        onCancel={() => setIsOpen(false)}
-        onClose={() => setIsOpen(false)}
-        onOk={handleUpgrade}
-        footer={[
-          <Button key="cancel" onClick={() => setIsOpen(false)}>
-            Cancel
-          </Button>,
-          <Button key="upgrade" type="primary" onClick={handleUpgrade}>
-            Upgrade
-          </Button>,
-        ]}
-      >
-        <Layout
-          style={{
-            background: 'transparent',
-            flexDirection: 'column',
-            gap: 24,
-          }}
-        >
-          <Title level={4}>
-            Upgrade Agent Studio to{' '}
-            <b>
-              {isValidSemver(upgradeStatus?.local_version)
-                ? upgradeStatus?.newest_version
-                : upgradeStatus?.newest_version.substring(0, 7)}
-            </b>
-            <SyncOutlined style={{ marginLeft: 12 }} />
-          </Title>
-          <Text>
-            Current Version:{' '}
-            <b>
-              {isValidSemver(upgradeStatus?.local_version)
-                ? upgradeStatus?.local_version
-                : upgradeStatus?.local_version.substring(0, 7)}
-            </b>
-          </Text>
-          <Paragraph>
-            Your version of Agent Studio is out of date. Upgrading Agent Studio will pull down the
-            most recent version into your project, and restart the main Agent Studio application.
-            Your existing workflows will not be lost. Do you wish to continue?
-          </Paragraph>
-        </Layout>
-      </Modal>
-    </>
-  );
-};
 
 const WorkflowsPageContent: React.FC = () => {
   const { data: workflows, refetch: refetchWorkflows } = useListWorkflowsQuery({});
@@ -337,10 +261,6 @@ const WorkflowsPageContent: React.FC = () => {
     }
   };
 
-  const isOutOfDate = (upgradeStatus: CheckStudioUpgradeStatusResponse | undefined) => {
-    return upgradeStatus && upgradeStatus.local_version !== upgradeStatus.newest_version;
-  };
-
   return (
     <Layout
       style={{
@@ -350,7 +270,6 @@ const WorkflowsPageContent: React.FC = () => {
         background: 'transparent',
       }}
     >
-      {isOutOfDate(upgradeStatus) && <UpgradeModal upgradeStatus={upgradeStatus} />}
       <CommonBreadCrumb items={[{ title: 'Agentic Workflows' }]} />
       <Layout>
         <Layout

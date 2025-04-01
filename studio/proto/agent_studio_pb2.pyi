@@ -1658,14 +1658,6 @@ class UpgradeStudioResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
 
-class RestartStudioApplicationRequest(_message.Message):
-    __slots__ = ()
-    def __init__(self) -> None: ...
-
-class RestartStudioApplicationResponse(_message.Message):
-    __slots__ = ()
-    def __init__(self) -> None: ...
-
 class HealthCheckRequest(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...

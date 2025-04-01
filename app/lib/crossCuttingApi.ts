@@ -43,13 +43,6 @@ export const crossCuttingApi = apiSlice.injectEndpoints({
         body: {},
       }),
     }),
-    restartStudioApplication: builder.mutation<void, void>({
-      query: (request) => ({
-        url: '/grpc/restartStudioApplication',
-        method: 'POST',
-        body: {},
-      }),
-    }),
     healthCheck: builder.query<boolean, void>({
       query: () => ({
         url: '/grpc/healthCheck',
@@ -78,7 +71,6 @@ export const {
   useGetParentProjectDetailsQuery,
   useCheckStudioUpgradeStatusQuery,
   useUpgradeStudioMutation,
-  useRestartStudioApplicationMutation,
   useHealthCheckQuery,
   useWorkbenchDetailsQuery,
 } = crossCuttingApi;

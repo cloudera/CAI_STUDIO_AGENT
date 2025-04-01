@@ -298,7 +298,9 @@ def get_deployed_workflow_runtime_identifier(cml: cmlapi.CMLServiceApi) -> Union
     Right now, we actually use the same base runtime image for both the CML model tasked
     with running our deployed workflows, as well as the standalone Workflow UI application.
     """
-    application: cmlapi.Application = get_application_by_name(cml, consts.AGENT_STUDIO_SERVICE_APPLICATION_NAME)
+    application: cmlapi.Application = get_application_by_name(
+        cml, consts.AGENT_STUDIO_SERVICE_APPLICATION_NAME, only_running=False
+    )
     return application.runtime_identifier
 
 

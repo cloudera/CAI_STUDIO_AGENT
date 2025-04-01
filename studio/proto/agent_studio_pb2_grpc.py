@@ -6,10 +6,8 @@ import warnings
 
 from studio.proto import agent_studio_pb2 as studio_dot_proto_dot_agent__studio__pb2
 
-GRPC_GENERATED_VERSION = "1.65.4"
+GRPC_GENERATED_VERSION = "1.71.0"
 GRPC_VERSION = grpc.__version__
-EXPECTED_ERROR_RELEASE = "1.66.0"
-SCHEDULED_RELEASE_DATE = "August 6, 2024"
 _version_not_supported = False
 
 try:
@@ -20,15 +18,12 @@ except ImportError:
     _version_not_supported = True
 
 if _version_not_supported:
-    warnings.warn(
+    raise RuntimeError(
         f"The grpc package installed is at version {GRPC_VERSION},"
         + f" but the generated code in studio/proto/agent_studio_pb2_grpc.py depends on"
         + f" grpcio>={GRPC_GENERATED_VERSION}."
         + f" Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}"
         + f" or downgrade your generated code using grpcio-tools<={GRPC_VERSION}."
-        + f" This warning will become an error in {EXPECTED_ERROR_RELEASE},"
-        + f" scheduled for release on {SCHEDULED_RELEASE_DATE}.",
-        RuntimeWarning,
     )
 
 
@@ -315,12 +310,6 @@ class AgentStudioStub(object):
             "/agent_studio.AgentStudio/UpgradeStudio",
             request_serializer=studio_dot_proto_dot_agent__studio__pb2.UpgradeStudioRequest.SerializeToString,
             response_deserializer=studio_dot_proto_dot_agent__studio__pb2.UpgradeStudioResponse.FromString,
-            _registered_method=True,
-        )
-        self.RestartStudioApplication = channel.unary_unary(
-            "/agent_studio.AgentStudio/RestartStudioApplication",
-            request_serializer=studio_dot_proto_dot_agent__studio__pb2.RestartStudioApplicationRequest.SerializeToString,
-            response_deserializer=studio_dot_proto_dot_agent__studio__pb2.RestartStudioApplicationResponse.FromString,
             _registered_method=True,
         )
         self.HealthCheck = channel.unary_unary(
@@ -700,12 +689,6 @@ class AgentStudioServicer(object):
         context.set_details("Method not implemented!")
         raise NotImplementedError("Method not implemented!")
 
-    def RestartStudioApplication(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details("Method not implemented!")
-        raise NotImplementedError("Method not implemented!")
-
     def HealthCheck(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -1029,11 +1012,6 @@ def add_AgentStudioServicer_to_server(servicer, server):
             servicer.UpgradeStudio,
             request_deserializer=studio_dot_proto_dot_agent__studio__pb2.UpgradeStudioRequest.FromString,
             response_serializer=studio_dot_proto_dot_agent__studio__pb2.UpgradeStudioResponse.SerializeToString,
-        ),
-        "RestartStudioApplication": grpc.unary_unary_rpc_method_handler(
-            servicer.RestartStudioApplication,
-            request_deserializer=studio_dot_proto_dot_agent__studio__pb2.RestartStudioApplicationRequest.FromString,
-            response_serializer=studio_dot_proto_dot_agent__studio__pb2.RestartStudioApplicationResponse.SerializeToString,
         ),
         "HealthCheck": grpc.unary_unary_rpc_method_handler(
             servicer.HealthCheck,
@@ -2470,36 +2448,6 @@ class AgentStudio(object):
             "/agent_studio.AgentStudio/UpgradeStudio",
             studio_dot_proto_dot_agent__studio__pb2.UpgradeStudioRequest.SerializeToString,
             studio_dot_proto_dot_agent__studio__pb2.UpgradeStudioResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True,
-        )
-
-    @staticmethod
-    def RestartStudioApplication(
-        request,
-        target,
-        options=(),
-        channel_credentials=None,
-        call_credentials=None,
-        insecure=False,
-        compression=None,
-        wait_for_ready=None,
-        timeout=None,
-        metadata=None,
-    ):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            "/agent_studio.AgentStudio/RestartStudioApplication",
-            studio_dot_proto_dot_agent__studio__pb2.RestartStudioApplicationRequest.SerializeToString,
-            studio_dot_proto_dot_agent__studio__pb2.RestartStudioApplicationResponse.FromString,
             options,
             channel_credentials,
             insecure,

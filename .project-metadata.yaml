@@ -24,8 +24,8 @@ tasks:
     script: startup_scripts/install-dependencies.py
     short_summary: Install Dependencies
     kernel: python3
-    cpu: 1
-    memory: 4
+    cpu: 2
+    memory: 8
   - type: run_session
     name: Initialize Project Defaults
     script: startup_scripts/uv_initialize-project-defaults.py
@@ -40,8 +40,8 @@ tasks:
     short_summary: Upgrade Agent Studio
     long_summary: Fully upgrade Agent Studio and all dependencies
     kernel: python3
-    cpu: 1
-    memory: 4
+    cpu: 2
+    memory: 8
     environment:
       TASK_TYPE: CREATE/RUN_JOB
   - type: start_application
@@ -51,8 +51,8 @@ tasks:
     subdomain: cai-agent-studio-ops
     script: startup_scripts/uv_start-agent-ops-server.py
     long_summary: This application launches an oservability platform for insight and visibility into how agentic crews, agents, and tools are performing during their respective lifecycles.
-    cpu: 1
-    memory: 4
+    cpu: 2
+    memory: 8
     environment_variables:
       TASK_TYPE: START_APPLICATION
   - type: start_application
@@ -62,7 +62,7 @@ tasks:
     script: startup_scripts/run-app.py
     long_summary: This application launcher a agent studio backend and frontend application.
     bypass_authentication: true
-    cpu: 1
+    cpu: 2
     memory: 8
     is_embedded: true
     environment_variables:
