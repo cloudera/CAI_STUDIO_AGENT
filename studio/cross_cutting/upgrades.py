@@ -1,12 +1,7 @@
 from cmlapi import CMLServiceApi
-import cmlapi
-import os
 
-from studio.consts import AGENT_STUDIO_SERVICE_APPLICATION_NAME
-from studio.cross_cutting.utils import get_appliction_by_name
 from studio.db.dao import AgentStudioDao
 from studio.api import *
-import time
 
 import subprocess
 
@@ -30,7 +25,7 @@ def git_fetch():
     subprocess.run(["git", "fetch", "--tags"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
 
-def _stash_pop_safely():
+def stash_pop_safely():
     """
     Helper function to pop the stash without blowing up the entire process if there's no stash.
     """
@@ -201,117 +196,3 @@ def check_studio_upgrade_status(
         local_version=local_version,
         newest_version=newest_version,
     )
-
-
-def upgrade_studio(
-    request: UpgradeStudioRequest, cml: CMLServiceApi = None, dao: AgentStudioDao = None
-) -> UpgradeStudioResponse:
-    """
-    If currently on a semantic version tag, fetch remote tags and checkout the newest semantic version tag.
-    Otherwise, do a normal stash/pull/stash pop flow.
-    In both cases, stash/pop is used to preserve local changes.
-    """
-
-    # Always stash before doing any git operation, so we can safely switch versions/branches
-    try:
-        subprocess.run(["git", "stash"], check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Error stashing changes: {e}")
-
-    if is_on_a_semantic_version_tag():
-        try:
-            # 1) Fetch remote so we get the latest tags
-            git_fetch()
-
-            # 2) Get the newest remote semantic version tag
-            newest_tag = get_remote_most_recent_semantic_version()
-            if not newest_tag:
-                print("No valid semantic tags exist on remote.")
-                # Attempt to pop stash so you’re not left with stashed changes
-                _stash_pop_safely()
-                return UpgradeStudioResponse()
-
-            # 3) Checkout that tag
-            subprocess.run(["git", "checkout", newest_tag], check=True)
-            print(f"Checked out newest semantic version tag: {newest_tag}")
-        except subprocess.CalledProcessError as e:
-            print(f"Error upgrading to latest semantic version tag: {e}")
-            _stash_pop_safely()
-            return UpgradeStudioResponse()
-    else:
-        # If not on semantic version, do a normal 'git pull'
-        try:
-            subprocess.run(["git", "pull"], check=True)
-        except subprocess.CalledProcessError as e:
-            print(f"Error pulling changes: {e}")
-            _stash_pop_safely()
-            return UpgradeStudioResponse()
-
-    # Pop the stash to restore local changes
-    _stash_pop_safely()
-
-    # Also run any and all DB default upgrades. Our upgrades need to be compatible with our
-    # style of project defaults here - which means that if project defaults gets updated with
-    # new schemas, then alembic still needs to go through the entire ugrade lineage even though
-    # the new schemas alredy exist. This is to support both old users and new users of agent studio.
-    # This means that, for example, if there was an alembic version upgrade to add a column, we need
-    # to first check if that column already exists. If the column already exists, someone new must have
-    # pulled down agent studio and ran a fresh project-defaults. If the column does not exist, that
-    # means we are performing an upgrade.
-    try:
-        subprocess.run(["uv", "run", "alembic", "upgrade", "head"], check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Error upgrading DB: {e}")
-
-    # Also perform any project default upgrades necessary. Note this will explicitly
-    # check to see if an existing project default has already been added to make sure
-    # that we are not duplicating project defaults.
-    try:
-        subprocess.run(["uv", "run", "bin/initialize-project-defaults.py"], check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Error initializing project defaults: {e}")
-
-    # Install new dependencies
-    try:
-        subprocess.run(["npm", "install"], check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Error running npm install: {e}")
-
-    # Rebuild frontend app
-    try:
-        subprocess.run(["npm", "run", "build"], check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Error running npm run build: {e}")
-
-    # Run post upgrade hook
-    try:
-        subprocess.run(["uv", "run", "bin/post-upgrade-hook.py"], check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Error running post upgrade: {e}")
-
-    # Small sleep to ensure output from post-upgrade-hook makes it
-    # to application logs. Not necessary functionally, but will help
-    # with diagnostics.
-    time.sleep(10)
-
-    # Restart the application
-    restart_studio_application(RestartStudioApplicationRequest(), cml=cml, dao=dao)
-
-    # Restart the application.
-    return UpgradeStudioResponse()
-
-
-def restart_studio_application(
-    request: RestartStudioApplicationRequest, cml: CMLServiceApi = None, dao: AgentStudioDao = None
-) -> RestartStudioApplicationResponse:
-    # Grab a reference to the current application
-    application: cmlapi.Application = get_appliction_by_name(cml=cml, name=AGENT_STUDIO_SERVICE_APPLICATION_NAME)
-
-    # Restart the application
-    cml.restart_application(os.getenv("CDSW_PROJECT_ID"), application.id)
-
-    # NOTE: this will technically never be returned to the
-    # frontend because we are sending a command to restart
-    # the application, which means the pod that is running
-    # this command will be killed.
-    return RestartStudioApplicationResponse()

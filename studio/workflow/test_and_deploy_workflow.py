@@ -431,9 +431,12 @@ def deploy_workflow(
 
         # Copy over our workflow engine code into our deployed workflow directory
         # NOTE: this will go away once we move to a dedicated repo for workflow engines
+<<<<<<< Updated upstream
         # NOTE: for workbenches without the model root dir feature enabled, we are technically installing
         # the workflow_engine package directly as part of the cdsw-build.sh script, so this copy may
         # not be necessary.
+=======
+>>>>>>> Stashed changes
         shutil.copytree(os.path.join("studio", "workflow_engine"), deployable_workflow_dir, dirs_exist_ok=True)
 
         # Copy over the workflow directory into the deployed workflow directory.
@@ -450,16 +453,23 @@ def deploy_workflow(
             "studio-data", os.path.join(deployable_workflow_dir, "studio-data"), ignore=studio_data_workflow_ignore
         )
 
+<<<<<<< Updated upstream
         # Get some deployed workflow configuration parameters based on the version
         # of workbench running, deployment pattern, and entitlements that are currently enabled
         deployed_workflow_config = get_deployed_workflow_config(deployable_workflow_dir)
         print(json.dumps(deployed_workflow_config, indent=2))
 
+=======
+>>>>>>> Stashed changes
         env_vars_for_cml_model.update(
             {
                 "AGENT_STUDIO_OPS_ENDPOINT": get_ops_endpoint(),
                 "AGENT_STUDIO_WORKFLOW_ARTIFACT_TYPE": "config_file",
+<<<<<<< Updated upstream
                 "AGENT_STUDIO_WORKFLOW_ARTIFACT": deployed_workflow_config["deployed_workflow_model_config_location"],
+=======
+                "AGENT_STUDIO_WORKFLOW_ARTIFACT_LOCATION": "/home/cdsw/workflow/config.json",
+>>>>>>> Stashed changes
                 "AGENT_STUDIO_WORKFLOW_NAME": deployed_workflow_instance_name,
                 "CDSW_APIV2_KEY": os.getenv("CDSW_APIV2_KEY"),
             }
@@ -471,8 +481,13 @@ def deploy_workflow(
             model_name=cml_model_name,
             model_description=f"Model for workflow {deployed_workflow_instance_name}",
             model_build_comment=f"Build for workflow {deployed_workflow_instance_name}",
+<<<<<<< Updated upstream
             model_root_dir=deployed_workflow_config["model_root_dir"],
             model_file_path=deployed_workflow_config["model_file_path"],
+=======
+            model_root_dir=os.path.join(get_studio_subdirectory(), deployable_workflow_dir),
+            model_file_path="src/engine/entry/workbench.py",
+>>>>>>> Stashed changes
             function_name="api_wrapper",
             runtime_identifier=cc_utils.get_deployed_workflow_runtime_identifier(cml),
             deployment_config=cmlapi.ShortCreateModelDeployment(

@@ -2,7 +2,7 @@ import os
 import cmlapi
 
 
-def get_appliction_by_name(cml: cmlapi.CMLServiceApi, name: str) -> cmlapi.Application:
+def get_application_by_name(cml: cmlapi.CMLServiceApi, name: str, only_running: bool = True) -> cmlapi.Application:
     """
     Get the most recent running version of a CML application by its name.
     Args:
@@ -21,12 +21,19 @@ def get_appliction_by_name(cml: cmlapi.CMLServiceApi, name: str) -> cmlapi.Appli
     # Filter for applications that:
     # 1. Match the base name
     # 2. Have "running" in their status
-    running_apps = [
-        app
-        for app in applications
-        if ((app.name == name) or (name + " v") in app.name)
-        and "running" in app.status.lower()  # Changed to check if "running" is in status
-    ]
+    if only_running:
+        running_apps = [
+            app
+            for app in applications
+            if ((app.name == name) or (name + " v") in app.name)
+            and "running" in app.status.lower()  # Changed to check if "running" is in status
+        ]
+    else:
+        running_apps = [
+            app
+            for app in applications
+            if ((app.name == name) or (name + " v") in app.name)
+        ]
 
     if not running_apps:
         raise ValueError(f"No running applications found matching '{name}'")

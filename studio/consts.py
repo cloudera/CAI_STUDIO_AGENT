@@ -17,6 +17,7 @@ class SupportedModelTypes(str, Enum):
 
 AGENT_STUDIO_SERVICE_APPLICATION_NAME = "Agent Studio"
 AGENT_STUDIO_OPS_APPLICATION_NAME = "Agent Studio - Agent Ops & Metrics"
+AGENT_STUDIO_UPGRADE_JOB_NAME = "Agent Studio - Upgrade"
 
 ALL_STUDIO_DATA_LOCATION = "studio-data"
 TOOL_TEMPLATE_CATALOG_LOCATION = f"{ALL_STUDIO_DATA_LOCATION}/tool_templates"

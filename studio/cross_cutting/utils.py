@@ -223,7 +223,7 @@ def is_valid_python_module_name(name: str) -> bool:
         raise ValueError(f"Error while validating module name: {str(e)}") from e
 
 
-def get_appliction_by_name(cml: cmlapi.CMLServiceApi, name: str) -> cmlapi.Application:
+def get_application_by_name(cml: cmlapi.CMLServiceApi, name: str, only_running: bool = True) -> cmlapi.Application:
     """
     Get the most recent running version of a CML application by its name.
     Args:
@@ -235,18 +235,26 @@ def get_appliction_by_name(cml: cmlapi.CMLServiceApi, name: str) -> cmlapi.Appli
         ValueError: If no running application is found
     """
     applications: list[cmlapi.Application] = cml.list_applications(
-        project_id=os.getenv("CDSW_PROJECT_ID"), page_size=5000
+        project_id=os.getenv("CDSW_PROJECT_ID"),
+        page_size=5000,
     ).applications
 
     # Filter for applications that:
     # 1. Match the base name
     # 2. Have "running" in their status
-    running_apps = [
-        app
-        for app in applications
-        if ((app.name == name) or (name + " v") in app.name)
-        and "running" in app.status.lower()  # Changed to check if "running" is in status
-    ]
+    if only_running:
+        running_apps = [
+            app
+            for app in applications
+            if ((app.name == name) or (name + " v") in app.name)
+            and "running" in app.status.lower()  # Changed to check if "running" is in status
+        ]
+    else:
+        running_apps = [
+            app
+            for app in applications
+            if ((app.name == name) or (name + " v") in app.name)
+        ]
 
     if not running_apps:
         raise ValueError(f"No running applications found matching '{name}'")
@@ -271,7 +279,7 @@ def get_deployed_workflow_runtime_identifier(cml: cmlapi.CMLServiceApi) -> Union
     Right now, we actually use the same base runtime image for both the CML model tasked
     with running our deployed workflows, as well as the standalone Workflow UI application.
     """
-    application: cmlapi.Application = get_appliction_by_name(cml, consts.AGENT_STUDIO_SERVICE_APPLICATION_NAME)
+    application: cmlapi.Application = get_application_by_name(cml, consts.AGENT_STUDIO_SERVICE_APPLICATION_NAME)
     return application.runtime_identifier
 
 

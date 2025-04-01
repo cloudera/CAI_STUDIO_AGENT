@@ -3,7 +3,7 @@ import sys
 __import__("pysqlite3")
 sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
 
-from engine.utils import get_appliction_by_name
+from engine.utils import get_application_by_name
 from engine.consts import AGENT_STUDIO_OPS_APPLICATION_NAME
 from cmlapi import Application
 from phoenix.otel import register
@@ -28,7 +28,7 @@ def get_ops_endpoint() -> str:
         return os.getenv("AGENT_STUDIO_OPS_ENDPOINT")
 
     cml = cmlapi.default_client()
-    application: Application = get_appliction_by_name(cml, AGENT_STUDIO_OPS_APPLICATION_NAME)
+    application: Application = get_application_by_name(cml, AGENT_STUDIO_OPS_APPLICATION_NAME)
     return f"https://{application.subdomain}.{os.getenv('CDSW_DOMAIN')}"
 
 
