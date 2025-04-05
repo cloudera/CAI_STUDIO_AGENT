@@ -59,10 +59,11 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
           target: `${task.assigned_agent_id}`,
         });
       } else {
+        const mId = useDefaultManager ? 'manager-agent' : managerAgentId;
         initialEdges.push({
-          id: `e-${task.task_id}-manager-agent`,
+          id: `e-${task.task_id}-${mId}`,
           source: `${task.task_id}`,
-          target: `manager-agent`,
+          target: `${mId}`,
         });
       }
     }
@@ -74,9 +75,10 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
   if (hasManagerAgent) {
     const agent = workflowData.agents?.find((agent) => agent.id === managerAgentId);
     const agentName = useDefaultManager ? 'Default Manager' : agent?.name;
+    const mId = useDefaultManager ? 'manager-agent' : managerAgentId;
     initialNodes.push({
       type: 'agent',
-      id:  `manager-agent`,
+      id: mId,
       position: { x: 0, y: yIndex },
       draggable: true,
       data: {
@@ -118,9 +120,10 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
     if (agent) {
       // Add edge to manager agent
       if (hasManagerAgent) {
+        const mId = useDefaultManager ? 'manager-agent' : managerAgentId;
         initialEdges.push({
-          id: `e-manager-agent-${agent.id}`,
-          source: `manager-agent`,
+          id: `e-${mId}-${agent.id}`,
+          source: `${mId}`,
           target: `${agent.id}`,
         });
       }

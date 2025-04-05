@@ -68,7 +68,7 @@ export const processEvents = (
         });
 
         if (nodeStack.at(-1) !== nodeId) {
-          nodeStack.push(event.agent_studio_id || 'manager-agent');
+          nodeStack.push(nodeId);
         }
 
         break;
