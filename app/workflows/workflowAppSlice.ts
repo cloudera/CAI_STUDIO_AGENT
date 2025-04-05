@@ -1,6 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../lib/store';
-import { WorkflowEvent } from '../lib/workflow';
 
 export interface WorkflowAppChatMessage {
   id?: string;
@@ -26,7 +25,7 @@ export interface WorkflowAppState {
   appChat: WorkflowAppChat;
   isRunning?: boolean;
   crewOutput?: string;
-  currentEvents?: WorkflowEvent[];
+  currentEvents?: any[];
   currentEventIndex?: number;
   currentPhoenixProjectId?: string;
 }
@@ -86,8 +85,14 @@ export const workflowAppSlice = createSlice({
     updatedIsRunning: (state, action: PayloadAction<boolean>) => {
       state.isRunning = action.payload;
     },
-    updatedCurrentEvents: (state, action: PayloadAction<WorkflowEvent[]>) => {
+    updatedCurrentEvents: (state, action: PayloadAction<any[]>) => {
       state.currentEvents = action.payload;
+    },
+    addedCurrentEvents: (state, action: PayloadAction<any[]>) => {
+      state.currentEvents = [...(state.currentEvents || []), ...action.payload];
+    },
+    clearedCurrentEvents: (state) => {
+      state.currentEvents = [];
     },
     updatedCrewOutput: (state, action: PayloadAction<string | undefined>) => {
       state.crewOutput = action.payload;
@@ -116,6 +121,8 @@ export const {
   updatedChatMessages,
   updatedIsRunning,
   updatedCurrentEvents,
+  addedCurrentEvents,
+  clearedCurrentEvents,
   updatedCrewOutput,
   updatedCurrentEventIndex,
   updatedCurrentPhoenixProjectId,

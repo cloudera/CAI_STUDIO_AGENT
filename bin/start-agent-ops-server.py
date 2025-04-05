@@ -7,7 +7,30 @@ from studio.consts import DEFAULT_AS_PHOENIX_OPS_PLATFORM_PORT
 import http.server
 import http.client
 import urllib.parse
+from kombu import Connection, Exchange
+from kombu.simple import SimpleQueue
 
+# ---------------------------
+# Kombu Initialization
+# ---------------------------
+
+# Create a Kombu connection using the in-memory transport
+kombu_connection = Connection("memory://")
+# Ensure the connection is established
+kombu_connection.connect()
+# Global dictionary to store per-trace queues
+trace_queues = {}
+
+
+def get_or_create_queue(trace_id):
+    """
+    Retrieve or create a SimpleQueue for a given trace_id.
+    The queue is bound to the 'crew_events' exchange using the trace_id as routing key.
+    """
+    if trace_id not in trace_queues:
+        simple_queue = kombu_connection.SimpleQueue(name=trace_id)
+        trace_queues[trace_id] = simple_queue
+    return trace_queues[trace_id]
 
 
 def start_phoenix_server():
@@ -49,6 +72,10 @@ def set_ops_server_discovery():
 # Define the target server to forward requests to
 TARGET_SERVER = "0.0.0.0"
 
+
+# ---------------------------
+# HTTP Server Handler
+# ---------------------------
 class ProxyHandler(http.server.BaseHTTPRequestHandler):
     """
     We do not inherently serve the ops platform on $CDSW_APP_PORT because this
@@ -58,11 +85,80 @@ class ProxyHandler(http.server.BaseHTTPRequestHandler):
     our phoenix server with this python middleware.
     """
     
-    def do_GET(self):
-        self.forward_request()
-
     def do_POST(self):
-        self.forward_request()
+        if self.path.startswith("/events"):
+            self.handle_events_post()
+        else:
+            self.forward_request()
+    
+
+    def do_GET(self):
+        if self.path.startswith("/events"):
+            self.handle_events_get()
+        else:
+            self.forward_request()
+
+
+    def handle_events_post(self):
+        # Read and parse the JSON body
+        content_length = int(self.headers.get("Content-Length", 0))
+        body = self.rfile.read(content_length)
+        try:
+            data = json.loads(body)
+        except json.JSONDecodeError:
+            self.send_response(400)
+            self.end_headers()
+            self.wfile.write(b"Invalid JSON")
+            return
+
+        trace_id = data.get("trace_id")
+        event_content = data.get("event")
+        if not trace_id or not event_content:
+            self.send_response(400)
+            self.end_headers()
+            self.wfile.write(b"Missing trace_id or event")
+            return
+
+        # Get (or create) the queue associated with this trace_id
+        queue = get_or_create_queue(trace_id)
+        # Publish the message to the Kombu queue
+        queue.put(event_content)
+
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b'{"status": "200"}')
+
+
+    def handle_events_get(self):
+        # Parse query parameters to extract trace_id
+        parsed_url = urllib.parse.urlparse(self.path)
+        params = urllib.parse.parse_qs(parsed_url.query)
+        trace_id = params.get("trace_id", [None])[0]
+
+        if not trace_id:
+            self.send_response(400)
+            self.end_headers()
+            self.wfile.write(b"Missing trace_id")
+            return
+
+        queue = get_or_create_queue(trace_id)
+        messages = []
+        # Retrieve and flush all messages from the queue
+        while True:
+            try:
+                message = queue.get_nowait()  # non-blocking
+                messages.append(message.payload)
+                message.ack()  # Acknowledge to remove the message
+            except Exception:
+                # No more messages in the queue
+                break
+
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(json.dumps(messages).encode("utf-8"))
+
+
 
     def forward_request(self):
 

@@ -5,8 +5,6 @@ import { UsergroupAddOutlined, UserOutlined } from '@ant-design/icons';
 import { useImageAssetsData } from '@/app/lib/hooks/useAssetData';
 const { Paragraph } = Typography;
 
-export type InfoType = 'Completion' | 'TaskStart' | 'ToolInput' | 'ToolOutput';
-
 type AgentNode = Node<
   {
     name: string;
@@ -14,7 +12,7 @@ type AgentNode = Node<
     manager: boolean;
     active: boolean;
     info?: string;
-    infoType?: InfoType;
+    infoType?: string;
     isMostRecent?: boolean;
   },
   'agent'
@@ -41,7 +39,7 @@ export default function AgentNode({ data }: NodeProps<AgentNode>) {
         backgroundColor: data.manager ? 'white' : 'lightblue',
       }}
     >
-      {data.info && (data.isMostRecent || isHovered) && (
+      {data.info && (
         <>
           <NodeToolbar
             isVisible={true}
@@ -64,7 +62,29 @@ export default function AgentNode({ data }: NodeProps<AgentNode>) {
                 color: 'white',
               }}
             >
-              {isHovered ? data.info : 'Thinking...'}
+              {isHovered
+                ? data.info
+                : data.infoType === 'LLMCall'
+                  ? 'Calling LLM...'
+                  : data.infoType === 'ToolOutput'
+                    ? 'Tool Use Complete...'
+                    : data.infoType === 'ToolInput'
+                      ? 'Using Tool...'
+                      : data.infoType === 'TaskStart'
+                        ? 'Starting a Task...'
+                        : data.infoType === 'Completion'
+                          ? 'Thinking...'
+                          : data.infoType === 'FailedCompletion'
+                            ? 'Failed LLM Call...'
+                            : data.infoType === 'Delegate'
+                              ? 'Delegating...'
+                              : data.infoType === 'EndDelegate'
+                                ? 'Done Delegating...'
+                                : data.infoType === 'AskCoworker'
+                                  ? 'Asking a coworker...'
+                                  : data.infoType === 'EndAskCoworker'
+                                    ? 'Done Asking a coworker...'
+                                    : 'Unknown...'}
             </Paragraph>
           </NodeToolbar>
         </>

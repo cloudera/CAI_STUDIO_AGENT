@@ -13,122 +13,10 @@ interface ListApplicationsResponse {
   applications: Application[];
 }
 
-/**
- * Get a global trace ID from a local hex trace ID. Phoenix GraphQL does not
- * allow to search for projects by a project ID or by project name, but the
- * endpoint DOES allow us to get individual nodes by their "global ID". We use
- * this query to get the global ID of the trace whose "local" ID (predefined
- * as the actual trace ID of the span context) matches the trace ID returned
- * when kicking off a crew.
- */
-const getProjectAndTraceInfo = async (client: GraphQLClient, traceId: string) => {
-  const query = `
-query QueryProjectsForTraceExistence {
-  projects(first: 1000) {
-    edges {
-      node {
-        id
-        trace(traceId: "${traceId}") {
-          id
-        }
-      }
-    }
-  }
-}
-  `;
-  const data: any = await client.request(query);
-  const project: any = data.projects.edges.find((edge: any) => edge.node.trace?.id);
-  const globalTraceId: string = project.node.trace.id;
-  return {
-    projectId: project.node.id,
-    globalTraceId: globalTraceId,
-  };
-};
-
-const eventTypes = [
-  'Crew.kickoff',
-  'Agent._start_task',
-  'completion',
-  'ToolUsage._use',
-  'ToolUsage._end_use',
-  'Agent._end_task',
-  'Crew.complete',
-];
-
-/**
- * Get all crew events given a specific crew Trace. It's assumed that the
- * traceId is the "local" trace ID that was passed from the crew kickoff call.
- */
-export const getCrewEvents = async (client: GraphQLClient, traceId: string) => {
-  // Get the global trace ID
-  const { projectId, globalTraceId } = await getProjectAndTraceInfo(client, traceId);
-
-  // Query the global trace ID
-  const query = `
-query MyQuery {
-  node(id: "${globalTraceId}") {
-    ... on Trace {
-      rootSpan {
-        name
-        descendants(maxDepth: 100, first: 10000) {
-          edges {
-            node {
-              id
-              name
-              startTime
-              cumulativeTokenCountTotal
-              cumulativeTokenCountPrompt
-              cumulativeTokenCountCompletion
-              endTime
-              attributes
-              events {
-                message
-                name
-                timestamp
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-  `;
-  const data: any = await client.request(query);
-  const events: any[] = [];
-
-  data.node.rootSpan.descendants.edges.map((edge: any) => {
-    if (eventTypes.includes(edge.node.name)) {
-      events.push({
-        ...edge.node,
-        attributes: JSON.parse(edge.node.attributes),
-        events: edge.node.events || [],
-      });
-    }
-    return;
-  });
-
-  // Sort the data by startTime in ascending order
-  const sortedEvents = events.sort((a: any, b: any) => {
-    const dateA = new Date(a.startTime);
-    const dateB = new Date(b.startTime);
-    return dateA.getTime() - dateB.getTime(); // Compare timestamps
-  });
-
-  return {
-    projectId: projectId,
-    events: sortedEvents,
-  };
-};
-
 export const fetchOpsUrl = async (): Promise<string | null> => {
   const CDSW_APIV2_KEY = process.env.CDSW_APIV2_KEY;
   const CDSW_DOMAIN = process.env.CDSW_DOMAIN;
   const CDSW_PROJECT_ID = process.env.CDSW_PROJECT_ID;
-
-  if (process.env.AGENT_STUDIO_DEPLOYMENT_CONFIG === 'dev') {
-    return 'http://127.0.0.1:8123';
-  }
 
   if (!CDSW_APIV2_KEY || !CDSW_DOMAIN || !CDSW_PROJECT_ID) {
     console.error('Environment variables are not set properly.');
@@ -197,4 +85,25 @@ export const fetchOpsUrl = async (): Promise<string | null> => {
     console.error('Error fetching applications:', error);
     return null;
   }
+};
+
+/**
+ * Get all crew events given a specific crew Trace. It's assumed that the
+ * traceId is the "local" trace ID that was passed from the crew kickoff call.
+ */
+export const getCrewEvents = async (traceId: string) => {
+  // Use the CA bundle
+  const agent = new https.Agent({
+    ca: fs.readFileSync('/etc/ssl/certs/ca-certificates.crt'),
+  });
+  const opsUrl = await fetchOpsUrl();
+  const response = await fetch(`${opsUrl}/events?trace_id=${traceId}`, {
+    headers: {
+      authorization: `Bearer ${process.env.CDSW_APIV2_KEY}`,
+    },
+    agent,
+  });
+
+  const events: any[] = (await response.json()) as any;
+  return events;
 };

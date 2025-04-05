@@ -1,7 +1,6 @@
 from studio.client import AgentStudioClient
 from studio.api import *
 from studio.sdk.utils import get_deployed_workflow_endpoint
-from studio.ops import get_phoenix_ops_graphql_client
 from studio.sdk.ops import get_crew_events
 
 
@@ -115,11 +114,8 @@ def get_workflow_status(run_id: str) -> dict:
     Get the events and status of the
     """
 
-    # Create a graphQL client to our Phoenix server
-    studio_gql_client = get_phoenix_ops_graphql_client()
-
     try:
-        crew_events = get_crew_events(studio_gql_client, run_id)
+        crew_events = get_crew_events(run_id)
     except Exception as e:
         raise ValueError(f"There was an issue with trying to get events from workflow id '{run_id}'", str(e))
 
@@ -128,21 +124,14 @@ def get_workflow_status(run_id: str) -> dict:
         "complete": False,
         "output": None,
         "error": None,
-        "events": crew_events["events"] or [],
     }
-    if len(crew_events["events"]) > 0 and crew_events["events"][-1]["name"] == "Crew.complete":
+    if len(crew_events) > 0 and crew_events[-1]["type"] == "crew_kickoff_completed":
         out_dict["complete"] = True
-        out_dict["output"] = crew_events["events"][-1]["attributes"]["crew_output"]
-
-    # Report any errors that appear
-    for crew_event in crew_events["events"]:
-        if crew_event.get("events"):
-            for evt in crew_event.get("events"):
-                if evt.get("name") == "exception":
-                    out_dict["error"] = evt.get("message")
-                    out_dict["complete"] = True
-                    out_dict["output"] = evt.get("message")
-
+        out_dict["output"] = crew_events[-1]["output"]
+    if len(crew_events) > 0 and crew_events[-1]["type"] == "crew_kickoff_failed":
+        out_dict["complete"] = True
+        out_dict["error"] = crew_events[-1]["error"]
+        
     return out_dict
 
 

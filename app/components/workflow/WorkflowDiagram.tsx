@@ -113,6 +113,7 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
               ...node.data,
               active: true,
               info: activeNode.info,
+              infoType: activeNode.infoType,
               isMostRecent: activeNode.isMostRecent,
             },
           };
@@ -123,6 +124,7 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
               ...node.data,
               active: false,
               info: undefined,
+              infoType: undefined,
               isMostRecent: false,
             },
           };

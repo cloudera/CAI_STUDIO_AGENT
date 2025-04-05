@@ -41,7 +41,7 @@ export default function ToolNode({ data }: NodeProps<ToolNode>) {
         backgroundColor: 'lightgray',
       }}
     >
-      {data.info && (data.isMostRecent || isHovered) && (
+      {data.info && (
         <>
           <NodeToolbar
             isVisible={true}
@@ -64,7 +64,7 @@ export default function ToolNode({ data }: NodeProps<ToolNode>) {
                 color: 'white',
               }}
             >
-              {isHovered ? data.info : 'Using Tool...'}
+              {isHovered ? data.info : 'Tool Use'}
             </Paragraph>
           </NodeToolbar>
         </>

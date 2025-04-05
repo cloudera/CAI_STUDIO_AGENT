@@ -5,7 +5,7 @@ from crewai import LLM as CrewAILLM, Agent
 from crewai.tools import BaseTool
 
 import engine.types as input_types
-from engine.crewai.tracing import WrappedAgent
+from engine.crewai.wrappers import AgentStudioCrewAIAgent
 
 
 def get_crewai_agent(
@@ -14,7 +14,7 @@ def get_crewai_agent(
     llm_model: Optional[CrewAILLM] = None,
     tracer=None,
 ) -> Agent:
-    return WrappedAgent(
+    return AgentStudioCrewAIAgent(
         agent_studio_id=agent.id,
         tracer=tracer,
         role=agent.crew_ai_role,

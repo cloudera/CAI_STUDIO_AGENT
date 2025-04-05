@@ -103,7 +103,7 @@ def api_wrapper(args: Union[dict, str]) -> str:
         span_name = f"Workflow Run: {formatted_time}"
         with tracer.start_as_current_span(span_name) as parent_span:
             decimal_trace_id = parent_span.get_span_context().trace_id
-            trace_id = hex(decimal_trace_id)[2:]
+            trace_id = f"{decimal_trace_id:032x}"
 
             # End the parent span early
             parent_span.add_event("Parent span ending early for visibility")
@@ -114,7 +114,7 @@ def api_wrapper(args: Union[dict, str]) -> str:
 
             # Start the workflow in the background using the parent context
             asyncio.create_task(
-                run_workflow_async(collated_input_copy, tool_user_params, inputs, parent_context, tracer)
+                run_workflow_async(collated_input_copy, tool_user_params, inputs, parent_context, trace_id, tracer)
             )
 
         return {"trace_id": str(trace_id)}

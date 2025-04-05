@@ -6,6 +6,7 @@ import WorkflowAppInputsView from './WorkflowAppInputsView';
 import { useAppDispatch, useAppSelector } from '@/app/lib/hooks/hooks';
 import {
   addedChatMessage,
+  addedCurrentEvents,
   selectCurrentEvents,
   selectWorkflowCurrentTraceId,
   selectWorkflowIsRunning,
@@ -19,8 +20,6 @@ import {
   updatedEditorWorkflowDescription,
   selectEditorWorkflowDescription,
 } from '@/app/workflows/editorSlice';
-import fetch from 'node-fetch';
-import { WorkflowEvent } from '@/app/lib/workflow';
 import WorkflowDiagramView from './WorkflowDiagramView';
 import {
   AgentMetadata,
@@ -53,17 +52,6 @@ export interface WorkflowAppProps {
   toolInstances?: ToolInstance[];
   tasks?: CrewAITaskMetadata[];
   agents?: AgentMetadata[];
-}
-
-// Add interface for event type
-interface EventError {
-  name: string;
-  message: string;
-}
-
-// Add interface for workflow event with errors
-interface WorkflowEventWithErrors extends WorkflowEvent {
-  events?: EventError[];
 }
 
 const renderAlert = (
@@ -308,49 +296,20 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
     // Set the interval function
     const fetchEvents = async () => {
       try {
-        const { projectId, events: allEvents } = await getEvents({
+        const { events: newEvents } = await getEvents({
           traceId: currentTraceId,
         }).unwrap();
-        dispatch(updatedCurrentEvents(allEvents));
-        dispatch(updatedCurrentEventIndex(allEvents.length - 1));
-        dispatch(updatedCurrentPhoenixProjectId(projectId)); // TODO: there's a more graceful place for this
+        dispatch(addedCurrentEvents(newEvents));
 
-        if (allEvents && allEvents.length > 0) {
-          // Find completion events and check for exceptions
-          const completionEvent = allEvents.find((event: WorkflowEventWithErrors) => {
-            if (event.name === 'completion') {
-              const hasException = event.events?.some((e: EventError) => e.name === 'exception');
-              return hasException && !processedExceptionsRef.current.has(event.id);
-            }
-            return false;
-          });
-
-          if (completionEvent) {
-            const exceptionEvent = completionEvent.events?.find(
-              (e: EventError) => e.name === 'exception',
-            );
-            if (exceptionEvent && isRunning) {
-              processedExceptionsRef.current.add(completionEvent.id);
-              stopPolling();
-              dispatch(updatedIsRunning(false));
-              const errorMessage = `Error: ${exceptionEvent.message}`;
-
-              if (workflow?.is_conversational) {
-                dispatch(addedChatMessage({ role: 'assistant', content: errorMessage }));
-              } else {
-                dispatch(updatedCrewOutput(errorMessage));
-              }
-              return;
-            }
-          }
-
+        if (newEvents && newEvents.length > 0) {
           // Check for successful completion as before
-          const crewCompleteEvent = allEvents.find(
-            (event: WorkflowEvent) => event.name === 'Crew.complete',
+          const crewCompleteEvent = newEvents.find(
+            (event) =>
+              event.type === 'crew_kickoff_completed' || event.type === 'crew_kickoff_failed',
           );
           if (crewCompleteEvent) {
             stopPolling();
-            dispatch(updatedCrewOutput(crewCompleteEvent.attributes.crew_output));
+            dispatch(updatedCrewOutput(crewCompleteEvent.output || crewCompleteEvent.error));
             dispatch(updatedIsRunning(false));
 
             if (workflow?.is_conversational) {
@@ -358,7 +317,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
                 addedChatMessage({
                   id: crewCompleteEvent.id,
                   role: 'assistant',
-                  content: crewCompleteEvent.attributes.crew_output,
+                  content: crewCompleteEvent.output || crewCompleteEvent.error,
                 }),
               );
             }

@@ -101,6 +101,7 @@ def get_embedded_crewai_tool(
     studio_tool_instance = studio_tool_class(user_parameters=user_params)
 
     class EmbeddedCrewAITool(BaseTool):
+        agent_studio_id: str = tool_instance.id
         name: str = studio_tool_instance.name
         description: str = studio_tool_instance.description
         args_schema: Type[BaseModel] = studio_tool_instance.args_schema

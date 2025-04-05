@@ -7,7 +7,8 @@ from textwrap import dedent, indent
 import subprocess
 import threading
 import hashlib
-from typing import Dict, Tuple, List, Optional, Literal
+from pydantic import BaseModel
+from typing import Dict, Tuple, List, Optional, Literal, Type
 from crewai.tools import BaseTool
 
 # Import engine code manually. Eventually when this code becomes
@@ -265,11 +266,22 @@ def get_tool_instance_proxy(tool_instance: Input__ToolInstance, user_params_kv: 
 
     _tool: BaseTool = run_code_in_thread(proxy_code + f"\n\nresult = {tool_class_name}()")
 
-    # This is a workaround to use DB-specific name in the tool rather
-    # than the "mandatory" field set within the tool code.
-    _tool.name = tool_instance.name
-    _tool._generate_description()
-    return _tool
+    class EmbeddedCrewAITool(BaseTool):
+        agent_studio_id: str = tool_instance.id
+        name: str = _tool.name
+        description: str = _tool.description
+        args_schema: Type[BaseModel] = _tool.args_schema
+
+        def _run(self, *args, **kwargs):
+            return _tool._run(*args, **kwargs)
+
+    crewai_tool: BaseTool = EmbeddedCrewAITool()
+    print(str(crewai_tool))
+
+    crewai_tool.name = tool_instance.name
+    crewai_tool._generate_description()
+
+    return crewai_tool
 
 
 def is_venv_prepared_for_tool(source_folder_path: str, requirements_file_name: str) -> bool:

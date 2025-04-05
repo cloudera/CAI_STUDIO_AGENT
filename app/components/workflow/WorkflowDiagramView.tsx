@@ -1,4 +1,4 @@
-import { Alert, Card, Layout, Tabs } from 'antd';
+import { Alert, Card, Layout, Tabs, Typography } from 'antd';
 import { ReactFlowProvider } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useLayoutEffect, useRef } from 'react';
@@ -10,6 +10,8 @@ import OpsIFrame from '../OpsIFrame';
 import ReactMarkdown from 'react-markdown';
 import { useAppSelector } from '@/app/lib/hooks/hooks';
 import { selectCurrentEventIndex } from '@/app/workflows/workflowAppSlice';
+
+const { Text, Paragraph } = Typography;
 
 export interface WorkflowDiagramViewProps {
   workflowState: WorkflowState;
@@ -168,11 +170,11 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
                           ref={(el) => {
                             eventLogs.current[index] = el;
                           }}
-                          title={event.name === 'Crew.complete' ? 'Output' : event.name}
+                          title={event.type}
                           style={{
                             margin: 8,
                             backgroundColor:
-                              event.name === 'Crew.complete'
+                              event.type === 'crew_kickoff_completed'
                                 ? '#a2f5bf'
                                 : index === currentEventIndex
                                   ? '#8fe6ff'
@@ -186,8 +188,8 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
                           headStyle={{ fontSize: '14px' }}
                           bodyStyle={{ fontSize: '9px', padding: '12px', overflow: 'auto' }}
                         >
-                          {event.name === 'Crew.complete' ? (
-                            <ReactMarkdown>{event.attributes.crew_output}</ReactMarkdown>
+                          {event.type === 'crew_kickoff_completed' ? (
+                            <ReactMarkdown>{event.output}</ReactMarkdown>
                           ) : (
                             <pre
                               style={{
@@ -197,47 +199,13 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
                                 maxWidth: '100%',
                               }}
                             >
-                              {JSON.stringify(event.attributes, null, 2)}
+                              {JSON.stringify(event, null, 2)}
                             </pre>
                           )}
                         </Card>
                       ))}
                   </Layout>
                 )}
-              </div>
-            ),
-          },
-          {
-            key: '3',
-            label: (
-              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <MonitorOutlined
-                  style={{
-                    color: 'white',
-                    background: '#1890ff',
-                    borderRadius: '50%',
-                    width: '24px',
-                    height: '24px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '4px',
-                  }}
-                />
-                Monitoring
-              </span>
-            ),
-            children: (
-              <div
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  overflow: 'hidden',
-                }}
-              >
-                <OpsIFrame />
               </div>
             ),
           },

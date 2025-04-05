@@ -5,8 +5,9 @@ import sys
 import os
 import requests
 from opentelemetry.context import attach, detach, Context
-from crewai import Task, Crew, LLM as CrewAILLM, Agent
+from crewai import Task, Crew, Agent
 from crewai.tools import BaseTool
+from crewai.utilities.events import crewai_event_bus
 
 from studio.tools.utils import get_tool_instance_proxy
 from studio.cross_cutting import utils as cc_utils
@@ -22,6 +23,8 @@ sys.path.append("studio/workflow_engine/src/")
 from engine.crewai.agents import get_crewai_agent
 from engine.crewai.llms import get_crewai_llm_object_direct
 import engine.types as input_types
+from engine.crewai.events import OpsServerMessageQueueEventListener
+from engine.crewai.wrappers import *
 
 
 #  Compare two different versions of Cloudera AI Workbench. Workbench
@@ -101,15 +104,17 @@ def create_crewai_objects_for_test(
     this test object creation can be fully replaced with workflow engine code.
     """
 
-    language_models: Dict[str, CrewAILLM] = {}
+    language_models: Dict[str, AgentStudioCrewAILLM] = {}
     for language_model in collated_input.language_models:
         language_models[language_model.model_id] = get_crewai_llm_object_direct(language_model)
 
     tools: Dict[str, BaseTool] = {}
     for t_ in collated_input.tool_instances:
         tools[t_.id] = get_tool_instance_proxy(t_, tool_user_params.get(t_.id, {}))
+        print(tools[t_.id])
+        print(type(tools[t_.id]))
 
-    agents: Dict[str, Agent] = {}
+    agents: Dict[str, AgentStudioCrewAIAgent] = {}
     for agent in collated_input.agents:
         crewai_tools = [tools[tool_id] for tool_id in agent.tool_instance_ids]
         model_id = agent.llm_provider_model_id
@@ -120,7 +125,8 @@ def create_crewai_objects_for_test(
     tasks: Dict[str, Task] = {}
     for task_input in collated_input.tasks:
         agent_for_task: Agent = agents[task_input.assigned_agent_id] if task_input.assigned_agent_id else None
-        tasks[task_input.id] = Task(
+        tasks[task_input.id] = AgentStudioCrewAITask(
+            agent_studio_id=task_input.id,
             description=task_input.description,
             expected_output=task_input.expected_output,
             agent=agent_for_task,
@@ -168,13 +174,18 @@ def invalidate_workflow(preexisting_db_session, condition) -> None:
     return
 
 
-def run_workflow_with_context(crew: Crew, inputs, parent_context: Context):
+def run_workflow_with_context(crew: Crew, inputs, parent_context: Context, trace_id):
     """Run workflow with the parent OpenTelemetry context"""
     # Attach the parent context
     token = attach(parent_context)
     try:
-        print(f"Running workflow {crew.name} with context")
-        return crew.kickoff(inputs=inputs)
+        with crewai_event_bus.scoped_handlers():
+            # Create our message broker
+            print("Creating event listener....")
+            listener = OpsServerMessageQueueEventListener(trace_id)
+
+            print(f"Running workflow {crew.name} with context")
+            return crew.kickoff(inputs=inputs)
     finally:
         # Detach the context
         detach(token)

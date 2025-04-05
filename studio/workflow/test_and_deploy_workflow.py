@@ -224,7 +224,7 @@ def test_workflow(
                 parent_span.add_event("Parent span starting")
 
                 decimal_trace_id = parent_span.get_span_context().trace_id
-                trace_id = hex(decimal_trace_id)[2:]
+                trace_id = f"{decimal_trace_id:032x}"
 
                 # Add event before ending early
                 parent_span.add_event("Parent span ending early for visibility")
@@ -239,6 +239,7 @@ def test_workflow(
                     crew,
                     dict(request.inputs),
                     parent_context,
+                    trace_id,
                 )
 
             return TestWorkflowResponse(

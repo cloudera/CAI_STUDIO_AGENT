@@ -3,13 +3,16 @@
 from typing import Dict, Any
 from opentelemetry.context import attach, detach
 import asyncio
-from crewai import Task, Crew, LLM as CrewAILLM, Agent
+from crewai import Crew, Agent
 from crewai.tools import BaseTool
+from crewai.utilities.events import crewai_event_bus
 
 import engine.types as input_types
 from engine.crewai.llms import get_crewai_llm_object_direct
 from engine.crewai.tools import get_embedded_crewai_tool
 from engine.crewai.agents import get_crewai_agent
+from engine.crewai.events import OpsServerMessageQueueEventListener
+from engine.crewai.wrappers import *
 
 
 def create_crewai_objects(
@@ -17,7 +20,7 @@ def create_crewai_objects(
     tool_user_params: Dict[str, Dict[str, str]],
     tracer=None,
 ) -> input_types.CrewAIObjects:
-    language_models: Dict[str, CrewAILLM] = {}
+    language_models: Dict[str, AgentStudioCrewAILLM] = {}
     for language_model in collated_input.language_models:
         language_models[language_model.model_id] = get_crewai_llm_object_direct(language_model)
 
@@ -25,7 +28,7 @@ def create_crewai_objects(
     for t_ in collated_input.tool_instances:
         tools[t_.id] = get_embedded_crewai_tool(t_, tool_user_params.get(t_.id, {}))
 
-    agents: Dict[str, Agent] = {}
+    agents: Dict[str, AgentStudioCrewAIAgent] = {}
     for agent in collated_input.agents:
         crewai_tools = [tools[tool_id] for tool_id in agent.tool_instance_ids]
         model_id = agent.llm_provider_model_id
@@ -33,10 +36,11 @@ def create_crewai_objects(
             model_id = collated_input.default_language_model_id
         agents[agent.id] = get_crewai_agent(agent, crewai_tools, language_models[model_id], tracer)
 
-    tasks: Dict[str, Task] = {}
+    tasks: Dict[str, AgentStudioCrewAITask] = {}
     for task_input in collated_input.tasks:
         agent_for_task: Agent = agents[task_input.assigned_agent_id] if task_input.assigned_agent_id else None
-        tasks[task_input.id] = Task(
+        tasks[task_input.id] = AgentStudioCrewAITask(
+            agent_studio_id=task_input.id,
             description=task_input.description,
             expected_output=task_input.expected_output,
             agent=agent_for_task,
@@ -70,6 +74,7 @@ async def run_workflow_async(
     tool_user_params: Dict[str, Dict[str, str]],
     inputs: Dict[str, Any],
     parent_context: Any,  # Use the parent context
+    trace_id,
     tracer=None,
 ) -> None:
     """
@@ -81,12 +86,17 @@ async def run_workflow_async(
         token = attach(parent_context)
 
         try:
-            # Run the actual workflow logic within the propagated context
-            crewai_objects = create_crewai_objects(collated_input, tool_user_params, tracer)
-            crew = crewai_objects.crews[collated_input.workflow.id]
+            with crewai_event_bus.scoped_handlers():
+                # Create our message broker
+                print("Creating event listener....")
+                listener = OpsServerMessageQueueEventListener(trace_id)
 
-            # Perform the kickoff
-            crew.kickoff(inputs=dict(inputs))
+                # Run the actual workflow logic within the propagated context
+                crewai_objects = create_crewai_objects(collated_input, tool_user_params, tracer)
+                crew = crewai_objects.crews[collated_input.workflow.id]
+
+                # Perform the kickoff
+                crew.kickoff(inputs=dict(inputs))
 
         finally:
             # Detach the context when done

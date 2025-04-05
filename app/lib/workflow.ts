@@ -7,12 +7,11 @@ import {
   UpdateWorkflowRequest,
 } from '@/studio/proto/agent_studio';
 import { WorkflowState } from '../workflows/editorSlice';
-import { InfoType } from '../components/diagram/AgentNode';
 
 export interface ActiveNodeState {
   id: string;
   info?: string;
-  infoType?: InfoType;
+  infoType?: string;
   isMostRecent?: boolean;
 }
 
@@ -24,15 +23,8 @@ const extractThought = (completion: string) => {
   return completion;
 };
 
-// Add this interface near the top with other interfaces
-export interface WorkflowEvent {
-  id: string;
-  name: string;
-  attributes: any;
-}
-
 export const processEvents = (
-  events: WorkflowEvent[],
+  events: any[],
   agents: AgentMetadata[],
   tasks: CrewAITaskMetadata[],
   toolInstances: ToolInstance[],
@@ -40,105 +32,169 @@ export const processEvents = (
   process: string | undefined,
 ): ProcessedState => {
   let activeNodes: ActiveNodeState[] = [];
+  const nodeStack: string[] = [];
 
-  events.forEach((event: WorkflowEvent) => {
-    const { name, attributes } = event;
-
-    switch (name) {
-      case 'Agent._start_task': {
-        const agentId = event.attributes.agent_studio_id;
-        if (agentId) {
-          if (manager_agent_id && manager_agent_id === agentId) {
-            activeNodes.push({
-              id: 'manager-agent',
-              info: `I am starting a task: "${event.attributes.task.description}"`,
-              infoType: 'TaskStart',
-            });
-          } else {
-            activeNodes.push({
-              id: agentId,
-              info: `I am starting a task: "${event.attributes.task.description}"`,
-              infoType: 'TaskStart',
-            });
-          }
-        } else {
-          if (process === 'hierarchical' && !manager_agent_id) {
-            // NOTE: For default managers, it turns out that Agent._start_task is never triggered. That's because a default LLM
-            // isn't technically registered as an Agent in crew - it's only completions without an agent. So technically
-            // this line will never be hit.
-            activeNodes.push({
-              id: 'manager-agent',
-              info: `I am starting a task: "${event.attributes.task.description}"`,
-              infoType: 'TaskStart',
-            });
-          }
-        }
-        break;
-      }
-
-      case 'completion': {
-        // If there are no active nodes, it's assumed that this completion
-        // is a DEFAULT MANAGER, which does not trigger an Agent._start_task
-        // command, but rather only triggers completion thoughts.
-        if (activeNodes.length == 0) {
+  events.forEach((event) => {
+    switch (event.type) {
+      case 'task_started': {
+        if (event.agent_studio_id) {
           activeNodes.push({
-            id: 'manager-agent',
-            info: `${event.attributes.output.value}`,
-            infoType: 'Completion',
+            id: event.agent_studio_id,
           });
-        } else {
-          // Let's assume for completions that the completion happens with
-          // the currently most recently activated node, which should be an agent.
-          activeNodes[activeNodes.length - 1] = {
-            ...activeNodes[activeNodes.length - 1],
-            info: event.attributes.output ? `${event.attributes.output.value}` : undefined,
-            infoType: 'Completion',
-          };
+          nodeStack.push(event.agent_studio_id);
+        }
+        break;
+      }
+
+      case 'task_completed': {
+        if (event.agent_studio_id) {
+          activeNodes = activeNodes.filter((node) => node.id !== event.agent_studio_id);
+          nodeStack.pop();
+        }
+        break;
+      }
+
+      case 'agent_execution_started': {
+        // There are some cases where a tool usage error will lead to re-triggering
+        // an agent execution start without a corresponding agent execution error. to
+        // compensate for this, we need to make sure we don't duplicate agent nodes
+        // on top of the active node stack.
+        const nodeId = event.agent_studio_id || 'manager-agent';
+        activeNodes = activeNodes.filter((node) => node.id !== nodeId);
+        activeNodes.push({
+          id: nodeId,
+          info: `I am starting a task: "${event.task.description}"`,
+          infoType: 'TaskStart',
+        });
+
+        if (nodeStack.at(-1) !== nodeId) {
+          nodeStack.push(event.agent_studio_id || 'manager-agent');
         }
 
         break;
       }
 
-      case 'Agent._end_task': {
-        const agentId = event.attributes.agent_studio_id;
-        if (agentId) {
-          activeNodes = activeNodes.filter((node) => node.id !== agentId);
-        }
-        break;
-      }
-
-      case 'ToolUsage._use': {
-        const toolName = event.attributes.tool.name;
-        const toolInstance = toolInstances.find((ti) => ti.name === toolName)!;
-        if (toolName !== 'Delegate work to coworker' && toolName !== 'Ask question to coworker') {
-          const inputValue = JSON.parse(event.attributes.input.value);
-          toolInstance &&
+      case 'tool_usage_started': {
+        // For manager agent, this is a delegation.
+        if (event.tool_name === 'Delegate work to coworker') {
+          const nodeId = nodeStack.at(-1);
+          nodeId && (activeNodes = activeNodes.filter((node) => node.id !== nodeId));
+          nodeId &&
             activeNodes.push({
-              id: toolInstance.id,
-              info: inputValue.calling,
+              id: nodeId,
+              info: `${event.tool_args}`,
+              infoType: 'Delegate',
+            });
+        } else if (event.tool_name === 'Ask question to coworker') {
+          const nodeId = nodeStack.at(-1);
+          nodeId && (activeNodes = activeNodes.filter((node) => node.id !== nodeId));
+          nodeId &&
+            activeNodes.push({
+              id: nodeId,
+              info: `${event.tool_args}`,
+              infoType: 'AskCoworker',
+            });
+        } else {
+          const agentId = nodeStack.at(-1);
+          const agent = agents.find((a) => a.id === agentId);
+          const tools = toolInstances.filter((ti) => agent?.tools_id.includes(ti.id));
+          const tool = tools.find((t) => t.name === event.tool_name);
+          if (tool) {
+            // Update the agent node
+            activeNodes = activeNodes.filter((node) => node.id !== agentId);
+            activeNodes.push({
+              id: agentId!,
+              info: `${event.tool_args}`,
               infoType: 'ToolInput',
             });
+
+            // Add the tool node to the stack
+            activeNodes.push({
+              id: tool.id,
+              info: `${event.tool_args}`,
+              infoType: 'ToolInput',
+            });
+            nodeStack.push(tool.id);
+          }
         }
         break;
       }
 
-      case 'ToolUsage._end_use': {
-        const toolName = event.attributes.tool.name;
-        const toolInstance = toolInstances.find((ti) => ti.name === toolName)!;
-        toolInstance && (activeNodes = activeNodes.filter((node) => node.id !== toolInstance.id));
+      case 'tool_usage_finished':
+      case 'tool_usage_error': {
+        // For manager agent, this is a delegation.
+        if (event.tool_name === 'Delegate work to coworker') {
+          // update the corresponding agent node
+          activeNodes = activeNodes.filter((node) => node.id !== nodeStack.at(-1));
+          activeNodes.push({
+            id: nodeStack.at(-1)!,
+            info: `${JSON.stringify(event)}`,
+            infoType: 'EndDelegate',
+          });
+        } else if (event.tool_name === 'Ask question to coworker') {
+          // update the corresponding agent node
+          activeNodes = activeNodes.filter((node) => node.id !== nodeStack.at(-1));
+          activeNodes.push({
+            id: nodeStack.at(-1)!,
+            info: `${JSON.stringify(event)}`,
+            infoType: 'EndAskCoworker',
+          });
+        } else {
+          // pop the tool node
+          activeNodes = activeNodes.filter((node) => node.id !== nodeStack.at(-1));
+          nodeStack.pop();
+
+          // update the corresponding agent node
+          activeNodes = activeNodes.filter((node) => node.id !== nodeStack.at(-1));
+          activeNodes.push({
+            id: nodeStack.at(-1)!,
+            info: `${JSON.stringify(event)}`,
+            infoType: 'ToolOutput',
+          });
+        }
         break;
       }
 
-      case 'Crew.complete': {
-        activeNodes = [];
+      case 'llm_call_started': {
+        // find the most recent node in the stack which will be the node of
+        // the calling agent
+        const nodeId = nodeStack.at(-1);
+        if (nodeId) {
+          activeNodes = activeNodes.filter((node) => node.id !== nodeId);
+          activeNodes.push({
+            id: nodeId,
+            info: `${JSON.stringify(event)}`,
+            infoType: 'LLMCall',
+          });
+        }
+        break;
+      }
+
+      case 'llm_call_completed':
+      case 'llm_call_failed': {
+        // find the most recent node in the stack which will be the node of
+        // the calling agent
+        const nodeId = nodeStack.at(-1);
+        if (nodeId) {
+          activeNodes = activeNodes.filter((node) => node.id !== nodeId);
+          activeNodes.push({
+            id: nodeId,
+            info: `${event.response || event.error}`,
+            infoType: event.type === 'llm_call_completed' ? 'Completion' : 'FailedCompletion',
+          });
+        }
+        break;
+      }
+
+      case 'agent_execution_completed':
+      case 'agent_execution_error': {
+        const nodeId = event.agent_studio_id || 'manager-agent';
+        activeNodes = activeNodes.filter((node) => node.id !== nodeId);
+        nodeStack.pop();
         break;
       }
     }
   });
-
-  if (activeNodes.length > 0) {
-    activeNodes[activeNodes.length - 1].isMostRecent = true;
-  }
 
   return { activeNodes };
 };

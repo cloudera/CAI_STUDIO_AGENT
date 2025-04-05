@@ -72,12 +72,11 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
 
   // Add manager agent
   if (hasManagerAgent) {
-    const agentName = useDefaultManager
-      ? 'Default Manager'
-      : workflowData.agents?.find((agent) => agent.id === managerAgentId)?.name;
+    const agent = workflowData.agents?.find((agent) => agent.id === managerAgentId);
+    const agentName = useDefaultManager ? 'Default Manager' : agent?.name;
     initialNodes.push({
       type: 'agent',
-      id: `manager-agent`,
+      id: useDefaultManager ? `manager-agent` : agent?.id || '',
       position: { x: 0, y: yIndex },
       draggable: true,
       data: {

@@ -22,6 +22,7 @@ dependencies = [
     "sqlalchemy==2.0.40",
     "uv==0.5.29",
     "alembic==1.15.2",
+    "kombu==5.5.2",
 ]
 
 [dependency-groups]

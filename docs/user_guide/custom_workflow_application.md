@@ -13,8 +13,8 @@ For every workflow that you deploy, the Model hosts all of the workflow's tools 
 
 There is also a "default" Workbench Application for each deployed workflow provides a visual interface to kickoff a workflow's Model, and retrieve information about the currently running workflows. This Application, by default, is the same UI that you see when you're testing your workflows from within the Studio. The lifecycle of an Agent Studio workflow execution is as follows (see **Figure 1**):
 1) The end user interacts with the deployed workflow's Application, which sends requests to the corresponding Model to execute ("kickoff") a workflow. Once a workflow has initiated execution, the Model responds with a unique ID that corresponds with this workflow request (i.e. `{"trace_id": "4ec9e40f8e68d218d2dbae55a8120be0"}`)
-2) The newly kicked off workflow will complete execution from within the Model, and continuously stream workflow **events** (task start/stop, tooling start/stop, LLM completions, etc.) to Agent Studio's Phoenix ops server. As of March 2025, we are logging a slight variation of the [OpenInference](https://github.com/Arize-ai/openinference)'s telemetry standard.
-3) The deployed Application will continuously poll the events of a specific workflow (queried by the `trace_id` created when the workflow was kicked off) using [Phoenix's provided GraphQL endpoint](https://docs.arize.com/arize/resources/graphql-api). The UI will then display live visuals of how the workflow is progressing.
+2) The newly kicked off workflow will complete execution from within the Model, and continuously stream workflow **events** (task start/stop, tooling start/stop, LLM completions, etc.), as well as **traces**, to Agent Studio's Phoenix ops server. Agent Studio logs workflow traces using [OpenInference](https://github.com/Arize-ai/openinference)'s telemetry standard, and logs events to a simple messaging queue that runs in the Ops & Metrics server.
+3) The deployed Application will continuously poll the events of a specific workflow (queried by the `trace_id` created when the workflow was kicked off) from the messaging queue running on the Ops & Metrics server. The UI will then display live visuals of how the workflow is progressing.
 
 
 
@@ -31,7 +31,7 @@ Users have the ability to create custom applications that can interact with depl
 ### Figure 2: Custom Workflow Applications
 ![Custom Workflow Application](custom_application.png)
 
-Since both the workflow Model and Application are standard Cloudera AI Workbench constructs, users can build custom interfaces completely from the ground up (i.e., call a deployed Model's endpoint URL directly with HTTP requests, and query the Phoenix server directly through the GraphQL endpoint). However, for simple custom applications (i.e. a Gradio app), this is a fairly large amount of overhead.
+Since both the workflow Model and Application are standard Cloudera AI Workbench constructs, users can build custom interfaces completely from the ground up (i.e., call a deployed Model's endpoint URL directly with HTTP requests, and query the Ops & Metrics server directly for new events). However, for simple custom applications (i.e. a Gradio app), this is a fairly large amount of overhead.
 
 ## Agent Studio's Workflow SDK
 
@@ -44,13 +44,13 @@ from studio.sdk.workflows import (
 )
 from time import sleep
 
-run_id = run_workflow(name="Chatbot", inputs={"user_input": "hi there!", "context": []})
+run_id = run_workflow(workflow_name="Chat", inputs={"user_input": "hi there!", "context": []})
 
 workflow_status = {}
 while not workflow_status.get("complete"):
     sleep(1)
     workflow_status = get_workflow_status(run_id)
-    
+
 print(workflow_status["output"])
 
 ```
@@ -98,7 +98,7 @@ def respond(user_message, chat_history, context):
 
     context.append({"role": "User", "content": user_message})
 
-    run_id = run_workflow("Chatbot", inputs={
+    run_id = run_workflow(WORKFLOW_NAME, inputs={
         "user_input": user_message,
         "context": context,
     })
@@ -176,7 +176,7 @@ Some customers might want more advanced workflow UIs than the example above. For
 
 Since workflows execute asynchronously by nature, the SDK `get_workflow_status` method can provide the current status of workflows, even if the workflow is not yet complete, and the returned **workflow events** can be used to extract even more fine grained information from workflows.
 
-Workflow events (also referred to intermittently as *traces* and *spans* depending on the context of the conversation) represent milestones of a workflow execution, such as task assignment, tool usage, and LLM calls. Each of these events log their own attributes. It's recommended to deserialize each event attribute individually based on the event type. The following event types are logged in Agent Studio:
+Workflow events represent milestones of a workflow execution, such as task assignment, tool usage, and LLM calls. Each of these events log their own attributes. It's recommended to deserialize each event attribute individually based on the event type. The following event types are logged in Agent Studio:
 
 ```python
 [
@@ -190,91 +190,7 @@ Workflow events (also referred to intermittently as *traces* and *spans* dependi
 ]
 ```
 
-When calling `get_workflow_events`, each of these event types are objects that will have a `name` field, a variety of other fields, and most importantly, an `attributes` field. The `attributes` field will be different for each event type above. Given the type of event, specific steps can be taken to extract information from the event attributes.
-
-An example excerpt (with some items redacted) of the output you can expect from the `get_workflow_status` SDK method is below:
-
-```json
-{
-  "complete": true,
-  "output": "The last message I said was: \"Hi there! How can I assist you today?\"",
-  "events": [
-    {
-      "id": "U3BhbjoxMzk3",
-      "name": "Crew.kickoff",
-      "startTime": "2025-03-13T15:37:15.899322+00:00",
-      "endTime": "2025-03-13T15:37:15.899640+00:00",
-      "attributes": {
-        ...
-      }
-    },
-    {
-      "id": "U3BhbjoxNDAx",
-      "name": "Agent._start_task",
-      "startTime": "2025-03-13T15:37:15.944827+00:00",
-      "cumulativeTokenCountCompletion": 31,
-      "endTime": "2025-03-13T15:37:15.944958+00:00",
-      "attributes": {
-        "agent_role": "Chat",
-        "task": {
-          "expected_output": "Provide a response that aligns with the conversation history.",
-          "description": "Respond to the user's message: 'what's the last message you said?'. Conversation history:\n[{'role': 'User', 'content': 'Well hello there!'}, {'role': 'System', 'content': 'Hi there! How can I assist you today?'}]."
-        },
-        ...
-      },
-      "events": []
-    },
-    {
-      "id": "U3BhbjoxNDAy",
-      "name": "completion",
-      "startTime": "2025-03-13T15:37:15.956574+00:00",
-      "attributes": {
-        "input": {
-          "value": "[{\"role\": \"system\", \"content\": \"You are Chat. Chat\\nYour personal goal is: Respond in a very very lengthy output\\nTo give my best complete final answer to the task respond using the exact following format:\\n\\nThought: I now can give a great answer\\nFinal Answer: Your final answer must be the great and the most complete as possible, it must be outcome described.\\n\\nI MUST use these formats, my job depends on it!\"}, {\"role\": \"user\", \"content\": \"\\nCurrent Task: Respond to the user's message: 'what's the last message you said?'. Conversation history:\\n[{'role': 'User', 'content': 'Well hello there!'}, {'role': 'System', 'content': 'Hi there! How can I assist you today?'}].\\n\\nThis is the expect criteria for your final answer: Provide a response that aligns with the conversation history.\\nyou MUST return the actual complete content as the final answer, not a summary.\\n\\nBegin! This is VERY important to you, use the tools available and give your best Final Answer, your job depends on it!\\n\\nThought:\"}]"
-        },
-        "llm": {
-          ...
-          "output_messages": [
-            {
-              "message": {
-                "role": "assistant",
-                "content": "Thought: I now can give a great answer\nFinal Answer: The last message I said was: \"Hi there! How can I assist you today?\""
-              }
-            }
-          ],
-          ...
-          "token_count": {
-            "prompt": 217,
-            "total": 248,
-            "completion": 31
-          },
-          "model_name": "openai/gpt-4o"
-        },
-        "output": {
-          "value": "Thought: I now can give a great answer\nFinal Answer: The last message I said was: \"Hi there! How can I assist you today?\""
-        },
-        "openinference": {
-          "span": {
-            "kind": "LLM"
-          }
-        }
-      },
-      "events": []
-    },
-    ...
-    {
-      "id": "U3BhbjoxNDA0",
-      "name": "Crew.complete",
-      "startTime": "2025-03-13T15:37:16.627146+00:00",
-      "endTime": "2025-03-13T15:37:16.627295+00:00",
-      "attributes": {
-        "crew_output": "The last message I said was: \"Hi there! How can I assist you today?\""
-      },
-      "events": []
-    }
-  ]
-}
-```
+When calling `get_workflow_events`, each of these event types are objects that will have a `type` field, a variety of other fields. Given the type of event, specific steps can be taken to extract information from the event attributes.
 
 ### Getting Workflow Details
 
