@@ -76,7 +76,7 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
     const agentName = useDefaultManager ? 'Default Manager' : agent?.name;
     initialNodes.push({
       type: 'agent',
-      id: useDefaultManager ? `manager-agent` : agent?.id || '',
+      id:  `manager-agent`,
       position: { x: 0, y: yIndex },
       draggable: true,
       data: {
