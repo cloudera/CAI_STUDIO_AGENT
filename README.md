@@ -31,6 +31,6 @@ These docs are targeted for individuals managing the Agent Studio instance itsel
 
 ### For Agent Studio Tool Developers
 These docs are targeted for individuals who are building custom Agent Studio tools
- - [Creating Custom Tools]()
+ - [Creating Custom Tools](./docs/user_guide/custom_tools.md)
 
 
