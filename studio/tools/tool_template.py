@@ -45,9 +45,12 @@ def list_tool_templates(
                     is_valid = False
 
                 # Validate the Python code if successfully read
-                validation_errors = []
-                if python_code:
-                    is_valid, validation_errors = tool_utils.validate_tool_code(python_code)
+                # NOTE: with tools v2, there is no need to validate tool code. Tool code
+                # is the responsibility of the tool developer. We capture stdout in venv tools
+                # so error handling is much easier.
+                # validation_errors = []
+                # if python_code:
+                #     is_valid, validation_errors = tool_utils.validate_tool_code(python_code)
 
                 # Attempt to read the Python requirements
                 try:
@@ -59,7 +62,7 @@ def list_tool_templates(
                 except Exception:
                     is_valid = False
 
-                tool_metadata = json.dumps({"validation_errors": validation_errors})
+                # tool_metadata = json.dumps({"validation_errors": validation_errors})
 
                 tool_image_uri = ""
                 if template.tool_image_path:
@@ -72,12 +75,13 @@ def list_tool_templates(
                         python_code=python_code,
                         python_requirements=python_requirements,
                         source_folder_path=template.source_folder_path,
-                        tool_metadata=tool_metadata,
+                        tool_metadata="{}",
                         is_valid=is_valid,
                         pre_built=template.pre_built,
                         tool_image_uri=tool_image_uri,
-                        tool_description=tool_utils.extract_tool_description(python_code),
+                        tool_description="",
                         workflow_template_id=template.workflow_template_id,
+                        is_venv_tool=template.is_venv_tool,
                     )
                 )
 
@@ -115,10 +119,10 @@ def get_tool_template(
             except Exception:
                 is_valid = False
 
-            # Validate the Python code if successfully read
-            validation_errors = []
-            if python_code:
-                is_valid, validation_errors = tool_utils.validate_tool_code(python_code)
+            # # Validate the Python code if successfully read
+            # validation_errors = []
+            # if python_code:
+            #     is_valid, validation_errors = tool_utils.validate_tool_code(python_code)
 
             # Attempt to read the Python requirements
             try:
@@ -139,7 +143,7 @@ def get_tool_template(
                     user_params = [f"Error parsing Python code: {e}"]
 
             # Create tool_metadata as a JSON string
-            tool_metadata = json.dumps({"user_params": user_params, "validation_errors": validation_errors})
+            tool_metadata = json.dumps({"user_params": user_params})
 
             tool_image_uri = ""
             if template.tool_image_path:
@@ -157,8 +161,9 @@ def get_tool_template(
                     is_valid=is_valid,
                     pre_built=template.pre_built,
                     tool_image_uri=tool_image_uri,
-                    tool_description=tool_utils.extract_tool_description(python_code),
+                    tool_description="",
                     workflow_template_id=template.workflow_template_id,
+                    is_venv_tool=template.is_venv_tool,
                 )
             )
 
@@ -171,6 +176,9 @@ def add_tool_template(
 ) -> AddToolTemplateResponse:
     """
     Add a new tool template.
+
+    NOTE: this will now only create "venv tools", as the original tool
+    specification is being deprecated.
     """
     try:
         # Validate tool template name
@@ -190,11 +198,6 @@ def add_tool_template(
         root_tool_dir = consts.TOOL_TEMPLATE_CATALOG_LOCATION
         tool_dir = os.path.join(root_tool_dir, tool_dir_basename)
 
-        skeleton_code = consts.TOOL_PYTHON_CODE_TEMPLATE.format(
-            tool_name=request.tool_template_name, tool_class_name=tool_class_name
-        )
-        requirements_file_content = consts.TOOL_PYTHON_REQUIREMENTS_TEMPLATE
-
         # Check for uniqueness of tool template name before creating files
         with dao.get_session() as session:
             existing_template = session.query(db_model.ToolTemplate).filter_by(name=request.tool_template_name).first()
@@ -204,16 +207,7 @@ def add_tool_template(
         # Create the .tool directory and tool template folder
         try:
             os.makedirs(tool_dir, exist_ok=True)
-
-            # Write the Python code to tool.py
-            py_path = os.path.join(tool_dir, "tool.py")
-            with open(py_path, "w") as py_file:
-                py_file.write(skeleton_code)
-
-            # Write the Python requirements to requirements.txt
-            requirements_txt_path = os.path.join(tool_dir, "requirements.txt")
-            with open(requirements_txt_path, "w") as requirements_txt_file:
-                requirements_txt_file.write(requirements_file_content)
+            shutil.copytree(consts.TOOL_TEMPLATE_SAMPLE_DIR, tool_dir, dirs_exist_ok=True)
         except Exception as e:
             # Cleanup the directory if something fails
             if os.path.exists(tool_dir):
@@ -242,6 +236,7 @@ def add_tool_template(
                 source_folder_path=tool_dir,
                 tool_image_path=tool_image_path,
                 workflow_template_id=request.workflow_template_id if request.workflow_template_id else None,
+                is_venv_tool=True,
             )
             session.add(tool_template)
             session.commit()

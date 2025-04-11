@@ -1,40 +1,44 @@
 # No top level studio.db imports allowed to support wokrflow model deployment
 
 from typing import Dict
-from crewai import Task, Crew, LLM as CrewAILLM, Agent
+from crewai import Crew, Agent
 from crewai.tools import BaseTool
 
 import engine.types as input_types
 from engine.crewai.llms import get_crewai_llm_object_direct
-from engine.crewai.tools import get_embedded_crewai_tool
+from engine.crewai.tools import get_tool_instance_proxy, get_venv_tool
 from engine.crewai.agents import get_crewai_agent
+from engine.crewai.wrappers import *
 
 
 def create_crewai_objects(
     collated_input: input_types.CollatedInput,
     tool_user_params: Dict[str, Dict[str, str]],
-    tracer=None,
 ) -> input_types.CrewAIObjects:
-    language_models: Dict[str, CrewAILLM] = {}
+    language_models: Dict[str, AgentStudioCrewAILLM] = {}
     for language_model in collated_input.language_models:
         language_models[language_model.model_id] = get_crewai_llm_object_direct(language_model)
 
     tools: Dict[str, BaseTool] = {}
     for t_ in collated_input.tool_instances:
-        tools[t_.id] = get_embedded_crewai_tool(t_, tool_user_params.get(t_.id, {}))
+        if t_.is_venv_tool:
+            tools[t_.id] = get_venv_tool(t_, tool_user_params.get(t_.id, {}))
+        else:
+            tools[t_.id] = get_tool_instance_proxy(t_, tool_user_params.get(t_.id, {}))
 
-    agents: Dict[str, Agent] = {}
+    agents: Dict[str, AgentStudioCrewAIAgent] = {}
     for agent in collated_input.agents:
         crewai_tools = [tools[tool_id] for tool_id in agent.tool_instance_ids]
         model_id = agent.llm_provider_model_id
         if not model_id:
             model_id = collated_input.default_language_model_id
-        agents[agent.id] = get_crewai_agent(agent, crewai_tools, language_models[model_id], tracer)
+        agents[agent.id] = get_crewai_agent(agent, crewai_tools, language_models[model_id])
 
-    tasks: Dict[str, Task] = {}
+    tasks: Dict[str, AgentStudioCrewAITask] = {}
     for task_input in collated_input.tasks:
         agent_for_task: Agent = agents[task_input.assigned_agent_id] if task_input.assigned_agent_id else None
-        tasks[task_input.id] = Task(
+        tasks[task_input.id] = AgentStudioCrewAITask(
+            agent_studio_id=task_input.id,
             description=task_input.description,
             expected_output=task_input.expected_output,
             agent=agent_for_task,

@@ -4,9 +4,6 @@
 
 Tools are the building blocks of AI agents and workflows. They let the agents talk to external systems(DBs, APIs, etc), or do tasks which might prove difficult for an LLM to do.
 
-The format used for defining a tool is heavily inspired by one used by [CrewAI](https://docs.crewai.com/concepts/tools#creating-your-own-tools).
-Agent Studio ships with a set of pre-built tools, and allows you to create your own(and save it as a template).
-
 ## Pre-built tools
 
 Agent Studio ships with the following tools out-of the box:

@@ -1,4 +1,4 @@
-# Cloudera AI Agent Studio - Models
+# Cloudera AI Agent Studio - LLMs
 
 ## Overview
 

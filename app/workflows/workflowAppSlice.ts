@@ -76,7 +76,6 @@ export const workflowAppSlice = createSlice({
       state.appChat.messages = action.payload;
     },
     updatedAppInputs: (state, action: PayloadAction<Record<string, string>>) => {
-      console.log('Redux: app inputs updated', action.payload);
       state.appStandard.inputs = {
         ...state.appStandard.inputs,
         ...action.payload,

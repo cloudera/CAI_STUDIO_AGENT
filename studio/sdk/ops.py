@@ -1,9 +1,6 @@
-import json
-from gql import gql, Client
-from datetime import datetime
 from studio.ops import get_ops_endpoint
 import requests
-import os 
+import os
 
 
 def get_crew_events(trace_id: str) -> dict:
@@ -12,11 +9,8 @@ def get_crew_events(trace_id: str) -> dict:
     to a local trace ID. Returns a dict with keys "projectId" and "events".
     """
     ops_endpoint = f"{get_ops_endpoint()}/events?trace_id={trace_id}"
-    
-    response = requests.get(
-        ops_endpoint,
-        headers={'Authorization': f'Bearer {os.getenv("CDSW_APIV2_KEY")}'}
-    )
+
+    response = requests.get(ops_endpoint, headers={"Authorization": f"Bearer {os.getenv('CDSW_APIV2_KEY')}"})
     events = response.json()
 
     return events

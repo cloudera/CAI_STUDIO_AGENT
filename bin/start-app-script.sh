@@ -25,6 +25,12 @@ echo "AGENT_STUDIO_DEPLOYMENT_CONFIG: $AGENT_STUDIO_DEPLOYMENT_CONFIG"
 # Default ops platform. Currently, only phoenix is supported.
 export AGENT_STUDIO_OPS_PROVIDER=phoenix
 
+# Number of agent studio workflow runners to spin up for workflow testing purposes.
+export AGENT_STUDIO_NUM_WORKFLOW_RUNNERS=${AGENT_STUDIO_NUM_WORKFLOW_RUNNERS:-5}
+
+# Array to hold runner process IDs.
+declare -a RUNNER_PIDS=()
+
 # Function to clean up background processes
 cleanup() {
   echo "Shutting down services..."
@@ -32,6 +38,15 @@ cleanup() {
   pkill -f "bin/start-ops-proxy.py"
   pkill -f "npm run dev"
   pkill -f "npm run start"
+
+  # Kill our workflow runner processes.
+  for pid in "${RUNNER_PIDS[@]}"; do
+    if ps -p "$pid" > /dev/null; then
+      echo "Killing workflow runner with PID: $pid"
+      kill "$pid"
+    fi
+  done
+
   exit
 }
 
@@ -41,6 +56,22 @@ trap cleanup SIGINT SIGTERM
 # Depending on the deployment or development mode, this may
 # be injected and used from the value in the project environment.
 echo "Current AGENT_STUDIO_SERVICE_IP: $AGENT_STUDIO_SERVICE_IP"
+
+# Spin up workflow runners.
+DEFAULT_WORKFLOW_RUNNER_STARTING_PORT=51000
+for (( i=0; i<AGENT_STUDIO_NUM_WORKFLOW_RUNNERS; i++ )); do
+  PORT_NUM=$((DEFAULT_WORKFLOW_RUNNER_STARTING_PORT + i))
+  echo "Starting workflow runner on port $PORT_NUM..."
+  
+  # Launch the runner using the virtual environment's python
+  studio/workflow_engine/.venv/bin/python -m uvicorn \
+    studio.workflow_engine.src.engine.entry.fastapi:app \
+    --port "$PORT_NUM" &
+  
+  # Save the process PID.
+  RUNNER_PIDS+=($!)
+done
+
 
 # If we are starting up the main app (not the workflow app), then we also want to 
 # start up the gRPC server that hosts all application logic.

@@ -342,6 +342,7 @@ class ToolTemplate(_message.Message):
         "tool_image_uri",
         "tool_description",
         "workflow_template_id",
+        "is_venv_tool",
     )
     ID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
@@ -354,6 +355,7 @@ class ToolTemplate(_message.Message):
     TOOL_IMAGE_URI_FIELD_NUMBER: _ClassVar[int]
     TOOL_DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
     WORKFLOW_TEMPLATE_ID_FIELD_NUMBER: _ClassVar[int]
+    IS_VENV_TOOL_FIELD_NUMBER: _ClassVar[int]
     id: str
     name: str
     python_code: str
@@ -365,6 +367,7 @@ class ToolTemplate(_message.Message):
     tool_image_uri: str
     tool_description: str
     workflow_template_id: str
+    is_venv_tool: bool
     def __init__(
         self,
         id: _Optional[str] = ...,
@@ -378,6 +381,7 @@ class ToolTemplate(_message.Message):
         tool_image_uri: _Optional[str] = ...,
         tool_description: _Optional[str] = ...,
         workflow_template_id: _Optional[str] = ...,
+        is_venv_tool: bool = ...,
     ) -> None: ...
 
 class ToolInstance(_message.Message):
@@ -392,6 +396,7 @@ class ToolInstance(_message.Message):
         "is_valid",
         "tool_image_uri",
         "tool_description",
+        "is_venv_tool",
     )
     ID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
@@ -403,6 +408,7 @@ class ToolInstance(_message.Message):
     IS_VALID_FIELD_NUMBER: _ClassVar[int]
     TOOL_IMAGE_URI_FIELD_NUMBER: _ClassVar[int]
     TOOL_DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
+    IS_VENV_TOOL_FIELD_NUMBER: _ClassVar[int]
     id: str
     name: str
     workflow_id: str
@@ -413,6 +419,7 @@ class ToolInstance(_message.Message):
     is_valid: bool
     tool_image_uri: str
     tool_description: str
+    is_venv_tool: bool
     def __init__(
         self,
         id: _Optional[str] = ...,
@@ -425,6 +432,7 @@ class ToolInstance(_message.Message):
         is_valid: bool = ...,
         tool_image_uri: _Optional[str] = ...,
         tool_description: _Optional[str] = ...,
+        is_venv_tool: bool = ...,
     ) -> None: ...
 
 class ListAgentsRequest(_message.Message):

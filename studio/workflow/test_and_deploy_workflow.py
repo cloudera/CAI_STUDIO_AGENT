@@ -5,8 +5,6 @@ from uuid import uuid4
 import cmlapi
 from typing import Union, List, Optional
 from sqlalchemy.exc import SQLAlchemyError
-from datetime import datetime
-from opentelemetry.context import get_current
 import requests
 from google.protobuf.json_format import MessageToDict
 import json
@@ -17,12 +15,11 @@ from studio.api import *
 from studio.db import model as db_model
 from studio.models.utils import get_studio_default_model_id
 import studio.cross_cutting.utils as cc_utils
-from studio.cross_cutting.global_thread_pool import get_thread_pool
 from studio.proto.utils import is_field_set
 from studio.cross_cutting.utils import get_studio_subdirectory
-import studio.workflow.utils as workflow_utils
 import studio.consts as consts
 from studio.workflow.utils import is_custom_model_root_dir_feature_enabled
+from studio.workflow.runners import get_workflow_runners
 
 # Import engine code manually. Eventually when this code becomes
 # a separate git repo, or a custom runtime image, this path call
@@ -32,7 +29,6 @@ import sys
 sys.path.append("studio/worfklow_engine/src")
 
 from engine.ops import get_ops_endpoint
-from engine.crewai.tracing import instrument_crewai_workflow, reset_crewai_instrumentation
 import engine.types as input_types
 
 
@@ -132,6 +128,7 @@ def _create_collated_input(
                         if tool_instance_db_model.tool_image_path
                         else None
                     ),
+                    is_venv_tool=tool_instance_db_model.is_venv_tool,
                 )
             )
 
@@ -197,55 +194,38 @@ def test_workflow(
     """
     Test a workflow by creating agent instances, tasks, and a Crew AI execution.
     """
+    print("TEST WORKFLOW ENTRY 1")
     try:
         collated_input = _create_collated_input(request, cml, dao)
-        try:
-            reset_crewai_instrumentation()
-            tracer_provider = instrument_crewai_workflow(f"Test Workflow - {collated_input.workflow.name}")
-        except Exception as e:
-            pass
+        tool_user_params_kv = {
+            tool_id: {k: v for k, v in user_param_kv.parameters.items()}
+            for tool_id, user_param_kv in request.tool_user_parameters.items()
+        }
+        events_trace_id = str(uuid4())
 
-        with dao.get_session() as session:
-            tool_user_params_kv = {
-                tool_id: {k: v for k, v in user_param_kv.parameters.items()}
-                for tool_id, user_param_kv in request.tool_user_parameters.items()
-            }
+        workflow_runners = get_workflow_runners()
+        available_workflow_runners = list(filter(lambda x: not x["busy"], workflow_runners))
+        if not available_workflow_runners:
+            raise RuntimeError("No workflow runners currently available to test workflow!")
 
-            current_time = datetime.now()
-            formatted_time = current_time.strftime("%b %d, %H:%M:%S.%f")[:-3]
-            span_name = f"Workflow Run: {formatted_time}"
-            tracer = tracer_provider.get_tracer("opentelemetry.agentstudio.workflow.test")
+        # Use the first available runner
+        workflow_runner = available_workflow_runners[0]
 
-            crewai_objects = workflow_utils.create_crewai_objects_for_test(collated_input, tool_user_params_kv, tracer)
-            crew = list(crewai_objects.crews.values())[0]
+        resp = requests.post(
+            url=f"{workflow_runner['endpoint']}/kickoff",
+            json={
+                "workflow_name": f"Test Workflow - {collated_input.workflow.name}",
+                "collated_input": collated_input.model_dump(),
+                "tool_user_params": tool_user_params_kv,
+                "inputs": dict(request.inputs),
+                "events_trace_id": events_trace_id,
+            },
+        )
 
-            with tracer.start_as_current_span(span_name) as parent_span:
-                # Add event to mark start
-                parent_span.add_event("Parent span starting")
-
-                decimal_trace_id = parent_span.get_span_context().trace_id
-                trace_id = f"{decimal_trace_id:032x}"
-
-                # Add event before ending early
-                parent_span.add_event("Parent span ending early for visibility")
-                parent_span.end()
-
-                # Capture the current OpenTelemetry context
-                parent_context = get_current()
-
-                # Start crew execution in a separate thread with the parent context
-                get_thread_pool().submit(
-                    workflow_utils.run_workflow_with_context,
-                    crew,
-                    dict(request.inputs),
-                    parent_context,
-                    trace_id,
-                )
-
-            return TestWorkflowResponse(
-                message="",  # Return empty message since execution is async
-                trace_id=trace_id,
-            )
+        return TestWorkflowResponse(
+            message="",  # Return empty message since execution is async
+            trace_id=events_trace_id,
+        )
 
     except ValueError as e:
         raise RuntimeError(f"Validation error: {e}")
@@ -435,7 +415,15 @@ def deploy_workflow(
         # NOTE: for workbenches without the model root dir feature enabled, we are technically installing
         # the workflow_engine package directly as part of the cdsw-build.sh script, so this copy may
         # not be necessary.
-        shutil.copytree(os.path.join("studio", "workflow_engine"), deployable_workflow_dir, dirs_exist_ok=True)
+        def workflow_engine_ignore(src, names):
+            return {".venv", ".ruff_cache", "__pycache__"}
+
+        shutil.copytree(
+            os.path.join("studio", "workflow_engine"),
+            deployable_workflow_dir,
+            dirs_exist_ok=True,
+            ignore=workflow_engine_ignore,
+        )
 
         # Copy over the workflow directory into the deployed workflow directory.
         # we keep the "studio-data/" upper-level directory for consistency.
@@ -445,7 +433,7 @@ def deploy_workflow(
             elif os.path.basename(src) == "workflows":
                 return {name for name in names if name != os.path.basename(workflow_directory)}
             else:
-                return {".venv", ".next", "node_modules", ".nvm"}
+                return {".venv", ".next", "node_modules", ".nvm", ".requirements_hash.txt"}
 
         shutil.copytree(
             "studio-data", os.path.join(deployable_workflow_dir, "studio-data"), ignore=studio_data_workflow_ignore

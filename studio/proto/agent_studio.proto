@@ -350,6 +350,7 @@ message ToolTemplate {
   string tool_image_uri = 9; // Image of the tool 
   string tool_description = 10; // Detailed description of the tool.
   optional string workflow_template_id = 11; // optional field specifying the workflow template that this tool template belongs to
+  bool is_venv_tool = 12; // Optional "venv" tool feature.
 }
 
 message ToolInstance {
@@ -363,6 +364,7 @@ message ToolInstance {
   bool is_valid = 8; // Is the tool instance valid based on whether the python code and requirements file exist.
   string tool_image_uri = 9; // Image of the tool 
   string tool_description = 10; // Detailed description of the tool.
+  bool is_venv_tool = 11; // Expanded "venv" tool feature.
 }
 
 // Agent Messages

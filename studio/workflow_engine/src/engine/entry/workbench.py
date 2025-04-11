@@ -28,6 +28,7 @@ import engine.types as input_types
 from engine import consts
 from engine.crewai.run import run_workflow_async
 from engine.crewai.tracing import instrument_crewai_workflow, reset_crewai_instrumentation
+from engine.crewai.tools import prepare_virtual_env_for_tool
 
 import cml.models_v1 as cml_models
 
@@ -35,13 +36,9 @@ import cml.models_v1 as cml_models
 # Currently the only artifact type supported for import is directory.
 # the collated input requirements are all relative to the workflow import path.
 def _install_python_requirements(collated_input: input_types.CollatedInput):
-    requirement_files = set()
     for tool_instance in collated_input.tool_instances:
-        requirement_files.add(
-            os.path.join(tool_instance.source_folder_path, tool_instance.python_requirements_file_name)
-        )
-    for requirement_file in requirement_files:
-        subprocess.call(["pip", "install", "-r", requirement_file])
+        print(f"PREPARING VIRTUAL ENV FOR {tool_instance.name}")
+        prepare_virtual_env_for_tool(tool_instance.source_folder_path, tool_instance.python_requirements_file_name)
 
 
 if WORKFLOW_ARTIFACT_TYPE == "config_file":
@@ -57,6 +54,13 @@ def base64_decode(encoded_str: str):
     return json.loads(decoded_bytes.decode("utf-8"))
 
 
+# Instrument our workflow given a specific workflow name and
+# set up the instrumentation.
+reset_crewai_instrumentation()
+tracer_provider = instrument_crewai_workflow(f"{WORKFLOW_NAME}")
+tracer = tracer_provider.get_tracer("opentelemetry.agentstudio.workflow.model")
+
+
 @cml_models.cml_model
 def api_wrapper(args: Union[dict, str]) -> str:
     dict_args = args
@@ -68,12 +72,6 @@ def api_wrapper(args: Union[dict, str]) -> str:
             base64_decode(serve_workflow_parameters.kickoff_inputs) if serve_workflow_parameters.kickoff_inputs else {}
         )
         collated_input_copy = collated_input.model_copy(deep=True)
-
-        # Instrument our workflow given a specific workflow name and
-        # set up the instrumentation.
-        reset_crewai_instrumentation()
-        tracer_provider = instrument_crewai_workflow(f"{WORKFLOW_NAME}")
-        tracer = tracer_provider.get_tracer("opentelemetry.agentstudio.workflow.model")
 
         tool_user_params: Dict[str, Dict[str, str]] = {}
         for tool_instance in collated_input_copy.tool_instances:
@@ -114,7 +112,7 @@ def api_wrapper(args: Union[dict, str]) -> str:
 
             # Start the workflow in the background using the parent context
             asyncio.create_task(
-                run_workflow_async(collated_input_copy, tool_user_params, inputs, parent_context, trace_id, tracer)
+                run_workflow_async(collated_input_copy, tool_user_params, inputs, parent_context, trace_id)
             )
 
         return {"trace_id": str(trace_id)}

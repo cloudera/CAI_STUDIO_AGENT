@@ -29,6 +29,7 @@ import {
   selectWorkflowGenerationConfig,
 } from '@/app/workflows/editorSlice';
 import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
+import { useGlobalNotification } from '../Notifications';
 
 const { Title, Text } = Typography;
 
@@ -45,6 +46,7 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow, tas
   const crewOutput = useAppSelector(selectWorkflowCrewOutput);
   const workflowGenerationConfig = useAppSelector(selectWorkflowGenerationConfig);
   const workflowConfiguration = useAppSelector(selectWorkflowConfiguration);
+  const notificationApi = useGlobalNotification();
 
   // If we haven't determined our application render type, then we don't render yet!
   const { data: workflowData, isLoading } = useGetWorkflowDataQuery();
@@ -83,27 +85,27 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow, tas
     const context =
       messages.map((message) => ({ role: message.role, content: message.content })) || [];
 
-    // Add message to history
-    dispatch(
-      addedChatMessage({
-        role: 'user',
-        content: userInput || '', // TODO: fail on blank?
-      }),
-    );
-    dispatch(updatedChatUserInput(''));
-
     let traceId: string | undefined = undefined;
     if (renderMode === 'studio') {
-      const response = await testWorkflow({
-        workflow_id: workflow.workflow_id,
-        inputs: {
-          user_input: userInput || '', // TODO: fail on blank?
-          context: JSON.stringify(context),
-        },
-        tool_user_parameters: workflowConfiguration?.toolConfigurations || {},
-        generation_config: JSON.stringify(workflowGenerationConfig),
-      }).unwrap();
-      traceId = response.trace_id;
+      try {
+        const response = await testWorkflow({
+          workflow_id: workflow.workflow_id,
+          inputs: {
+            user_input: userInput || '', // TODO: fail on blank?
+            context: JSON.stringify(context),
+          },
+          tool_user_parameters: workflowConfiguration?.toolConfigurations || {},
+          generation_config: JSON.stringify(workflowGenerationConfig),
+        }).unwrap();
+        traceId = response.trace_id;
+      } catch (error) {
+        notificationApi.error({
+          message: 'Test Workflow failed',
+          description: JSON.stringify(error),
+          placement: 'topRight',
+        });
+        return;
+      }
     } else {
       console.log({
         action_type: 'kickoff',
@@ -138,6 +140,15 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow, tas
       }
       dispatch(updatedCurrentTraceId(traceId));
       dispatch(updatedIsRunning(true));
+
+      // Add message to history
+      dispatch(
+        addedChatMessage({
+          role: 'user',
+          content: userInput || '', // TODO: fail on blank?
+        }),
+      );
+      dispatch(updatedChatUserInput(''));
     } else {
       console.log('ERROR: could not start the crew!');
       dispatch(updatedIsRunning(false));

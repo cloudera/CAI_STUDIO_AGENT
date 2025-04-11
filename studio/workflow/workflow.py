@@ -12,11 +12,18 @@ from studio.task.task import remove_task
 from studio.agents.agent import remove_agent, add_agent
 from studio.tools.tool_instance import remove_tool_instance
 from studio.cross_cutting.global_thread_pool import get_thread_pool
-import studio.tools.utils as tool_utils
 import studio.workflow.utils as workflow_utils
 from cmlapi import CMLServiceApi
 from typing import List, Set
 from crewai import Process
+
+# Import engine code manually. Eventually when this code becomes
+# a separate git repo, or a custom runtime image, this path call
+# will go away and workflow engine features will be available already.
+import sys
+
+sys.path.append("studio/worfklow_engine/src")
+from engine.crewai.tools import is_venv_prepared_for_tool
 
 
 def _validate_agents(metadata: CrewAIWorkflowMetadata, cml: CMLServiceApi, dao: AgentStudioDao = None) -> None:
@@ -330,7 +337,7 @@ def get_workflow(request: GetWorkflowRequest, cml: CMLServiceApi, dao: AgentStud
                 )
 
             are_all_tools_ready = all(
-                tool_utils.is_venv_prepared_for_tool(t_.source_folder_path, t_.python_requirements_file_name)
+                is_venv_prepared_for_tool(t_.source_folder_path, t_.python_requirements_file_name)
                 for t_ in tool_instances
             )
 

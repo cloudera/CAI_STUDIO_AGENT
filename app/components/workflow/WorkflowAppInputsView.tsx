@@ -12,6 +12,7 @@ import {
   updatedCurrentTraceId,
   updatedIsRunning,
   updatedCrewOutput,
+  selectCurrentEvents,
 } from '@/app/workflows/workflowAppSlice';
 import { PauseCircleOutlined, SendOutlined, DownloadOutlined } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
@@ -29,6 +30,7 @@ import {
   selectWorkflowGenerationConfig,
 } from '@/app/workflows/editorSlice';
 import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
+import { useGlobalNotification } from '../Notifications';
 
 const { Title, Text } = Typography;
 
@@ -49,9 +51,11 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
   const inputs = useAppSelector(selectWorkflowAppStandardInputs);
   const crewOutput = useAppSelector(selectWorkflowCrewOutput);
   const isRunning = useAppSelector(selectWorkflowIsRunning);
+  const currentEvents = useAppSelector(selectCurrentEvents);
   const [testWorkflow] = useTestWorkflowMutation();
   const workflowGenerationConfig = useAppSelector(selectWorkflowGenerationConfig);
   const workflowConfiguration = useAppSelector(selectWorkflowConfiguration);
+  const notificationApi = useGlobalNotification();
 
   // If we haven't determined our application render type, then we don't render yet!
   const { data: workflowData, isLoading } = useGetWorkflowDataQuery();
@@ -89,13 +93,22 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
 
     let traceId: string | undefined = undefined;
     if (renderMode === 'studio') {
-      const response = await testWorkflow({
-        workflow_id: workflow.workflow_id,
-        inputs: finalInputs, // Use finalInputs instead of inputs
-        tool_user_parameters: workflowConfiguration?.toolConfigurations || {},
-        generation_config: JSON.stringify(workflowGenerationConfig),
-      }).unwrap();
-      traceId = response.trace_id;
+      try {
+        const response = await testWorkflow({
+          workflow_id: workflow.workflow_id,
+          inputs: finalInputs, // Use finalInputs instead of inputs
+          tool_user_parameters: workflowConfiguration?.toolConfigurations || {},
+          generation_config: JSON.stringify(workflowGenerationConfig),
+        }).unwrap();
+        traceId = response.trace_id;
+      } catch (error) {
+        notificationApi.error({
+          message: 'Test Workflow failed',
+          description: JSON.stringify(error),
+          placement: 'topRight',
+        });
+        return;
+      }
     } else {
       const kickoffResponse = await fetch(`${workflowModelUrl}`, {
         method: 'POST',

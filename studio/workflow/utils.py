@@ -1,15 +1,12 @@
 # No top level studio.db imports allowed to support wokrflow model deployment
 
-from typing import List, Dict
+from typing import List
 import sys
 import os
 import requests
-from opentelemetry.context import attach, detach, Context
-from crewai import Task, Crew, Agent
-from crewai.tools import BaseTool
+from crewai import Crew
 from crewai.utilities.events import crewai_event_bus
 
-from studio.tools.utils import get_tool_instance_proxy
 from studio.cross_cutting import utils as cc_utils
 from studio import consts
 
@@ -20,11 +17,7 @@ import sys
 
 sys.path.append("studio/workflow_engine/src/")
 
-from engine.crewai.agents import get_crewai_agent
-from engine.crewai.llms import get_crewai_llm_object_direct
-import engine.types as input_types
 from engine.crewai.events import OpsServerMessageQueueEventListener
-from engine.crewai.wrappers import *
 
 
 #  Compare two different versions of Cloudera AI Workbench. Workbench
@@ -90,71 +83,6 @@ def get_fresh_workflow_directory(workflow_name: str) -> str:
     return f"{consts.WORKFLOWS_LOCATION}/{cc_utils.create_slug_from_name(workflow_name)}_{cc_utils.get_random_compact_string()}"
 
 
-def create_crewai_objects_for_test(
-    collated_input: input_types.CollatedInput,
-    tool_user_params: Dict[str, Dict[str, str]],
-    tracer=None,
-) -> input_types.CrewAIObjects:
-    """
-    Create our crewai Crew and other related objects for "testing" a workflow from within Agent Studio.
-
-    This method takes collated input and converts this input into CrewAI objects. note that in our workflow
-    engine, there is a similar method for creating Crew objects - however when testing, we use tool *proxies*,
-    and during workflow execution, we use direct tool module imports in our crews. Once this is centralized,
-    this test object creation can be fully replaced with workflow engine code.
-    """
-
-    language_models: Dict[str, AgentStudioCrewAILLM] = {}
-    for language_model in collated_input.language_models:
-        language_models[language_model.model_id] = get_crewai_llm_object_direct(language_model)
-
-    tools: Dict[str, BaseTool] = {}
-    for t_ in collated_input.tool_instances:
-        tools[t_.id] = get_tool_instance_proxy(t_, tool_user_params.get(t_.id, {}))
-        print(tools[t_.id])
-        print(type(tools[t_.id]))
-
-    agents: Dict[str, AgentStudioCrewAIAgent] = {}
-    for agent in collated_input.agents:
-        crewai_tools = [tools[tool_id] for tool_id in agent.tool_instance_ids]
-        model_id = agent.llm_provider_model_id
-        if not model_id:
-            model_id = collated_input.default_language_model_id
-        agents[agent.id] = get_crewai_agent(agent, crewai_tools, language_models[model_id], tracer)
-
-    tasks: Dict[str, Task] = {}
-    for task_input in collated_input.tasks:
-        agent_for_task: Agent = agents[task_input.assigned_agent_id] if task_input.assigned_agent_id else None
-        tasks[task_input.id] = AgentStudioCrewAITask(
-            agent_studio_id=task_input.id,
-            description=task_input.description,
-            expected_output=task_input.expected_output,
-            agent=agent_for_task,
-            tools=agent_for_task.tools if agent_for_task else None,
-        )
-
-    workflow_input = collated_input.workflow
-    crew = Crew(
-        name=workflow_input.name,
-        process=workflow_input.crew_ai_process,
-        agents=[agents[agent_id] for agent_id in workflow_input.agent_ids],
-        tasks=[tasks[task_id] for task_id in workflow_input.task_ids],
-        manager_agent=agents[workflow_input.manager_agent_id] if workflow_input.manager_agent_id else None,
-        manager_llm=language_models[workflow_input.llm_provider_model_id]
-        if workflow_input.llm_provider_model_id
-        else None,
-        verbose=True,
-    )
-
-    return input_types.CrewAIObjects(
-        language_models=language_models,
-        tools=tools,
-        agents=agents,
-        tasks=tasks,
-        crews={workflow_input.id: crew},
-    )
-
-
 def invalidate_workflow(preexisting_db_session, condition) -> None:
     """
     Move dependent workflows to draft mode and mark any dependent deployed workflows as stale.
@@ -174,18 +102,11 @@ def invalidate_workflow(preexisting_db_session, condition) -> None:
     return
 
 
-def run_workflow_with_context(crew: Crew, inputs, parent_context: Context, trace_id):
-    """Run workflow with the parent OpenTelemetry context"""
-    # Attach the parent context
-    token = attach(parent_context)
-    try:
-        with crewai_event_bus.scoped_handlers():
-            # Create our message broker
-            print("Creating event listener....")
-            listener = OpsServerMessageQueueEventListener(trace_id)
+def run_workflow_with_context(crew: Crew, inputs, trace_id):
+    with crewai_event_bus.scoped_handlers():
+        # Create our message broker
+        print("Creating event listener....")
+        listener = OpsServerMessageQueueEventListener(trace_id)
 
-            print(f"Running workflow {crew.name} with context")
-            return crew.kickoff(inputs=inputs)
-    finally:
-        # Detach the context
-        detach(token)
+        print(f"Running workflow {crew.name} with context")
+        return crew.kickoff(inputs=inputs)

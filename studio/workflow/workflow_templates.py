@@ -140,13 +140,11 @@ def add_workflow_template_from_workflow(
                 tool_template_dir = os.path.join(consts.TOOL_TEMPLATE_CATALOG_LOCATION, tool_template_dir_basename)
                 os.makedirs(tool_template_dir, exist_ok=True)
 
-                shutil.copy(
-                    os.path.join(tool_instance.source_folder_path, tool_instance.python_code_file_name),
-                    os.path.join(tool_template_dir, "tool.py"),
-                )
-                shutil.copy(
-                    os.path.join(tool_instance.source_folder_path, tool_instance.python_requirements_file_name),
-                    os.path.join(tool_template_dir, "requirements.txt"),
+                def tool_dir_ignore(src, names):
+                    return {".venv", ".requirements_hash.txt", "__pycache__"}
+
+                shutil.copytree(
+                    tool_instance.source_folder_path, tool_template_dir, dirs_exist_ok=True, ignore=tool_dir_ignore
                 )
 
                 tool_image_path = ""
@@ -166,6 +164,7 @@ def add_workflow_template_from_workflow(
                     python_requirements_file_name="requirements.txt",
                     source_folder_path=tool_template_dir,
                     tool_image_path=tool_image_path,
+                    is_venv_tool=tool_instance.is_venv_tool,
                 )
 
                 tool_template_ids.append(tool_template_id)

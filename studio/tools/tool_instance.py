@@ -12,6 +12,14 @@ from studio.cross_cutting.global_thread_pool import get_thread_pool
 import studio.consts as consts
 import studio.cross_cutting.utils as cc_utils
 
+# Import engine code manually. Eventually when this code becomes
+# a separate git repo, or a custom runtime image, this path call
+# will go away and workflow engine features will be available already.
+import sys
+
+sys.path.append("studio/workflow_engine/src/")
+from engine.crewai.tools import prepare_virtual_env_for_tool
+
 
 def create_tool_instance(
     request: CreateToolInstanceRequest,
@@ -63,16 +71,7 @@ def _create_tool_instance_impl(request: CreateToolInstanceRequest, session: DbSe
     os.makedirs(tool_instance_dir, exist_ok=True)
 
     if associated_tool_template:
-        shutil.copy(
-            os.path.join(associated_tool_template.source_folder_path, associated_tool_template.python_code_file_name),
-            os.path.join(tool_instance_dir, "tool.py"),
-        )
-        shutil.copy(
-            os.path.join(
-                associated_tool_template.source_folder_path, associated_tool_template.python_requirements_file_name
-            ),
-            os.path.join(tool_instance_dir, "requirements.txt"),
-        )
+        shutil.copytree(associated_tool_template.source_folder_path, tool_instance_dir, dirs_exist_ok=True)
 
         tool_image_path = ""
         if associated_tool_template.tool_image_path:
@@ -85,21 +84,15 @@ def _create_tool_instance_impl(request: CreateToolInstanceRequest, session: DbSe
             id=instance_uuid,
             workflow_id=request.workflow_id,
             name=tool_instance_name,
-            python_code_file_name="tool.py",
-            python_requirements_file_name="requirements.txt",
+            python_code_file_name=associated_tool_template.python_code_file_name,
+            python_requirements_file_name=associated_tool_template.python_requirements_file_name,
             source_folder_path=tool_instance_dir,
             tool_image_path=tool_image_path,
+            is_venv_tool=associated_tool_template.is_venv_tool,
         )
         session.add(tool_instance)
     else:
-        skeleton_code = consts.TOOL_PYTHON_CODE_TEMPLATE.format(
-            tool_class_name="ToolInstance", tool_name="Tool Instance"
-        )
-        requirements_file_content = consts.TOOL_PYTHON_REQUIREMENTS_TEMPLATE
-        with open(os.path.join(tool_instance_dir, "tool.py"), "w") as f:
-            f.write(skeleton_code)
-        with open(os.path.join(tool_instance_dir, "requirements.txt"), "w") as f:
-            f.write(requirements_file_content)
+        shutil.copytree(consts.TOOL_TEMPLATE_SAMPLE_DIR, tool_instance_dir, dirs_exist_ok=True)
         tool_instance = db_model.ToolInstance(
             id=instance_uuid,
             workflow_id=request.workflow_id,
@@ -108,11 +101,12 @@ def _create_tool_instance_impl(request: CreateToolInstanceRequest, session: DbSe
             python_requirements_file_name="requirements.txt",
             source_folder_path=tool_instance_dir,
             tool_image_path="",
+            is_venv_tool=True,
         )
         session.add(tool_instance)
 
     get_thread_pool().submit(
-        tool_utils.prepare_virtual_env_for_tool,
+        prepare_virtual_env_for_tool,
         tool_instance_dir,
         "requirements.txt",
     )
@@ -167,7 +161,7 @@ def _update_tool_instance_impl(request: UpdateToolInstanceRequest, session: DbSe
         tool_instance.tool_image_path = tool_image_path
         os.remove(request.tmp_tool_image_path)
     get_thread_pool().submit(
-        tool_utils.prepare_virtual_env_for_tool,
+        prepare_virtual_env_for_tool,
         tool_instance.source_folder_path,
         tool_instance.python_requirements_file_name,
     )
@@ -208,13 +202,13 @@ def _get_tool_instance_impl(request: GetToolInstanceRequest, session: DbSession)
     with open(os.path.join(tool_instance_dir, tool_instance.python_requirements_file_name), "r") as f:
         tool_requirements = f.read()
 
-    is_valid, validation_errors = tool_utils.validate_tool_code(tool_code)
+    # is_valid, validation_errors = tool_utils.validate_tool_code(tool_code)
     user_params = []
     try:
         user_params = tool_utils.extract_user_params_from_code(tool_code)
     except Exception as e:
         is_valid = False
-        validation_errors.append(f"Error extracting user parameters from python code: {e}")
+        # validation_errors.append(f"Error extracting user parameters from python code: {e}")
 
     tool_image_uri = ""
     if tool_instance.tool_image_path:
@@ -228,10 +222,11 @@ def _get_tool_instance_impl(request: GetToolInstanceRequest, session: DbSession)
             python_code=tool_code,
             python_requirements=tool_requirements,
             source_folder_path=tool_instance_dir,
-            tool_metadata=json.dumps({"validation_errors": validation_errors, "user_params": user_params}),
-            is_valid=is_valid,
+            tool_metadata=json.dumps({"user_params": user_params}),
+            is_valid=True,
             tool_image_uri=tool_image_uri,
-            tool_description=tool_utils.extract_tool_description(tool_code),
+            tool_description="",
+            is_venv_tool=tool_instance.is_venv_tool,
         )
     )
 
@@ -273,13 +268,13 @@ def _list_tool_instances_impl(request: ListToolInstancesRequest, session: DbSess
         with open(os.path.join(tool_instance_dir, tool_instance.python_requirements_file_name), "r") as f:
             tool_requirements = f.read()
 
-        is_valid, validation_errors = tool_utils.validate_tool_code(tool_code)
+        # is_valid, validation_errors = tool_utils.validate_tool_code(tool_code)
         user_params = []
         try:
             user_params = tool_utils.extract_user_params_from_code(tool_code)
         except Exception as e:
             is_valid = False
-            validation_errors.append(f"Error extracting user parameters from python code: {e}")
+            # validation_errors.append(f"Error extracting user parameters from python code: {e}")
 
         tool_image_uri = ""
         if tool_instance.tool_image_path:
@@ -293,10 +288,11 @@ def _list_tool_instances_impl(request: ListToolInstancesRequest, session: DbSess
                 python_code=tool_code,
                 python_requirements=tool_requirements,
                 source_folder_path=tool_instance.source_folder_path,
-                tool_metadata=json.dumps({"validation_errors": validation_errors, "user_params": user_params}),
-                is_valid=is_valid,
+                tool_metadata=json.dumps({"user_params": user_params}),
+                is_valid=True,
                 tool_image_uri=tool_image_uri,
-                tool_description=tool_utils.extract_tool_description(tool_code),
+                tool_description="",
+                is_venv_tool=tool_instance.is_venv_tool,
             )
         )
     return ListToolInstancesResponse(tool_instances=tool_instances_response)

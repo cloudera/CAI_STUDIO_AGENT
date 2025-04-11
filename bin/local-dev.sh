@@ -19,4 +19,5 @@
 export AGENT_STUDIO_RENDER_MODE=studio
 export AGENT_STUDIO_GRPC_MODE=enabled
 export AGENT_STUDIO_DEPLOYMENT_CONFIG=dev 
+export AGENT_STUDIO_NUM_WORKFLOW_RUNNERS=1
 python startup_scripts/run-app.py

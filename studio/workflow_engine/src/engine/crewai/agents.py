@@ -12,11 +12,9 @@ def get_crewai_agent(
     agent: input_types.Input__Agent,
     crewai_tools: Optional[List[BaseTool]] = None,
     llm_model: Optional[CrewAILLM] = None,
-    tracer=None,
 ) -> Agent:
     return AgentStudioCrewAIAgent(
         agent_studio_id=agent.id,
-        tracer=tracer,
         role=agent.crew_ai_role,
         backstory=agent.crew_ai_backstory,
         goal=agent.crew_ai_goal,

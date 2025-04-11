@@ -131,7 +131,7 @@ def get_workflow_status(run_id: str) -> dict:
     if len(crew_events) > 0 and crew_events[-1]["type"] == "crew_kickoff_failed":
         out_dict["complete"] = True
         out_dict["error"] = crew_events[-1]["error"]
-        
+
     return out_dict
 
 

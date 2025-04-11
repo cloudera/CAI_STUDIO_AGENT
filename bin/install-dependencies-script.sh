@@ -20,3 +20,9 @@ npm install
 
 echo "Building new frontend application (this may take a moment...)"
 npm run build
+
+echo "Configuring workflow engine virtual environment..."
+cd studio/workflow_engine
+rm -rf .venv
+uv venv
+VIRTUAL_ENV=.venv uv sync --all-extras

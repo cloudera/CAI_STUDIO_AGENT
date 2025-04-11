@@ -274,7 +274,11 @@ export interface ToolTemplate {
   /** Detailed description of the tool. */
   tool_description: string;
   /** optional field specifying the workflow template that this tool template belongs to */
-  workflow_template_id?: string | undefined;
+  workflow_template_id?:
+    | string
+    | undefined;
+  /** Optional "venv" tool feature. */
+  is_venv_tool: boolean;
 }
 
 export interface ToolInstance {
@@ -298,6 +302,8 @@ export interface ToolInstance {
   tool_image_uri: string;
   /** Detailed description of the tool. */
   tool_description: string;
+  /** Expanded "venv" tool feature. */
+  is_venv_tool: boolean;
 }
 
 /** Agent Messages */
@@ -3667,6 +3673,7 @@ function createBaseToolTemplate(): ToolTemplate {
     tool_image_uri: "",
     tool_description: "",
     workflow_template_id: undefined,
+    is_venv_tool: false,
   };
 }
 
@@ -3704,6 +3711,9 @@ export const ToolTemplate: MessageFns<ToolTemplate> = {
     }
     if (message.workflow_template_id !== undefined) {
       writer.uint32(90).string(message.workflow_template_id);
+    }
+    if (message.is_venv_tool !== false) {
+      writer.uint32(96).bool(message.is_venv_tool);
     }
     return writer;
   },
@@ -3803,6 +3813,14 @@ export const ToolTemplate: MessageFns<ToolTemplate> = {
           message.workflow_template_id = reader.string();
           continue;
         }
+        case 12: {
+          if (tag !== 96) {
+            break;
+          }
+
+          message.is_venv_tool = reader.bool();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -3827,6 +3845,7 @@ export const ToolTemplate: MessageFns<ToolTemplate> = {
       workflow_template_id: isSet(object.workflow_template_id)
         ? globalThis.String(object.workflow_template_id)
         : undefined,
+      is_venv_tool: isSet(object.is_venv_tool) ? globalThis.Boolean(object.is_venv_tool) : false,
     };
   },
 
@@ -3865,6 +3884,9 @@ export const ToolTemplate: MessageFns<ToolTemplate> = {
     if (message.workflow_template_id !== undefined) {
       obj.workflow_template_id = message.workflow_template_id;
     }
+    if (message.is_venv_tool !== false) {
+      obj.is_venv_tool = message.is_venv_tool;
+    }
     return obj;
   },
 
@@ -3884,6 +3906,7 @@ export const ToolTemplate: MessageFns<ToolTemplate> = {
     message.tool_image_uri = object.tool_image_uri ?? "";
     message.tool_description = object.tool_description ?? "";
     message.workflow_template_id = object.workflow_template_id ?? undefined;
+    message.is_venv_tool = object.is_venv_tool ?? false;
     return message;
   },
 };
@@ -3900,6 +3923,7 @@ function createBaseToolInstance(): ToolInstance {
     is_valid: false,
     tool_image_uri: "",
     tool_description: "",
+    is_venv_tool: false,
   };
 }
 
@@ -3934,6 +3958,9 @@ export const ToolInstance: MessageFns<ToolInstance> = {
     }
     if (message.tool_description !== "") {
       writer.uint32(82).string(message.tool_description);
+    }
+    if (message.is_venv_tool !== false) {
+      writer.uint32(88).bool(message.is_venv_tool);
     }
     return writer;
   },
@@ -4025,6 +4052,14 @@ export const ToolInstance: MessageFns<ToolInstance> = {
           message.tool_description = reader.string();
           continue;
         }
+        case 11: {
+          if (tag !== 88) {
+            break;
+          }
+
+          message.is_venv_tool = reader.bool();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -4046,6 +4081,7 @@ export const ToolInstance: MessageFns<ToolInstance> = {
       is_valid: isSet(object.is_valid) ? globalThis.Boolean(object.is_valid) : false,
       tool_image_uri: isSet(object.tool_image_uri) ? globalThis.String(object.tool_image_uri) : "",
       tool_description: isSet(object.tool_description) ? globalThis.String(object.tool_description) : "",
+      is_venv_tool: isSet(object.is_venv_tool) ? globalThis.Boolean(object.is_venv_tool) : false,
     };
   },
 
@@ -4081,6 +4117,9 @@ export const ToolInstance: MessageFns<ToolInstance> = {
     if (message.tool_description !== "") {
       obj.tool_description = message.tool_description;
     }
+    if (message.is_venv_tool !== false) {
+      obj.is_venv_tool = message.is_venv_tool;
+    }
     return obj;
   },
 
@@ -4099,6 +4138,7 @@ export const ToolInstance: MessageFns<ToolInstance> = {
     message.is_valid = object.is_valid ?? false;
     message.tool_image_uri = object.tool_image_uri ?? "";
     message.tool_description = object.tool_description ?? "";
+    message.is_venv_tool = object.is_venv_tool ?? false;
     return message;
   },
 };

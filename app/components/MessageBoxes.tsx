@@ -20,6 +20,7 @@ import { CheckStudioUpgradeStatusResponse } from '@/studio/proto/agent_studio';
 import { SyncOutlined } from '@ant-design/icons';
 import { useGlobalNotification } from './Notifications';
 import * as semver from 'semver';
+import { useGetWorkflowDataQuery } from '../workflows/workflowAppApi';
 
 const { confirm } = Modal;
 const { Text, Title, Paragraph } = Typography;
@@ -144,6 +145,7 @@ const MessageBoxes: React.FC = () => {
   const { data: defaultModel } = useGetDefaultModelQuery();
   const { data: workbench } = useWorkbenchDetailsQuery();
   const { data: upgradeStatus } = useCheckStudioUpgradeStatusQuery();
+  const { data: workflowData } = useGetWorkflowDataQuery();
   const [isOpen, setIsOpen] = useState(false);
 
   const isOutOfDate = (upgradeStatus: CheckStudioUpgradeStatusResponse | undefined) => {
@@ -152,7 +154,7 @@ const MessageBoxes: React.FC = () => {
 
   const currentWarningMessages = [
     {
-      messageTrigger: !defaultModel,
+      messageTrigger: workflowData && workflowData?.renderMode === 'studio' && !defaultModel,
       message: NO_DEFAULT_LLM_NOTIFICATION,
     },
   ];

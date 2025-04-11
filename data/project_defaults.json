@@ -2,11 +2,22 @@
   "models": [],
   "tool_templates": [
     {
+      "id": "6ad37ef6-e049-444e-96db-f4e0faea949c",
+      "name": "Sample Tool",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/sample_tool",
+      "is_venv_tool": true,
+      "pre_built": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/graph.png"
+    },
+    {
       "id": "abcdd1d9-abcd-4b89-bbbb-6934c8d9010",
       "name": "Calculator Tool",
       "python_code_file_name": "tool.py",
       "python_requirements_file_name": "requirements.txt",
       "source_folder_path": "studio-data/tool_templates/calculator",
+      "is_venv_tool": true,
       "pre_built": true,
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/calculator.png"
     },
@@ -17,6 +28,7 @@
       "python_requirements_file_name": "requirements.txt",
       "source_folder_path": "studio-data/tool_templates/jira_integration",
       "pre_built": true,
+      "is_venv_tool": true,
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/jira.png"
     },
     {
@@ -26,6 +38,7 @@
       "python_requirements_file_name": "requirements.txt",
       "source_folder_path": "studio-data/tool_templates/search_internet",
       "pre_built": true,
+      "is_venv_tool": true,
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/internet.png"
     },
     {
@@ -35,6 +48,7 @@
       "python_requirements_file_name": "requirements.txt",
       "source_folder_path": "studio-data/tool_templates/scrape_website",
       "pre_built": true,
+      "is_venv_tool": true,
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/web-crawler.png"
     },
     {
@@ -44,6 +58,7 @@
       "python_requirements_file_name": "requirements.txt",
       "source_folder_path": "studio-data/tool_templates/email_tool",
       "pre_built": true,
+      "is_venv_tool": true,
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/mail.png"
     },
     {
@@ -53,6 +68,7 @@
       "python_requirements_file_name": "requirements.txt",
       "source_folder_path": "studio-data/tool_templates/slack_tool",
       "pre_built": true,
+      "is_venv_tool": true,
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/slack.png"
     },
     {
@@ -62,6 +78,7 @@
       "python_requirements_file_name": "requirements.txt",
       "source_folder_path": "studio-data/tool_templates/calendar_tool",
       "pre_built": true,
+      "is_venv_tool": true,
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/calendar_icon.png"
     },
     {
@@ -71,6 +88,7 @@
       "python_requirements_file_name": "requirements.txt",
       "source_folder_path": "studio-data/tool_templates/pdf_tool",
       "pre_built": true,
+      "is_venv_tool": true,
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/pdf.png"
     },
     {
@@ -80,6 +98,7 @@
       "python_requirements_file_name": "requirements.txt",
       "source_folder_path": "studio-data/tool_templates/fileread_tool",
       "pre_built": true,
+      "is_venv_tool": true,
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/google-docs.png"
     },
     {
@@ -89,6 +108,7 @@
       "python_requirements_file_name": "requirements.txt",
       "source_folder_path": "studio-data/tool_templates/directoryread_tool",
       "pre_built": true,
+      "is_venv_tool": true,
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/folder.png"
     },
     {
@@ -98,6 +118,7 @@
       "python_requirements_file_name": "requirements.txt",
       "source_folder_path": "studio-data/tool_templates/cdf_readyflow_deploy_hf_tool",
       "pre_built": true,
+      "is_venv_tool": true,
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/cdf_icon.png"
     },
     {
@@ -107,6 +128,7 @@
       "python_requirements_file_name": "requirements.txt",
       "source_folder_path": "studio-data/tool_templates/cdv_dataset_tool",
       "pre_built": true,
+      "is_venv_tool": true,
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/cdv_icon.png"
     },
     {
@@ -116,6 +138,7 @@
       "python_requirements_file_name": "requirements.txt",
       "source_folder_path": "studio-data/tool_templates/cdv_smart_visual_tool",
       "pre_built": true,
+      "is_venv_tool": true,
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/cdv_icon.png"
     },
     {
@@ -125,6 +148,7 @@
       "python_requirements_file_name": "requirements.txt",
       "source_folder_path": "studio-data/tool_templates/cdw_hive_from_s3_parquet",
       "pre_built": true,
+      "is_venv_tool": true,
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/hive_icon.png"
     },
     {
@@ -134,6 +158,7 @@
       "python_requirements_file_name": "requirements.txt",
       "source_folder_path": "studio-data/tool_templates/fsi_timeseries_stock_tool",
       "pre_built": true,
+      "is_venv_tool": true,
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/yfinance.png"
     },
     {
@@ -143,6 +168,7 @@
       "python_requirements_file_name": "requirements.txt",
       "source_folder_path": "studio-data/tool_templates/fsi_portfolio_optimization_tool",
       "pre_built": true,
+      "is_venv_tool": true,
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/graph.png"
     },
     {
@@ -152,6 +178,7 @@
       "python_requirements_file_name": "requirements.txt",
       "source_folder_path": "studio-data/tool_templates/fsi_sample_portfolio_lookup_tool",
       "pre_built": true,
+      "is_venv_tool": true,
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/guide.png"
     },
     {
@@ -161,6 +188,7 @@
       "python_requirements_file_name": "requirements.txt",
       "source_folder_path": "studio-data/tool_templates/fsi_customer_profile_lookup_tool",
       "pre_built": true,
+      "is_venv_tool": true,
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/partners.png"
     }
   ],
@@ -563,7 +591,7 @@
       "name": "FSI Portfolio Manager",
       "description": "",
       "role": "FSI Portfolio Manager",
-      "backstory": "You are a manager capable of delegating tasks related to portfolio management and optimization.",
+      "backstory": "You are a manager capable of delegating tasks related to portfolio management and optimization. When delegating tasks to coworkers, make sure the \"task\", \"context\" and \"coworker\" input arguments are the correct type (strings).",
       "goal": "Delegate the user request properly and forward relevant execution information to the user.",
       "allow_delegation": true,
       "verbose": false,

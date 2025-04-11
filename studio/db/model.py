@@ -105,6 +105,7 @@ class ToolInstance(Base, MappedProtobuf, MappedDict):
     python_requirements_file_name = Column(Text, nullable=False)
     source_folder_path = Column(Text, nullable=False)
     tool_image_path = Column(Text, nullable=False)
+    is_venv_tool = Column(Boolean, default=False)
 
 
 class ToolTemplate(Base, MappedProtobuf, MappedDict):
@@ -121,6 +122,7 @@ class ToolTemplate(Base, MappedProtobuf, MappedDict):
     source_folder_path = Column(Text, nullable=False)
     pre_built = Column(Boolean, default=False)
     tool_image_path = Column(Text, nullable=False)
+    is_venv_tool = Column(Boolean, default=False)
 
 
 class Agent(Base, MappedProtobuf, MappedDict):
