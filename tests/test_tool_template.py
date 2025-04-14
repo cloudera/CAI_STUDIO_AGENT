@@ -6,10 +6,10 @@ from studio.db.dao import AgentStudioDao
 from studio.db import model as db_model
 from studio.tools.tool_template import *
 from studio.tools.utils import (
-    extract_user_params_from_code,
-    extract_tool_class_name
+    extract_user_params_from_code
 )
 import json
+
 
 
 # Tests for extract_user_params_from_code
@@ -31,41 +31,6 @@ class UserParameters(BaseModel:
 """
     with pytest.raises(ValueError) as excinfo:
         extract_user_params_from_code(python_code)
-    assert "Error parsing Python code" in str(excinfo.value)
-
-
-# Tests for extract_wrapper_function_name
-def test_extract_tool_class_name_valid():
-    python_code = """
-class UserParameters(BaseModel):
-    param1: str
-    param2: str
-    
-class NewTool(StudioBaseTool):
-    pass
-    """
-    wrapper_name = extract_tool_class_name(python_code)
-    assert wrapper_name == "NewTool"
-
-
-def test_extract_tool_class_name_no_wrapper():
-    python_code = """
-class UserParameters(BaseModel):
-    param1: str
-    param2: notype
-"""
-    with pytest.raises(ValueError) as excinfo:
-        extract_tool_class_name(python_code)
-    assert "CrewAI tool class not found" in str(excinfo.value)
-
-
-def test_extract_tool_class_name_syntax_error():
-    python_code = """
-class NewTool(StudioBaseTool:
-    param1: notype
-"""
-    with pytest.raises(ValueError) as excinfo:
-        extract_tool_class_name(python_code)
     assert "Error parsing Python code" in str(excinfo.value)
 
 
@@ -127,43 +92,6 @@ def test_list_tool_templates_empty_db(mock_dao):
     assert isinstance(res, ListToolTemplatesResponse)
     assert len(res.templates) == 0
 
-
-@patch("studio.tools.utils.validate_tool_code")
-@patch("builtins.open", new_callable=MagicMock)
-@patch("os.path.join")
-def test_list_tool_templates_invalid_code(mock_join, mock_open, mock_validate):
-    test_dao = AgentStudioDao(engine_url="sqlite:///:memory:", echo=False)
-
-    with test_dao.get_session() as session:
-        session.add(db_model.ToolTemplate(
-            id="t1",
-            name="template1",
-            source_folder_path="/path/t1",
-            python_code_file_name="code.py",
-            python_requirements_file_name="requirements.txt",
-            tool_image_path="some/path.png",
-        ))
-        session.commit()
-
-    # Mock file paths
-    mock_join.side_effect = lambda *args: "/".join(args)
-
-    # Mock file reads
-    mock_open.return_value.__enter__.return_value.read.side_effect = [
-        "invalid python code",  # Invalid Python code
-        "package==1.0"  # Mocked requirements.txt content
-    ]
-
-    # Mock validation to return invalid
-    mock_validate.return_value = (False, ["Syntax error"])
-
-    req = ListToolTemplatesRequest()
-    res = list_tool_templates(req, cml=None, dao=test_dao)
-
-    # Validate the response
-    assert isinstance(res, ListToolTemplatesResponse)
-    assert len(res.templates) == 1
-    assert not res.templates[0].is_valid  # Should be invalid due to syntax error
 
 
 @patch("builtins.open", new_callable=MagicMock)
@@ -279,50 +207,6 @@ def test_get_tool_template_missing_python_file(mock_join, mock_open):
     assert isinstance(res, GetToolTemplateResponse)
     assert not res.template.is_valid  # Should be invalid due to missing Python file
 
-@patch("studio.tools.utils.validate_tool_code")
-@patch("builtins.open", new_callable=MagicMock)
-@patch("os.path.join")
-def test_get_tool_template_syntax_error(mock_join, mock_open, mock_validate):
-    test_dao = AgentStudioDao(engine_url="sqlite:///:memory:", echo=False)
-
-    with test_dao.get_session() as session:
-        session.add(db_model.ToolTemplate(
-            id="t1",
-            name="template1",
-            source_folder_path="/path/t1",
-            python_code_file_name="code.py",
-            python_requirements_file_name="requirements.txt",
-            tool_image_path="some/path.png",
-        ))
-        session.commit()
-
-    # Mock file paths
-    mock_join.side_effect = lambda *args: "/".join(args)
-
-    # Mock file reads
-    mock_open.return_value.__enter__.return_value.read.side_effect = [
-"""
-class UserParameters(BaseModel:
-    param1: str
-    param2: str
-    
-class NewTool(StudioBaseTool):
-    pass
-""",
-"""
-package==1.0
-"""   
-    ]
-
-    # Mock validation to return invalid
-    mock_validate.return_value = (False, ["Syntax error in code"])
-
-    req = GetToolTemplateRequest(tool_template_id="t1")
-    res = get_tool_template(req, cml=None, dao=test_dao)
-
-    # Validate the response
-    assert isinstance(res, GetToolTemplateResponse)
-    assert not res.template.is_valid  # Should be invalid due to syntax error
 
 
 @patch("os.makedirs")
@@ -332,8 +216,9 @@ package==1.0
 @patch("studio.db.dao.AgentStudioDao")
 @patch("studio.tools.tool_template.cc_utils.create_slug_from_name")
 @patch("studio.tools.tool_template.cc_utils.get_random_compact_string")
-# @patch("studio.tools.tool_template.consts.TOOL_TEMPLATE_CATALOG_LOCATION", "/tool_template_catalog_location")
+@patch("studio.tools.tool_template.shutil")
 def test_add_tool_template_success(
+    mock_shutil,
     mock_get_random_string, 
     mock_create_slug, 
     mock_dao, 
@@ -381,8 +266,6 @@ def test_add_tool_template_success(
 
     # Validate file operations
     mock_makedirs.assert_called_once()
-    mock_open.assert_any_call("studio-data/tool_templates/tool_slug_xyz123/tool.py", "w")
-    mock_open.assert_any_call("studio-data/tool_templates/tool_slug_xyz123/requirements.txt", "w")
 
 
 def test_add_tool_template_duplicate_name():

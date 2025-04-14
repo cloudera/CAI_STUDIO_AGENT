@@ -2,10 +2,7 @@
 
 from typing import Dict, Optional, Type
 from pydantic import BaseModel
-import sys
-from contextlib import contextmanager
 import os
-import importlib
 from crewai.tools import BaseTool
 import ast
 from typing import Optional
@@ -20,63 +17,6 @@ import venv
 
 import engine.types as input_types
 from engine.types import *
-
-
-def _import_module_with_isolation(module_name: str, module_path: str):
-    """
-    Import a module while ensuring isolation from previously imported modules,
-    while properly handling relative imports within the module.
-
-    Args:
-        module_name: Name of the module to import (without .py extension)
-        module_path: Absolute path to the directory containing the module
-    """
-
-    @contextmanager
-    def temporary_sys_path(path):
-        """Temporarily add a path to sys.path"""
-        sys.path.insert(0, path)
-        try:
-            yield
-        finally:
-            if path in sys.path:
-                sys.path.remove(path)
-
-    # Generate a unique name for the module to avoid namespace conflicts
-    unique_module_name = f"{module_name}_{hash(module_path)}"
-
-    # Remove any existing module with the same name from sys.modules
-    for key in list(sys.modules.keys()):
-        if key == unique_module_name or key.startswith(f"{unique_module_name}."):
-            del sys.modules[key]
-
-    # Create the full path to the module file
-    full_path = os.path.join(module_path, f"{module_name}.py")
-
-    # Load the module specification
-    spec = importlib.util.spec_from_file_location(unique_module_name, full_path)
-    if spec is None:
-        raise ImportError(f"Could not load module specification from {full_path}")
-
-    # Create the module
-    module = importlib.util.module_from_spec(spec)
-
-    # Add the module path to sys.modules to handle relative imports
-    sys.modules[unique_module_name] = module
-
-    # Add the module's directory to sys.path temporarily and execute the module
-    with temporary_sys_path(module_path):
-        if spec.loader is None:
-            raise ImportError(f"Could not load module from {full_path}")
-        try:
-            spec.loader.exec_module(module)
-        except Exception as e:
-            # Clean up sys.modules in case of an error
-            if unique_module_name in sys.modules:
-                del sys.modules[unique_module_name]
-            raise e
-
-    return module
 
 
 def extract_tool_class_name(code: str) -> str:
@@ -549,3 +489,40 @@ def get_venv_tool(tool_instance: input_types.Input__ToolInstance, user_params_kv
     tool = AgentStudioCrewAIVenvTool()
 
     return tool
+
+
+def is_venv_tool(tool_code: str) -> bool:
+    """
+    Checks to see whether a tool is a venv tool (V2 Tool) or not. This is determined
+    by the existence of ToolParameters at the upper level of the entrypoint
+    module for the tool. venv tools have ToolParameters at the root of the module,
+    whereas "V1" tools have ToolParameters defined nested in the StudioBaseTool.
+
+    NOTE: this is NOT a tool validation script. This is just a hueristic to determine
+    whether a tool is *probably* a valid V1 or V2 tool. We should put more time into
+    introspecting our tool code and revamping validate_tool_code() to handle V2 tools.
+    """
+
+    parsed_ast = ast.parse(tool_code)
+
+    # Search for ToolParameters class in the base node
+    for node in parsed_ast.body:
+        if isinstance(node, ast.ClassDef) and node.name == "ToolParameters":
+            return True
+    return False
+
+
+def get_crewai_tool(tool_instance: input_types.Input__ToolInstance, user_params_kv: Dict[str, str]) -> BaseTool:
+    """
+    Agent Studio currently supports two different tool template types - one which is a "V2" venv tool (multiple
+    files and packages, custom main entrypoint), and the "V1" tool (requires some class structure, only
+    single file tool, etc.). This method determines what tool type is running and then either loads the
+    V1 tool or the V2 tool.
+    """
+    relative_module_dir = os.path.abspath(tool_instance.source_folder_path)
+    with open(os.path.join(relative_module_dir, tool_instance.python_code_file_name), "r") as code_file:
+        tool_code = code_file.read()
+    if is_venv_tool(tool_code):
+        return get_venv_tool(tool_instance, user_params_kv)
+    else:
+        return get_tool_instance_proxy(tool_instance, user_params_kv)

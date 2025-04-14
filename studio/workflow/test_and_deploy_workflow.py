@@ -194,7 +194,6 @@ def test_workflow(
     """
     Test a workflow by creating agent instances, tasks, and a Crew AI execution.
     """
-    print("TEST WORKFLOW ENTRY 1")
     try:
         collated_input = _create_collated_input(request, cml, dao)
         tool_user_params_kv = {

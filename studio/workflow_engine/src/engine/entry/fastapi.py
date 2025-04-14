@@ -29,6 +29,7 @@ global_lock = asyncio.Lock()
 # Global reference to the running workflow
 running_workflow = None
 
+
 # Pydantic model for the incoming JSON payload.
 class KickoffPayload(BaseModel):
     workflow_name: str
@@ -40,7 +41,7 @@ class KickoffPayload(BaseModel):
 
 def run_workflow_task(payload: KickoffPayload) -> None:
     global running_workflow
-    
+
     """
     This synchronous function mirrors your original CLI workflow.
     It:
@@ -98,7 +99,7 @@ def run_workflow_task(payload: KickoffPayload) -> None:
 
 async def run_workflow_background(payload: KickoffPayload) -> None:
     global running_workflow
-    
+
     """
     This asynchronous wrapper schedules the synchronous workflow to run
     in an executor. When done, it ensures the global lock is released.
@@ -115,7 +116,7 @@ async def run_workflow_background(payload: KickoffPayload) -> None:
 @app.post("/kickoff")
 async def kickoff(payload: KickoffPayload):
     global running_workflow
-    
+
     """
     POST endpoint to start a Crew workflow.
 
@@ -129,10 +130,7 @@ async def kickoff(payload: KickoffPayload):
 
     # Acquire the lock so that no other workflow starts.
     await global_lock.acquire()
-    running_workflow = {
-        "name": payload.workflow_name,
-        "id": payload.collated_input["workflow"]["id"]
-    }
+    running_workflow = {"name": payload.workflow_name, "id": payload.collated_input["workflow"]["id"]}
     # Launch the background workflow process.
     asyncio.create_task(run_workflow_background(payload))
     return {"status": "Workflow kickoff started"}
@@ -141,18 +139,13 @@ async def kickoff(payload: KickoffPayload):
 @app.get("/status")
 async def status():
     global running_workflow
-    
+
     """
     GET endpoint to report the runner's busy status.
 
     It returns a JSON indicating whether a workflow is currently running.
     """
-    if global_lock.locked(): 
-        return {
-            "busy": True,
-            "workflow": running_workflow
-        }
-    else: 
-        return {
-            "busy": False
-        }
+    if global_lock.locked():
+        return {"busy": True, "workflow": running_workflow}
+    else:
+        return {"busy": False}

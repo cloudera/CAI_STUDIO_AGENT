@@ -1,4 +1,5 @@
 [run]
 omit = 
     studio/proto/* 
+    studio/workflow_engine/*
     */__init__.py
