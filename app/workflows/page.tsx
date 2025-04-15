@@ -44,7 +44,9 @@ import { compareWorkbenchVersions } from '../lib/workbench';
 const { Text, Title, Paragraph } = Typography;
 
 const WorkflowsPageContent: React.FC = () => {
-  const { data: workflows, refetch: refetchWorkflows } = useListWorkflowsQuery({});
+  const { data: workflows, refetch: refetchWorkflows } = useListWorkflowsQuery({}, {
+    refetchOnMountOrArgChange: true
+  });
   const { data: deployedWorkflowInstances, refetch: refetchDeployedWorkflowInstances } =
     useListDeployedWorkflowsQuery({});
   const { data: workflowTemplates, refetch: refetchWorkflowTemplates } =
@@ -71,6 +73,10 @@ const WorkflowsPageContent: React.FC = () => {
   const [isGetStartModalVisible, setGetStartModalVisible] = useState(false);
   const { data: upgradeStatus } = useCheckStudioUpgradeStatusQuery();
   const { data: workbenchDetails } = useWorkbenchDetailsQuery();
+
+  useEffect(() => {
+    refetchWorkflows();
+  }, []);
 
   const handleGetStarted = () => {
     setGetStartModalVisible(true);

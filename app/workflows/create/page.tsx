@@ -14,6 +14,7 @@ import {
   selectEditorWorkflowName,
   updatedWorkflowConfiguration,
   updatedEditorWorkflowName,
+  selectEditorWorkflow,
 } from '../editorSlice';
 import WorkflowApp from '@/app/components/workflow/WorkflowApp';
 import WorkflowStepView from '@/app/components/WorkflowStepView';
@@ -33,7 +34,9 @@ import { useListTasksQuery } from '@/app/tasks/tasksApi';
 import { useListAgentsQuery } from '@/app/agents/agentApi';
 import { clearedWorkflowApp } from '../workflowAppSlice';
 import { readWorkflowConfigurationFromLocalStorage } from '@/app/lib/localStorage';
-import { EditOutlined } from '@ant-design/icons';
+import { EditOutlined, SaveOutlined } from '@ant-design/icons';
+import { useGlobalNotification } from '@/app/components/Notifications';
+import { createUpdateRequestFromEditor } from '@/app/lib/workflow';
 
 const { Title } = Typography;
 
@@ -56,6 +59,9 @@ const CreateWorkflowContent: React.FC = () => {
   const { data: tasks } = useListTasksQuery({});
   const { data: agents } = useListAgentsQuery({});
   const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [updateWorkflow] = useUpdateWorkflowMutation();
+  const notificationApi = useGlobalNotification();
+  const workflowState = useAppSelector(selectEditorWorkflow);
 
   // Clear the existing workflow app upon first load. Note: the "Workflow App"
   // in the context of the workflow editor is just the Test page (for now, until
@@ -87,13 +93,44 @@ const CreateWorkflowContent: React.FC = () => {
     }
   }, [searchParams.get('workflowId')]);
 
-  const handleBlur = () => {
-    setIsEditing(false);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+  const handleSaveWorkflowName = async () => {
+    const currentWorkflowName = workflowName || '';
+    if (!workflowId || !currentWorkflowName.trim()) {
       setIsEditing(false);
+      return;
+    }
+
+    try {
+      notificationApi.info({
+        message: 'Updating Workflow',
+        description: 'Saving workflow name changes...',
+        placement: 'topRight',
+      });
+
+      const updatedWorkflowState = {
+        ...workflowState,
+        name: currentWorkflowName,
+        workflowMetadata: {
+          ...workflowState.workflowMetadata,
+          name: currentWorkflowName
+        }
+      };
+
+      await updateWorkflow(createUpdateRequestFromEditor(updatedWorkflowState)).unwrap();
+      
+      notificationApi.success({
+        message: 'Workflow Updated',
+        description: 'Workflow name has been updated successfully.',
+        placement: 'topRight',
+      });
+
+      setIsEditing(false);
+    } catch (error) {
+      notificationApi.error({
+        message: 'Error Updating Workflow',
+        description: 'Failed to update workflow name. Please try again.',
+        placement: 'topRight',
+      });
     }
   };
 
@@ -122,29 +159,47 @@ const CreateWorkflowContent: React.FC = () => {
           { title: workflowId ? 'Edit Workflow' : 'Create Workflow' },
         ]}
       />
-      <div style={{ display: 'flex', alignItems: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
         {isEditing ? (
-          <Input
-            size="large"
-            value={workflowName}
-            onChange={(e) => {
-              dispatch(updatedEditorWorkflowName(e.target.value));
-            }}
-            onBlur={handleBlur}
-            onKeyDown={handleKeyDown}
-            style={{ marginRight: '8px' }}
-          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
+            <Input
+              size="large"
+              value={workflowName}
+              onChange={(e) => {
+                dispatch(updatedEditorWorkflowName(e.target.value));
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleSaveWorkflowName();
+                } else if (e.key === 'Escape') {
+                  setIsEditing(false);
+                }
+              }}
+              style={{ width: '50%' }}
+              autoFocus
+            />
+            <Button
+              icon={<SaveOutlined />}
+              type="primary"
+              onClick={(e) => {
+                e.preventDefault();
+                handleSaveWorkflowName();
+              }}
+            />
+          </div>
         ) : (
-          <Title level={5} style={{ paddingTop: 4, fontSize: '18px', fontWeight: 600 }}>
-            {workflowId ? 'Workflow: ' + workflowName : 'Create Workflow'}
-          </Title>
+          <>
+            <Title level={5} style={{ paddingTop: 4, fontSize: '18px', fontWeight: 600 }}>
+              {workflowId ? 'Workflow: ' + workflowName : 'Create Workflow'}
+            </Title>
+            <Button
+              icon={<EditOutlined />}
+              type="text"
+              style={{ marginLeft: '8px' }}
+              onClick={() => setIsEditing(true)}
+            />
+          </>
         )}
-        <Button
-          icon={<EditOutlined />}
-          type="text"
-          style={{ marginLeft: '8px' }}
-          onClick={() => setIsEditing(true)}
-        />
       </div>
       <div style={{ marginBottom: '8px' }} />
       <Layout
