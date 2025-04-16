@@ -866,7 +866,7 @@
     {
       "id": "6eccbfa6-66f9-418a-bc6c-74516ac8219d",
       "name": "FSI Example: Portfolio Advisory Workflow",
-      "description": "This multi-agent workflow leverages customer profiles and portfolio data to research and identify stocks aligned with a portfolio strategy, optimize allocation based on risk-return objectives, and retrieve time-series data for selected tickers. By integrating these insights, the agent generates actionable recommendations to enhance a user's investment portfolio",
+      "description": "Prompts to try out:\nI am working with customer John Doe, please show me their current investment portfolio and investment preferences.\nResearch some new stocks to invest in with a High Risk profile and a new investment theme idea 'I want to invest in pharmaceuticals.'\nRetrieve the historical performance data for these new stocks and then create an optimized portfolio with 35% drawdown limit and total $150,000.\n\nThis multi-agent workflow leverages customer profiles and portfolio data to research and identify stocks aligned with a portfolio strategy, optimize allocation based on risk-return objectives, and retrieve time-series data for selected tickers. By integrating these insights, the agent generates actionable recommendations to enhance a user's investment portfolio",
       "process": "hierarchical",
       "agent_template_ids": [
         "835b622c-ca33-4a6c-b1c4-ef7b86ba6c81",

@@ -12,6 +12,7 @@ import {
   useCheckStudioUpgradeStatusQuery,
   useUpgradeStudioMutation,
   useWorkbenchDetailsQuery,
+  useHealthCheckQuery,
 } from '../lib/crossCuttingApi';
 import { compareWorkbenchVersions } from '../lib/workbench';
 import WarningMessageBox from './WarningMessageBox';
@@ -142,11 +143,18 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ upgradeStatus, isOpen, setI
 };
 
 const MessageBoxes: React.FC = () => {
-  const { data: defaultModel } = useGetDefaultModelQuery();
+  const { data: defaultModel, refetch: refetchDefaultModel } = useGetDefaultModelQuery();
+  const { data: isHealthy } = useHealthCheckQuery();
   const { data: workbench } = useWorkbenchDetailsQuery();
   const { data: upgradeStatus } = useCheckStudioUpgradeStatusQuery();
   const { data: workflowData } = useGetWorkflowDataQuery();
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    if (isHealthy) {
+      refetchDefaultModel();
+    }
+  }, [isHealthy, refetchDefaultModel]);
 
   const isOutOfDate = (upgradeStatus: CheckStudioUpgradeStatusResponse | undefined) => {
     return upgradeStatus && upgradeStatus.local_version !== upgradeStatus.newest_version;
