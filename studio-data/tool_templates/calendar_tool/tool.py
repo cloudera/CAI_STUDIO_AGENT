@@ -1,3 +1,16 @@
+"""
+Data for the event to be created or updated.
+This should be a dictionary containing the following fields:
+- **title** *(str, optional)*: Title of the event (default: 'Untitled Event').
+- **start** *(str, required)*: Start time of the event in ISO 8601 format (e.g., '2025-01-24T10:00:00').
+- **end** *(str, required)*: End time of the event in ISO 8601 format (e.g., '2025-01-24T11:00:00').
+- **description** *(str, optional)*: Description of the event.
+- **location** *(str, optional)*: Location where the event will take place.
+- **attendees** *(list of str, optional)*: List of attendee email addresses (e.g., ['email1@example.com']).
+- **organizer** *(str, optional)*: Email address of the event organizer (e.g., 'organizer@example.com').
+"""
+
+
 import os
 import uuid
 from textwrap import dedent

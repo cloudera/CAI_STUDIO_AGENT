@@ -1,3 +1,8 @@
+"""
+Sends an email using the specified SMTP server.
+"""
+
+
 from textwrap import dedent
 from typing import Type, Literal, Optional, List
 from pydantic import BaseModel, Field
@@ -48,9 +53,7 @@ def run_tool(
     bcc = args.bcc
     attachments = args.attachments
     
-    """
-    Sends an email using the specified SMTP server.
-    """
+
     try:
         if action == "sendMail":
         # Prepare the email message

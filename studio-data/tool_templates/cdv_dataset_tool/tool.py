@@ -1,3 +1,9 @@
+"""
+The function creates a dataset in CDV(Cloudera Data Visualization) from a SQL table.
+
+The function returns the ID, columns (in the parameter `column_list`) & url of the created dataset.
+"""
+
 from textwrap import dedent
 from typing import Type
 from pydantic import Field, BaseModel
@@ -22,11 +28,6 @@ def run_tool(
     config: UserParameters,
     args: ToolParameters,
 ):
-    """
-    The function creates a dataset in CDV(Cloudera Data Visualization) from a SQL table.
-
-    The function returns the ID, columns (in the parameter `column_list`) & url of the created dataset.
-    """
     ds_name = args.ds_name
     table_name = args.table_name
 

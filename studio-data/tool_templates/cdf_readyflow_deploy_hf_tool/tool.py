@@ -1,3 +1,8 @@
+"""
+This hf_s3_readyflow_tool tool is used for importing a huggingface dataset into a path in the CDP datalake. 
+It returns the status of the CDF readyflow instance creation and if successful, the s3_uri of the parquet directory
+"""
+
 from textwrap import dedent
 from typing import Type
 from pydantic import BaseModel, Field

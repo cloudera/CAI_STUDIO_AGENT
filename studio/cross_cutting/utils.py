@@ -71,17 +71,29 @@ def deploy_cml_model(
 
     try:
         # Create the model build
-        create_model_build_body = cmlapi.CreateModelBuildRequest(
-            project_id=project_id,
-            model_id=model_id,
-            comment=model_build_comment,
-            file_path=model_file_path,
-            function_name=function_name,
-            runtime_identifier=runtime_identifier,
-            auto_deployment_config=deployment_config,
-            auto_deploy_model=True,
-            model_root_dir=model_root_dir,
-        )
+        if model_root_dir:
+            create_model_build_body = cmlapi.CreateModelBuildRequest(
+                project_id=project_id,
+                model_id=model_id,
+                comment=model_build_comment,
+                file_path=model_file_path,
+                function_name=function_name,
+                runtime_identifier=runtime_identifier,
+                auto_deployment_config=deployment_config,
+                auto_deploy_model=True,
+                model_root_dir=model_root_dir,
+            )
+        else:
+            create_model_build_body = cmlapi.CreateModelBuildRequest(
+                project_id=project_id,
+                model_id=model_id,
+                comment=model_build_comment,
+                file_path=model_file_path,
+                function_name=function_name,
+                runtime_identifier=runtime_identifier,
+                auto_deployment_config=deployment_config,
+                auto_deploy_model=True,
+            )
 
         create_build_resp = cml.create_model_build(create_model_build_body, project_id=project_id, model_id=model_id)
     except cmlapi.rest.ApiException as e:

@@ -1,72 +1,89 @@
-export const defaultToolPyCode = `# File: tool.py
+export const defaultToolPyCode = `
+"""
+Sample agent studio tool to showcase
+tool making capabilities. Any information added to the docstring
+of a tool template will be used for the tool's description, if the
+employed agent frameork supports tool descriptions.
+"""
 
-from textwrap import dedent
-from typing import Dict, List, Optional, Type
 from pydantic import BaseModel, Field
-from pydantic import BaseModel as StudioBaseTool # This import is required for the tool to be recognized by the studio
+from typing import Optional, Any
+import json 
+import argparse
 
-# import <any other requirements(python libraries) for the tool>
 
 class UserParameters(BaseModel):
     """
-    This class is used to define the parameters that would be passed by the user.
-    These are used to configuire the same tool template for different instances of the service being used by the tool.
-    For example,
-    This can include URLs, file paths, API keys, etc.
-
-    User parameters can also be an empty class, if the tool does not require any user parameters.
+    Parameters used to configure a tool. This may include API keys,
+    database connections, environment variables, etc.
     """
+    user_key_1: str # User parameters can be required, and will lead to a tool failure if this parameter is missing.
+    user_key_2: Optional[str] = None  # User parameters can also be optional if they're not needed by the tool, but may be used.
+    pass 
 
-    example_url: str
-    example_api_key: str
-    example_file_path: Optional[str] = None
-    example_other_parameter: Optional[str] = None
 
-class NewTool(StudioBaseTool):
+class ToolParameters(BaseModel):
+    """
+    Arguments of a tool call. These arguments are passed to this tool whenever
+    an Agent calls this tool. The descriptions below are also provided to agents
+    to help them make informed decisions of what to pass to the tool.
+    """
+    input1: str = Field(description="First parameter that should be passed to the tool")
+    input2: str = Field(description="Second parameter to be passed to the tool")
 
-    class ToolParameters(BaseModel):
-        """
-        This class is used to define the parameters that would be determined by AI/Agents.
-        Make sure to properly annotate the parameters with the correct type and description,
-        so that LLMs can understand the meaning of the parameters, and suggest the correct values.
-        """
 
-        runtime_parameter_1: str = Field(
-            description="Description explaining the utility of the parameter."
-        )
-        runtime_parameter_2: float = Field(
-            description="Description explaining the utility of the parameter."
-        )
-        runtime_parameter_3: Optional[Dict[str, str]] = Field(
-            description="Description explaining the utility of the parameter."
-        )
 
-    name: str = "New Tool"
-    description: str = dedent(
-        """
-        Please write multiline decsription for the tool, so that LLMs can understand the utility of the tool.
-                         
-        The description can also be used to describe the parameters of the tool in much more detail.
-                         
-        Agent studio will also uplevel the description of the tool in the UI.
-        """
-    )
-    args_schema: Type[BaseModel] = ToolParameters
-    user_parameters: UserParameters
+def run_tool(config: UserParameters, args: ToolParameters) -> Any:
+    """
+    Main tool code logic. Anything returned from this method is returned
+    from the tool back to the calling agent.
+    """
+    
+    result_object = {
+        "combined": args.input1 + args.input2,
+    }
+    return result_object
 
-    def _run(
-        self, runtime_parameter_1, runtime_parameter_2, runtime_parameter_3=None
-    ) -> str:
-        # Implementation for the tool goes here.
-        return f"""
-            {self.user_parameters.example_url}
-            {self.user_parameters.example_api_key}
-            {self.user_parameters.example_file_path}
-            {self.user_parameters.example_other_parameter}
-            {runtime_parameter_1}
-            {runtime_parameter_2}
-            {runtime_parameter_3}
-        """
+
+
+
+OUTPUT_KEY = "tool_output"
+"""
+When an agent calls a tool, technically the tool's entire stdout can be passed back to the agent.
+However, if an OUTPUT_KEY is present in a tool's main file, only stdout content *after* this key is
+passed to the agent. This allows us to return structured output to the agent while still retaining
+the entire stdout stream from a tool! By default, this feature is enabled, and anything returned
+from the run_tool() method above will be the structured output of the tool.
+"""
+
+
+if __name__ == "__main__":
+    """
+    Tool entrypoint. 
+    
+    The only two things that are required in a tool are the
+    ToolConfiguration and ToolArguments classes. Then, the only two arguments that are
+    passed to a tool entrypoint are "--tool-config" and "--tool-args", respectively. The rest
+    of the implementation is up to the tool builder - feel free to customize the entrypoint to your 
+    chosing!
+    """
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--user-params", required=True, help="Tool configuration")
+    parser.add_argument("--tool-params", required=True, help="Tool arguments")
+    args = parser.parse_args()
+    
+    # Parse JSON into dictionaries
+    user_dict = json.loads(args.user_params)
+    tool_dict = json.loads(args.tool_params)
+    
+    # Validate dictionaries against Pydantic models
+    config = UserParameters(**user_dict)
+    params = ToolParameters(**tool_dict)
+    
+    # Run the tool.
+    output = run_tool(config, params)
+    print(OUTPUT_KEY, output)
 `;
 
 export const defaultRequirementsTxt = `pydantic==2.10.6

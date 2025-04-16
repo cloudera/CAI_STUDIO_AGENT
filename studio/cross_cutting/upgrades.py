@@ -42,68 +42,57 @@ def stash_pop_safely():
         print(f"Error popping stashed changes: {e}")
 
 
-def is_on_a_semantic_version_tag():
+def is_on_a_semantic_version():
     """
-    Returns True if HEAD is currently checked out at a tag
-    that looks like a semantic version (v1.2.3, etc.).
+    Returns True if the LOCAL HEAD commit matches the commit of
+    any REMOTE tag that looks like a semantic version (v1.2.3, etc.).
     """
     try:
-        # git describe --tags --exact-match fails (non-zero) if HEAD is not exactly on a tag
-        tag = subprocess.run(
-            ["git", "describe", "--tags", "--exact-match", "HEAD"],
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        ).stdout.strip()
-
-        # Validate with simple semantic-version regex
-        return bool(SEMVER_REGEX.match(tag))
-    except subprocess.CalledProcessError:
+        sem_ver = get_current_semantic_version()
+        return bool(sem_ver)
+    except Exception as e:
+        # e.g., if 'ls-remote' or 'rev-parse' fails
         return False
 
 
-def get_local_semantic_version():
+def get_current_semantic_version():
     """
     Returns the tag name (e.g. 'v1.2.3') if we are indeed on a semantic version tag.
     If HEAD is not exactly on a tag, this method may raise an exception or return None.
     """
-    # If not on a tag, this raises CalledProcessError
-    tag = subprocess.run(
-        ["git", "describe", "--tags", "--exact-match", "HEAD"],
+    # 1) Get the local HEAD commit SHA
+    head_commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
         check=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
     ).stdout.strip()
 
-    # Optional sanity check: ensure it matches the SEMVER_REGEX
-    # Otherwise raise an error or return None
-    if not SEMVER_REGEX.match(tag):
-        raise ValueError(f"Current tag '{tag}' is not a valid semantic version.")
+    versions: list[dict] = get_semantic_versions()
+    matching_semantic_versions = list(filter(lambda x: x["commit"] == head_commit, versions))
 
-    return tag
+    if len(matching_semantic_versions) > 1:
+        raise RuntimeError("Multiple semantic versions corresponding to this commit!")
+
+    if matching_semantic_versions:
+        return matching_semantic_versions[0]["tag"]
+
+    raise RuntimeError(f"HEAD commit ({head_commit}) does not correspond to a semantic version.")
 
 
-def get_remote_most_recent_semantic_version():
-    """
-    Fetches the tag references from 'origin', parses them as semantic versions,
-    and returns the highest tag (e.g. 'v1.2.3') by semantic version order.
-    If no valid semantic tags exist, returns None.
-    """
-    # Grab tags from origin; each line looks like:
-    #   <commit-hash>  refs/tags/<tagname>
-    #
-    # For annotated tags, you might see an additional line for ^{} references. We'll skip those.
+def get_semantic_versions():
     tags_output = subprocess.run(
-        ["git", "ls-remote", "--tags", "origin"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+        ["git", "ls-remote", "--tags", "origin"],
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
     ).stdout.strip()
 
-    # Parse out only valid semantic versions
     valid_versions = []
     for line in tags_output.splitlines():
         commit_hash, ref = line.split()
-        # For example, ref == "refs/tags/v1.2.3"
         tagname = ref.replace("refs/tags/", "")
 
         # Skip "tag^{}" lines
@@ -112,10 +101,22 @@ def get_remote_most_recent_semantic_version():
 
         # Check if the tag is a valid semver
         if SEMVER_REGEX.match(tagname):
-            valid_versions.append(tagname)
+            valid_versions.append({"commit": commit_hash, "tag": tagname})
+
+    return valid_versions
+
+
+def get_most_recent_semantic_version():
+    """
+    Fetches the tag references from 'origin', parses them as semantic versions,
+    and returns the highest tag (e.g. 'v1.2.3') by semantic version order.
+    If no valid semantic tags exist, returns None.
+    """
+
+    valid_versions = get_semantic_versions()
 
     if not valid_versions:
-        return None
+        raise RuntimeError("There are no semantic versions available.")
 
     # Sort versions by major/minor/patch so we can pick the highest
     # We can do a naive approach here by splitting on '.' and comparing, or use the same regex captures
@@ -125,8 +126,8 @@ def get_remote_most_recent_semantic_version():
         # group(1)=major, group(2)=minor, group(3)=patch
         return tuple(map(int, m.groups()[:3]))  # ignore pre-release for a straightforward approach
 
-    valid_versions.sort(key=lambda ver: parse_semver_str(ver))
-    most_recent = valid_versions[-1]
+    valid_versions.sort(key=lambda ver: parse_semver_str(ver["tag"]))
+    most_recent = valid_versions[-1]["tag"]
 
     return most_recent
 
@@ -185,10 +186,10 @@ def check_studio_upgrade_status(
     git_fetch()
 
     # 2) Decide which type of versioning to compare
-    if is_on_a_semantic_version_tag():
+    if is_on_a_semantic_version():
         # If we are on a semantic version, only upgrade on official releases
-        local_version = get_local_semantic_version()
-        newest_version = get_remote_most_recent_semantic_version() or local_version
+        local_version = get_current_semantic_version()
+        newest_version = get_most_recent_semantic_version() or local_version
     elif is_on_main_branch():
         # If on main, we just track commits
         local_version = get_local_commit()

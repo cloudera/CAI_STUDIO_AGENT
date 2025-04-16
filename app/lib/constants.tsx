@@ -60,9 +60,9 @@ export const COMPATIBILITY_WARNING_2_0_47: React.ReactNode = (
  */
 export const ENTITLEMENT_WARNING_ML_ENABLE_COMPOSABLE_AMPS: React.ReactNode = (
   <>
-    Agent Studio is running without the <b>ML_ENABLE_COMPOSABLE_AMPS</b> entitlement enabled for
+    Agent Studio is running without the <b>AI Studios</b> entitlement enabled for
     your account. This may cause degraded performance of deployed workflows. Please work with your
-    administrator to enable the <b>ML_ENABLE_COMPOSABLE_AMPS</b> entitlement.
+    administrator to enable the <b>AI Studios</b> entitlement.
   </>
 );
 

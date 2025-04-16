@@ -1,3 +1,8 @@
+"""
+Useful to search the internet about a given topic and return relevant results.
+"""
+
+
 import json
 import requests
 from typing import Type

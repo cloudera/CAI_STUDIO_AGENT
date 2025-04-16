@@ -1,4 +1,9 @@
-# File: tool.py
+"""
+This tool fetches portfolio data including stocks, bonds and cash holdings for a given customer ID. Currently returns placeholder data.
+Returns:
+    str: json string with customer portfolio data containing stocks, bonds and cash holdings
+"""
+
 
 from textwrap import dedent
 from typing import Literal, Type

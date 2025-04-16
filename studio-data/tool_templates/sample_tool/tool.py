@@ -1,6 +1,8 @@
 """
 Sample agent studio tool to showcase
-tool making capabilities.
+tool making capabilities. Any information added to the docstring
+of a tool template will be used for the tool's description, if the
+employed agent frameork supports tool descriptions.
 """
 
 from pydantic import BaseModel, Field

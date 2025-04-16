@@ -1,3 +1,5 @@
+"""Reads and extracts content from the given file."""
+
 from textwrap import dedent
 from typing import Type
 from pydantic import BaseModel, Field
@@ -30,7 +32,6 @@ def run_tool(
 ):
     file_path = args.file_path
     
-    """Reads and extracts content from the given file."""
     if not os.path.exists(file_path):
         return f"Error: File not found at path {file_path}"
 

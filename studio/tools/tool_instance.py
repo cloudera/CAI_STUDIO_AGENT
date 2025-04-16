@@ -7,6 +7,7 @@ from studio.api import *
 from cmlapi import CMLServiceApi
 import json
 import os
+import ast
 import studio.tools.utils as tool_utils
 from studio.cross_cutting.global_thread_pool import get_thread_pool
 import studio.consts as consts
@@ -202,13 +203,11 @@ def _get_tool_instance_impl(request: GetToolInstanceRequest, session: DbSession)
     with open(os.path.join(tool_instance_dir, tool_instance.python_requirements_file_name), "r") as f:
         tool_requirements = f.read()
 
-    # is_valid, validation_errors = tool_utils.validate_tool_code(tool_code)
     user_params = []
     try:
         user_params = tool_utils.extract_user_params_from_code(tool_code)
     except Exception as e:
         is_valid = False
-        # validation_errors.append(f"Error extracting user parameters from python code: {e}")
 
     tool_image_uri = ""
     if tool_instance.tool_image_path:
@@ -225,7 +224,7 @@ def _get_tool_instance_impl(request: GetToolInstanceRequest, session: DbSession)
             tool_metadata=json.dumps({"user_params": user_params}),
             is_valid=True,
             tool_image_uri=tool_image_uri,
-            tool_description="",
+            tool_description=ast.get_docstring(ast.parse(tool_code)),
             is_venv_tool=tool_instance.is_venv_tool,
         )
     )
@@ -268,13 +267,11 @@ def _list_tool_instances_impl(request: ListToolInstancesRequest, session: DbSess
         with open(os.path.join(tool_instance_dir, tool_instance.python_requirements_file_name), "r") as f:
             tool_requirements = f.read()
 
-        # is_valid, validation_errors = tool_utils.validate_tool_code(tool_code)
         user_params = []
         try:
             user_params = tool_utils.extract_user_params_from_code(tool_code)
         except Exception as e:
             is_valid = False
-            # validation_errors.append(f"Error extracting user parameters from python code: {e}")
 
         tool_image_uri = ""
         if tool_instance.tool_image_path:
@@ -291,7 +288,7 @@ def _list_tool_instances_impl(request: ListToolInstancesRequest, session: DbSess
                 tool_metadata=json.dumps({"user_params": user_params}),
                 is_valid=True,
                 tool_image_uri=tool_image_uri,
-                tool_description="",
+                tool_description=ast.get_docstring(ast.parse(tool_code)),
                 is_venv_tool=tool_instance.is_venv_tool,
             )
         )

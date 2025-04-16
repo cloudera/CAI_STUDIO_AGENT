@@ -1,9 +1,15 @@
 import os
 import unittest
+import pytest
+from pydantic import BaseModel
+from unittest.mock import patch, MagicMock
 from typing import Union
+from cmlapi import CMLServiceApi
+import cmlapi
 
 from studio.cross_cutting.utils import (
-    get_job_by_name
+    get_job_by_name,
+    deploy_cml_model
 )
 
 
@@ -83,4 +89,56 @@ class TestGetJobByName(unittest.TestCase):
                     self.assertIsNotNone(result, msg="Expected a job but got None")
                     self.assertEqual(result.name, case["expected"],
                                      msg=f"Expected job name '{case['expected']}' but got '{result.name}'")
+
+class IDResponse(BaseModel):
+    id: str
+
+
+@patch("studio.cross_cutting.utils.get_cml_project_number_and_id")
+def test_deploy_cml_model_happy_path(mock_proj_number):
+    mock_proj_number.return_value = "number", "proj_id"
+    cml = MagicMock(spec=CMLServiceApi)
+    cml.create_model.return_value = IDResponse(id="model_id")
+    out = deploy_cml_model(
+        cml, None, None, None,
+        None, None, None, None, "some/root/dir"
+    )
+    cml.create_model_build.assert_called_with(
+        cmlapi.CreateModelBuildRequest(
+            project_id="proj_id",
+            model_id="model_id",
+            comment=None,
+            file_path=None,
+            function_name=None,
+            runtime_identifier=None,
+            auto_deployment_config=None,
+            auto_deploy_model=True,
+            model_root_dir="some/root/dir",
+        ),  project_id='proj_id', model_id='model_id'
+    )
+
+
+@patch("studio.cross_cutting.utils.get_cml_project_number_and_id")
+def test_deploy_cml_model_no_root_dir(mock_proj_number):
+    mock_proj_number.return_value = "number", "proj_id"
+    cml = MagicMock(spec=CMLServiceApi)
+    cml.create_model.return_value = IDResponse(id="model_id")
+    out = deploy_cml_model(
+        cml, None, None, None,
+        None, None, None, None, None
+    )
+    cml.create_model_build.assert_called_with(
+        cmlapi.CreateModelBuildRequest(
+            project_id="proj_id",
+            model_id="model_id",
+            comment=None,
+            file_path=None,
+            function_name=None,
+            runtime_identifier=None,
+            auto_deployment_config=None,
+            auto_deploy_model=True,
+        ),  project_id='proj_id', model_id='model_id'
+    )
+
+
 

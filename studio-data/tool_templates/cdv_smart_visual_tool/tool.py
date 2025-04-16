@@ -1,3 +1,14 @@
+"""
+This function creates a visual in CDV(Cloudera Data Visualization) from a dataset.
+Visual means an actual visualization like a table, chart, etc.
+
+Each item in the `columns` list should be a dictionary with the following keys:
+- `column_name`: The name of the column to be used in the visual. This is a mandatory field.
+- `aggregate_function`: The aggregate function to be applied to the column. Valid values of aggregate function are: `sum`, `avg`, `min`, `max`, `count`. This is an optional field.
+
+The function returns the ID & url of the created visual.
+"""
+
 import json
 from textwrap import dedent
 from typing import List, Dict, Optional, Literal, Type
@@ -24,16 +35,6 @@ def run_tool(
     config: UserParameters,
     args: ToolParameters,
 ):
-    """
-    This function creates a visual in CDV(Cloudera Data Visualization) from a dataset.
-    Visual means an actual visualization like a table, chart, etc.
-
-    Each item in the `columns` list should be a dictionary with the following keys:
-    - `column_name`: The name of the column to be used in the visual. This is a mandatory field.
-    - `aggregate_function`: The aggregate function to be applied to the column. Valid values of aggregate function are: `sum`, `avg`, `min`, `max`, `count`. This is an optional field.
-
-    The function returns the ID & url of the created visual.
-    """
     dataset_id = args.dataset_id
     columns = args.columns
     title = args.title

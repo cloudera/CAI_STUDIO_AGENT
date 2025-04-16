@@ -5,6 +5,8 @@ import { Layout, Menu, Typography, Popover } from 'antd';
 import { useRouter, usePathname } from 'next/navigation';
 import '../globals.css';
 import FeedbackContent from './FeedbackContent';
+import * as semver from 'semver';
+import { useCheckStudioUpgradeStatusQuery } from '../lib/crossCuttingApi';
 
 const { Text, Title } = Typography;
 const { Header } = Layout;
@@ -12,6 +14,11 @@ const { Header } = Layout;
 const StudioTopNav: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
+  const { data: upgradeStatus } = useCheckStudioUpgradeStatusQuery();
+
+  const isValidSemver = (version: string | undefined) => {
+    return version && Boolean(semver.valid(version));
+  };
 
   const menuItems = [
     { key: '/workflows', label: 'Agentic Workflows' },
@@ -70,22 +77,53 @@ const StudioTopNav: React.FC = () => {
         {/* Flex layout of the image logo and the text logo */}
         <Layout
           style={{
-            alignItems: 'center',
+            alignItems: 'top',
             justifyContent: 'flex-start',
             display: 'flex',
+            height: '100%',
             flexDirection: 'row',
             backgroundColor: 'transparent',
-            gap: '4px',
-            flexGrow: 0,
+            gap: 12,
+            flexGrow: 1,
           }}
         >
-          <Title
-            level={1}
-            style={{ fontSize: 20, color: 'white', fontWeight: 400 }}
-            className="font-sans"
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'flex-end',
+            }}
           >
-            Agent Studio
-          </Title>
+            <Title
+              level={1}
+              style={{
+                fontSize: 20,
+                color: 'white',
+                fontWeight: 400,
+                padding: 0,
+                margin: 0,
+                flexGrow: 0,
+              }}
+              className="font-sans"
+            >
+              Agent Studio
+            </Title>
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              height: '100%',
+              flexDirection: 'column',
+              justifyContent: 'flex-end',
+            }}
+          >
+            <Title
+              level={4}
+              style={{ padding: 0, margin: 0, fontWeight: 200, fontSize: 14, flexGrow: 0 }}
+            >
+              {isValidSemver(upgradeStatus?.local_version) && <i>{upgradeStatus?.local_version}</i>}
+            </Title>
+          </div>
         </Layout>
 
         {/* Navigation bar menu items */}

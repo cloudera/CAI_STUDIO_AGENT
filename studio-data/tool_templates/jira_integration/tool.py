@@ -1,3 +1,8 @@
+"""
+Executes specified actions on Jira such as searching, creating, updating, and deleting issues.
+"""
+
+
 from typing import Literal, Optional, Dict
 from pydantic import Field
 from typing import Literal, Type, Optional
@@ -31,9 +36,6 @@ def run_tool(
     issue_id = args.issue_id
     update_data = args.update_data
 
-    """
-    Jira Integration Tool: Executes specified actions on Jira such as searching, creating, updating, and deleting issues.
-    """
     try:
         # Initialize Jira client
         jira_client = JIRA(server=config.jira_url, basic_auth=(config.user_email, config.auth_token))

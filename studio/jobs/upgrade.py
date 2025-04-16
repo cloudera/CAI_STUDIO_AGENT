@@ -10,8 +10,8 @@ from studio.consts import (
 from studio.cross_cutting.utils import get_application_by_name, get_job_by_name
 from studio.api import *
 from studio.cross_cutting.upgrades import (
-    is_on_a_semantic_version_tag,
-    get_remote_most_recent_semantic_version,
+    is_on_a_semantic_version,
+    get_most_recent_semantic_version,
     git_fetch,
     get_local_commit,
 )
@@ -61,7 +61,7 @@ def upgrade_studio(cml: CMLServiceApi = None) -> UpgradeStudioResponse:
     print(f"Attempting to pull new Agent Studio version...")
     print(f"Current commit: {get_local_commit()}")
 
-    if is_on_a_semantic_version_tag():
+    if is_on_a_semantic_version():
         print("This Agent Studio is on a semantic version tag.")
         try:
             # 1) Fetch remote so we get the latest tags
@@ -69,7 +69,7 @@ def upgrade_studio(cml: CMLServiceApi = None) -> UpgradeStudioResponse:
             git_fetch()
 
             # 2) Get the newest remote semantic version tag
-            newest_tag = get_remote_most_recent_semantic_version()
+            newest_tag = get_most_recent_semantic_version()
             if not newest_tag:
                 print("No valid semantic tags exist on remote.")
             else:

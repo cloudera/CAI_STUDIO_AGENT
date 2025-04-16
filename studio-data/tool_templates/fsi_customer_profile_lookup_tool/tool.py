@@ -1,4 +1,10 @@
-# File: tool.py
+"""
+This tool fetches Customer profile data which includes their account information and their previously specified investment preferences.
+Returns:
+    str: json string with customer profile data containing customer info and investment preferences including risk profile, investment horizon,
+            and financial information.
+"""
+
 
 from textwrap import dedent
 from typing import Literal, Type

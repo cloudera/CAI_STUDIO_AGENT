@@ -1,3 +1,10 @@
+"""
+Fetches and returns the main text content of a website using BeautifulSoup.
+:param url: The URL of the website to scrape.
+:return: The raw text content as a string.
+"""
+        
+        
 from typing import Type
 from pydantic import BaseModel, Field
 from pydantic import BaseModel as StudioBaseTool

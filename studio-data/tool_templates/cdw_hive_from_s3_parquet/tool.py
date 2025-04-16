@@ -1,5 +1,7 @@
-# File: tool.py
-
+"""This tool is used for loading an existing parquet file in s3 as a table accessible in CDW.
+It will return some sample data from the created table to prove the table exists.
+"""
+        
 from textwrap import dedent
 from typing import Dict, List, Optional, Type
 from pydantic import BaseModel, Field
@@ -47,9 +49,10 @@ def run_tool(
     table_name = args.table_name
     s3_path = args.s3_path
     
-    os.environ["WORKLOAD_PASSWORD"] = config.workload_pass
-    os.environ["HADOOP_USER_NAME"] = config.workload_user
-    conn = cmldata.get_connection(config.hive_cai_data_connection_name)
+    conn = cmldata.get_connection(config.hive_cai_data_connection_name, parameters={
+        "USERNAME": config.workload_user,
+        "PASSWORD": config.workload_pass
+    })
 
     parquet_path = s3_path
     schema_0_path = parquet_path+'/0.parquet'

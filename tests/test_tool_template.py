@@ -126,10 +126,9 @@ def test_list_tool_templates_file_read_error(mock_join, mock_open):
 
 
 # Tests for get_tool_template
-@patch("studio.tools.utils.validate_tool_code")
 @patch("builtins.open", new_callable=MagicMock)
 @patch("os.path.join")
-def test_get_tool_template(mock_join, mock_open, mock_validate):
+def test_get_tool_template(mock_join, mock_open):
     test_dao = AgentStudioDao(engine_url="sqlite:///:memory:", echo=False)
 
     # Insert a mock tool template into the database
@@ -161,9 +160,6 @@ class NewTool(StudioBaseTool):
 package==1.0
 """   
     ]
-
-    # Mock validate_tool_template_code to return True
-    mock_validate.return_value = (True, [])
 
     # Create a request for the tool template
     req = GetToolTemplateRequest(tool_template_id="t1")
@@ -212,7 +208,6 @@ def test_get_tool_template_missing_python_file(mock_join, mock_open):
 @patch("os.makedirs")
 @patch("builtins.open")
 @patch("os.path.join")
-@patch("studio.tools.utils.validate_tool_code")
 @patch("studio.db.dao.AgentStudioDao")
 @patch("studio.tools.tool_template.cc_utils.create_slug_from_name")
 @patch("studio.tools.tool_template.cc_utils.get_random_compact_string")
@@ -222,7 +217,6 @@ def test_add_tool_template_success(
     mock_get_random_string, 
     mock_create_slug, 
     mock_dao, 
-    mock_validate, 
     mock_join, 
     mock_open, 
     mock_makedirs
@@ -237,9 +231,6 @@ def test_add_tool_template_success(
 
     # Mock the database query for duplicates to return None
     test_session.query.return_value.filter_by.return_value.first.return_value = None
-
-    # Mock validate_tool_template_code to return valid
-    mock_validate.return_value = (True, [])
 
     # Mock file operations
     # mock_open.return_value.__enter__.return_value.write = MagicMock()

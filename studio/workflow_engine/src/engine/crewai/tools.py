@@ -458,7 +458,7 @@ def get_venv_tool(tool_instance: input_types.Input__ToolInstance, user_params_kv
         python_executable: str = get_venv_tool_python_executable(tool_instance)
         python_file: str = os.path.join(tool_instance.source_folder_path, tool_instance.python_code_file_name)
         name: str = tool_instance.name
-        description: str = ""  # eventually tool_instance.description
+        description: str = ast.get_docstring(ast.parse(tool_code))
         args_schema: Type[BaseModel] = get_venv_tool_tool_parameters_type(tool_code)
 
         def _run(self, *args, **kwargs):
@@ -479,12 +479,14 @@ def get_venv_tool(tool_instance: input_types.Input__ToolInstance, user_params_kv
                 return f"Tool call failed: {e}"
             if result.returncode != 0:
                 return f"Error: {result.stderr or 'No error details found'}"
+            if result.stdout:
+                output = str(result.stdout)
+                if self.output_key and self.output_key in output:
+                    output = output.split(self.output_key, 1)[-1].strip()
+                return output
             if result.stderr:
-                return f"Error: {result.stderr or 'No error details found'}"
-            output = str(result.stdout)
-            if self.output_key and self.output_key in output:
-                output = output.split(self.output_key, 1)[-1].strip()
-            return output
+                return f"stderr: {result.stderr or 'No error details found'}\n\n\nstdout: {result.stdout}"
+            return f"Error running tool - no output"
 
     tool = AgentStudioCrewAIVenvTool()
 

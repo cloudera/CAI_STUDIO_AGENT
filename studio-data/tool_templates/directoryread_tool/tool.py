@@ -1,3 +1,7 @@
+"""
+Reads all directory content, non-recursive, in a given directory.
+"""
+
 from typing import Optional, Type
 from textwrap import dedent
 from pydantic import BaseModel, Field

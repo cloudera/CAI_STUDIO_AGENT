@@ -1,3 +1,45 @@
+"""
+Tool for handling PDF-related operations, such as converting Markdown to PDF and reading PDF content.
+This tool supports two distinct actions:
+- `readpdf`: Extracts text content from a PDF file.
+- `markdown_to_pdf`: Converts Markdown content (from a file or raw string) into a styled PDF document.
+The tool is designed to be versatile, handling both simple and advanced Markdown-to-PDF conversions
+with optional CSS styling and Markdown extensions for customization.
+Args:
+    action_type (Literal["readpdf", "markdown_to_pdf"]): Specifies the operation to perform.
+    pdf (str): Path to the PDF file. Output file for 'markdown_to_pdf' or input file for 'readpdf'.
+    raw (Optional[str]): Raw Markdown content for 'markdown_to_pdf'. If provided, this takes precedence.
+    md (Optional[str]): Path to the input Markdown file for 'markdown_to_pdf'.
+    css (Optional[str]): Path to the CSS file for styling the generated PDF in 'markdown_to_pdf'.
+    base_url (Optional[str]): Base URL for relative paths (e.g., images) in 'markdown_to_pdf'.
+    extras (Optional[List[str]]): Markdown extensions for advanced rendering in 'markdown_to_pdf'.
+
+Returns:
+    str: Success message or extracted content based on the action type.
+
+Action Type Details:
+-------------------
+1. **`readpdf`**:
+    - Reads the content of a PDF file and extracts the text from all pages.
+    - **Parameters**:
+        - `pdf`: Path to the input PDF file.
+    - **Output**:
+        - Extracted text content from the PDF.
+
+2. **`markdown_to_pdf`**:
+    - Converts Markdown content to a PDF file.
+    - **Parameters**:
+        - `pdf`: Output PDF file path (required).
+        - `raw`: Raw Markdown content (optional, used if no file is provided).
+        - `md`: Path to a Markdown file (optional, used if no raw Markdown is provided).
+        - `css`: Path to an optional CSS file for styling (optional).
+        - `base_url`: Base URL for relative paths in the Markdown content (e.g., images).
+        - `extras`: List of optional Markdown extensions for advanced features.
+    - **Output**:
+        - Generates a PDF at the specified output path.
+"""
+
+
 from textwrap import dedent
 from typing import Literal, Optional, List, Type
 from pydantic import BaseModel, Field

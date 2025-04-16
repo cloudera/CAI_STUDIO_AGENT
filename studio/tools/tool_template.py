@@ -13,6 +13,7 @@ from studio.proto.utils import is_field_set
 from cmlapi import CMLServiceApi
 import json
 import shutil
+import ast
 
 
 def list_tool_templates(
@@ -45,12 +46,7 @@ def list_tool_templates(
                     is_valid = False
 
                 # Validate the Python code if successfully read
-                # NOTE: with tools v2, there is no need to validate tool code. Tool code
-                # is the responsibility of the tool developer. We capture stdout in venv tools
-                # so error handling is much easier.
-                # validation_errors = []
-                # if python_code:
-                #     is_valid, validation_errors = tool_utils.validate_tool_code(python_code)
+                # TODO: build tool validation code for v2
 
                 # Attempt to read the Python requirements
                 try:
@@ -79,7 +75,7 @@ def list_tool_templates(
                         is_valid=is_valid,
                         pre_built=template.pre_built,
                         tool_image_uri=tool_image_uri,
-                        tool_description="",
+                        tool_description=ast.get_docstring(ast.parse(python_code)),
                         workflow_template_id=template.workflow_template_id,
                         is_venv_tool=template.is_venv_tool,
                     )
@@ -119,11 +115,6 @@ def get_tool_template(
             except Exception:
                 is_valid = False
 
-            # # Validate the Python code if successfully read
-            # validation_errors = []
-            # if python_code:
-            #     is_valid, validation_errors = tool_utils.validate_tool_code(python_code)
-
             # Attempt to read the Python requirements
             try:
                 python_requirements_file_path = os.path.join(
@@ -161,7 +152,7 @@ def get_tool_template(
                     is_valid=is_valid,
                     pre_built=template.pre_built,
                     tool_image_uri=tool_image_uri,
-                    tool_description="",
+                    tool_description=ast.get_docstring(ast.parse(python_code)),
                     workflow_template_id=template.workflow_template_id,
                     is_venv_tool=template.is_venv_tool,
                 )

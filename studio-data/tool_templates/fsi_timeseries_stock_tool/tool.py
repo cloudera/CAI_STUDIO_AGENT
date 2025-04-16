@@ -1,3 +1,13 @@
+"""
+Fetch historical price data for multiple stocks over the last year.
+Args:
+    tickers_list: List of stock ticker symbols
+    
+Returns:
+    str: Status of the timeseries lookup of selected stock tickers
+"""
+
+
 from typing import Type, List
 from pydantic import BaseModel, Field
 from pydantic import BaseModel as StudioBaseTool

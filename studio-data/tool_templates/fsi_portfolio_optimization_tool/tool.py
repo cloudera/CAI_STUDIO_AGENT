@@ -1,3 +1,11 @@
+"""
+Optimize portfolio allocation based on risk tolerance and a list of proposed stock tickers
+This tool takes portfolio data and risk tolerance as input and returns optimized portfolio allocations. Currently returns placeholder data.
+Returns:
+    str: json string with reccomended customer portfolio data containing stocks, bonds and cash holdings
+"""
+
+
 from typing import Type, List
 from pydantic import BaseModel, Field
 from pydantic import BaseModel as StudioBaseTool

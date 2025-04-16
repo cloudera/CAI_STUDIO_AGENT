@@ -1,3 +1,14 @@
+"""
+Posts a message with optional multiple file attachments to a specified Slack username or channel name.
+Args:
+    recipient (str): The Slack channel name (e.g., 'general' or '#general') or user email (e.g., 'user@example.com').
+    message (Optional[str]): The message content to send. Defaults to None if no message is provided.
+    file_paths (Optional[List[str]]): A list of file paths to attach to the message.
+Returns:
+    str: Success or error message.
+"""
+
+
 from textwrap import dedent
 from typing import Type, Literal,Optional, List
 from pydantic import BaseModel, Field
