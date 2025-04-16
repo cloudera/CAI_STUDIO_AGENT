@@ -40,12 +40,14 @@ cleanup() {
   pkill -f "npm run start"
 
   # Kill our workflow runner processes.
-  for pid in "${RUNNER_PIDS[@]}"; do
-    if ps -p "$pid" > /dev/null; then
-      echo "Killing workflow runner with PID: $pid"
-      kill "$pid"
-    fi
-  done
+  if [ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]; then
+    for pid in "${RUNNER_PIDS[@]}"; do
+      if ps -p "$pid" > /dev/null; then
+        echo "Killing workflow runner with PID: $pid"
+        kill "$pid"
+      fi
+    done
+  fi
 
   exit
 }
@@ -58,19 +60,21 @@ trap cleanup SIGINT SIGTERM
 echo "Current AGENT_STUDIO_SERVICE_IP: $AGENT_STUDIO_SERVICE_IP"
 
 # Spin up workflow runners.
-DEFAULT_WORKFLOW_RUNNER_STARTING_PORT=51000
-for (( i=0; i<AGENT_STUDIO_NUM_WORKFLOW_RUNNERS; i++ )); do
-  PORT_NUM=$((DEFAULT_WORKFLOW_RUNNER_STARTING_PORT + i))
-  echo "Starting workflow runner on port $PORT_NUM..."
-  
-  # Launch the runner using the virtual environment's python
-  studio/workflow_engine/.venv/bin/python -m uvicorn \
-    studio.workflow_engine.src.engine.entry.fastapi:app \
-    --port "$PORT_NUM" &
-  
-  # Save the process PID.
-  RUNNER_PIDS+=($!)
-done
+if [ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]; then
+  DEFAULT_WORKFLOW_RUNNER_STARTING_PORT=51000
+  for (( i=0; i<AGENT_STUDIO_NUM_WORKFLOW_RUNNERS; i++ )); do
+    PORT_NUM=$((DEFAULT_WORKFLOW_RUNNER_STARTING_PORT + i))
+    echo "Starting workflow runner on port $PORT_NUM..."
+    
+    # Launch the runner using the virtual environment's python
+    studio/workflow_engine/.venv/bin/python -m uvicorn \
+      studio.workflow_engine.src.engine.entry.fastapi:app \
+      --port "$PORT_NUM" &
+    
+    # Save the process PID.
+    RUNNER_PIDS+=($!)
+  done
+fi
 
 
 # If we are starting up the main app (not the workflow app), then we also want to 
