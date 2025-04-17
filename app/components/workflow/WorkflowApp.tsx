@@ -15,6 +15,7 @@ import {
   updatedCurrentEvents,
   updatedCurrentPhoenixProjectId,
   updatedIsRunning,
+  clearedWorkflowApp,
 } from '@/app/workflows/workflowAppSlice';
 import {
   updatedEditorWorkflowDescription,
@@ -374,6 +375,40 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
       };
     }
   }, [workflow?.is_ready, refetchWorkflow]);
+
+  // Add effect to reset state when workflow changes
+  useEffect(() => {
+    dispatch(clearedWorkflowApp());
+    setSliderValue(0);
+    setShowMonitoring(renderMode === 'studio');
+    
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    if (workflowPollingRef.current) {
+      clearInterval(workflowPollingRef.current);
+      workflowPollingRef.current = null;
+    }
+  }, [workflow?.workflow_id]); // Use workflow_id instead of id
+
+  // Keep the existing cleanup effect as well
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      if (workflowPollingRef.current) {
+        clearInterval(workflowPollingRef.current);
+        workflowPollingRef.current = null;
+      }
+      
+      dispatch(clearedWorkflowApp());
+      setSliderValue(0);
+      setShowMonitoring(renderMode === 'studio');
+    };
+  }, []);
 
   // Don't display anything if workflowId is nonexistent
   if (!workflow) {

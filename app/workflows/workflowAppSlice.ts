@@ -102,9 +102,15 @@ export const workflowAppSlice = createSlice({
     updatedCurrentPhoenixProjectId: (state, action: PayloadAction<string>) => {
       state.currentPhoenixProjectId = action.payload;
     },
-    clearedWorkflowApp: (state, action: PayloadAction<void>) => {
+    clearedWorkflowApp: (state) => {
+      state.isRunning = false;
+      state.currentTraceId = undefined;
+      state.currentEvents = [];
+      state.currentEventIndex = 0;
+      state.crewOutput = undefined;
       state.appStandard.inputs = {};
       state.appChat.messages = [];
+      state.appChat.userInput = '';
     },
     clearedChatMessages: (state) => {
       state.appChat.messages = [];
