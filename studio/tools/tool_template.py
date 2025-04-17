@@ -64,6 +64,11 @@ def list_tool_templates(
                 if template.tool_image_path:
                     tool_image_uri = os.path.relpath(template.tool_image_path, consts.DYNAMIC_ASSETS_LOCATION)
 
+                try:
+                    tool_description = ast.get_docstring(ast.parse(python_code)) if python_code else ""
+                except Exception:
+                    tool_description = "Unable to read tool description"
+
                 response_templates.append(
                     ToolTemplate(
                         id=template.id,
@@ -75,7 +80,7 @@ def list_tool_templates(
                         is_valid=is_valid,
                         pre_built=template.pre_built,
                         tool_image_uri=tool_image_uri,
-                        tool_description=ast.get_docstring(ast.parse(python_code)),
+                        tool_description=tool_description,
                         workflow_template_id=template.workflow_template_id,
                         is_venv_tool=template.is_venv_tool,
                     )
@@ -140,6 +145,11 @@ def get_tool_template(
             if template.tool_image_path:
                 tool_image_uri = os.path.relpath(template.tool_image_path, consts.DYNAMIC_ASSETS_LOCATION)
 
+            try:
+                tool_description = ast.get_docstring(ast.parse(python_code)) if python_code else ""
+            except Exception:
+                tool_description = "Unable to read tool description"
+
             # Convert the template to protobuf and set file content
             return GetToolTemplateResponse(
                 template=ToolTemplate(
@@ -152,7 +162,7 @@ def get_tool_template(
                     is_valid=is_valid,
                     pre_built=template.pre_built,
                     tool_image_uri=tool_image_uri,
-                    tool_description=ast.get_docstring(ast.parse(python_code)),
+                    tool_description=tool_description,
                     workflow_template_id=template.workflow_template_id,
                     is_venv_tool=template.is_venv_tool,
                 )

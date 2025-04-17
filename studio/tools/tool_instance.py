@@ -213,6 +213,11 @@ def _get_tool_instance_impl(request: GetToolInstanceRequest, session: DbSession)
     if tool_instance.tool_image_path:
         tool_image_uri = os.path.relpath(tool_instance.tool_image_path, consts.DYNAMIC_ASSETS_LOCATION)
 
+    try:
+        tool_description = ast.get_docstring(ast.parse(tool_code)) if tool_code else ""
+    except Exception:
+        tool_description = "Unable to read tool description"
+
     return GetToolInstanceResponse(
         tool_instance=ToolInstance(
             id=tool_instance.id,
@@ -224,7 +229,7 @@ def _get_tool_instance_impl(request: GetToolInstanceRequest, session: DbSession)
             tool_metadata=json.dumps({"user_params": user_params}),
             is_valid=True,
             tool_image_uri=tool_image_uri,
-            tool_description=ast.get_docstring(ast.parse(tool_code)),
+            tool_description=tool_description,
             is_venv_tool=tool_instance.is_venv_tool,
         )
     )
@@ -277,6 +282,11 @@ def _list_tool_instances_impl(request: ListToolInstancesRequest, session: DbSess
         if tool_instance.tool_image_path:
             tool_image_uri = os.path.relpath(tool_instance.tool_image_path, consts.DYNAMIC_ASSETS_LOCATION)
 
+        try:
+            tool_description = ast.get_docstring(ast.parse(tool_code)) if tool_code else ""
+        except Exception:
+            tool_description = "Unable to read tool description"
+
         tool_instances_response.append(
             ToolInstance(
                 id=tool_instance.id,
@@ -288,7 +298,7 @@ def _list_tool_instances_impl(request: ListToolInstancesRequest, session: DbSess
                 tool_metadata=json.dumps({"user_params": user_params}),
                 is_valid=True,
                 tool_image_uri=tool_image_uri,
-                tool_description=ast.get_docstring(ast.parse(tool_code)),
+                tool_description=tool_description,
                 is_venv_tool=tool_instance.is_venv_tool,
             )
         )
