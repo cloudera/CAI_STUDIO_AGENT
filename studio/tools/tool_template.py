@@ -189,11 +189,24 @@ def add_tool_template(
         root_tool_dir = consts.TOOL_TEMPLATE_CATALOG_LOCATION
         tool_dir = os.path.join(root_tool_dir, tool_dir_basename)
 
-        # Check for uniqueness of tool template name before creating files
+        # Check for uniqueness of tool template name considering global templates
         with dao.get_session() as session:
-            existing_template = session.query(db_model.ToolTemplate).filter_by(name=request.tool_template_name).first()
+            existing_template = (
+                session.query(db_model.ToolTemplate)
+                .filter(
+                    db_model.ToolTemplate.name == request.tool_template_name,
+                    (
+                        (db_model.ToolTemplate.workflow_template_id == request.workflow_template_id) |
+                        (db_model.ToolTemplate.workflow_template_id.is_(None))
+                    )
+                )
+                .first()
+            )
             if existing_template:
-                raise ValueError("A tool template with this name already exists.")
+                if existing_template.workflow_template_id is None:
+                    raise ValueError("A global tool template with this name already exists.")
+                else:
+                    raise ValueError("A tool template with this name already exists for this workflow template.")
 
         # Create the .tool directory and tool template folder
         try:
@@ -265,16 +278,24 @@ def update_tool_template(
             # Update database fields
             if request.tool_template_name:
                 tool_template.name = request.tool_template_name
+                # Check for uniqueness considering global templates
                 existing_template = (
                     session.query(db_model.ToolTemplate)
                     .filter(
                         db_model.ToolTemplate.name == request.tool_template_name,
                         db_model.ToolTemplate.id != request.tool_template_id,
+                        (
+                            (db_model.ToolTemplate.workflow_template_id == request.workflow_template_id) |
+                            (db_model.ToolTemplate.workflow_template_id.is_(None))
+                        )
                     )
-                    .one_or_none()
+                    .first()
                 )
                 if existing_template:
-                    raise ValueError(f"A tool template with the name '{request.tool_template_name}' already exists.")
+                    if existing_template.workflow_template_id is None:
+                        raise ValueError("A global tool template with this name already exists.")
+                    else:
+                        raise ValueError("A tool template with this name already exists for this workflow template.")
             if request.tmp_tool_image_path:
                 # Validate temporary image file exists and has valid extension
                 if not os.path.exists(request.tmp_tool_image_path):
