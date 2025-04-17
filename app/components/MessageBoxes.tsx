@@ -143,18 +143,21 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ upgradeStatus, isOpen, setI
 };
 
 const MessageBoxes: React.FC = () => {
-  const { data: defaultModel, refetch: refetchDefaultModel } = useGetDefaultModelQuery();
   const { data: isHealthy } = useHealthCheckQuery();
+  const [hasInitialHealthCheck, setHasInitialHealthCheck] = useState(false);
+  const { data: defaultModel } = useGetDefaultModelQuery(undefined, {
+    skip: !hasInitialHealthCheck
+  });
   const { data: workbench } = useWorkbenchDetailsQuery();
   const { data: upgradeStatus } = useCheckStudioUpgradeStatusQuery();
   const { data: workflowData } = useGetWorkflowDataQuery();
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    if (isHealthy) {
-      refetchDefaultModel();
+    if (isHealthy && !hasInitialHealthCheck) {
+      setHasInitialHealthCheck(true);
     }
-  }, [isHealthy, refetchDefaultModel]);
+  }, [isHealthy]);
 
   const isOutOfDate = (upgradeStatus: CheckStudioUpgradeStatusResponse | undefined) => {
     return upgradeStatus && upgradeStatus.local_version !== upgradeStatus.newest_version;
@@ -162,7 +165,7 @@ const MessageBoxes: React.FC = () => {
 
   const currentWarningMessages = [
     {
-      messageTrigger: workflowData && workflowData?.renderMode === 'studio' && !defaultModel,
+      messageTrigger: hasInitialHealthCheck && workflowData && workflowData?.renderMode === 'studio' && !defaultModel,
       message: NO_DEFAULT_LLM_NOTIFICATION,
     },
   ];
