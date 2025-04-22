@@ -381,8 +381,8 @@ def deploy_workflow(
         # ALSO, there's a fluent bit config volume mount that is in the form of:
         #  "workflow-model-<name>-<8hex>-XXX-XXXX-fluent-bit-config"
         #  which even FURTHER limits our name to 14 characters (!)
-        cml_model_name_internal = collated_input.workflow.name[-13:] + "_" + collated_input.workflow.deployment_id
-        cml_model_name = f"wf_model_{cml_model_name_internal}"
+        cml_model_name_internal = collated_input.workflow.name[:22] + "_" + collated_input.workflow.deployment_id
+        cml_model_name = f"{cml_model_name_internal}"
 
         deployed_workflow_instance_name = f"{collated_input.workflow.name}_{collated_input.workflow.deployment_id}"
 

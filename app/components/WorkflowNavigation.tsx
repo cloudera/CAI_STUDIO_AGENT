@@ -424,21 +424,6 @@ const WorkflowNavigation: React.FC = () => {
               <QuestionCircleOutlined style={{ color: '#666', marginLeft: '8px' }} />
             </Tooltip>
           </Checkbox>
-          <Checkbox
-            checked={bypassAuthenticationForDeployedApplication}
-            onChange={(e) => setBypassAuthenticationForDeployedApplication(e.target.checked)}
-          >
-            Create unauthenticated application
-            <Tooltip
-              title={
-                'If checked, the deployed application will not require authentication. ' +
-                'Creating unauthenticated applications might not be allowed ' +
-                'depending on your workbench configuration.'
-              }
-            >
-              <QuestionCircleOutlined style={{ color: '#666', marginLeft: '8px' }} />
-            </Tooltip>
-          </Checkbox>
         </div>
       </Modal>
     </>

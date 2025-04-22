@@ -315,11 +315,16 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
   const dispatch = useAppDispatch();
 
   const handleCardClick = () => {
-    router.push(`/workflows/view/${workflow?.workflow_id}`);
+    if (sectionType === 'Template') {
+      router.push(`/workflows/view_template/${workflowTemplate?.id}`);
+    } else {
+      router.push(`/workflows/view/${workflow?.workflow_id}`);
+    }
   };
 
-  const handleCreateWorkflowFromTemplate = async () => {
+  const handleCreateWorkflowFromTemplate = async (e: React.MouseEvent) => {
     try {
+      e.stopPropagation();
       const workflowId = await addWorkflow({
         workflow_template_id: workflowTemplate!.id,
         name: `Copy of ${workflowTemplate?.name}`,
@@ -337,8 +342,9 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
     }
   };
 
-  const handleDownloadWorkflowTemplate = async () => {
+  const handleDownloadWorkflowTemplate = async (e: React.MouseEvent) => {
     try {
+      e.stopPropagation();
       setDownloadingTemplate(true);
       const tmp_file_path = await exportWorkflowTemplate({
         id: workflowTemplate!.id,
@@ -419,7 +425,7 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
             e.currentTarget.style.transform = 'scale(1)';
             e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
           }}
-          onClick={sectionType === 'Template' ? () => {} : handleCardClick}
+          onClick={handleCardClick}
         >
           {sectionType === 'Template' ? (
             <>
@@ -458,9 +464,9 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
                   <Button
                     style={{ border: 'none' }}
                     icon={<CopyOutlined style={{ opacity: 0.45 }} />}
-                    onClick={async (e) => {
+                    onClick={(e) => {
                       e.stopPropagation();
-                      await addWorkflowTemplate({
+                      addWorkflowTemplate({
                         workflow_id: workflow!.workflow_id,
                         agent_template_ids: [],
                         task_template_ids: [],
@@ -527,7 +533,10 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
                   <Button
                     style={{ border: 'none' }}
                     icon={<CopyOutlined style={{ opacity: 0.45 }} />}
-                    onClick={handleCreateWorkflowFromTemplate}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCreateWorkflowFromTemplate(e);
+                    }}
                   />
                 </Tooltip>
                 <Divider style={{ flexGrow: 0, margin: '12px 0px' }} type="vertical" />
@@ -541,7 +550,10 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
                         <LoadingOutlined style={{ opacity: 0.45 }} />
                       )
                     }
-                    onClick={handleDownloadWorkflowTemplate}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDownloadWorkflowTemplate(e);
+                    }}
                     disabled={downloadingTemplate}
                   />
                 </Tooltip>
@@ -611,9 +623,9 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
                   <Button
                     style={{ border: 'none' }}
                     icon={<CopyOutlined style={{ opacity: 0.45 }} />}
-                    onClick={async (e) => {
+                    onClick={(e) => {
                       e.stopPropagation();
-                      await addWorkflowTemplate({
+                      addWorkflowTemplate({
                         workflow_id: workflow!.workflow_id,
                         agent_template_ids: [],
                         task_template_ids: [],

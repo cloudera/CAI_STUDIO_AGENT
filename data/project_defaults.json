@@ -276,7 +276,7 @@
     {
       "id": "c2bf6054-649a-41ed-afe0-5f2bc8c6ff54",
       "name": "Blog AI Research Task",
-      "description": "Conduct a comprehensive analysis of the latest advancements in AI in 2024. Identify key trends, breakthrough technologies, and potential industry impacts.",
+      "description": "Conduct a comprehensive analysis of the latest advancements in AI in this year. Identify key trends, breakthrough technologies, and potential industry impacts.",
       "expected_output": "Full analysis report in bullet points",
       "assigned_agent_template_id": "",
       "workflow_template_id": "a77aed0a-7d43-48ec-9495-8728dd97e66d"

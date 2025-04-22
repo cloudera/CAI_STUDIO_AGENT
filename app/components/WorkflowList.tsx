@@ -210,6 +210,11 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
     workflow.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
+  // Add this new filter for workflow templates
+  const filteredWorkflowTemplates = workflowTemplates.filter((template) =>
+    template.name.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
   // Modify to exclude workflows that are deployed from draft section
   const deployedWorkflowIds = new Set(Object.keys(deployedWorkflowMap));
   const draftWorkflows = filteredWorkflows.filter(
@@ -343,7 +348,7 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
         )}
 
         {/* Templates */}
-        {workflowTemplates.length > 0 && (
+        {filteredWorkflowTemplates.length > 0 && (
           <>
             <div
               style={{
@@ -376,7 +381,7 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
                 xxl: 5,
               }}
               style={{ width: '100%', marginTop: '10px' }}
-              dataSource={workflowTemplates}
+              dataSource={filteredWorkflowTemplates}
               renderItem={(workflowTemplate) => (
                 <List.Item style={{ width: '100%', margin: 0 }}>
                   <WorkflowListItem
