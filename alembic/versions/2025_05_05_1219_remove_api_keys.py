@@ -158,8 +158,9 @@ def upgrade() -> None:
             )
         """
         print(f"Create table SQL: {create_table_sql}")
-        with op.get_bind().connect() as connection:
-            connection.execute(sa.text(create_table_sql))
+        
+        # Use bind directly instead of trying to create a new connection
+        bind.execute(sa.text(create_table_sql))
         
         # Generate column list for INSERT
         column_names = [col['name'] for col in columns if col['name'] != 'api_key']
@@ -173,31 +174,30 @@ def upgrade() -> None:
             FROM models
         """
         print(f"Insert SQL: {insert_sql}")
-        with op.get_bind().connect() as connection:
-            connection.execute(sa.text(insert_sql))
+        
+        # Execute statements using bind directly
+        bind.execute(sa.text(insert_sql))
             
-            # Verify data was copied by counting rows in both tables
-            result = connection.execute(sa.text("SELECT COUNT(*) as count FROM models"))
-            old_count = result.first()['count'] if result else 0
+        # Verify data was copied by counting rows in both tables
+        result = bind.execute(sa.text("SELECT COUNT(*) as count FROM models"))
+        old_count = result.scalar()
             
-            result = connection.execute(sa.text("SELECT COUNT(*) as count FROM models_new"))
-            new_count = result.first()['count'] if result else 0
+        result = bind.execute(sa.text("SELECT COUNT(*) as count FROM models_new"))
+        new_count = result.scalar()
             
-            print(f"Original table had {old_count} rows, new table has {new_count} rows")
+        print(f"Original table had {old_count} rows, new table has {new_count} rows")
             
-            if old_count != new_count:
-                raise Exception(f"Data copy mismatch: original table had {old_count} rows but new table has {new_count} rows")
+        if old_count != new_count:
+            raise Exception(f"Data copy mismatch: original table had {old_count} rows but new table has {new_count} rows")
             
-            print("Dropping old table...")
-            connection.execute(sa.text("DROP TABLE models"))
+        print("Dropping old table...")
+        bind.execute(sa.text("DROP TABLE models"))
             
-            print("Renaming new table...")
-            connection.execute(sa.text("ALTER TABLE models_new RENAME TO models"))
-            
-            # Commit the transaction
-            connection.commit()
+        print("Renaming new table...")
+        bind.execute(sa.text("ALTER TABLE models_new RENAME TO models"))
         
         print("Successfully completed table recreation process")
+        
     except Exception as e:
         print(f"Critical error during table recreation: {str(e)}")
         print("Full error details:")
@@ -243,43 +243,41 @@ def downgrade() -> None:
                 )
             """
             print(f"Create table SQL: {create_table_sql}")
-            with op.get_bind().connect() as connection:
-                connection.execute(sa.text(create_table_sql))
+            
+            # Execute statements using bind directly
+            bind.execute(sa.text(create_table_sql))
                 
-                # Generate column list for INSERT
-                column_names = [col['name'] for col in columns]
-                columns_sql = ', '.join(column_names)
+            # Generate column list for INSERT
+            column_names = [col['name'] for col in columns]
+            columns_sql = ', '.join(column_names)
                 
-                # Copy existing data
-                print("Copying existing data to new table...")
-                insert_sql = f"""
-                    INSERT INTO models_new ({columns_sql})
-                    SELECT {columns_sql}
-                    FROM models
-                """
-                print(f"Insert SQL: {insert_sql}")
-                connection.execute(sa.text(insert_sql))
+            # Copy existing data
+            print("Copying existing data to new table...")
+            insert_sql = f"""
+                INSERT INTO models_new ({columns_sql})
+                SELECT {columns_sql}
+                FROM models
+            """
+            print(f"Insert SQL: {insert_sql}")
+            bind.execute(sa.text(insert_sql))
                 
-                # Verify data was copied by counting rows in both tables
-                result = connection.execute(sa.text("SELECT COUNT(*) as count FROM models"))
-                old_count = result.first()['count'] if result else 0
+            # Verify data was copied by counting rows in both tables
+            result = bind.execute(sa.text("SELECT COUNT(*) as count FROM models"))
+            old_count = result.scalar()
                 
-                result = connection.execute(sa.text("SELECT COUNT(*) as count FROM models_new"))
-                new_count = result.first()['count'] if result else 0
+            result = bind.execute(sa.text("SELECT COUNT(*) as count FROM models_new"))
+            new_count = result.scalar()
                 
-                print(f"Original table had {old_count} rows, new table has {new_count} rows")
+            print(f"Original table had {old_count} rows, new table has {new_count} rows")
                 
-                if old_count != new_count:
-                    raise Exception(f"Data copy mismatch: original table had {old_count} rows but new table has {new_count} rows")
+            if old_count != new_count:
+                raise Exception(f"Data copy mismatch: original table had {old_count} rows but new table has {new_count} rows")
                 
-                print("Dropping old table...")
-                connection.execute(sa.text("DROP TABLE models"))
+            print("Dropping old table...")
+            bind.execute(sa.text("DROP TABLE models"))
                 
-                print("Renaming new table...")
-                connection.execute(sa.text("ALTER TABLE models_new RENAME TO models"))
-                
-                # Commit the transaction
-                connection.commit()
+            print("Renaming new table...")
+            bind.execute(sa.text("ALTER TABLE models_new RENAME TO models"))
             
             print("Successfully completed table recreation process")
         except Exception as e:
