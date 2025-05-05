@@ -111,14 +111,6 @@ def upgrade_studio(cml: CMLServiceApi = None) -> UpgradeStudioResponse:
     except subprocess.CalledProcessError as e:
         print(f"Error running 'uv run alembic upgrade head': {e}")
 
-    # After database upgrade but before restarting applications
-    print("Migrating API keys to project environment variables...")
-    try:
-        from studio.db.dao import AgentStudioDao
-        dao = AgentStudioDao()
-        migrate_api_keys_to_env(cml, dao)
-    except Exception as e:
-        print(f"Warning: Failed to migrate API keys: {str(e)}")
 
     # Also perform any project default upgrades necessary. Note this will explicitly
     # check to see if an existing project default has already been added to make sure
