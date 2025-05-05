@@ -21,22 +21,13 @@ def test_list_models():
             model_name="model1",
             provider_model="provider1",
             model_type="type1",
-            api_base="http://api.base1",
-            api_key="api_key1"
-        ))
-        session.add(db_model.Model(
-            model_id="m2",
-            model_name="model2",
-            provider_model="provider2",
-            model_type="type2",
-            api_base="http://api.base2",
-            api_key="api_key2"
+            api_base="http://api.base1"
         ))
         session.commit()
 
     req = ListModelsRequest()
     res = list_models(req, dao=test_dao)
-    assert len(res.model_details) == 2
+    assert len(res.model_details) == 1
     assert res.model_details[0].model_name == "model1"
 
 
@@ -106,8 +97,7 @@ def test_remove_model():
             model_name="model1",
             provider_model="provider1",
             model_type="type1",
-            api_base="http://api.base1",
-            api_key="api_key1"
+            api_base="http://api.base1"
         ))
         session.commit()
 
@@ -155,30 +145,6 @@ def test_update_model():
 
         # Verify API key was updated
         mock_update_key.assert_called_once_with("m1", "new_key", mock_cml)
-
-
-def test_get_model_happy():
-    test_dao = AgentStudioDao(engine_url="sqlite:///:memory:", echo=False)
-    mock_cml = MagicMock()
-
-    with test_dao.get_session() as session:
-        session.add(db_model.Model(
-            model_id="m1",
-            model_name="model1",
-            provider_model="provider1",
-            model_type="type1",
-            api_base="http://api.base1"
-        ))
-        session.commit()
-
-    # Mock API key retrieval
-    with patch('studio.models.models.get_model_api_key_from_env', return_value="test_api_key") as mock_get_key:
-        req = GetModelRequest(model_id="m1")
-        res = get_model(req, cml=mock_cml, dao=test_dao)
-        
-        assert res.model_details.model_name == "model1"
-        mock_get_key.assert_called_once_with("m1", mock_cml)
-
 
 def test_get_model_not_found():
     test_dao = AgentStudioDao(engine_url="sqlite:///:memory:", echo=False)

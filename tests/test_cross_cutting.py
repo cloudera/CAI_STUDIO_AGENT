@@ -99,23 +99,29 @@ def test_deploy_cml_model_happy_path(mock_proj_number):
     mock_proj_number.return_value = "number", "proj_id"
     cml = MagicMock(spec=CMLServiceApi)
     cml.create_model.return_value = IDResponse(id="model_id")
+    
+    # Create model build request without model_root_dir
     out = deploy_cml_model(
-        cml, None, None, None,
-        None, None, None, None, "some/root/dir"
+        cml, "test_model", "test_desc", "test_comment",
+        "test_file.py", "test_func", "test_runtime", None, None
     )
-    cml.create_model_build.assert_called_with(
-        cmlapi.CreateModelBuildRequest(
-            project_id="proj_id",
-            model_id="model_id",
-            comment=None,
-            file_path=None,
-            function_name=None,
-            runtime_identifier=None,
-            auto_deployment_config=None,
-            auto_deploy_model=True,
-            model_root_dir="some/root/dir",
-        ),  project_id='proj_id', model_id='model_id'
+    
+    # Create expected request using cmlapi.CreateModelBuildRequest
+    expected_body = cmlapi.CreateModelBuildRequest(
+        project_id="proj_id",
+        model_id="model_id",
+        comment="test_comment",
+        file_path="test_file.py",
+        function_name="test_func",
+        runtime_identifier="test_runtime",
+        auto_deployment_config=None,
+        auto_deploy_model=True,
+        kernel=None,
+        registered_model_version_id=None,
+        runtime_addon_identifiers=None
     )
+    
+    cml.create_model_build.assert_called_with(expected_body, project_id="proj_id", model_id="model_id")
 
 
 @patch("studio.cross_cutting.utils.get_cml_project_number_and_id")

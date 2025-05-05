@@ -4,35 +4,48 @@ from studio.models.utils import (
     get_studio_default_model_id,
     get_model_api_key_from_env,
     update_model_api_key_in_env,
-    _sanitize_model_id,
-    _sanitize_api_key
+    remove_model_api_key_from_env,
+    _encode_value,
+    _decode_value,
+    _get_env_key
 )
 from studio.db.dao import AgentStudioDao
 from studio.db import model as db_model
 from cmlapi import CMLServiceApi
+import json
 
-def test_sanitize_model_id():
-    assert _sanitize_model_id("model-id-123") == "MODEL_ID_123"
-    assert _sanitize_model_id("model@id!") == "MODEL_ID_"
-    assert _sanitize_model_id("model id") == "MODEL_ID"
+def test_encode_decode_value():
+    # Test encoding and decoding
+    original = "test-value"
+    encoded = _encode_value(original)
+    assert isinstance(encoded, str)
+    assert _decode_value(encoded) == original
 
-def test_sanitize_api_key():
-    assert _sanitize_api_key("  api_key  ") == "api_key"
-    assert _sanitize_api_key('api"key') == "apikey"
-    assert _sanitize_api_key("api'key") == "apikey"
-    assert _sanitize_api_key("api key") == "apikey"
-    assert _sanitize_api_key(None) == ""
-    assert _sanitize_api_key(123) == ""
+    # Test edge cases
+    assert _encode_value(None) == ""
+    assert _encode_value(123) == ""
+    assert _decode_value("") is None
+    assert _decode_value("invalid-base64") is None
+
+def test_get_env_key():
+    model_id = "test-model"
+    env_key = _get_env_key(model_id)
+    assert isinstance(env_key, str)
+    assert env_key.startswith("MODEL_API_KEY_")
 
 @patch('os.getenv', return_value="test_project_id")
 @patch('studio.models.utils.CMLServiceApi')
 def test_get_model_api_key_from_env(mock_cml_api, mock_getenv):
     mock_cml = MagicMock()
-    mock_cml.get_project.return_value.environment = '{"MODEL_API_KEY_MODEL_ID_123": "test_api_key"}'
+    # Create encoded test key
+    test_api_key = "test_api_key"
+    encoded_key = _encode_value(test_api_key)
+    env_key = _get_env_key("model-id-123")
+    mock_cml.get_project.return_value.environment = json.dumps({env_key: encoded_key})
     mock_cml_api.return_value = mock_cml
 
     api_key = get_model_api_key_from_env("model-id-123", mock_cml)
-    assert api_key == "test_api_key"
+    assert api_key == test_api_key
 
 @patch('os.getenv', return_value=None)
 def test_get_model_api_key_from_env_no_project_id(mock_getenv):
@@ -47,9 +60,14 @@ def test_update_model_api_key_in_env(mock_cml_api, mock_getenv):
     mock_cml.get_project.return_value.environment = '{}'
     mock_cml_api.return_value = mock_cml
 
-    update_model_api_key_in_env("model-id-123", "new_api_key", mock_cml)
+    model_id = "model-id-123"
+    new_api_key = "new_api_key"
+    update_model_api_key_in_env(model_id, new_api_key, mock_cml)
 
-    expected_env = '{"MODEL_API_KEY_MODEL_ID_123": "new_api_key"}'
+    # Verify the encoded key is stored
+    env_key = _get_env_key(model_id)
+    encoded_key = _encode_value(new_api_key)
+    expected_env = json.dumps({env_key: encoded_key})
     mock_cml.update_project.assert_called_once_with({"environment": expected_env}, "test_project_id")
 
 @patch('os.getenv', return_value=None)
@@ -57,6 +75,32 @@ def test_update_model_api_key_in_env_no_project_id(mock_getenv):
     mock_cml = MagicMock()
     with pytest.raises(ValueError, match="CDSW_PROJECT_ID environment variable not found"):
         update_model_api_key_in_env("model-id-123", "new_api_key", mock_cml)
+
+@patch('os.getenv', return_value="test_project_id")
+@patch('studio.models.utils.CMLServiceApi')
+def test_remove_model_api_key_from_env(mock_cml_api, mock_getenv):
+    mock_cml = MagicMock()
+    model_id = "model-id-123"
+    env_key = _get_env_key(model_id)
+    initial_env = {env_key: _encode_value("test_key")}
+    mock_cml.get_project.return_value.environment = json.dumps(initial_env)
+    mock_cml_api.return_value = mock_cml
+
+    remove_model_api_key_from_env(model_id, mock_cml)
+
+    # Verify the key was removed
+    mock_cml.update_project.assert_called_once_with({"environment": "{}"}, "test_project_id")
+
+@patch('os.getenv', return_value="test_project_id")
+@patch('studio.models.utils.CMLServiceApi')
+def test_remove_model_api_key_from_env_nonexistent(mock_cml_api, mock_getenv):
+    mock_cml = MagicMock()
+    mock_cml.get_project.return_value.environment = '{}'
+    mock_cml_api.return_value = mock_cml
+
+    # Should not raise an error if key doesn't exist
+    remove_model_api_key_from_env("model-id-123", mock_cml)
+    mock_cml.update_project.assert_not_called()
 
 def test_get_studio_default_model_id():
     test_dao = AgentStudioDao(engine_url="sqlite:///:memory:", echo=False)

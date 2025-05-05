@@ -1,3 +1,7 @@
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
 import pytest
 from unittest.mock import Mock, patch
 from studio.models.models import add_model
@@ -34,10 +38,15 @@ def test_add_model_duplicate_name_cleanup():
     mock_dao = Mock()
     mock_cml = Mock()
     mock_session = Mock()
-    
+
+    # Mock session context manager
+    mock_session_ctx = Mock()
+    mock_session_ctx.__enter__ = Mock(return_value=mock_session)
+    mock_session_ctx.__exit__ = Mock(return_value=None)
+    mock_dao.get_session.return_value = mock_session_ctx
+
     # Mock session to simulate duplicate name
     mock_session.query().filter_by().first.return_value = True
-    mock_dao.get_session.return_value.__enter__.return_value = mock_session
     
     # Mock successful API key storage
     with patch('studio.models.models.update_model_api_key_in_env') as mock_update_key, \
