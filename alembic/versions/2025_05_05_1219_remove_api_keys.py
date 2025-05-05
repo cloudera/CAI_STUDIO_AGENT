@@ -131,7 +131,6 @@ def upgrade() -> None:
     
     # First migrate existing API keys to environment variables
     migrate_api_keys_to_env()
-    # pass
     
     print("Attempting to remove api_key column from models table...")
     try:
@@ -152,11 +151,12 @@ def upgrade() -> None:
         
         # Create new table without the api_key column
         print("Creating new table without api_key column...")
-        create_table_sql = (
-            "CREATE TABLE models_new (\n"
-            f"    {',\n    '.join(column_defs)}\n"
-            ")"
-        )
+        column_defs_str = ',\n    '.join(column_defs)
+        create_table_sql = f"""
+            CREATE TABLE models_new (
+                {column_defs_str}
+            )
+        """
         print(f"Create table SQL: {create_table_sql}")
         op.execute(create_table_sql)
         
@@ -166,11 +166,11 @@ def upgrade() -> None:
         
         # Copy data from old table to new table
         print("Copying data to new table...")
-        insert_sql = (
-            "INSERT INTO models_new \n"
-            f"SELECT {columns_sql}\n"
-            "FROM models"
-        )
+        insert_sql = f"""
+            INSERT INTO models_new 
+            SELECT {columns_sql}
+            FROM models
+        """
         print(f"Insert SQL: {insert_sql}")
         result = op.execute(insert_sql)
         print(f"Copied {result.rowcount} rows to new table")
@@ -191,7 +191,6 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # pass
     print("Starting downgrade process to restore api_key column...")
     
     try:
@@ -221,11 +220,12 @@ def downgrade() -> None:
             
             # Create new table with api_key column
             print("Creating new table with api_key column...")
-            create_table_sql = (
-                "CREATE TABLE models_new (\n"
-                f"    {',\n    '.join(column_defs)}\n"
-                ")"
-            )
+            column_defs_str = ',\n    '.join(column_defs)
+            create_table_sql = f"""
+                CREATE TABLE models_new (
+                    {column_defs_str}
+                )
+            """
             print(f"Create table SQL: {create_table_sql}")
             op.execute(create_table_sql)
             
@@ -235,11 +235,11 @@ def downgrade() -> None:
             
             # Copy existing data
             print("Copying existing data to new table...")
-            insert_sql = (
-                f"INSERT INTO models_new ({columns_sql})\n"
-                f"SELECT {columns_sql}\n"
-                "FROM models"
-            )
+            insert_sql = f"""
+                INSERT INTO models_new ({columns_sql})
+                SELECT {columns_sql}
+                FROM models
+            """
             print(f"Insert SQL: {insert_sql}")
             result = op.execute(insert_sql)
             print(f"Copied {result.rowcount} rows to new table")
