@@ -36,17 +36,19 @@ def list_tool_templates(
                 python_code = ""
                 python_requirements = ""
                 is_valid = True
+                status_message = ""
 
                 # Attempt to read the Python code
                 try:
                     python_code_file_path = os.path.join(template.source_folder_path, template.python_code_file_name)
                     with open(python_code_file_path, "r") as file:
                         python_code = file.read()
-                except Exception:
+                except FileNotFoundError as e:
+                    status_message = f"Tool template files not found: {str(e)}"
                     is_valid = False
-
-                # Validate the Python code if successfully read
-                # TODO: build tool validation code for v2
+                except Exception as e:
+                    status_message = f"Error reading tool template files: {str(e)}"
+                    is_valid = False
 
                 # Attempt to read the Python requirements
                 try:
@@ -55,10 +57,14 @@ def list_tool_templates(
                     )
                     with open(python_requirements_file_path, "r") as file:
                         python_requirements = file.read()
-                except Exception:
+                except FileNotFoundError as e:
+                    if not status_message:
+                        status_message = f"Tool template requirements not found: {str(e)}"
                     is_valid = False
-
-                # tool_metadata = json.dumps({"validation_errors": validation_errors})
+                except Exception as e:
+                    if not status_message:
+                        status_message = f"Error reading tool template requirements: {str(e)}"
+                    is_valid = False
 
                 tool_image_uri = ""
                 if template.tool_image_path:
@@ -76,7 +82,7 @@ def list_tool_templates(
                         python_code=python_code,
                         python_requirements=python_requirements,
                         source_folder_path=template.source_folder_path,
-                        tool_metadata="{}",
+                        tool_metadata=json.dumps({"status": status_message}),
                         is_valid=is_valid,
                         pre_built=template.pre_built,
                         tool_image_uri=tool_image_uri,
@@ -111,13 +117,18 @@ def get_tool_template(
             python_code = ""
             python_requirements = ""
             is_valid = True
+            status_message = ""
 
             # Attempt to read the Python code
             try:
                 python_code_file_path = os.path.join(template.source_folder_path, template.python_code_file_name)
                 with open(python_code_file_path, "r") as file:
                     python_code = file.read()
-            except Exception:
+            except FileNotFoundError as e:
+                status_message = f"Tool template files not found: {str(e)}"
+                is_valid = False
+            except Exception as e:
+                status_message = f"Error reading tool template files: {str(e)}"
                 is_valid = False
 
             # Attempt to read the Python requirements
@@ -127,7 +138,13 @@ def get_tool_template(
                 )
                 with open(python_requirements_file_path, "r") as file:
                     python_requirements = file.read()
-            except Exception:
+            except FileNotFoundError as e:
+                if not status_message:
+                    status_message = f"Tool template requirements not found: {str(e)}"
+                is_valid = False
+            except Exception as e:
+                if not status_message:
+                    status_message = f"Error reading tool template requirements: {str(e)}"
                 is_valid = False
 
             # Extract user parameters from the Python code
@@ -136,13 +153,8 @@ def get_tool_template(
                 try:
                     user_params_dict = tool_utils.extract_user_params_from_code(python_code)
                 except ValueError as e:
-                    user_params_dict = {"error": {"required": True, "error": f"Error parsing Python code: {e}"}}
-
-            # Create tool_metadata as a JSON string
-            tool_metadata = json.dumps({
-                "user_params": list(user_params_dict.keys()),
-                "user_params_metadata": user_params_dict
-            })
+                    status_message = f"Error parsing Python code: {str(e)}"
+                    is_valid = False
 
             tool_image_uri = ""
             if template.tool_image_path:
@@ -153,7 +165,13 @@ def get_tool_template(
             except Exception:
                 tool_description = "Unable to read tool description"
 
-            # Convert the template to protobuf and set file content
+            # Create tool_metadata as a JSON string
+            tool_metadata = json.dumps({
+                "user_params": list(user_params_dict.keys()),
+                "user_params_metadata": user_params_dict,
+                "status": status_message
+            })
+
             return GetToolTemplateResponse(
                 template=ToolTemplate(
                     id=template.id,
@@ -344,7 +362,8 @@ def remove_tool_template(
         with dao.get_session() as session:
             template = session.query(db_model.ToolTemplate).filter_by(id=request.tool_template_id).one_or_none()
             if not template:
-                raise ValueError(f"Tool template with ID '{request.tool_template_id}' not found.")
+                print(f"Tool template with ID '{request.tool_template_id}' not found, assuming already deleted")
+                return RemoveToolTemplateResponse()
 
             if template.pre_built:
                 raise ValueError(
@@ -356,15 +375,22 @@ def remove_tool_template(
                 try:
                     if os.path.exists(template.source_folder_path):
                         shutil.rmtree(template.source_folder_path)
+                        print(f"Deleted tool template directory: {template.source_folder_path}")
+                    else:
+                        print(f"Tool template directory not found: {template.source_folder_path}")
                 except Exception as e:
-                    raise ValueError(f"Failed to delete tool template code folder: {e}")
+                    print(f"Failed to delete tool template directory: {e}")
 
             if template.tool_image_path:
                 try:
                     if os.path.exists(template.tool_image_path):
                         os.remove(template.tool_image_path)
+                        print(f"Deleted tool template image: {template.tool_image_path}")
+                    else:
+                        print(f"Tool template image not found: {template.tool_image_path}")
                 except Exception as e:
                     print(f"Failed to delete tool template image: {e}")
+
             session.delete(template)
             session.commit()
         return RemoveToolTemplateResponse()

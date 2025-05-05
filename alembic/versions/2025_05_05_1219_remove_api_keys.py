@@ -172,8 +172,15 @@ def upgrade() -> None:
             FROM models
         """
         print(f"Insert SQL: {insert_sql}")
-        result = op.execute(insert_sql)
-        print(f"Copied {result.rowcount} rows to new table")
+        op.execute(insert_sql)
+        
+        # Verify data was copied by counting rows in both tables
+        old_count = op.execute("SELECT COUNT(*) FROM models").scalar()
+        new_count = op.execute("SELECT COUNT(*) FROM models_new").scalar()
+        print(f"Original table had {old_count} rows, new table has {new_count} rows")
+        
+        if old_count != new_count:
+            raise Exception(f"Data copy mismatch: original table had {old_count} rows but new table has {new_count} rows")
         
         print("Dropping old table...")
         op.execute("DROP TABLE models")
@@ -241,8 +248,15 @@ def downgrade() -> None:
                 FROM models
             """
             print(f"Insert SQL: {insert_sql}")
-            result = op.execute(insert_sql)
-            print(f"Copied {result.rowcount} rows to new table")
+            op.execute(insert_sql)
+            
+            # Verify data was copied by counting rows in both tables
+            old_count = op.execute("SELECT COUNT(*) FROM models").scalar()
+            new_count = op.execute("SELECT COUNT(*) FROM models_new").scalar()
+            print(f"Original table had {old_count} rows, new table has {new_count} rows")
+            
+            if old_count != new_count:
+                raise Exception(f"Data copy mismatch: original table had {old_count} rows but new table has {new_count} rows")
             
             print("Dropping old table...")
             op.execute("DROP TABLE models")

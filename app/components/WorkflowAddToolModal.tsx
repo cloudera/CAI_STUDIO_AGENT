@@ -28,6 +28,7 @@ import {
   InfoCircleOutlined,
   FileImageOutlined,
   DeleteOutlined,
+  SearchOutlined,
 } from '@ant-design/icons';
 import {
   useListGlobalToolTemplatesQuery,
@@ -93,6 +94,8 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ open, onCan
   const [newToolName, setNewToolName] = useState<string>(''); // State for new tool name
   const [getToolInstance] = useGetToolInstanceMutation();
   const [editorKey, setEditorKey] = useState<number>(0); // Add this state
+  const [searchTemplates, setSearchTemplates] = useState('');
+  const [searchTools, setSearchTools] = useState('');
 
   // Create a map of tool instances
   const [toolInstancesMap, setToolInstancesMap] = useState<Record<string, any>>(() => {
@@ -435,6 +438,23 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ open, onCan
         placement: 'topRight',
       });
     }
+  };
+
+  const filterToolTemplates = (templates: any[]) => {
+    return templates.filter(template => 
+      template.name.toLowerCase().includes(searchTemplates.toLowerCase()) ||
+      (template.tool_description || '').toLowerCase().includes(searchTemplates.toLowerCase())
+    );
+  };
+
+  const filterToolInstances = (toolIds: string[]) => {
+    return toolIds.filter(id => {
+      const tool = toolInstancesMap[id];
+      return tool && (
+        tool.name.toLowerCase().includes(searchTools.toLowerCase()) ||
+        (tool.tool_description || '').toLowerCase().includes(searchTools.toLowerCase())
+      );
+    });
   };
 
   const renderToolTemplate = (template: any) => {
@@ -986,16 +1006,34 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ open, onCan
                 </div>
               </div>
 
-              <Layout style={{ display: 'flex', flexDirection: 'row', backgroundColor: '#fff' }}>
+              <Layout style={{ display: 'flex', flexDirection: 'row', backgroundColor: '#fff', marginBottom: '8px'}}>
                 <Layout style={{ flex: 1, backgroundColor: '#fff', paddingRight: '16px' }}>
-                  <Typography.Title level={5} style={{ marginBottom: '16px' }}>
-                    Edit Agent Tools
-                  </Typography.Title>
+                  <Space direction="vertical" style={{ width: '100%', marginBottom: '0px' }}>
+                    <Typography.Title level={5} style={{ marginBottom: '8px' }}>
+                      Edit Agent Tools
+                    </Typography.Title>
+                    <Input
+                      placeholder="Search tools..."
+                      prefix={<SearchOutlined />}
+                      value={searchTools}
+                      onChange={(e) => setSearchTools(e.target.value)}
+                      allowClear
+                    />
+                  </Space>
                 </Layout>
                 <Layout style={{ flex: 1, backgroundColor: '#fff', paddingLeft: '16px' }}>
-                  <Typography.Title level={5} style={{ marginBottom: '16px' }}>
-                    Create Tool From Template
-                  </Typography.Title>
+                  <Space direction="vertical" style={{ width: '100%', marginBottom: '0px' }}>
+                    <Typography.Title level={5} style={{ marginBottom: '8px' }}>
+                      Create Tool From Template
+                    </Typography.Title>
+                    <Input
+                      placeholder="Search templates..."
+                      prefix={<SearchOutlined />}
+                      value={searchTemplates}
+                      onChange={(e) => setSearchTemplates(e.target.value)}
+                      allowClear
+                    />
+                  </Space>
                 </Layout>
               </Layout>
 
@@ -1005,6 +1043,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ open, onCan
                   flexDirection: 'row',
                   height: '100%',
                   backgroundColor: '#fff',
+                  marginTop: '8px'
                 }}
               >
                 <Layout
@@ -1016,8 +1055,9 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ open, onCan
                   }}
                 >
                   <List
+                    style={{ marginTop: '8px' }}
                     grid={{ gutter: 16, column: 1 }}
-                    dataSource={createAgentState?.tools || []}
+                    dataSource={filterToolInstances(createAgentState?.tools || [])}
                     renderItem={(toolId) => renderToolInstance(toolId)}
                   />
                 </Layout>
@@ -1030,8 +1070,9 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ open, onCan
                   }}
                 >
                   <List
+                    style={{ marginTop: '8px' }}
                     grid={{ gutter: 16, column: 1 }}
-                    dataSource={toolTemplates}
+                    dataSource={filterToolTemplates(toolTemplates)}
                     renderItem={renderToolTemplate}
                   />
                 </Layout>

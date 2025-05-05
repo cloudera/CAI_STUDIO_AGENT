@@ -198,15 +198,30 @@ def _get_tool_instance_impl(request: GetToolInstanceRequest, session: DbSession)
         raise ValueError(f"Tool Instance with id '{request.tool_instance_id}' not found")
 
     tool_instance_dir = tool_instance.source_folder_path
-    with open(os.path.join(tool_instance_dir, tool_instance.python_code_file_name), "r") as f:
-        tool_code = f.read()
-    with open(os.path.join(tool_instance_dir, tool_instance.python_requirements_file_name), "r") as f:
-        tool_requirements = f.read()
+    tool_code = ""
+    tool_requirements = ""
+    status_message = ""
+    is_valid = True
+
+    # Try to read tool code and requirements
+    try:
+        with open(os.path.join(tool_instance_dir, tool_instance.python_code_file_name), "r") as f:
+            tool_code = f.read()
+        with open(os.path.join(tool_instance_dir, tool_instance.python_requirements_file_name), "r") as f:
+            tool_requirements = f.read()
+    except FileNotFoundError as e:
+        status_message = f"Tool instance files not found: {str(e)}"
+        is_valid = False
+    except Exception as e:
+        status_message = f"Error reading tool instance files: {str(e)}"
+        is_valid = False
 
     user_params_dict = {}
     try:
-        user_params_dict = tool_utils.extract_user_params_from_code(tool_code)
+        if tool_code:
+            user_params_dict = tool_utils.extract_user_params_from_code(tool_code)
     except Exception as e:
+        status_message = f"Error extracting user params: {str(e)}"
         is_valid = False
 
     tool_image_uri = ""
@@ -226,8 +241,12 @@ def _get_tool_instance_impl(request: GetToolInstanceRequest, session: DbSession)
             python_code=tool_code,
             python_requirements=tool_requirements,
             source_folder_path=tool_instance_dir,
-            tool_metadata=json.dumps({"user_params": list(user_params_dict.keys()), "user_params_metadata": user_params_dict}),
-            is_valid=True,
+            tool_metadata=json.dumps({
+                "user_params": list(user_params_dict.keys()),
+                "user_params_metadata": user_params_dict,
+                "status": status_message
+            }),
+            is_valid=is_valid,
             tool_image_uri=tool_image_uri,
             tool_description=tool_description,
             is_venv_tool=tool_instance.is_venv_tool,
@@ -267,15 +286,30 @@ def _list_tool_instances_impl(request: ListToolInstancesRequest, session: DbSess
     tool_instances_response = []
     for tool_instance in tool_instances:
         tool_instance_dir = tool_instance.source_folder_path
-        with open(os.path.join(tool_instance_dir, tool_instance.python_code_file_name), "r") as f:
-            tool_code = f.read()
-        with open(os.path.join(tool_instance_dir, tool_instance.python_requirements_file_name), "r") as f:
-            tool_requirements = f.read()
+        tool_code = ""
+        tool_requirements = ""
+        status_message = ""
+        is_valid = True
+
+        # Try to read tool code and requirements
+        try:
+            with open(os.path.join(tool_instance_dir, tool_instance.python_code_file_name), "r") as f:
+                tool_code = f.read()
+            with open(os.path.join(tool_instance_dir, tool_instance.python_requirements_file_name), "r") as f:
+                tool_requirements = f.read()
+        except FileNotFoundError as e:
+            status_message = f"Tool instance files not found: {str(e)}"
+            is_valid = False
+        except Exception as e:
+            status_message = f"Error reading tool instance files: {str(e)}"
+            is_valid = False
 
         user_params_dict = {}
         try:
-            user_params_dict = tool_utils.extract_user_params_from_code(tool_code)
+            if tool_code:
+                user_params_dict = tool_utils.extract_user_params_from_code(tool_code)
         except Exception as e:
+            status_message = f"Error extracting user params: {str(e)}"
             is_valid = False
 
         tool_image_uri = ""
@@ -297,9 +331,10 @@ def _list_tool_instances_impl(request: ListToolInstancesRequest, session: DbSess
                 source_folder_path=tool_instance.source_folder_path,
                 tool_metadata=json.dumps({
                     "user_params": list(user_params_dict.keys()),
-                    "user_params_metadata": user_params_dict
+                    "user_params_metadata": user_params_dict,
+                    "status": status_message
                 }),
-                is_valid=True,
+                is_valid=is_valid,
                 tool_image_uri=tool_image_uri,
                 tool_description=tool_description,
                 is_venv_tool=tool_instance.is_venv_tool,
@@ -313,6 +348,8 @@ def _delete_tool_instance_directory(source_folder_path: str):
         if os.path.exists(source_folder_path):
             shutil.rmtree(source_folder_path)
             print(f"Deleted tool instance directory: {source_folder_path}")
+        else:
+            print(f"Tool instance directory not found: {source_folder_path}")
     except Exception as e:
         print(f"Failed to delete tool instance directory: {e}")
 
@@ -348,7 +385,8 @@ def _remove_tool_instance_impl(
     """
     tool_instance = session.query(db_model.ToolInstance).filter_by(id=request.tool_instance_id).first()
     if not tool_instance:
-        raise ValueError(f"Tool Instance with id '{request.tool_instance_id}' not found")
+        print(f"Tool Instance with id '{request.tool_instance_id}' not found, assuming already deleted")
+        return RemoveToolInstanceResponse()
 
     if delete_tool_directory:
         get_thread_pool().submit(
@@ -358,7 +396,11 @@ def _remove_tool_instance_impl(
 
     if tool_instance.tool_image_path:
         try:
-            os.remove(tool_instance.tool_image_path)
+            if os.path.exists(tool_instance.tool_image_path):
+                os.remove(tool_instance.tool_image_path)
+                print(f"Deleted tool instance image: {tool_instance.tool_image_path}")
+            else:
+                print(f"Tool instance image not found: {tool_instance.tool_image_path}")
         except Exception as e:
             print(f"Failed to delete tool instance image: {e}")
 
