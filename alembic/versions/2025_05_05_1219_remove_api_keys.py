@@ -47,12 +47,22 @@ def migrate_api_keys_to_env() -> None:
             print("Warning: cmlapi not installed, skipping API key migration")
             return
             
+        # Print all environment variables for debugging
+        print("\nCurrent environment variables:")
+        env_vars = {k: v for k, v in os.environ.items() if not k.startswith('_')}  # Filter out internal vars
+        for key in sorted(env_vars.keys()):
+            # Mask sensitive values
+            value = env_vars[key]
+            if any(sensitive in key.lower() for sensitive in ['token', 'key', 'secret', 'password', 'auth']):
+                value = '*' * 8  # Mask sensitive values
+            print(f"  {key}: {value}")
+            
         project_id = os.getenv("CDSW_PROJECT_ID")
         if not project_id:
-            print("Warning: CDSW_PROJECT_ID not found, skipping API key migration")
+            print("\nWarning: CDSW_PROJECT_ID not found, skipping API key migration")
             return
             
-        print(f"Using project ID: {project_id}")
+        print(f"\nUsing project ID: {project_id}")
         
         # Get current project environment
         print("Fetching project environment...")
@@ -125,27 +135,44 @@ def upgrade() -> None:
         print("Falling back to table recreation approach...")
         
         try:
-            # Fallback to table recreation approach for SQLite
-            print("Creating new table without api_key column...")
-            op.execute("""
-                CREATE TABLE models_new (
-                    model_id VARCHAR NOT NULL, 
-                    name VARCHAR,
-                    description VARCHAR,
-                    created_at TIMESTAMP,
-                    updated_at TIMESTAMP,
-                    created_by VARCHAR,
-                    updated_by VARCHAR,
-                    PRIMARY KEY (model_id)
-                )
-            """)
+            # Get existing columns from the models table
+            bind = op.get_bind()
+            inspector = sa.inspect(bind)
+            columns = inspector.get_columns('models')
             
+            print(f"Found existing columns: {[col['name'] for col in columns]}")
+            
+            # Create column definitions for new table, excluding api_key
+            column_defs = []
+            for col in columns:
+                if col['name'] != 'api_key':
+                    nullable_str = "" if col.get('nullable', True) else " NOT NULL"
+                    default_str = f" DEFAULT {col['default']}" if col.get('default') is not None else ""
+                    column_defs.append(f"{col['name']} {col['type']}{nullable_str}{default_str}")
+            
+            # Create new table without the api_key column
+            print("Creating new table without api_key column...")
+            create_table_sql = f"""
+                CREATE TABLE models_new (
+                    {',\n'.join(column_defs)}
+                )
+            """
+            print(f"Create table SQL: {create_table_sql}")
+            op.execute(create_table_sql)
+            
+            # Generate column list for INSERT
+            column_names = [col['name'] for col in columns if col['name'] != 'api_key']
+            columns_sql = ', '.join(column_names)
+            
+            # Copy data from old table to new table
             print("Copying data to new table...")
-            result = op.execute("""
+            insert_sql = f"""
                 INSERT INTO models_new 
-                SELECT model_id, name, description, created_at, updated_at, created_by, updated_by
+                SELECT {columns_sql}
                 FROM models
-            """)
+            """
+            print(f"Insert SQL: {insert_sql}")
+            result = op.execute(insert_sql)
             print(f"Copied {result.rowcount} rows to new table")
             
             print("Dropping old table...")
@@ -157,6 +184,9 @@ def upgrade() -> None:
             print("Successfully completed table recreation process")
         except Exception as e:
             print(f"Critical error during table recreation: {str(e)}")
+            print("Full error details:")
+            import traceback
+            traceback.print_exc()
             raise
 
 
@@ -173,28 +203,44 @@ def downgrade() -> None:
         print("Falling back to table recreation approach...")
         
         try:
-            # Fallback to table recreation approach for SQLite
-            print("Creating new table with api_key column...")
-            op.execute("""
-                CREATE TABLE models_new (
-                    model_id VARCHAR NOT NULL,
-                    name VARCHAR,
-                    description VARCHAR,
-                    created_at TIMESTAMP,
-                    updated_at TIMESTAMP,
-                    created_by VARCHAR,
-                    updated_by VARCHAR,
-                    api_key VARCHAR,
-                    PRIMARY KEY (model_id)
-                )
-            """)
+            # Get existing columns from the models table
+            bind = op.get_bind()
+            inspector = sa.inspect(bind)
+            columns = inspector.get_columns('models')
             
+            print(f"Found existing columns: {[col['name'] for col in columns]}")
+            
+            # Create column definitions including api_key
+            column_defs = []
+            for col in columns:
+                nullable_str = "" if col.get('nullable', True) else " NOT NULL"
+                default_str = f" DEFAULT {col['default']}" if col.get('default') is not None else ""
+                column_defs.append(f"{col['name']} {col['type']}{nullable_str}{default_str}")
+            column_defs.append("api_key VARCHAR")
+            
+            # Create new table with api_key column
+            print("Creating new table with api_key column...")
+            create_table_sql = f"""
+                CREATE TABLE models_new (
+                    {',\n'.join(column_defs)}
+                )
+            """
+            print(f"Create table SQL: {create_table_sql}")
+            op.execute(create_table_sql)
+            
+            # Generate column list for INSERT
+            column_names = [col['name'] for col in columns]
+            columns_sql = ', '.join(column_names)
+            
+            # Copy existing data
             print("Copying existing data to new table...")
-            result = op.execute("""
-                INSERT INTO models_new (model_id, name, description, created_at, updated_at, created_by, updated_by)
-                SELECT model_id, name, description, created_at, updated_at, created_by, updated_by
+            insert_sql = f"""
+                INSERT INTO models_new ({columns_sql})
+                SELECT {columns_sql}
                 FROM models
-            """)
+            """
+            print(f"Insert SQL: {insert_sql}")
+            result = op.execute(insert_sql)
             print(f"Copied {result.rowcount} rows to new table")
             
             print("Dropping old table...")
@@ -206,6 +252,9 @@ def downgrade() -> None:
             print("Successfully completed table recreation process")
         except Exception as e:
             print(f"Critical error during table recreation: {str(e)}")
+            print("Full error details:")
+            import traceback
+            traceback.print_exc()
             raise
     
     print("Warning: API keys cannot be restored from environment variables")
