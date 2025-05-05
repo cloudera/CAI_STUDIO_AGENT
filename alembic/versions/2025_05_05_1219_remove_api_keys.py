@@ -175,8 +175,8 @@ def upgrade() -> None:
         op.execute(insert_sql)
         
         # Verify data was copied by counting rows in both tables
-        old_count = op.execute("SELECT COUNT(*) FROM models").scalar()
-        new_count = op.execute("SELECT COUNT(*) FROM models_new").scalar()
+        old_count = op.execute("SELECT COUNT(*) as count FROM models").fetchone()[0]
+        new_count = op.execute("SELECT COUNT(*) as count FROM models_new").fetchone()[0]
         print(f"Original table had {old_count} rows, new table has {new_count} rows")
         
         if old_count != new_count:
@@ -251,8 +251,8 @@ def downgrade() -> None:
             op.execute(insert_sql)
             
             # Verify data was copied by counting rows in both tables
-            old_count = op.execute("SELECT COUNT(*) FROM models").scalar()
-            new_count = op.execute("SELECT COUNT(*) FROM models_new").scalar()
+            old_count = op.execute("SELECT COUNT(*) as count FROM models").fetchone()[0]
+            new_count = op.execute("SELECT COUNT(*) as count FROM models_new").fetchone()[0]
             print(f"Original table had {old_count} rows, new table has {new_count} rows")
             
             if old_count != new_count:
