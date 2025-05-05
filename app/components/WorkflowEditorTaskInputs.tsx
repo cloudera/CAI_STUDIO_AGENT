@@ -3,7 +3,7 @@ import {
   selectEditorWorkflow,
   selectEditorWorkflowIsConversational,
   selectEditorWorkflowManagerAgentId,
-  selectEditorWorkflowName,
+  selectEditorWorkflowName as _selectEditorWorkflowName,
   selectEditorWorkflowTaskIds,
   addedEditorWorkflowTask,
   removedEditorWorkflowTask,
@@ -22,9 +22,9 @@ import {
   Tag,
   Avatar,
 } from 'antd';
-import { Typography } from 'antd/lib';
-const { Header, Content } = Layout;
-const { Title, Text } = Typography;
+import { Typography } from 'antd';
+const { Header: _Header, Content: _Content } = Layout;
+const { Title: _Title } = Typography;
 import {
   DeleteOutlined,
   InfoCircleOutlined,
@@ -49,6 +49,7 @@ import { useState } from 'react';
 import { createUpdateRequestFromEditor, createAddRequestFromEditor } from '../lib/workflow';
 import { useGlobalNotification } from './Notifications';
 import React from 'react';
+const { Text } = Typography;
 
 const getTagColor = (agentName: string): string => {
   const colors = [
@@ -375,21 +376,6 @@ const WorkflowTasksComponent: React.FC = () => {
     }
   };
 
-  // Add a helper function to check if any other alerts are being shown
-  const hasOtherAlerts = () => {
-    const isConversational = useAppSelector(selectEditorWorkflowIsConversational);
-    const process = useAppSelector(selectEditorWorkflowProcess);
-    const hasManagerAgent = process === 'hierarchical';
-    
-    // Check for unassigned tasks
-    const hasUnassignedTasks = workflowTaskIds.some((taskId) => {
-      const task = tasks?.find((t) => t.task_id === taskId);
-      return task && !task.assigned_agent_id && !hasManagerAgent;
-    });
-
-    return hasUnassignedTasks || isConversational || hasManagerAgent;
-  };
-
   return (
     <>
       <AlertsComponent />
@@ -402,7 +388,7 @@ const WorkflowTasksComponent: React.FC = () => {
           background: 'white',
         }}
       >
-        {workflowTaskIds.length > 1 && !hasOtherAlerts() && (
+        {workflowTaskIds.length > 1 && (
           <Alert
             style={alertStyle}
             message={
