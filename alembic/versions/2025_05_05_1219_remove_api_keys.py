@@ -115,7 +115,7 @@ def migrate_api_keys_to_env() -> None:
             import traceback
             print("Traceback:")
             traceback.print_tb(e.__traceback__)
-        print("\nContinuing with column removal despite migration error")
+        # print("\nContinuing with column removal despite migration error")
         # Don't raise the error - we still want to drop the column even if migration fails
 
 
@@ -124,138 +124,132 @@ def upgrade() -> None:
     
     # First migrate existing API keys to environment variables
     migrate_api_keys_to_env()
+    pass
     
-    print("Attempting to remove api_key column from models table...")
-    try:
-        # Try dropping the column directly first
-        op.drop_column('models', 'api_key')
-        print("Successfully dropped api_key column using direct method")
-    except Exception as e:
-        print(f"Error dropping api_key column directly: {str(e)}")
-        print("Falling back to table recreation approach...")
+    # print("Attempting to remove api_key column from models table...")
+    # try:
+    #     # Get existing columns from the models table
+    #     bind = op.get_bind()
+    #     inspector = sa.inspect(bind)
+    #     columns = inspector.get_columns('models')
         
-        try:
-            # Get existing columns from the models table
-            bind = op.get_bind()
-            inspector = sa.inspect(bind)
-            columns = inspector.get_columns('models')
-            
-            print(f"Found existing columns: {[col['name'] for col in columns]}")
-            
-            # Create column definitions for new table, excluding api_key
-            column_defs = []
-            for col in columns:
-                if col['name'] != 'api_key':
-                    nullable_str = "" if col.get('nullable', True) else " NOT NULL"
-                    default_str = f" DEFAULT {col['default']}" if col.get('default') is not None else ""
-                    column_defs.append(f"{col['name']} {col['type']}{nullable_str}{default_str}")
-            
-            # Create new table without the api_key column
-            print("Creating new table without api_key column...")
-            create_table_sql = f"""
-                CREATE TABLE models_new (
-                    {',\n'.join(column_defs)}
-                )
-            """
-            print(f"Create table SQL: {create_table_sql}")
-            op.execute(create_table_sql)
-            
-            # Generate column list for INSERT
-            column_names = [col['name'] for col in columns if col['name'] != 'api_key']
-            columns_sql = ', '.join(column_names)
-            
-            # Copy data from old table to new table
-            print("Copying data to new table...")
-            insert_sql = f"""
-                INSERT INTO models_new 
-                SELECT {columns_sql}
-                FROM models
-            """
-            print(f"Insert SQL: {insert_sql}")
-            result = op.execute(insert_sql)
-            print(f"Copied {result.rowcount} rows to new table")
-            
-            print("Dropping old table...")
-            op.execute("DROP TABLE models")
-            
-            print("Renaming new table...")
-            op.execute("ALTER TABLE models_new RENAME TO models")
-            
-            print("Successfully completed table recreation process")
-        except Exception as e:
-            print(f"Critical error during table recreation: {str(e)}")
-            print("Full error details:")
-            import traceback
-            traceback.print_exc()
-            raise
+    #     print(f"Found existing columns: {[col['name'] for col in columns]}")
+        
+    #     # Create column definitions for new table, excluding api_key
+    #     column_defs = []
+    #     for col in columns:
+    #         if col['name'] != 'api_key':
+    #             nullable_str = "" if col.get('nullable', True) else " NOT NULL"
+    #             default_str = f" DEFAULT {col['default']}" if col.get('default') is not None else ""
+    #             column_defs.append(f"{col['name']} {col['type']}{nullable_str}{default_str}")
+        
+    #     # Create new table without the api_key column
+    #     print("Creating new table without api_key column...")
+    #     create_table_sql = (
+    #         "CREATE TABLE models_new (\n"
+    #         f"    {',\n    '.join(column_defs)}\n"
+    #         ")"
+    #     )
+    #     print(f"Create table SQL: {create_table_sql}")
+    #     op.execute(create_table_sql)
+        
+    #     # Generate column list for INSERT
+    #     column_names = [col['name'] for col in columns if col['name'] != 'api_key']
+    #     columns_sql = ', '.join(column_names)
+        
+    #     # Copy data from old table to new table
+    #     print("Copying data to new table...")
+    #     insert_sql = (
+    #         "INSERT INTO models_new \n"
+    #         f"SELECT {columns_sql}\n"
+    #         "FROM models"
+    #     )
+    #     print(f"Insert SQL: {insert_sql}")
+    #     result = op.execute(insert_sql)
+    #     print(f"Copied {result.rowcount} rows to new table")
+        
+    #     print("Dropping old table...")
+    #     op.execute("DROP TABLE models")
+        
+    #     print("Renaming new table...")
+    #     op.execute("ALTER TABLE models_new RENAME TO models")
+        
+    #     print("Successfully completed table recreation process")
+    # except Exception as e:
+    #     print(f"Critical error during table recreation: {str(e)}")
+    #     print("Full error details:")
+    #     import traceback
+    #     traceback.print_exc()
+    #     raise
 
 
 def downgrade() -> None:
-    print("Starting downgrade process to restore api_key column...")
+    pass
+    # print("Starting downgrade process to restore api_key column...")
     
-    try:
-        # Try adding the column directly first
-        print("Attempting to add api_key column directly...")
-        op.add_column('models', sa.Column('api_key', sa.VARCHAR(), nullable=True))
-        print("Successfully added api_key column using direct method")
-    except Exception as e:
-        print(f"Error adding api_key column directly: {str(e)}")
-        print("Falling back to table recreation approach...")
+    # try:
+    #     # Try adding the column directly first
+    #     print("Attempting to add api_key column directly...")
+    #     op.add_column('models', sa.Column('api_key', sa.VARCHAR(), nullable=True))
+    #     print("Successfully added api_key column using direct method")
+    # except Exception as e:
+    #     print(f"Error adding api_key column directly: {str(e)}")
+    #     print("Falling back to table recreation approach...")
         
-        try:
-            # Get existing columns from the models table
-            bind = op.get_bind()
-            inspector = sa.inspect(bind)
-            columns = inspector.get_columns('models')
+    #     try:
+    #         # Get existing columns from the models table
+    #         bind = op.get_bind()
+    #         inspector = sa.inspect(bind)
+    #         columns = inspector.get_columns('models')
             
-            print(f"Found existing columns: {[col['name'] for col in columns]}")
+    #         print(f"Found existing columns: {[col['name'] for col in columns]}")
             
-            # Create column definitions including api_key
-            column_defs = []
-            for col in columns:
-                nullable_str = "" if col.get('nullable', True) else " NOT NULL"
-                default_str = f" DEFAULT {col['default']}" if col.get('default') is not None else ""
-                column_defs.append(f"{col['name']} {col['type']}{nullable_str}{default_str}")
-            column_defs.append("api_key VARCHAR")
+    #         # Create column definitions including api_key
+    #         column_defs = []
+    #         for col in columns:
+    #             nullable_str = "" if col.get('nullable', True) else " NOT NULL"
+    #             default_str = f" DEFAULT {col['default']}" if col.get('default') is not None else ""
+    #             column_defs.append(f"{col['name']} {col['type']}{nullable_str}{default_str}")
+    #         column_defs.append("api_key VARCHAR")
             
-            # Create new table with api_key column
-            print("Creating new table with api_key column...")
-            create_table_sql = f"""
-                CREATE TABLE models_new (
-                    {',\n'.join(column_defs)}
-                )
-            """
-            print(f"Create table SQL: {create_table_sql}")
-            op.execute(create_table_sql)
+    #         # Create new table with api_key column
+    #         print("Creating new table with api_key column...")
+    #         create_table_sql = (
+    #             "CREATE TABLE models_new (\n"
+    #             f"    {',\n    '.join(column_defs)}\n"
+    #             ")"
+    #         )
+    #         print(f"Create table SQL: {create_table_sql}")
+    #         op.execute(create_table_sql)
             
-            # Generate column list for INSERT
-            column_names = [col['name'] for col in columns]
-            columns_sql = ', '.join(column_names)
+    #         # Generate column list for INSERT
+    #         column_names = [col['name'] for col in columns]
+    #         columns_sql = ', '.join(column_names)
             
-            # Copy existing data
-            print("Copying existing data to new table...")
-            insert_sql = f"""
-                INSERT INTO models_new ({columns_sql})
-                SELECT {columns_sql}
-                FROM models
-            """
-            print(f"Insert SQL: {insert_sql}")
-            result = op.execute(insert_sql)
-            print(f"Copied {result.rowcount} rows to new table")
+    #         # Copy existing data
+    #         print("Copying existing data to new table...")
+    #         insert_sql = (
+    #             f"INSERT INTO models_new ({columns_sql})\n"
+    #             f"SELECT {columns_sql}\n"
+    #             "FROM models"
+    #         )
+    #         print(f"Insert SQL: {insert_sql}")
+    #         result = op.execute(insert_sql)
+    #         print(f"Copied {result.rowcount} rows to new table")
             
-            print("Dropping old table...")
-            op.execute("DROP TABLE models")
+    #         print("Dropping old table...")
+    #         op.execute("DROP TABLE models")
             
-            print("Renaming new table...")
-            op.execute("ALTER TABLE models_new RENAME TO models")
+    #         print("Renaming new table...")
+    #         op.execute("ALTER TABLE models_new RENAME TO models")
             
-            print("Successfully completed table recreation process")
-        except Exception as e:
-            print(f"Critical error during table recreation: {str(e)}")
-            print("Full error details:")
-            import traceback
-            traceback.print_exc()
-            raise
+    #         print("Successfully completed table recreation process")
+    #     except Exception as e:
+    #         print(f"Critical error during table recreation: {str(e)}")
+    #         print("Full error details:")
+    #         import traceback
+    #         traceback.print_exc()
+    #         raise
     
-    print("Warning: API keys cannot be restored from environment variables")
-    print("Downgrade completed successfully")
+    # print("Warning: API keys cannot be restored from environment variables")
+    # print("Downgrade completed successfully")
