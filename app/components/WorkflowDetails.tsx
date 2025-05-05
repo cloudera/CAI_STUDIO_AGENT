@@ -39,11 +39,15 @@ import {
   selectEditorWorkflowAgentIds,
   selectEditorWorkflowTaskIds,
   selectEditorWorkflowProcess,
+  selectWorkflowConfiguration,
 } from '../workflows/editorSlice';
 import { AgentMetadata, DeployedWorkflow } from '@/studio/proto/agent_studio';
 import { getStatusColor, getStatusDisplay } from './WorkflowListItem';
 import { useGlobalNotification } from './Notifications';
 import { useGetDefaultModelQuery } from '../models/modelsApi';
+import { TOOL_PARAMS_ALERT } from '../lib/constants';
+import { hasValidToolConfiguration } from './WorkflowEditorConfigureInputs';
+import { renderAlert } from '../lib/alertUtils';
 const { Title, Text } = Typography;
 
 interface WorkflowDetailsProps {
@@ -84,6 +88,15 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
   const notificationsApi = useGlobalNotification();
 
   const { data: defaultModel } = useGetDefaultModelQuery();
+
+  const workflowConfiguration = useAppSelector(selectWorkflowConfiguration);
+
+  const isValid = hasValidToolConfiguration(
+    workflow.workflow_id,
+    allAgents,
+    toolInstances,
+    workflowConfiguration
+  );
 
   if (agentsLoading || toolInstancesLoading) {
     return (
@@ -534,55 +547,6 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
         }) ?? false)
       : false;
 
-  const renderAlert = (
-    message: string,
-    description: string,
-    type: 'info' | 'warning' | 'error',
-  ) => {
-    const icon =
-      type === 'warning' ? (
-        <WarningOutlined style={{ fontSize: 16, color: '#faad14' }} />
-      ) : (
-        <InfoCircleOutlined style={{ fontSize: 16, color: '#1890ff' }} />
-      );
-
-    return (
-      <Alert
-        style={{
-          alignItems: 'flex-start',
-          justifyContent: 'flex-start',
-          padding: 12,
-          marginBottom: 12,
-        }}
-        message={
-          <Layout
-            style={{ flexDirection: 'column', gap: 4, padding: 0, background: 'transparent' }}
-          >
-            <Layout
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 8,
-                background: 'transparent',
-              }}
-            >
-              {icon}
-              <Text style={{ fontSize: 13, fontWeight: 600, background: 'transparent' }}>
-                {message}
-              </Text>
-            </Layout>
-            <Text style={{ fontSize: 13, fontWeight: 400, background: 'transparent' }}>
-              {description}
-            </Text>
-          </Layout>
-        }
-        type={type}
-        showIcon={false}
-        closable={false}
-      />
-    );
-  };
-
   return (
     <Layout style={{ padding: '16px', background: '#fff' }}>
       {/* Show alerts in priority order */}
@@ -592,33 +556,39 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
             'Please configure a default LLM model in the Models section to use workflows.',
             'warning',
           )
-        : !workflow?.is_ready
-          ? renderAlert('Workflow Not Ready', 'This workflow is still being configured...', 'info')
-          : !hasAgents
-            ? renderAlert(
-                'No Agents Found',
-                'This workflow does not have any agents. You need at least one agent to test or deploy the workflow.',
-                'warning',
-              )
-            : !hasTasks
+        : !isValid
+          ? renderAlert(
+              TOOL_PARAMS_ALERT.message,
+              TOOL_PARAMS_ALERT.description,
+              'warning',
+            )
+          : !workflow?.is_ready
+            ? renderAlert('Workflow Not Ready', 'This workflow is still being configured...', 'info')
+            : !hasAgents
               ? renderAlert(
-                  'No Tasks Found',
-                  'This workflow does not have any tasks. You need at least one task to test or deploy the workflow.',
+                  'No Agents Found',
+                  'This workflow does not have any agents. You need at least one agent to test or deploy the workflow.',
                   'warning',
                 )
-              : hasUnassignedTasks
+              : !hasTasks
                 ? renderAlert(
-                    'Unassigned Tasks',
-                    'You need to assign tasks to an agent because there is no manager agent.',
+                    'No Tasks Found',
+                    'This workflow does not have any tasks. You need at least one task to test or deploy the workflow.',
                     'warning',
                   )
-                : workflowDeployments.length > 0
+                : hasUnassignedTasks
                   ? renderAlert(
-                      'Existing Deployment',
-                      'There is an existing deployment for this workflow. Please delete it first to redeploy the workflow.',
+                      'Unassigned Tasks',
+                      'You need to assign tasks to an agent because there is no manager agent.',
                       'warning',
                     )
-                  : null}
+                  : workflowDeployments.length > 0
+                    ? renderAlert(
+                        'Existing Deployment',
+                        'There is an existing deployment for this workflow. Please delete it first to redeploy the workflow.',
+                        'warning',
+                      )
+                    : null}
       <Collapse
         style={{ marginBottom: '12px' }}
         bordered={false}

@@ -13,6 +13,11 @@ export const DEFAULT_GENERATION_CONFIG = {
   temperature: 0.7,
 };
 
+export const TOOL_PARAMS_ALERT = {
+  message: 'Required Tool Parameters Not Configured',
+  description: 'Some of the required tool parameters are not set to enable testing and deployment of workflow. Either set them or change the tool code to make them optional.'
+};
+
 /**
  * Initial local storage state for a client browser. Note: we are not
  * setting any information about our workflow configuration yet, which is

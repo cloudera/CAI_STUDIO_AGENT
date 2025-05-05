@@ -2,6 +2,10 @@ import pytest
 from unittest.mock import patch, MagicMock
 import os
 
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
 from studio.workflow.utils import (
     compare_workbench_versions,
     is_custom_model_root_dir_feature_enabled    

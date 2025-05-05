@@ -128,7 +128,7 @@ export default function AgentNode({ data }: NodeProps<AgentNode>) {
       </div>
 
       {/* Handles for React Flow */}
-      <Handle type="target" position={Position.Top} style={{ background: '#555' }} />
+      <Handle type="target" position={Position.Top} id="top" />
       <Handle type="source" position={Position.Bottom} style={{ background: '#555' }} />
     </div>
   );

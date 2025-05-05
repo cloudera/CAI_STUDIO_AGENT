@@ -1,4 +1,5 @@
 import type { Edge, Node } from '@xyflow/react';
+import { MarkerType } from '@xyflow/react';
 
 import {
   ToolTemplate,
@@ -52,11 +53,36 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
         },
       });
 
+      // Add edge to previous task (if not the first task)
+      if (index > 0) {
+        const previousTaskId = workflowData.workflowState.workflowMetadata.taskIds![index - 1];
+        initialEdges.push({
+          id: `e-task-${previousTaskId}-${task.task_id}`,
+          source: `${previousTaskId}`,
+          target: `${task.task_id}`,
+          sourceHandle: 'right',
+          targetHandle: 'left',
+          markerEnd: {
+            type: MarkerType.Arrow,
+            width: 20,
+            height: 20,
+          },
+        });
+      }
+
       if (!hasManagerAgent) {
+        // Connect task to its assigned agent
         initialEdges.push({
           id: `e-${task.task_id}-${task.assigned_agent_id}`,
           source: `${task.task_id}`,
           target: `${task.assigned_agent_id}`,
+          sourceHandle: 'bottom',
+          targetHandle: 'top',
+          markerEnd: {
+            type: MarkerType.Arrow,
+            width: 20,
+            height: 20,
+          },
         });
       } else {
         const mId = useDefaultManager ? 'manager-agent' : managerAgentId;
@@ -64,6 +90,12 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
           id: `e-${task.task_id}-${mId}`,
           source: `${task.task_id}`,
           target: `${mId}`,
+          sourceHandle: 'bottom',
+          markerEnd: {
+            type: MarkerType.Arrow,
+            width: 20,
+            height: 20,
+          },
         });
       }
     }

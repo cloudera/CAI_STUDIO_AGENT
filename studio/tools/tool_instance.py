@@ -203,9 +203,9 @@ def _get_tool_instance_impl(request: GetToolInstanceRequest, session: DbSession)
     with open(os.path.join(tool_instance_dir, tool_instance.python_requirements_file_name), "r") as f:
         tool_requirements = f.read()
 
-    user_params = []
+    user_params_dict = {}
     try:
-        user_params = tool_utils.extract_user_params_from_code(tool_code)
+        user_params_dict = tool_utils.extract_user_params_from_code(tool_code)
     except Exception as e:
         is_valid = False
 
@@ -226,7 +226,7 @@ def _get_tool_instance_impl(request: GetToolInstanceRequest, session: DbSession)
             python_code=tool_code,
             python_requirements=tool_requirements,
             source_folder_path=tool_instance_dir,
-            tool_metadata=json.dumps({"user_params": user_params}),
+            tool_metadata=json.dumps({"user_params": list(user_params_dict.keys()), "user_params_metadata": user_params_dict}),
             is_valid=True,
             tool_image_uri=tool_image_uri,
             tool_description=tool_description,
@@ -272,9 +272,9 @@ def _list_tool_instances_impl(request: ListToolInstancesRequest, session: DbSess
         with open(os.path.join(tool_instance_dir, tool_instance.python_requirements_file_name), "r") as f:
             tool_requirements = f.read()
 
-        user_params = []
+        user_params_dict = {}
         try:
-            user_params = tool_utils.extract_user_params_from_code(tool_code)
+            user_params_dict = tool_utils.extract_user_params_from_code(tool_code)
         except Exception as e:
             is_valid = False
 
@@ -295,7 +295,10 @@ def _list_tool_instances_impl(request: ListToolInstancesRequest, session: DbSess
                 python_code=tool_code,
                 python_requirements=tool_requirements,
                 source_folder_path=tool_instance.source_folder_path,
-                tool_metadata=json.dumps({"user_params": user_params}),
+                tool_metadata=json.dumps({
+                    "user_params": list(user_params_dict.keys()),
+                    "user_params_metadata": user_params_dict
+                }),
                 is_valid=True,
                 tool_image_uri=tool_image_uri,
                 tool_description=tool_description,

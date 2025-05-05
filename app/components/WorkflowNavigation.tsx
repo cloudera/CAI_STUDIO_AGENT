@@ -27,7 +27,7 @@ import {
   CloseOutlined,
   QuestionCircleOutlined,
 } from '@ant-design/icons';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   useAddWorkflowMutation,
@@ -43,6 +43,9 @@ import { useListDeployedWorkflowsQuery } from '../workflows/deployedWorkflowsApi
 import { useListTasksQuery } from '../tasks/tasksApi';
 import { useGetDefaultModelQuery } from '../models/modelsApi';
 import { clearedWorkflowApp } from '../workflows/workflowAppSlice';
+import { hasValidToolConfiguration } from './WorkflowEditorConfigureInputs';
+import { useListToolInstancesQuery } from '../tools/toolInstancesApi';
+import { useListAgentsQuery } from '../agents/agentApi';
 
 const { Header, Content } = Layout;
 const { Title, Text } = Typography;
@@ -74,6 +77,26 @@ const WorkflowNavigation: React.FC = () => {
   const { data: defaultModel } = useGetDefaultModelQuery();
   const workflowGenerationConfig = useAppSelector(selectWorkflowGenerationConfig);
   const workflowConfiguration = useAppSelector(selectWorkflowConfiguration);
+
+  const { data: agents } = useListAgentsQuery({});
+  const { data: toolInstances } = useListToolInstancesQuery({});
+
+  const isValid = useMemo(() => {
+    const result = hasValidToolConfiguration(
+      workflowState.workflowId || '',
+      agents,
+      toolInstances,
+      workflowConfiguration
+    );
+    console.log('Validation Debug:', {
+      workflowId: workflowState.workflowId,
+      agents,
+      toolInstances,
+      workflowConfiguration,
+      isValid: result
+    });
+    return result;
+  }, [workflowState.workflowId, agents, toolInstances, workflowConfiguration]);
 
   const hasExistingDeployment = deployedWorkflows.some(
     (dw) => dw.workflow_id === workflowState.workflowId,
@@ -281,16 +304,20 @@ const WorkflowNavigation: React.FC = () => {
             >
               <ArrowLeftOutlined /> Add Tasks
             </Button>
-            <Button
-              type="primary"
-              style={{ flexGrow: 0, height: '40px' }}
-              onClick={() => {
-                dispatch(clearedWorkflowApp());
-                dispatch(updatedEditorStep('Test'));
-              }}
+            <Tooltip 
+              title={!isValid ? "Please fill in all required tool parameters before proceeding" : ""}
             >
-              Save & Next <ArrowRightOutlined />
-            </Button>
+              <Button
+                type="primary"
+                style={{ flexGrow: 0, height: '40px' }}
+                onClick={() => {
+                  dispatch(clearedWorkflowApp());
+                  dispatch(updatedEditorStep('Test'));
+                }}
+              >
+                Save & Next <ArrowRightOutlined />
+              </Button>
+            </Tooltip>
           </Layout>
         ) : currentStep === 'Test' ? (
           <Layout
@@ -308,13 +335,18 @@ const WorkflowNavigation: React.FC = () => {
             >
               <ArrowLeftOutlined /> Configure
             </Button>
-            <Button
-              type="primary"
-              style={{ flexGrow: 0, height: '40px' }}
-              onClick={() => dispatch(updatedEditorStep('Deploy'))}
-            >
-              Save & Next <ArrowRightOutlined />
-            </Button>
+            <Tooltip title={!isValid ? "Required tool parameters are missing" : ""}>
+              <Button
+                type="primary"
+                style={{ flexGrow: 0, height: '40px' }}
+                onClick={() => {
+                  dispatch(clearedWorkflowApp());
+                  dispatch(updatedEditorStep('Deploy'));
+                }}
+              >
+                Save & Next <ArrowRightOutlined />
+              </Button>
+            </Tooltip>
           </Layout>
         ) : currentStep === 'Deploy' ? (
           <Layout
@@ -367,20 +399,16 @@ const WorkflowNavigation: React.FC = () => {
             >
               Save as Template
             </Button>
-            <Button
-              type="primary"
-              style={{ flexGrow: 0, height: '40px' }}
-              onClick={() => setIsDeployModalVisible(true)}
-              disabled={
-                !defaultModel ||
-                hasExistingDeployment ||
-                !hasAgents ||
-                !hasTasks ||
-                hasUnassignedTasks
-              }
-            >
-              Deploy
-            </Button>
+            <Tooltip title={!isValid ? "Required tool parameters are missing" : ""}>
+              <Button
+                type="primary"
+                style={{ flexGrow: 0, height: '40px' }}
+                disabled={!isValid || !defaultModel || hasExistingDeployment || !hasAgents || !hasTasks || hasUnassignedTasks}
+                onClick={() => setIsDeployModalVisible(true)}
+              >
+                Deploy
+              </Button>
+            </Tooltip>
           </Layout>
         ) : (
           <div>Unknown Step</div>

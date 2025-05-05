@@ -3,7 +3,7 @@ import os
 import shutil
 from uuid import uuid4
 import cmlapi
-from typing import Union, List, Optional
+from typing import Union, List, Optional, Tuple
 from sqlalchemy.exc import SQLAlchemyError
 import requests
 from google.protobuf.json_format import MessageToDict
@@ -13,7 +13,7 @@ from cmlapi import CMLServiceApi
 from studio.db.dao import AgentStudioDao
 from studio.api import *
 from studio.db import model as db_model
-from studio.models.utils import get_studio_default_model_id
+from studio.models.utils import get_studio_default_model_id, get_model_api_key_from_env
 import studio.cross_cutting.utils as cc_utils
 from studio.proto.utils import is_field_set
 from studio.cross_cutting.utils import get_studio_subdirectory
@@ -140,19 +140,33 @@ def _create_collated_input(
             language_model_db_model = next((lm for lm in language_model_db_models if lm.model_id == lm_id), None)
             if not language_model_db_model:
                 raise ValueError(f"Language Model with ID '{lm_id}' not found.")
-            language_model_inputs.append(
-                input_types.Input__LanguageModel(
-                    model_id=language_model_db_model.model_id,
-                    model_name=language_model_db_model.model_name,
-                    config=input_types.Input__LanguageModelConfig(
-                        provider_model=language_model_db_model.provider_model,
-                        model_type=language_model_db_model.model_type,
-                        api_base=language_model_db_model.api_base or None,
-                        api_key=language_model_db_model.api_key or None,
-                    ),
-                    generation_config=llm_generation_config,
+            
+            try:
+                # Get API key from environment with error handling
+                api_key = get_model_api_key_from_env(language_model_db_model.model_id, cml)
+                if not api_key:
+                    raise ValueError(
+                        f"API key is required but not found for model {language_model_db_model.model_name} "
+                        f"({language_model_db_model.model_id}). Please configure the API key in project environment variables."
+                    )
+
+                language_model_inputs.append(
+                    input_types.Input__LanguageModel(
+                        model_id=language_model_db_model.model_id,
+                        model_name=language_model_db_model.model_name,
+                        config=input_types.Input__LanguageModelConfig(
+                            provider_model=language_model_db_model.provider_model,
+                            model_type=language_model_db_model.model_type,
+                            api_base=language_model_db_model.api_base or None,
+                            api_key=api_key,  # API key is required
+                        ),
+                        generation_config=llm_generation_config,
+                    )
                 )
-            )
+            except Exception as e:
+                raise ValueError(
+                    f"Failed to configure model {language_model_db_model.model_name}: {str(e)}"
+                )
 
         deployed_workflow_instance_id = cc_utils.get_random_compact_string()
 

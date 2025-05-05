@@ -131,15 +131,18 @@ def get_tool_template(
                 is_valid = False
 
             # Extract user parameters from the Python code
-            user_params = []
+            user_params_dict = {}
             if python_code:
                 try:
-                    user_params = tool_utils.extract_user_params_from_code(python_code)
+                    user_params_dict = tool_utils.extract_user_params_from_code(python_code)
                 except ValueError as e:
-                    user_params = [f"Error parsing Python code: {e}"]
+                    user_params_dict = {"error": {"required": True, "error": f"Error parsing Python code: {e}"}}
 
             # Create tool_metadata as a JSON string
-            tool_metadata = json.dumps({"user_params": user_params})
+            tool_metadata = json.dumps({
+                "user_params": list(user_params_dict.keys()),
+                "user_params_metadata": user_params_dict
+            })
 
             tool_image_uri = ""
             if template.tool_image_path:

@@ -15,6 +15,7 @@ import {
   Alert,
   Popconfirm,
   FormInstance,
+  Select,
 } from 'antd';
 import {
   PlusOutlined,
@@ -66,7 +67,7 @@ import {
   useRemoveToolInstanceMutation,
 } from '@/app/tools/toolInstancesApi';
 import { CrewAIAgentMetadata } from '@/studio/proto/agent_studio';
-import { useGetDefaultModelQuery } from '../models/modelsApi';
+import { useGetDefaultModelQuery, useGetModelMutation, useListModelsQuery } from '../models/modelsApi';
 import { useTestModelMutation } from '../models/modelsApi';
 
 const { Text } = Typography;
@@ -81,6 +82,7 @@ interface GenerateAgentPropertiesModalProps {
     role: string;
     backstory: string;
     goal: string;
+    llm_provider_model_id: string;
   }>;
   llmModel: Model;
   toolInstances: Record<string, ToolInstance>;
@@ -425,6 +427,7 @@ interface SelectAgentComponentProps {
     role: string;
     backstory: string;
     goal: string;
+    llm_provider_model_id: string;
   }>;
   selectedAgentTemplate: AgentTemplateMetadata | null;
   setSelectedAgentTemplate: React.Dispatch<React.SetStateAction<AgentTemplateMetadata | null>>;
@@ -478,6 +481,9 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
     ...new Set(useSelector(selectEditorAgentViewCreateAgentToolTemplates) || []),
   ];
   const selectedAssignedAgent = useAppSelector(selectEditorAgentViewAgent);
+  const { data: models = [] } = useListModelsQuery({});
+  const [getModel] = useGetModelMutation();
+  const [defaultModelId, setDefaultModelId] = useState<string>('');
 
   const toolTemplateCache = toolTemplates.reduce((acc: Record<string, any>, template: any) => {
     acc[template.id] = {
@@ -543,6 +549,28 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
     }
   }, [agents, selectedAssignedAgent]);
 
+  // Update the effect to fetch default model
+  useEffect(() => {
+    const fetchDefaultModel = async () => {
+      if (models && models.length > 0) {
+        try {
+          // Find the model marked as studio default
+          const defaultModel = models.find(model => model.is_studio_default);
+          if (defaultModel) {
+            setDefaultModelId(defaultModel.model_id);
+          } else {
+            // Fallback to first model if no default is set
+            const firstModel = await getModel({ model_id: models[0].model_id }).unwrap();
+            setDefaultModelId(firstModel.model_id);
+          }
+        } catch (error) {
+          console.error('Error fetching default model:', error);
+        }
+      }
+    };
+    fetchDefaultModel();
+  }, [models, getModel]);
+
   const changeToCreateAgentMode = () => {
     setIsCreateMode(true);
     setSelectedAgentTemplate(null);
@@ -556,7 +584,11 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
         tools: [],
       }),
     );
-    form.resetFields(); // Clear the form
+    form.resetFields();
+    // Set default model for new agent
+    form.setFieldsValue({
+      llm_provider_model_id: defaultModelId,
+    });
   };
 
   const handleSelectAgentTemplate = (template: AgentTemplateMetadata) => {
@@ -572,6 +604,14 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
         toolTemplateIds: template.tool_template_ids || [],
       }),
     );
+    // Set form values including default model
+    form.setFieldsValue({
+      name: template.name,
+      role: template.role,
+      backstory: template.backstory,
+      goal: template.goal,
+      llm_provider_model_id: defaultModelId,
+    });
   };
 
   const handleViewToolDetails = (toolId: string) => {
@@ -677,6 +717,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
         role: (agent.crew_ai_agent_metadata as CrewAIAgentMetadata)?.role || '',
         backstory: agent.crew_ai_agent_metadata?.backstory || '',
         goal: agent.crew_ai_agent_metadata?.goal || '',
+        llm_provider_model_id: agent.llm_provider_model_id || defaultModelId,
       });
     }, 0);
 
@@ -1463,6 +1504,27 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
             >
               <TextArea disabled={isFormDisabled} autoSize={{ minRows: 3, maxRows: 4 }} />
             </Form.Item>
+            <Form.Item
+              label={
+                <Space>
+                  LLM Model
+                  <Tooltip title="The language model this agent will use">
+                    <QuestionCircleOutlined style={{ color: '#666' }} />
+                  </Tooltip>
+                </Space>
+              }
+              name="llm_provider_model_id"
+              rules={[{ required: true, message: 'Language model is required' }]}
+              initialValue={selectedAssignedAgent?.llm_provider_model_id || defaultModelId}
+            >
+              <Select>
+                {models.map(model => (
+                  <Select.Option key={model.model_id} value={model.model_id}>
+                    {model.model_name} {model.model_id === defaultModelId && '(Default)'}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
             {renderToolSection()}
           </Form>
         </Layout>
@@ -1500,6 +1562,7 @@ const SelectOrAddAgentModal: React.FC = () => {
     role: string;
     backstory: string;
     goal: string;
+    llm_provider_model_id: string;
   }>();
   const [addAgent] = useAddAgentMutation();
   const workflowId = useSelector(selectEditorWorkflowId);
@@ -1602,7 +1665,7 @@ const SelectOrAddAgentModal: React.FC = () => {
           },
           tools_id: selectedAssignedAgent.tools_id || [],
           tool_template_ids: [],
-          llm_provider_model_id: '',
+          llm_provider_model_id: values.llm_provider_model_id,
           tmp_agent_image_path: '',
         }).unwrap();
 
@@ -1635,7 +1698,7 @@ const SelectOrAddAgentModal: React.FC = () => {
             max_iter: 0,
           },
           tools_id: createAgentState?.tools || [],
-          llm_provider_model_id: '',
+          llm_provider_model_id: values.llm_provider_model_id,
           tool_template_ids: toolTemplateIds,
           tmp_agent_image_path: '',
         }).unwrap();

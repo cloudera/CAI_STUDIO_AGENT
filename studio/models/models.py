@@ -1,6 +1,8 @@
 from uuid import uuid4
 from typing import List
 from cmlapi import CMLServiceApi
+import os
+import json
 
 from studio.db.dao import AgentStudioDao
 from studio.db import model as db_model
@@ -15,6 +17,12 @@ sys.path.append("studio/workflow_engine/src/")
 
 from engine.crewai.llms import get_crewai_llm_object_direct
 from engine.types import Input__LanguageModel, Input__LanguageModelConfig
+
+from .utils import (
+    get_model_api_key_from_env, 
+    update_model_api_key_in_env,
+    remove_model_api_key_from_env
+)
 
 
 def list_models(
@@ -36,6 +44,9 @@ def get_model(request: GetModelRequest, cml: CMLServiceApi = None, dao: AgentStu
         model = session.query(db_model.Model).filter_by(model_id=request.model_id).one_or_none()
         if not model:
             raise ValueError(f"Model with ID '{request.model_id}' not found.")
+            
+        # Get API key from environment
+        model.api_key = get_model_api_key_from_env(model.model_id, cml)
         return GetModelResponse(model_details=model.to_protobuf(Model))
 
 
@@ -59,15 +70,16 @@ def add_model(request: AddModelRequest, cml: CMLServiceApi = None, dao: AgentStu
             provider_model=request.provider_model,
             model_type=request.model_type,
             api_base=request.api_base,
-            api_key=request.api_key,
-            # Set as default if no models exist
             is_studio_default=(existing_model_count == 0),
         )
         session.add(m_)
         session.commit()
-        model_id_generated = m_.model_id
 
-    return AddModelResponse(model_id=model_id_generated)
+        # Store API key in project environment if provided
+        if request.api_key:
+            update_model_api_key_in_env(m_.model_id, request.api_key, cml)
+
+        return AddModelResponse(model_id=m_.model_id)
 
 
 def remove_model(
@@ -75,12 +87,28 @@ def remove_model(
 ) -> RemoveModelResponse:
     """
     Remove an existing model by its ID.
+    Also updates any agents using this model and removes the API key from environment variables.
     """
     with dao.get_session() as session:
+        # Find the model
         m_ = session.query(db_model.Model).filter_by(model_id=request.model_id).one_or_none()
         if not m_:
             raise ValueError(f"Model with ID '{request.model_id}' not found.")
+            
+        # Update all agents using this model to have empty llm_provider_model_id
+        session.query(db_model.Agent).filter_by(
+            llm_provider_model_id=request.model_id
+        ).update({"llm_provider_model_id": ""})
+        
+        # Delete the model
         session.delete(m_)
+        
+        try:
+            # Remove API key from project environment
+            remove_model_api_key_from_env(request.model_id, cml)
+        except Exception:
+            pass  # Don't fail deletion if environment cleanup fails
+            
         session.commit()
 
     return RemoveModelResponse()
@@ -105,7 +133,7 @@ def update_model(
         if request.api_base:
             m_.api_base = request.api_base
         if request.api_key:
-            m_.api_key = request.api_key
+            update_model_api_key_in_env(m_.model_id, request.api_key, cml)
         model_id = m_.model_id
         session.commit()
 
@@ -113,22 +141,19 @@ def update_model(
 
 
 def model_test(request: TestModelRequest, cml: CMLServiceApi = None, dao: AgentStudioDao = None) -> TestModelResponse:
-    """
-    Tests an existing model by sending a test request to the LiteLLM server.
-
-    Args:
-        request (TestModelRequest): The request containing the model ID, role, and test content.
-        cml (CMLServiceApi): Optional. The CMLServiceApi instance.
-        dao (AgentStudioDao): Optional. The AgentStudioDao instance for database interaction.
-
-    Returns:
-        TestModelResponse: The response containing the test result.
-    """
+    """Tests an existing model by sending a test request to the LiteLLM server."""
     with dao.get_session() as session:
-        # Retrieve the model using the model_id from the request
         model = session.query(db_model.Model).filter_by(model_id=request.model_id).one_or_none()
         if not model:
             raise ValueError(f"Model with ID '{request.model_id}' not found.")
+
+        # Get API key from environment instead of database
+        api_key = get_model_api_key_from_env(model.model_id, cml)
+        if not api_key:
+            raise ValueError(
+                f"API key is required but not found for model {model.model_name} "
+                f"({model.model_id}). Please configure the API key in project environment variables."
+            )
 
         llm = get_crewai_llm_object_direct(
             Input__LanguageModel(
@@ -138,7 +163,7 @@ def model_test(request: TestModelRequest, cml: CMLServiceApi = None, dao: AgentS
                     provider_model=model.provider_model,
                     model_type=model.model_type,
                     api_base=model.api_base or None,
-                    api_key=model.api_key or None,
+                    api_key=api_key,  # API key is required
                 ),
                 generation_config={
                     "temperature": request.temperature or None,
@@ -147,7 +172,6 @@ def model_test(request: TestModelRequest, cml: CMLServiceApi = None, dao: AgentS
             )
         )
 
-        # Send the request to the LiteLLM server and handle the response
         try:
             response = llm.call(messages=[{"role": request.completion_role, "content": request.completion_content}])
             return TestModelResponse(response=response)

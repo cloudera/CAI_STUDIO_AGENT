@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Layout, Spin, Typography, Slider, Alert, Button, Tooltip, Input, Collapse } from 'antd';
+import { Layout, Spin, Typography, Slider, Alert, Button, Tooltip, Input, Collapse, Card, Divider } from 'antd';
 import WorkflowAppInputsView from './WorkflowAppInputsView';
 import { useAppDispatch, useAppSelector } from '@/app/lib/hooks/hooks';
 import {
@@ -20,6 +20,7 @@ import {
 import {
   updatedEditorWorkflowDescription,
   selectEditorWorkflowDescription,
+  selectWorkflowConfiguration,
 } from '@/app/workflows/editorSlice';
 import WorkflowDiagramView from './WorkflowDiagramView';
 import {
@@ -44,6 +45,9 @@ import { useUpdateWorkflowMutation } from '@/app/workflows/workflowsApi';
 import { createUpdateRequestFromEditor } from '@/app/lib/workflow';
 import { useTestModelMutation } from '@/app/models/modelsApi';
 import { useGlobalNotification } from '../Notifications';
+import { renderAlert } from '@/app/lib/alertUtils';
+import { hasValidToolConfiguration } from '@/app/components/WorkflowEditorConfigureInputs';
+import { TOOL_PARAMS_ALERT } from '@/app/lib/constants';
 
 const { Title, Text } = Typography;
 
@@ -54,57 +58,6 @@ export interface WorkflowAppProps {
   tasks?: CrewAITaskMetadata[];
   agents?: AgentMetadata[];
 }
-
-const renderAlert = (
-  message: string,
-  description: string,
-  type: 'info' | 'warning' | 'error' | 'loading',
-) => {
-  const icon =
-    type === 'warning' ? (
-      <WarningOutlined style={{ fontSize: 16, color: '#faad14' }} />
-    ) : type === 'loading' ? (
-      <LoadingOutlined style={{ fontSize: 16, color: '#1890ff' }} />
-    ) : (
-      <InfoCircleOutlined style={{ fontSize: 16, color: '#1890ff' }} />
-    );
-
-  const alertType = type === 'loading' ? 'info' : type;
-
-  return (
-    <Alert
-      style={{
-        alignItems: 'flex-start',
-        justifyContent: 'flex-start',
-        padding: 12,
-        margin: 12,
-      }}
-      message={
-        <Layout style={{ flexDirection: 'column', gap: 4, padding: 0, background: 'transparent' }}>
-          <Layout
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 8,
-              background: 'transparent',
-            }}
-          >
-            {icon}
-            <Text style={{ fontSize: 13, fontWeight: 600, background: 'transparent' }}>
-              {message}
-            </Text>
-          </Layout>
-          <Text style={{ fontSize: 13, fontWeight: 400, background: 'transparent' }}>
-            {description}
-          </Text>
-        </Layout>
-      }
-      type={alertType}
-      showIcon={false}
-      closable={false}
-    />
-  );
-};
 
 const WorkflowApp: React.FC<WorkflowAppProps> = ({
   workflow,
@@ -410,6 +363,20 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
     };
   }, []);
 
+  // Add this selector
+  const workflowConfiguration = useAppSelector(selectWorkflowConfiguration);
+
+  // Update the hasValidTools check to use workflowConfiguration from redux
+  const hasValidTools = React.useMemo(() => {
+    if (!workflow) return true;
+    return hasValidToolConfiguration(
+      workflow.workflow_id,
+      agents,
+      toolInstances,
+      workflowConfiguration
+    );
+  }, [workflow, agents, toolInstances, workflowConfiguration]);
+
   // Don't display anything if workflowId is nonexistent
   if (!workflow) {
     return (
@@ -459,11 +426,13 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
             flexShrink: 0,
             height: '100%',
             transition: 'width 0.3s ease',
+            padding: '16px',
           }}
         >
           <Collapse
             bordered={false}
             defaultActiveKey={['1']}
+            style={{ marginBottom: '24px' }}
             items={[
               {
                 key: '1',
@@ -506,31 +475,37 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
             renderAlert(
               'No Default LLM Model',
               'Please configure a default LLM model on the LLMs page to use workflows.',
-              'warning',
+              'warning'
             )
           ) : !workflow?.is_ready ? (
             renderAlert(
               'Getting your workflow ready.',
               'This workflow is still being configured. This might take a few minutes.',
-              'loading',
+              'loading'
             )
           ) : !((workflow.crew_ai_workflow_metadata?.agent_id?.length ?? 0) > 0) ? (
             renderAlert(
               'No Agents Found',
               'This workflow does not have any agents. You need at least one agent to test or deploy the workflow.',
-              'warning',
+              'warning'
             )
           ) : !((workflow.crew_ai_workflow_metadata?.task_id?.length ?? 0) > 0) ? (
             renderAlert(
               'No Tasks Found',
               'This workflow does not have any tasks. You need at least one task to test or deploy the workflow.',
-              'warning',
+              'warning'
             )
           ) : hasUnassignedTasks ? (
             renderAlert(
               'Unassigned Tasks',
               'You need to assign tasks to an agent because there is no manager agent.',
-              'warning',
+              'warning'
+            )
+          ) : !hasValidTools ? (
+            renderAlert(
+              TOOL_PARAMS_ALERT.message,
+              TOOL_PARAMS_ALERT.description,
+              'warning'
             )
           ) : workflow.is_conversational ? (
             <WorkflowAppChatView workflow={workflow} tasks={tasks} />

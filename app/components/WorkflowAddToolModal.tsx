@@ -512,18 +512,21 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ open, onCan
               {template.name}
             </Text>
           </div>
-          <Text
-            style={{
-              fontSize: '11px',
-              opacity: 0.45,
-              fontWeight: 400,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-          >
-            {template.tool_description || 'N/A'}
-          </Text>
+          <Tooltip title={template.tool_description || 'N/A'}>
+            <Text
+              style={{
+                fontSize: '11px',
+                opacity: 0.45,
+                fontWeight: 400,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                cursor: 'help',
+              }}
+            >
+              {template.tool_description || 'N/A'}
+            </Text>
+          </Tooltip>
           {isDisabled}
         </div>
       </List.Item>
@@ -537,6 +540,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ open, onCan
     // Find the corresponding tool template to get the image URI if needed
     const toolTemplate = toolTemplates.find((t) => t.id === toolInstance.tool_template_id);
     const imageUri = toolInstance.tool_image_uri || toolTemplate?.tool_image_uri;
+    const description = toolInstance.tool_description || toolTemplate?.tool_description || 'N/A';
 
     return (
       <List.Item>
@@ -604,18 +608,21 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ open, onCan
               {toolInstance.name}
             </Text>
           </div>
-          <Text
-            style={{
-              fontSize: '11px',
-              opacity: 0.45,
-              fontWeight: 400,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-          >
-            {toolInstance.tool_description || toolTemplate?.tool_description || 'N/A'}
-          </Text>
+          <Tooltip title={description}>
+            <Text
+              style={{
+                fontSize: '11px',
+                opacity: 0.45,
+                fontWeight: 400,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                cursor: 'help',
+              }}
+            >
+              {description}
+            </Text>
+          </Tooltip>
         </div>
       </List.Item>
     );

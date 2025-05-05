@@ -13,7 +13,7 @@ import {
   InputNumber,
 } from 'antd';
 import { useListToolInstancesQuery } from '../tools/toolInstancesApi';
-import { ToolInstance } from '@/studio/proto/agent_studio';
+import { ToolInstance, AgentMetadata } from '@/studio/proto/agent_studio';
 import { useListAgentsQuery } from '../agents/agentApi';
 import { useAppDispatch, useAppSelector } from '../lib/hooks/hooks';
 import {
@@ -28,9 +28,12 @@ import {
   readWorkflowConfigurationFromLocalStorage,
   writeWorkflowConfigurationToLocalStorage,
 } from '../lib/localStorage';
-import { WorkflowGenerationConfig } from '../lib/types';
+import { WorkflowGenerationConfig, WorkflowConfiguration } from '../lib/types';
 import { InfoCircleOutlined, QuestionCircleOutlined, UserOutlined } from '@ant-design/icons';
 import { DEFAULT_GENERATION_CONFIG } from '../lib/constants';
+import React from 'react';
+import { TOOL_PARAMS_ALERT } from '../lib/constants';
+import { renderAlert } from '../lib/alertUtils';
 
 const { Title, Text } = Typography;
 const { Password } = Input;
@@ -41,8 +44,13 @@ export interface ToolConfigurationComponentProps {
   workflowId: string;
 }
 
-export interface ToolInstanceMetadataProps {
+interface ToolParameterMetadata {
+  required: boolean;
+}
+
+interface ToolInstanceMetadataProps {
   user_params?: string[];
+  user_params_metadata?: Record<string, ToolParameterMetadata>;
 }
 
 /**
@@ -111,14 +119,23 @@ const ToolConfigurationComponent: React.FC<ToolConfigurationComponentProps> = ({
   const instanceMetadata: ToolInstanceMetadataProps = JSON.parse(toolInstance.tool_metadata);
   const dispatch = useAppDispatch();
 
-  // Grab the current tool configuration for this tool. NOTE: we do NOT
-  // pull from local storage here. The only time we should be pulling workflow configuration from local
-  // storage is when we first enter our workflow editor component for a given worklfow ID. Any time
-  // other than this should only consiste of *write* operations to local storage.
   const workflowConfiguration = useAppSelector(selectWorkflowConfiguration);
   const toolConfiguration = workflowConfiguration.toolConfigurations[toolInstance.id] || {
     parameters: {},
   };
+
+  // Check if all required parameters are set
+  const hasAllRequiredParams = React.useMemo(() => {
+    if (!instanceMetadata.user_params_metadata) return true;
+    
+    return Object.entries(instanceMetadata.user_params_metadata).every(([param, metadata]) => {
+      if (metadata.required) {
+        const value = toolConfiguration.parameters[param];
+        return value !== undefined && value !== '';
+      }
+      return true;
+    });
+  }, [instanceMetadata.user_params_metadata, toolConfiguration.parameters]);
 
   if (!instanceMetadata.user_params || instanceMetadata.user_params.length == 0) {
     return <></>;
@@ -167,6 +184,10 @@ const ToolConfigurationComponent: React.FC<ToolConfigurationComponentProps> = ({
           }}
         >
           {instanceMetadata.user_params?.map((param, index) => {
+            const isRequired = instanceMetadata.user_params_metadata?.[param]?.required ?? false;
+            const isEmpty = !toolConfiguration.parameters[param];
+            const showError = isRequired && isEmpty;
+            
             return (
               <Layout
                 key={index}
@@ -176,13 +197,14 @@ const ToolConfigurationComponent: React.FC<ToolConfigurationComponentProps> = ({
                   background: 'transparent',
                 }}
               >
-                <Text style={{ fontWeight: 300 }}>{param}</Text>
+                <Text style={{ fontWeight: 300 }}>
+                  {param} {isRequired && <Text type="danger">*</Text>}
+                </Text>
                 <Password
+                  status={showError ? "error" : ""}
                   placeholder={param}
                   value={toolConfiguration.parameters[param]}
                   onChange={(e) => {
-                    // We write both to redux (which encompasses the current editor state),
-                    // as well as local storage.
                     dispatch(
                       updatedWorkflowToolParameter({
                         workflowId: workflowId,
@@ -199,6 +221,11 @@ const ToolConfigurationComponent: React.FC<ToolConfigurationComponentProps> = ({
                     );
                   }}
                 />
+                {showError && (
+                  <Text type="danger" style={{ fontSize: '12px' }}>
+                    This field is required
+                  </Text>
+                )}
               </Layout>
             );
           })}
@@ -216,6 +243,37 @@ const WorkflowEditorConfigureInputs: React.FC = () => {
   const workflowGenerationConfig = useAppSelector(selectWorkflowGenerationConfig);
   const dispatch = useAppDispatch();
 
+  // Check if all required parameters are set across all tools
+  const hasAllRequiredParams = React.useMemo(() => {
+    if (!agents || !toolInstances) return true;
+
+    return agents
+      .filter((agent) => agent.workflow_id === workflowId)
+      .every((agent) => {
+        const toolInstanceIds = agent.tools_id;
+        const workflowTools = toolInstances.filter((toolInstance) =>
+          toolInstanceIds.includes(toolInstance.id)
+        );
+
+        return workflowTools.every((toolInstance) => {
+          const metadata: ToolInstanceMetadataProps = JSON.parse(toolInstance.tool_metadata);
+          if (!metadata.user_params_metadata) return true;
+
+          const toolConfig = workflowConfiguration.toolConfigurations[toolInstance.id] || {
+            parameters: {},
+          };
+
+          return Object.entries(metadata.user_params_metadata).every(([param, meta]) => {
+            if (meta.required) {
+              const value = toolConfig.parameters[param];
+              return value !== undefined && value !== '';
+            }
+            return true;
+          });
+        });
+      });
+  }, [agents, toolInstances, workflowConfiguration, workflowId]);
+
   const hasConfigurableTools = agents
     ?.filter((agent) => agent.workflow_id === workflowId)
     .some((agent) => {
@@ -230,24 +288,25 @@ const WorkflowEditorConfigureInputs: React.FC = () => {
     <Layout
       style={{
         flexDirection: 'column',
-        flexGrow: 0,
-        flexShrink: 0,
         padding: '16px 24px',
         width: '40%',
         height: '100%',
         background: 'transparent',
-        gap: '24px',
-        overflow: 'auto',
+        overflow: 'hidden',
+        display: 'flex',
+        flexShrink: 0,
+        flexGrow: 0,
       }}
     >
       <Layout
         style={{
           background: 'transparent',
           width: '100%',
-          flexGrow: 0,
+          flexShrink: 0,
+          marginBottom: '24px',
         }}
       >
-        <Title level={4}>Agents & Managers</Title>
+        <Title level={4} style={{ marginBottom: '16px' }}>Agents & Managers</Title>
         <Card title={<Text style={{ fontWeight: 500 }}>Generation</Text>}>
           <Layout
             style={{
@@ -362,71 +421,170 @@ const WorkflowEditorConfigureInputs: React.FC = () => {
           </Layout>
         </Card>
       </Layout>
-      <Divider />
+
       <Layout
         style={{
           background: 'transparent',
           width: '100%',
-          flexGrow: 0,
-          gap: 12,
+          flexGrow: 1,
+          overflow: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px',
         }}
       >
-        <Title level={4}>Tools</Title>
-        {!hasConfigurableTools && (
-          <Alert
-            style={{ marginBottom: 16 }}
-            message={
-              <Layout
-                style={{ flexDirection: 'column', gap: 4, padding: 0, background: 'transparent' }}
-              >
+        {!hasAllRequiredParams && (
+          <Layout
+            style={{
+              background: 'transparent',
+              width: '100%',
+              flexShrink: 0,
+            }}
+          >
+            {renderAlert(
+              TOOL_PARAMS_ALERT.message,
+              TOOL_PARAMS_ALERT.description,
+              'warning'
+            )}
+          </Layout>
+        )}
+
+        <Layout
+          style={{
+            background: 'transparent',
+            width: '100%',
+            flexGrow: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+          }}
+        >
+          <Title level={4} style={{ marginBottom: '16px' }}>Tools</Title>
+          {!hasConfigurableTools && (
+            <Alert
+              style={{ 
+                marginBottom: '16px',
+                flexShrink: 0 
+              }}
+              message={
                 <Layout
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 8,
-                    background: 'transparent',
+                  style={{ 
+                    flexDirection: 'column', 
+                    gap: 4, 
+                    padding: 0, 
+                    background: 'transparent' 
                   }}
                 >
-                  <InfoCircleOutlined style={{ color: '#1890ff' }} />
-                  <Text style={{ fontSize: 13, fontWeight: 600, background: 'transparent' }}>
-                    No Configuration Required
+                  <Layout
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 8,
+                      background: 'transparent',
+                    }}
+                  >
+                    <InfoCircleOutlined style={{ color: '#1890ff' }} />
+                    <Text style={{ fontSize: 13, fontWeight: 600, background: 'transparent' }}>
+                      No Configuration Required
+                    </Text>
+                  </Layout>
+                  <Text style={{ fontSize: 13, fontWeight: 400, background: 'transparent' }}>
+                    This workflow has no tools that require configuration. You can proceed to test and
+                    deploy the workflow.
                   </Text>
                 </Layout>
-                <Text style={{ fontSize: 13, fontWeight: 400, background: 'transparent' }}>
-                  This workflow has no tools that require configuration. You can proceed to test and
-                  deploy the workflow.
-                </Text>
-              </Layout>
-            }
-            type="info"
-            showIcon={false}
-            closable={false}
-          />
-        )}
-        {agents
-          ?.filter((agent) => agent.workflow_id === workflowId)
-          .map((agent, index) => {
-            const toolInstanceIds = agent.tools_id;
-            const worklfowTools = toolInstances?.filter((toolInstance) =>
-              toolInstanceIds.includes(toolInstance.id),
-            );
-            return (
-              <>
-                {worklfowTools?.map((toolInstance, index) => (
-                  <>
-                    <ToolConfigurationComponent
-                      agentName={agent.name}
-                      toolInstance={toolInstance}
-                      workflowId={workflowId!}
-                    />
-                  </>
-                ))}
-              </>
-            );
-          })}
+              }
+              type="info"
+              showIcon={false}
+              closable={false}
+            />
+          )}
+          <Layout 
+            style={{ 
+              gap: '16px',
+              flexGrow: 1,
+            }}
+          >
+            {agents
+              ?.filter((agent) => agent.workflow_id === workflowId)
+              .map((agent, index) => {
+                const toolInstanceIds = agent.tools_id;
+                const worklfowTools = toolInstances?.filter((toolInstance) =>
+                  toolInstanceIds.includes(toolInstance.id),
+                );
+                return (
+                  <React.Fragment key={agent.id}>
+                    {worklfowTools?.map((toolInstance) => (
+                      <ToolConfigurationComponent
+                        key={toolInstance.id}
+                        agentName={agent.name}
+                        toolInstance={toolInstance}
+                        workflowId={workflowId!}
+                      />
+                    ))}
+                  </React.Fragment>
+                );
+              })}
+          </Layout>
+        </Layout>
       </Layout>
     </Layout>
   );
+};
+
+// Export a flag indicating if all required parameters are set
+export const hasValidToolConfiguration = (
+  workflowId: string,
+  agents: AgentMetadata[] | undefined,
+  toolInstances: ToolInstance[] | undefined,
+  workflowConfiguration: WorkflowConfiguration
+): boolean => {
+  console.log('hasValidToolConfiguration called with:', {
+    workflowId,
+    agentsCount: agents?.length,
+    toolInstancesCount: toolInstances?.length,
+    workflowConfiguration
+  });
+
+  if (!agents || !toolInstances) {
+    console.log('No agents or toolInstances, returning true');
+    return true;
+  }
+
+  const filteredAgents = agents.filter((agent) => agent.workflow_id === workflowId);
+  console.log('Filtered agents:', filteredAgents);
+
+  return filteredAgents.every((agent) => {
+    const toolInstanceIds = agent.tools_id;
+    const workflowTools = toolInstances.filter((toolInstance) =>
+      toolInstanceIds.includes(toolInstance.id)
+    );
+    console.log('Agent tools:', { agentId: agent.id, tools: workflowTools });
+
+    return workflowTools.every((toolInstance) => {
+      const metadata: ToolInstanceMetadataProps = JSON.parse(toolInstance.tool_metadata);
+      console.log('Tool metadata:', { toolId: toolInstance.id, metadata });
+
+      if (!metadata.user_params_metadata) return true;
+
+      const toolConfig = workflowConfiguration.toolConfigurations[toolInstance.id] || {
+        parameters: {},
+      };
+
+      const validParams = Object.entries(metadata.user_params_metadata).every(([param, meta]) => {
+        if (meta.required) {
+          const value = toolConfig.parameters[param];
+          const isValid = value !== undefined && value !== '';
+          console.log('Parameter validation:', { param, required: true, value, isValid });
+          return isValid;
+        }
+        return true;
+      });
+
+      console.log('Tool validation result:', { toolId: toolInstance.id, valid: validParams });
+      return validParams;
+    });
+  });
 };
 
 export default WorkflowEditorConfigureInputs;

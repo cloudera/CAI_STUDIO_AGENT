@@ -12,6 +12,7 @@ import {
   Tooltip,
   Avatar,
   Alert,
+  Select,
 } from 'antd';
 import { PlusOutlined, QuestionCircleOutlined, UsergroupAddOutlined } from '@ant-design/icons';
 import {
@@ -31,6 +32,7 @@ import { AgentTemplateMetadata, AgentMetadata } from '@/studio/proto/agent_studi
 import { useUpdateWorkflowMutation, useAddWorkflowMutation } from '../workflows/workflowsApi';
 import { createUpdateRequestFromEditor, createAddRequestFromEditor } from '../lib/workflow';
 import { useGlobalNotification } from './Notifications';
+import { useListModelsQuery, useGetModelMutation } from '../models/modelsApi';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -40,7 +42,10 @@ const SelectManagerAgentComponent: React.FC<{
   selectedAgentTemplate: AgentTemplateMetadata | null;
   setSelectedAgentTemplate: React.Dispatch<React.SetStateAction<AgentTemplateMetadata | null>>;
   existingManagerAgent: AgentMetadata | null;
-}> = ({ form, selectedAgentTemplate, setSelectedAgentTemplate, existingManagerAgent }) => {
+  defaultModelId: string;
+}> = ({ form, selectedAgentTemplate, setSelectedAgentTemplate, existingManagerAgent, defaultModelId }) => {
+  const { data: models = [] } = useListModelsQuery({});
+
   return (
     <>
       <Divider style={{ margin: 0, backgroundColor: '#f0f0f0' }} />
@@ -216,6 +221,27 @@ const SelectManagerAgentComponent: React.FC<{
             >
               <TextArea autoSize={{ minRows: 3 }} />
             </Form.Item>
+            <Form.Item
+              label={
+                <Space>
+                  LLM Model
+                  <Tooltip title="The language model this agent will use">
+                    <QuestionCircleOutlined style={{ color: '#666' }} />
+                  </Tooltip>
+                </Space>
+              }
+              name="llm_provider_model_id"
+              rules={[{ required: true, message: 'Language model is required' }]}
+              initialValue={existingManagerAgent?.llm_provider_model_id || defaultModelId}
+            >
+              <Select>
+                {models.map(model => (
+                  <Select.Option key={model.model_id} value={model.model_id}>
+                    {model.model_name} {model.model_id === defaultModelId && '(Default)'}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
           </Form>
         </Layout>
       </Layout>
@@ -248,13 +274,30 @@ const SelectOrAddManagerAgentModal: React.FC<SelectOrAddManagerAgentModalProps> 
   const { data: agents = [] } = useListAgentsQuery({});
   const existingManagerAgent =
     agents.find((agent) => agent.id === workflowState.workflowMetadata.managerAgentId) || null;
+  const { data: models = [] } = useListModelsQuery({});
+  const [getModel] = useGetModelMutation();
+  const [defaultModelId, setDefaultModelId] = useState<string>('');
 
   useEffect(() => {
-    if (!isOpen) {
-      setSelectedAgentTemplate(null);
-      form.resetFields();
-    }
-  }, [isOpen, form]);
+    const fetchDefaultModel = async () => {
+      if (models && models.length > 0) {
+        try {
+          // Find the model marked as studio default
+          const defaultModel = models.find(model => model.is_studio_default);
+          if (defaultModel) {
+            setDefaultModelId(defaultModel.model_id);
+          } else {
+            // Fallback to first model if no default is set
+            const firstModel = await getModel({ model_id: models[0].model_id }).unwrap();
+            setDefaultModelId(firstModel.model_id);
+          }
+        } catch (error) {
+          console.error('Error fetching default model:', error);
+        }
+      }
+    };
+    fetchDefaultModel();
+  }, [models, getModel]);
 
   useEffect(() => {
     if (isOpen && existingManagerAgent) {
@@ -263,9 +306,14 @@ const SelectOrAddManagerAgentModal: React.FC<SelectOrAddManagerAgentModalProps> 
         role: existingManagerAgent.crew_ai_agent_metadata?.role || '',
         backstory: existingManagerAgent.crew_ai_agent_metadata?.backstory || '',
         goal: existingManagerAgent.crew_ai_agent_metadata?.goal || '',
+        llm_provider_model_id: existingManagerAgent.llm_provider_model_id || defaultModelId,
+      });
+    } else if (isOpen) {
+      form.setFieldsValue({
+        llm_provider_model_id: defaultModelId,
       });
     }
-  }, [isOpen, existingManagerAgent, form]);
+  }, [isOpen, existingManagerAgent, form, defaultModelId]);
 
   const handleAddManagerAgent = async () => {
     if (existingManagerAgent) {
@@ -295,7 +343,7 @@ const SelectOrAddManagerAgentModal: React.FC<SelectOrAddManagerAgentModalProps> 
           max_iter: 0,
         },
         tools_id: [],
-        llm_provider_model_id: '',
+        llm_provider_model_id: values.llm_provider_model_id,
         tool_template_ids: [],
         tmp_agent_image_path: '',
       }).unwrap();
@@ -357,7 +405,7 @@ const SelectOrAddManagerAgentModal: React.FC<SelectOrAddManagerAgentModalProps> 
             max_iter: 0,
           },
           tools_id: existingManagerAgent.tools_id || [],
-          llm_provider_model_id: '',
+          llm_provider_model_id: values.llm_provider_model_id,
           tool_template_ids: [],
           tmp_agent_image_path: '',
         }).unwrap();
@@ -404,6 +452,7 @@ const SelectOrAddManagerAgentModal: React.FC<SelectOrAddManagerAgentModalProps> 
           selectedAgentTemplate={selectedAgentTemplate}
           setSelectedAgentTemplate={setSelectedAgentTemplate}
           existingManagerAgent={existingManagerAgent}
+          defaultModelId={defaultModelId}
         />
       </div>
     </Modal>

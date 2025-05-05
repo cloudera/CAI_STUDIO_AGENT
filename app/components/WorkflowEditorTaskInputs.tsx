@@ -375,6 +375,21 @@ const WorkflowTasksComponent: React.FC = () => {
     }
   };
 
+  // Add a helper function to check if any other alerts are being shown
+  const hasOtherAlerts = () => {
+    const isConversational = useAppSelector(selectEditorWorkflowIsConversational);
+    const process = useAppSelector(selectEditorWorkflowProcess);
+    const hasManagerAgent = process === 'hierarchical';
+    
+    // Check for unassigned tasks
+    const hasUnassignedTasks = workflowTaskIds.some((taskId) => {
+      const task = tasks?.find((t) => t.task_id === taskId);
+      return task && !task.assigned_agent_id && !hasManagerAgent;
+    });
+
+    return hasUnassignedTasks || isConversational || hasManagerAgent;
+  };
+
   return (
     <>
       <AlertsComponent />
@@ -387,6 +402,37 @@ const WorkflowTasksComponent: React.FC = () => {
           background: 'white',
         }}
       >
+        {workflowTaskIds.length > 1 && !hasOtherAlerts() && (
+          <Alert
+            style={alertStyle}
+            message={
+              <Layout
+                style={{ flexDirection: 'column', gap: 4, padding: 0, background: 'transparent' }}
+              >
+                <Layout
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 8,
+                    background: 'transparent',
+                  }}
+                >
+                  <InfoCircleOutlined style={{ fontSize: 16, color: '#1890ff' }} />
+                  <Text style={{ fontSize: 13, fontWeight: 600, background: 'transparent' }}>
+                    Task Execution Order
+                  </Text>
+                </Layout>
+                <Text style={{ fontSize: 13, fontWeight: 400, background: 'transparent' }}>
+                  The following {workflowTaskIds.length} tasks will be executed in the order specified below.
+                </Text>
+              </Layout>
+            }
+            type="info"
+            showIcon={false}
+            closable={false}
+          />
+        )}
+
         <Layout
           style={{
             background: 'white',
