@@ -66,47 +66,85 @@ def migrate_api_keys_to_env() -> None:
         
         # Get current project environment
         print("Fetching project environment...")
-        cml = CMLServiceApi()
-        project = cml.get_project(project_id)
-        try:
-            environment = json.loads(project.environment) if project.environment else {}
-            print("Successfully loaded existing project environment")
-        except (json.JSONDecodeError, TypeError) as e:
-            print(f"Warning: Error parsing project environment: {str(e)}")
-            print("Starting with empty environment")
-            environment = {}
-            
-        # Get all models with API keys
-        print("Connecting to database...")
-        bind = op.get_bind()
-        session = Session(bind=bind)
         
-        # Query all models that have API keys
-        print("Querying models with API keys...")
-        models = session.execute(
-            sa.text("SELECT model_id, api_key FROM models WHERE api_key IS NOT NULL AND api_key != ''")
-        ).fetchall()
+        # Initialize CML client with proper configuration
+        host = os.getenv("CDSW_API_URL")
+        token = os.getenv("CDSW_API_TOKEN")
         
-        model_count = len(models)
-        print(f"Found {model_count} models with API keys")
+        if not host or not token:
+            print("Warning: CDSW_API_URL or CDSW_API_TOKEN not found, skipping API key migration")
+            return
             
-        if model_count > 0:
-            print("Starting API key migration...")
-            for i, model in enumerate(models, 1):
-                # Add to environment variables using base64 encoding
-                env_key = _get_env_key(model.model_id)
-                environment[env_key] = _encode_value(model.api_key)
-                print(f"Migrated API key {i}/{model_count} for model: {model.model_id}")
+        # Remove trailing slash from host if present
+        host = host.rstrip('/')
+        
+        # Configure API client
+        from cmlapi.configuration import Configuration
+        from cmlapi.api_client import ApiClient
+        
+        configuration = Configuration(
+            host=host,
+            api_key={'Authorization': token},
+            api_key_prefix={'Authorization': 'Bearer'}
+        )
+        
+        with ApiClient(configuration) as api_client:
+            cml = CMLServiceApi(api_client)
+            print(f"Initialized CML API client with host: {host}")
+            
+            try:
+                project = cml.get_project(project_id)
+                print("Successfully retrieved project")
+                
+                try:
+                    environment = json.loads(project.environment) if project.environment else {}
+                    print("Successfully loaded existing project environment")
+                except (json.JSONDecodeError, TypeError) as e:
+                    print(f"Warning: Error parsing project environment: {str(e)}")
+                    print("Starting with empty environment")
+                    environment = {}
                     
-            # Update project environment with new API keys
-            print("Updating project environment...")
-            update_body = {"environment": json.dumps(environment)}
-            cml.update_project(update_body, project_id)
-            
-            print(f"Successfully migrated {model_count} API keys to project environment variables")
-        else:
-            print("No API keys found to migrate")
-        
+                # Get all models with API keys
+                print("Connecting to database...")
+                bind = op.get_bind()
+                session = Session(bind=bind)
+                
+                # Query all models that have API keys
+                print("Querying models with API keys...")
+                models = session.execute(
+                    sa.text("SELECT model_id, api_key FROM models WHERE api_key IS NOT NULL AND api_key != ''")
+                ).fetchall()
+                
+                model_count = len(models)
+                print(f"Found {model_count} models with API keys")
+                    
+                if model_count > 0:
+                    print("Starting API key migration...")
+                    for i, model in enumerate(models, 1):
+                        # Add to environment variables using base64 encoding
+                        env_key = _get_env_key(model.model_id)
+                        environment[env_key] = _encode_value(model.api_key)
+                        print(f"Migrated API key {i}/{model_count} for model: {model.model_id}")
+                            
+                    # Update project environment with new API keys
+                    print("Updating project environment...")
+                    update_body = {"environment": json.dumps(environment)}
+                    cml.update_project(update_body, project_id)
+                    
+                    print(f"Successfully migrated {model_count} API keys to project environment variables")
+                else:
+                    print("No API keys found to migrate")
+                    
+            except Exception as e:
+                print("\nError during CML API operations:")
+                print(f"Error type: {type(e).__name__}")
+                print(f"Error message: {str(e)}")
+                if hasattr(e, 'body'):
+                    print(f"Response body: {e.body}")
+                if hasattr(e, 'headers'):
+                    print(f"Response headers: {e.headers}")
+                raise
+                
     except Exception as e:
         print(f"\nWarning: Error during API key migration:")
         print(f"Error type: {type(e).__name__}")
@@ -115,7 +153,6 @@ def migrate_api_keys_to_env() -> None:
             import traceback
             print("Traceback:")
             traceback.print_tb(e.__traceback__)
-        # print("\nContinuing with column removal despite migration error")
         # Don't raise the error - we still want to drop the column even if migration fails
 
 
