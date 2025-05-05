@@ -5,7 +5,10 @@ from pydantic import Field
 from cmlapi import CMLServiceApi
 import os
 import json
+import base64
+import logging
 
+logger = logging.getLogger(__name__)
 
 def get_studio_default_model_id(
     dao=None,
@@ -30,18 +33,26 @@ def get_studio_default_model_id(
         session.close()
     return True, model.model_id
 
-def _sanitize_model_id(model_id: str) -> str:
-    """Convert model ID to a valid environment variable name"""
-    # Replace hyphens and any other invalid chars with underscores
-    return "".join(c if c.isalnum() else "_" for c in model_id).upper()
-
-def _sanitize_api_key(api_key: str) -> str:
-    """Sanitize API key for shell environment variable value"""
-    # Remove or escape any problematic characters
-    # For now, we'll just ensure it's a simple string without spaces or special chars
-    if not api_key or not isinstance(api_key, str):
+def _encode_value(value: str) -> str:
+    """Encode value for storage in environment variables using base64"""
+    if not value or not isinstance(value, str):
         return ""
-    return api_key.strip().replace('"', '').replace("'", "").replace(" ", "")
+    return base64.b64encode(value.encode()).decode()
+
+def _decode_value(encoded_value: str) -> str:
+    """Decode base64-encoded value from environment variables"""
+    if not encoded_value:
+        return None
+    try:
+        return base64.b64decode(encoded_value.encode()).decode()
+    except Exception:
+        logger.warning("Failed to decode value from environment")
+        return None
+
+def _get_env_key(model_id: str) -> str:
+    """Generate environment variable key for model API key"""
+    encoded_id = _encode_value(model_id)
+    return f"MODEL_API_KEY_{encoded_id}"
 
 def get_model_api_key_from_env(model_id: str, cml: CMLServiceApi) -> str:
     """Get model API key from project environment variables"""
@@ -57,10 +68,10 @@ def get_model_api_key_from_env(model_id: str, cml: CMLServiceApi) -> str:
         except (json.JSONDecodeError, TypeError):
             environment = {}
             
-        # Use sanitized model ID for environment variable
-        env_key = f"MODEL_API_KEY_{_sanitize_model_id(model_id)}"
-        api_key = environment.get(env_key)
-        return _sanitize_api_key(api_key) if api_key else None
+        # Use encoded model ID for environment variable
+        env_key = _get_env_key(model_id)
+        encoded_key = environment.get(env_key)
+        return _decode_value(encoded_key)
         
     except Exception as e:
         raise ValueError(f"Failed to get API key for model {model_id}: {str(e)}")
@@ -79,9 +90,9 @@ def update_model_api_key_in_env(model_id: str, api_key: str, cml: CMLServiceApi)
         except (json.JSONDecodeError, TypeError):
             environment = {}
             
-        # Use sanitized model ID and API key
-        env_key = f"MODEL_API_KEY_{_sanitize_model_id(model_id)}"
-        environment[env_key] = _sanitize_api_key(api_key)
+        # Use encoded model ID and API key
+        env_key = _get_env_key(model_id)
+        environment[env_key] = _encode_value(api_key)
         
         # Update project with new environment
         update_body = {"environment": json.dumps(environment)}
@@ -101,7 +112,7 @@ def remove_model_api_key_from_env(model_id: str, cml: CMLServiceApi) -> None:
         project = cml.get_project(project_id)
         try:
             environment = json.loads(project.environment) if project.environment else {}
-            env_key = f"MODEL_API_KEY_{_sanitize_model_id(model_id)}"
+            env_key = _get_env_key(model_id)
             if env_key in environment:
                 del environment[env_key]
                 # Update project with new environment

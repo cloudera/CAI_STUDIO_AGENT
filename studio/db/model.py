@@ -92,7 +92,6 @@ class Model(Base, MappedProtobuf, MappedDict):
     # "OPENAI", "OPENAI_COMPATIBLE" or "AZURE_OPENAI"
     model_type = Column(String, nullable=False)
     api_base = Column(String, nullable=True)
-    api_key = Column(String, nullable=True)
     is_studio_default = Column(Boolean, default=False)
 
 

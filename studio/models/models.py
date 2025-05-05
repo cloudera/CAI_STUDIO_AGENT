@@ -3,6 +3,7 @@ from typing import List
 from cmlapi import CMLServiceApi
 import os
 import json
+import logging
 
 from studio.db.dao import AgentStudioDao
 from studio.db import model as db_model
@@ -24,6 +25,7 @@ from .utils import (
     remove_model_api_key_from_env
 )
 
+logger = logging.getLogger(__name__)
 
 def list_models(
     request: ListModelsRequest, cml: CMLServiceApi = None, dao: AgentStudioDao = None
@@ -44,20 +46,40 @@ def get_model(request: GetModelRequest, cml: CMLServiceApi = None, dao: AgentStu
         model = session.query(db_model.Model).filter_by(model_id=request.model_id).one_or_none()
         if not model:
             raise ValueError(f"Model with ID '{request.model_id}' not found.")
-            
-        # Get API key from environment
-        model.api_key = get_model_api_key_from_env(model.model_id, cml)
-        return GetModelResponse(model_details=model.to_protobuf(Model))
+    
+    # Get API key from environment after session is closed
+    model_copy = model.to_protobuf(Model)
+    model_copy.api_key = get_model_api_key_from_env(model.model_id, cml)
+    return GetModelResponse(model_details=model_copy)
 
 
 def add_model(request: AddModelRequest, cml: CMLServiceApi = None, dao: AgentStudioDao = None) -> AddModelResponse:
     """
     Add a new model based on the request parameters.
     If no models exist, set the added model as the default.
+    
+    Raises:
+        ValueError: If model name already exists or if API key storage fails
     """
+    # Generate model ID upfront so we can store the API key
+    model_id = str(uuid4())
+    
+    # Store API key in project environment if provided
+    if request.api_key:
+        try:
+            update_model_api_key_in_env(model_id, request.api_key, cml)
+        except Exception as e:
+            raise ValueError(f"Failed to store API key in environment: {str(e)}")
+
     with dao.get_session() as session:
         # Validate if a model with the same name already exists
         if session.query(db_model.Model).filter_by(model_name=request.model_name).first():
+            # Clean up API key if it was stored
+            if request.api_key:
+                try:
+                    remove_model_api_key_from_env(model_id, cml)
+                except Exception as e:
+                    logger.warning(f"Failed to clean up API key for model {model_id} after duplicate name error: {str(e)}")
             raise ValueError(f"Model with name '{request.model_name}' already exists.")
 
         # Check if there are existing models in the database
@@ -65,7 +87,7 @@ def add_model(request: AddModelRequest, cml: CMLServiceApi = None, dao: AgentStu
 
         # Create the new model
         m_ = db_model.Model(
-            model_id=str(uuid4()),
+            model_id=model_id,
             model_name=request.model_name,
             provider_model=request.provider_model,
             model_type=request.model_type,
@@ -74,10 +96,6 @@ def add_model(request: AddModelRequest, cml: CMLServiceApi = None, dao: AgentStu
         )
         session.add(m_)
         session.commit()
-
-        # Store API key in project environment if provided
-        if request.api_key:
-            update_model_api_key_in_env(m_.model_id, request.api_key, cml)
 
         return AddModelResponse(model_id=m_.model_id)
 
@@ -106,8 +124,8 @@ def remove_model(
         try:
             # Remove API key from project environment
             remove_model_api_key_from_env(request.model_id, cml)
-        except Exception:
-            pass  # Don't fail deletion if environment cleanup fails
+        except Exception as e:
+            logger.warning(f"Failed to remove API key for model {request.model_id} during deletion: {str(e)}")
             
         session.commit()
 
