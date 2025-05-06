@@ -46,11 +46,8 @@ def get_model(request: GetModelRequest, cml: CMLServiceApi = None, dao: AgentStu
         model = session.query(db_model.Model).filter_by(model_id=request.model_id).one_or_none()
         if not model:
             raise ValueError(f"Model with ID '{request.model_id}' not found.")
-    
-    # Get API key from environment after session is closed
-    model_copy = model.to_protobuf(Model)
-    model_copy.api_key = get_model_api_key_from_env(model.model_id, cml)
-    return GetModelResponse(model_details=model_copy)
+        
+        return GetModelResponse(model_details=model.to_protobuf(Model))
 
 
 def add_model(request: AddModelRequest, cml: CMLServiceApi = None, dao: AgentStudioDao = None) -> AddModelResponse:
