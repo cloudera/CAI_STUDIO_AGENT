@@ -255,10 +255,12 @@ def _add_agent_impl(request: AddAgentRequest, cml: CMLServiceApi, session: DbSes
                 try:
                     tool_request = GetToolInstanceRequest(tool_instance_id=tool_id)
                     tool_response = get_tool_instance(tool_request, cml, dao=None, preexisting_db_session=session)
-                    # TODO : Check if Tool Instance is valid
+                    # Only add valid tools to the list
                     tool_instance_ids.append(tool_id)
                 except Exception as e:
-                    raise ValueError(f"Validation failed for tool ID '{tool_id}': {str(e)}")
+                    # Log the error but continue processing other tools
+                    print(f"Warning: Unable to validate tool ID '{tool_id}': {str(e)}. Skipping this tool.")
+                    continue
 
         # Handle agent image
         agent_image_path = ""
@@ -373,10 +375,12 @@ def _update_agent_impl(request: UpdateAgentRequest, cml: CMLServiceApi, session:
                 try:
                     tool_request = GetToolInstanceRequest(tool_instance_id=tool_id)
                     tool_response = get_tool_instance(tool_request, cml, dao=None, preexisting_db_session=session)
-                    # TODO : Check if Tool Instance is valid
+                    # Add to validated list if tool exists
                     validated_tool_ids.append(tool_id)
                 except Exception as e:
-                    raise ValueError(f"Validation failed for tool ID '{tool_id}': {str(e)}")
+                    # Log the error but continue processing other tools
+                    print(f"Warning: Unable to validate tool ID '{tool_id}': {str(e)}. Skipping this tool.")
+                    continue
             agent.tool_ids = validated_tool_ids
 
         # Handle agent image update

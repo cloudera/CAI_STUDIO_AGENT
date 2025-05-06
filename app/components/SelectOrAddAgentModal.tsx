@@ -17,6 +17,7 @@ import {
   FormInstance,
   Select,
   Result,
+  Spin,
 } from 'antd';
 import {
   PlusOutlined,
@@ -439,6 +440,8 @@ interface SelectAgentComponentProps {
   imageData: Record<string, string>;
   updateAgent: any;
   createAgentState: any;
+  isLoading: boolean;
+  setIsLoading: (loading: boolean) => void;
 }
 
 const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
@@ -452,6 +455,8 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
   imageData,
   updateAgent,
   createAgentState,
+  isLoading,
+  setIsLoading,
 }) => {
   const { data: defaultModel } = useGetDefaultModelQuery();
   const { data: agentTemplates = [] } = useListGlobalAgentTemplatesQuery();
@@ -617,18 +622,17 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
   const handleDeleteTool = async (toolId: string, toolName: string) => {
     if (selectedAgentTemplate) return;
 
-    // Initial notification about starting the deletion process
-    notificationApi.info({
-      message: 'Initiating Tool Removal',
-      description: `Starting to remove ${toolName} from the agent...`,
-      placement: 'topRight',
-    });
-
     try {
-      // Delete tool instance
+      setIsLoading(true);
+      
+      notificationApi.info({
+        message: 'Initiating Tool Removal',
+        description: `Starting to remove ${toolName} from the agent...`,
+        placement: 'topRight',
+      });
+
       await deleteToolInstance({ tool_instance_id: toolId }).unwrap();
 
-      // Notification about successful tool deletion
       notificationApi.success({
         message: 'Tool Deletion In Progress',
         description: `${toolName} will be removed in a few seconds after cleanup of remaining artifacts.`,
@@ -664,7 +668,6 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
           }),
         );
 
-        // Final success notification after agent update
         notificationApi.success({
           message: 'Agent Updated',
           description: `Agent configuration has been updated successfully.`,
@@ -680,14 +683,14 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
         );
       }
     } catch (error: unknown) {
-      const errorMessage =
-        (error as { data?: { error?: string } })?.data?.error ||
-        'Failed to remove tool. Please try again.';
+      const errorMessage = (error as { data?: { error?: string } })?.data?.error || 'Failed to remove tool. Please try again.';
       notificationApi.error({
         message: 'Error Removing Tool',
         description: errorMessage,
         placement: 'topRight',
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -1628,6 +1631,7 @@ const SelectOrAddAgentModal: React.FC = () => {
   const [updateAgent] = useUpdateAgentMutation();
   const createAgentState = useSelector(selectEditorAgentViewCreateAgentState);
   const { data: defaultModel } = useGetDefaultModelQuery();
+  const [isLoading, setIsLoading] = useState(false);
 
   // Add useEffect to set default model when form is initialized or when defaultModel changes
   useEffect(() => {
@@ -1836,19 +1840,40 @@ const SelectOrAddAgentModal: React.FC = () => {
         </Button>,
       ]}
     >
-      <div style={{ overflowY: 'auto', height: 'calc(95vh - 108px)' }}>
-        <SelectAgentComponent
-          parentModalOpen={isModalOpen || false}
-          form={form}
-          selectedAgentTemplate={selectedAgentTemplate}
-          setSelectedAgentTemplate={setSelectedAgentTemplate}
-          agents={agents}
-          workflowAgentIds={workflowAgentIds}
-          toolInstances={toolInstances}
-          imageData={imageData}
-          updateAgent={updateAgent}
-          createAgentState={createAgentState}
-        />
+      <div style={{ position: 'relative' }}>
+        {isLoading && (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(255, 255, 255, 0.6)',
+            zIndex: 1000,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            cursor: 'not-allowed'
+          }}>
+            <Spin size="large" />
+          </div>
+        )}
+        <div style={{ overflowY: 'auto', height: 'calc(95vh - 108px)' }}>
+          <SelectAgentComponent
+            parentModalOpen={isModalOpen || false}
+            form={form}
+            selectedAgentTemplate={selectedAgentTemplate}
+            setSelectedAgentTemplate={setSelectedAgentTemplate}
+            agents={agents}
+            workflowAgentIds={workflowAgentIds}
+            toolInstances={toolInstances}
+            imageData={imageData}
+            updateAgent={updateAgent}
+            createAgentState={createAgentState}
+            isLoading={isLoading}
+            setIsLoading={setIsLoading}
+          />
+        </div>
       </div>
     </Modal>
   );

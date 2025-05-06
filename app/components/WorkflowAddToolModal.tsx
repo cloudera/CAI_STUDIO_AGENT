@@ -99,6 +99,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ open, onCan
   const [editorKey, setEditorKey] = useState<number>(0); // Add this state
   const [searchTemplates, setSearchTemplates] = useState('');
   const [searchTools, setSearchTools] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   // Create a map of tool instances
   const [toolInstancesMap, setToolInstancesMap] = useState<Record<string, any>>(() => {
@@ -205,6 +206,8 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ open, onCan
     }
 
     try {
+      setIsLoading(true); // Set loading state before starting
+
       // Show initiating notification
       notificationApi.info({
         message: 'Creating Tool',
@@ -216,7 +219,6 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ open, onCan
       if (isCreateSelected) {
         toolName = newToolName || `${workflowName || 'Workflow'} Tool`;
       } else {
-        // Get the tool template details
         const toolTemplate = toolTemplates.find((t) => t.id === toolTemplateId);
         if (!toolTemplate) {
           throw new Error('Tool template not found');
@@ -283,6 +285,8 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ open, onCan
         description: errorMessage,
         placement: 'topRight',
       });
+    } finally {
+      setIsLoading(false); // Reset loading state whether success or failure
     }
   };
 
@@ -948,12 +952,14 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ open, onCan
     <Modal
       open={open}
       title="Create or Edit Tools"
-      onCancel={onCancel}
+      onCancel={!isLoading ? onCancel : undefined}
       centered
       width="98%"
       style={{ height: '95vh' }}
+      maskClosable={!isLoading}
+      keyboard={!isLoading}
       footer={[
-        <Button key="cancel" onClick={onCancel} disabled={loading}>
+        <Button key="cancel" onClick={onCancel} disabled={loading || isLoading}>
           Close
         </Button>,
         // Show either the create button or update button, not both
@@ -962,7 +968,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ open, onCan
             key="create"
             type="primary"
             onClick={() => handleCreateToolInstance(undefined)}
-            disabled={loading}
+            disabled={loading || isLoading}
           >
             {getButtonText()}
           </Button>
@@ -982,277 +988,302 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ open, onCan
               key="add"
               type="primary"
               onClick={() => handleCreateToolInstance(selectedToolTemplate)}
-              disabled={loading || !selectedTool?.is_valid}
+              disabled={loading || isLoading || !selectedTool?.is_valid}
+              loading={isLoading}
             >
               {getButtonText()}
             </Button>
           </Tooltip>
         ) : selectedToolInstance ? (
-          <Button key="update" type="primary" onClick={handleUpdateToolInstance} disabled={loading}>
+          <Button 
+            key="update" 
+            type="primary" 
+            onClick={handleUpdateToolInstance} 
+            disabled={loading || isLoading}
+          >
             {getButtonText()}
           </Button>
         ) : null,
       ]}
     >
-      {loading ? (
-        <div
-          style={{
+      <div style={{ position: 'relative' }}>
+        {isLoading && (
+          <div 
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(255, 255, 255, 0.6)',
+              zIndex: 1000,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              cursor: 'not-allowed'
+            }}
+          >
+            <Spin size="large" />
+          </div>
+        )}
+        {loading ? (
+          <div style={{
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
             height: '100%',
-          }}
-        >
-          <Spin size="large" />
-        </div>
-      ) : (
-        <div style={{ overflowY: 'auto', height: 'calc(95vh - 108px)' }}>
-          <Divider style={{ margin: 0, backgroundColor: '#f0f0f0' }} />
-          <Layout
-            style={{
-              display: 'flex',
-              flexDirection: 'row',
-              height: '100%',
-              backgroundColor: '#fff',
-            }}
-          >
+          }}>
+            <Spin size="large" />
+          </div>
+        ) : (
+          <div style={{ overflowY: 'auto', height: 'calc(95vh - 108px)' }}>
+            <Divider style={{ margin: 0, backgroundColor: '#f0f0f0' }} />
             <Layout
-              style={{ flex: 1, overflowY: 'auto', padding: '16px', backgroundColor: '#fff' }}
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                height: '100%',
+                backgroundColor: '#fff',
+              }}
             >
-              <div
-                style={{
-                  marginBottom: 16,
-                  cursor: 'pointer',
-                  boxShadow: isCreateSelected ? '0 4px 8px rgba(0, 0, 0, 0.2)' : 'none',
-                  width: '100%',
-                  border: 'solid 1px #f0f0f0',
-                  borderRadius: '4px',
-                  padding: '16px',
-                  backgroundColor: isCreateSelected ? '#edf7ff' : '#fff',
-                }}
-                onClick={handleCreateCardSelect}
+              <Layout
+                style={{ flex: 1, overflowY: 'auto', padding: '16px', backgroundColor: '#fff' }}
               >
                 <div
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                  style={{
+                    marginBottom: 16,
+                    cursor: 'pointer',
+                    boxShadow: isCreateSelected ? '0 4px 8px rgba(0, 0, 0, 0.2)' : 'none',
+                    width: '100%',
+                    border: 'solid 1px #f0f0f0',
+                    borderRadius: '4px',
+                    padding: '16px',
+                    backgroundColor: isCreateSelected ? '#edf7ff' : '#fff',
+                  }}
+                  onClick={handleCreateCardSelect}
                 >
-                  <Space size={16}>
-                    <div
-                      style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: '50%',
-                        backgroundColor: '#edf7ff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <PlusOutlined style={{ fontSize: '16px', color: '#1890ff' }} />
-                    </div>
-                    <div>
+                  <div
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                  >
+                    <Space size={16}>
                       <div
                         style={{
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
+                          width: 32,
+                          height: 32,
+                          borderRadius: '50%',
+                          backgroundColor: '#edf7ff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                         }}
                       >
-                        Create New Tool
+                        <PlusOutlined style={{ fontSize: '16px', color: '#1890ff' }} />
                       </div>
-                      <Text
-                        style={{
-                          fontSize: '11px',
-                          opacity: 0.45,
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                      >
-                        Create a new custom tool from scratch
-                      </Text>
-                    </div>
-                  </Space>
+                      <div>
+                        <div
+                          style={{
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          Create New Tool
+                        </div>
+                        <Text
+                          style={{
+                            fontSize: '11px',
+                            opacity: 0.45,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          Create a new custom tool from scratch
+                        </Text>
+                      </div>
+                    </Space>
+                  </div>
                 </div>
-              </div>
 
-              <Layout style={{ display: 'flex', flexDirection: 'row', backgroundColor: '#fff', marginBottom: '8px'}}>
-                <Layout style={{ flex: 1, backgroundColor: '#fff', paddingRight: '16px' }}>
-                  <Space direction="vertical" style={{ width: '100%', marginBottom: '0px' }}>
-                    <Typography.Title level={5} style={{ marginBottom: '8px' }}>
-                      Edit Agent Tools
-                    </Typography.Title>
-                    <Input
-                      placeholder="Search tools..."
-                      prefix={<SearchOutlined />}
-                      value={searchTools}
-                      onChange={(e) => setSearchTools(e.target.value)}
-                      allowClear
-                    />
-                  </Space>
+                <Layout style={{ display: 'flex', flexDirection: 'row', backgroundColor: '#fff', marginBottom: '8px'}}>
+                  <Layout style={{ flex: 1, backgroundColor: '#fff', paddingRight: '16px' }}>
+                    <Space direction="vertical" style={{ width: '100%', marginBottom: '0px' }}>
+                      <Typography.Title level={5} style={{ marginBottom: '8px' }}>
+                        Edit Agent Tools
+                      </Typography.Title>
+                      <Input
+                        placeholder="Search tools..."
+                        prefix={<SearchOutlined />}
+                        value={searchTools}
+                        onChange={(e) => setSearchTools(e.target.value)}
+                        allowClear
+                      />
+                    </Space>
+                  </Layout>
+                  <Layout style={{ flex: 1, backgroundColor: '#fff', paddingLeft: '16px' }}>
+                    <Space direction="vertical" style={{ width: '100%', marginBottom: '0px' }}>
+                      <Typography.Title level={5} style={{ marginBottom: '8px' }}>
+                        Create Tool From Template
+                      </Typography.Title>
+                      <Input
+                        placeholder="Search templates..."
+                        prefix={<SearchOutlined />}
+                        value={searchTemplates}
+                        onChange={(e) => setSearchTemplates(e.target.value)}
+                        allowClear
+                      />
+                    </Space>
+                  </Layout>
                 </Layout>
-                <Layout style={{ flex: 1, backgroundColor: '#fff', paddingLeft: '16px' }}>
-                  <Space direction="vertical" style={{ width: '100%', marginBottom: '0px' }}>
-                    <Typography.Title level={5} style={{ marginBottom: '8px' }}>
-                      Create Tool From Template
-                    </Typography.Title>
-                    <Input
-                      placeholder="Search templates..."
-                      prefix={<SearchOutlined />}
-                      value={searchTemplates}
-                      onChange={(e) => setSearchTemplates(e.target.value)}
-                      allowClear
+
+                <Layout
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    height: '100%',
+                    backgroundColor: '#fff',
+                    marginTop: '8px'
+                  }}
+                >
+                  <Layout
+                    style={{
+                      flex: 1,
+                      overflowY: 'auto',
+                      backgroundColor: '#fff',
+                      paddingRight: '16px',
+                    }}
+                  >
+                    <List
+                      style={{ marginTop: '8px' }}
+                      grid={{ gutter: 16, column: 1 }}
+                      dataSource={filterToolInstances(createAgentState?.tools || [])}
+                      renderItem={(toolId) => renderToolInstance(toolId)}
                     />
-                  </Space>
+                  </Layout>
+                  <Layout
+                    style={{
+                      flex: 1,
+                      overflowY: 'auto',
+                      backgroundColor: '#fff',
+                      paddingLeft: '16px',
+                    }}
+                  >
+                    <List
+                      style={{ marginTop: '8px' }}
+                      grid={{ gutter: 16, column: 1 }}
+                      dataSource={filterToolTemplates(toolTemplates)}
+                      renderItem={renderToolTemplate}
+                    />
+                  </Layout>
                 </Layout>
               </Layout>
+
+              <Divider type="vertical" style={{ height: 'auto', backgroundColor: '#f0f0f0' }} />
 
               <Layout
-                style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  height: '100%',
-                  backgroundColor: '#fff',
-                  marginTop: '8px'
-                }}
+                style={{ flex: 1, backgroundColor: '#fff', padding: '16px', overflowY: 'auto' }}
               >
-                <Layout
-                  style={{
-                    flex: 1,
-                    overflowY: 'auto',
-                    backgroundColor: '#fff',
-                    paddingRight: '16px',
-                  }}
-                >
-                  <List
-                    style={{ marginTop: '8px' }}
-                    grid={{ gutter: 16, column: 1 }}
-                    dataSource={filterToolInstances(createAgentState?.tools || [])}
-                    renderItem={(toolId) => renderToolInstance(toolId)}
-                  />
-                </Layout>
-                <Layout
-                  style={{
-                    flex: 1,
-                    overflowY: 'auto',
-                    backgroundColor: '#fff',
-                    paddingLeft: '16px',
-                  }}
-                >
-                  <List
-                    style={{ marginTop: '8px' }}
-                    grid={{ gutter: 16, column: 1 }}
-                    dataSource={filterToolTemplates(toolTemplates)}
-                    renderItem={renderToolTemplate}
-                  />
-                </Layout>
+                {isCreateSelected ? (
+                  renderCreateNewToolForm()
+                ) : selectedToolInstance ? (
+                  renderToolInstanceDetails()
+                ) : selectedTool ? (
+                  <>
+                    <Typography.Title level={5} style={{ marginBottom: '16px' }}>
+                      Tool Details
+                    </Typography.Title>
+                    <Form layout="vertical">
+                      <Form.Item
+                        label={
+                          <Space>
+                            Tool Name
+                            <Tooltip title="The name of the tool">
+                              <QuestionCircleOutlined style={{ color: '#666' }} />
+                            </Tooltip>
+                          </Space>
+                        }
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Input value={selectedTool?.name} readOnly={!isEditable} />
+                          <Tooltip 
+                            title={
+                              selectedTool.is_valid 
+                                ? 'Tool is valid' 
+                                : selectedTool.tool_metadata 
+                                  ? JSON.parse(typeof selectedTool.tool_metadata === 'string' ? selectedTool.tool_metadata : JSON.stringify(selectedTool.tool_metadata)).status || 'Tool status unknown'
+                                  : 'Tool status unknown'
+                            }
+                          >
+                            {selectedTool.is_valid ? (
+                              <CheckCircleOutlined style={{ color: '#52c41a', fontSize: '15px' }} />
+                            ) : (
+                              <ExclamationCircleOutlined style={{ color: '#faad14', fontSize: '15px' }} />
+                            )}
+                          </Tooltip>
+                        </div>
+                      </Form.Item>
+
+                      {selectedTool && !selectedTool.is_valid && (
+                        <div style={{ marginBottom: '16px' }}>
+                          {renderAlert(
+                            'Tool Validation Error',
+                            `This tool template is in an invalid state: ${
+                              selectedTool.tool_metadata 
+                                ? JSON.parse(typeof selectedTool.tool_metadata === 'string' ? selectedTool.tool_metadata : JSON.stringify(selectedTool.tool_metadata)).status 
+                                : 'Unknown error'
+                            }. Please consider deleting this tool and creating a new one.`,
+                            'warning'
+                          )}
+                        </div>
+                      )}
+
+                      <Form.Item
+                        label={
+                          <Space>
+                            tool.py
+                            <Tooltip title="The Python code that defines the tool's functionality and interface">
+                              <QuestionCircleOutlined style={{ color: '#666' }} />
+                            </Tooltip>
+                          </Space>
+                        }
+                      >
+                        <Editor
+                          key={`python-${editorKey}`}
+                          height="400px"
+                          defaultLanguage="python"
+                          value={selectedTool?.python_code || 'N/A'}
+                          options={{ readOnly: true }}
+                          theme="vs-dark"
+                        />
+                      </Form.Item>
+                      <Form.Item
+                        label={
+                          <Space>
+                            requirements.txt
+                            <Tooltip title="Python package dependencies required by this tool">
+                              <QuestionCircleOutlined style={{ color: '#666' }} />
+                            </Tooltip>
+                          </Space>
+                        }
+                      >
+                        <Editor
+                          key={`requirements-${editorKey}`}
+                          height="150px"
+                          defaultLanguage="plaintext"
+                          value={selectedTool?.python_requirements || 'N/A'}
+                          options={{ readOnly: true }}
+                          theme="vs-dark"
+                        />
+                      </Form.Item>
+                    </Form>
+                  </>
+                ) : null}
               </Layout>
             </Layout>
-
-            <Divider type="vertical" style={{ height: 'auto', backgroundColor: '#f0f0f0' }} />
-
-            <Layout
-              style={{ flex: 1, backgroundColor: '#fff', padding: '16px', overflowY: 'auto' }}
-            >
-              {isCreateSelected ? (
-                renderCreateNewToolForm()
-              ) : selectedToolInstance ? (
-                renderToolInstanceDetails()
-              ) : selectedTool ? (
-                <>
-                  <Typography.Title level={5} style={{ marginBottom: '16px' }}>
-                    Tool Details
-                  </Typography.Title>
-                  <Form layout="vertical">
-                    <Form.Item
-                      label={
-                        <Space>
-                          Tool Name
-                          <Tooltip title="The name of the tool">
-                            <QuestionCircleOutlined style={{ color: '#666' }} />
-                          </Tooltip>
-                        </Space>
-                      }
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Input value={selectedTool?.name} readOnly={!isEditable} />
-                        <Tooltip 
-                          title={
-                            selectedTool.is_valid 
-                              ? 'Tool is valid' 
-                              : selectedTool.tool_metadata 
-                                ? JSON.parse(typeof selectedTool.tool_metadata === 'string' ? selectedTool.tool_metadata : JSON.stringify(selectedTool.tool_metadata)).status || 'Tool status unknown'
-                                : 'Tool status unknown'
-                          }
-                        >
-                          {selectedTool.is_valid ? (
-                            <CheckCircleOutlined style={{ color: '#52c41a', fontSize: '15px' }} />
-                          ) : (
-                            <ExclamationCircleOutlined style={{ color: '#faad14', fontSize: '15px' }} />
-                          )}
-                        </Tooltip>
-                      </div>
-                    </Form.Item>
-
-                    {selectedTool && !selectedTool.is_valid && (
-                      <div style={{ marginBottom: '16px' }}>
-                        {renderAlert(
-                          'Tool Validation Error',
-                          `This tool template is in an invalid state: ${
-                            selectedTool.tool_metadata 
-                              ? JSON.parse(typeof selectedTool.tool_metadata === 'string' ? selectedTool.tool_metadata : JSON.stringify(selectedTool.tool_metadata)).status 
-                              : 'Unknown error'
-                          }. Please consider deleting this tool and creating a new one.`,
-                          'warning'
-                        )}
-                      </div>
-                    )}
-
-                    <Form.Item
-                      label={
-                        <Space>
-                          tool.py
-                          <Tooltip title="The Python code that defines the tool's functionality and interface">
-                            <QuestionCircleOutlined style={{ color: '#666' }} />
-                          </Tooltip>
-                        </Space>
-                      }
-                    >
-                      <Editor
-                        key={`python-${editorKey}`}
-                        height="400px"
-                        defaultLanguage="python"
-                        value={selectedTool?.python_code || 'N/A'}
-                        options={{ readOnly: true }}
-                        theme="vs-dark"
-                      />
-                    </Form.Item>
-                    <Form.Item
-                      label={
-                        <Space>
-                          requirements.txt
-                          <Tooltip title="Python package dependencies required by this tool">
-                            <QuestionCircleOutlined style={{ color: '#666' }} />
-                          </Tooltip>
-                        </Space>
-                      }
-                    >
-                      <Editor
-                        key={`requirements-${editorKey}`}
-                        height="150px"
-                        defaultLanguage="plaintext"
-                        value={selectedTool?.python_requirements || 'N/A'}
-                        options={{ readOnly: true }}
-                        theme="vs-dark"
-                      />
-                    </Form.Item>
-                  </Form>
-                </>
-              ) : null}
-            </Layout>
-          </Layout>
-          <Divider style={{ margin: 0, backgroundColor: '#f0f0f0' }} />
-        </div>
-      )}
+            <Divider style={{ margin: 0, backgroundColor: '#f0f0f0' }} />
+          </div>
+        )}
+      </div>
     </Modal>
   );
 };
