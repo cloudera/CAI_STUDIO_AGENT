@@ -150,6 +150,11 @@ export const createDiagramStateFromTemplate = (templateData: TemplateDiagramInpu
           id: `e-${mId}-${agent.id}`,
           source: `${mId}`,
           target: `${agent.id}`,
+          markerEnd: {
+            type: MarkerType.Arrow,
+            width: 20,
+            height: 20,
+          },
         });
       }
 
@@ -172,6 +177,11 @@ export const createDiagramStateFromTemplate = (templateData: TemplateDiagramInpu
             id: `e-${agent.id}-${tool.id}`,
             source: `${agent.id}`,
             target: `${tool.id}`,
+            markerEnd: {
+              type: MarkerType.Arrow,
+              width: 20,
+              height: 20,
+            },
           });
 
           xIndexOffset += 220;

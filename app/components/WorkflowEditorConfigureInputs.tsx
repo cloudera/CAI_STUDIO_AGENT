@@ -111,6 +111,26 @@ export const setGenerationConfig = (
   writeWorkflowConfigurationToLocalStorage(workflowId, workflowConfiguration);
 };
 
+const getInvalidTools = (agents: AgentMetadata[] | undefined, toolInstances: ToolInstance[] | undefined, workflowId: string | undefined) => {
+  if (!agents || !toolInstances || !workflowId) return [];
+  
+  const invalidTools: { name: string; status: string }[] = [];
+  
+  agents.filter(agent => agent.workflow_id === workflowId).forEach(agent => {
+    agent.tools_id.forEach(toolId => {
+      const tool = toolInstances.find(t => t.id === toolId);
+      if (tool && !tool.is_valid) {
+        const status = tool.tool_metadata ? 
+          JSON.parse(typeof tool.tool_metadata === 'string' ? tool.tool_metadata : JSON.stringify(tool.tool_metadata)).status 
+          : 'Unknown error';
+        invalidTools.push({ name: tool.name, status });
+      }
+    });
+  });
+  
+  return invalidTools;
+};
+
 const ToolConfigurationComponent: React.FC<ToolConfigurationComponentProps> = ({
   agentName,
   toolInstance,
@@ -154,7 +174,7 @@ const ToolConfigurationComponent: React.FC<ToolConfigurationComponentProps> = ({
               gap: 12,
             }}
           >
-            <Text style={{ fontWeight: 500 }}>{toolInstance.name}</Text>
+            <Text style={{ fontSize: 13, fontWeight: 600 }}>{toolInstance.name}</Text>
             <Tag style={{ background: '#add8e6', margin: 0 }}>
               <Layout
                 style={{
@@ -197,7 +217,7 @@ const ToolConfigurationComponent: React.FC<ToolConfigurationComponentProps> = ({
                   background: 'transparent',
                 }}
               >
-                <Text style={{ fontWeight: 300 }}>
+                <Text style={{ fontSize: 13, fontWeight: 400 }}>
                   {param} {isRequired && <Text type="danger">*</Text>}
                 </Text>
                 <Password
@@ -284,6 +304,8 @@ const WorkflowEditorConfigureInputs: React.FC = () => {
       return workflowTools?.some((tool) => JSON.parse(tool.tool_metadata)?.user_params?.length > 0);
     });
 
+  const invalidTools = getInvalidTools(agents, toolInstances, workflowId);
+
   return (
     <Layout
       style={{
@@ -292,7 +314,7 @@ const WorkflowEditorConfigureInputs: React.FC = () => {
         width: '40%',
         height: '100%',
         background: 'transparent',
-        overflow: 'hidden',
+        overflow: 'auto',
         display: 'flex',
         flexShrink: 0,
         flexGrow: 0,
@@ -306,8 +328,8 @@ const WorkflowEditorConfigureInputs: React.FC = () => {
           marginBottom: '24px',
         }}
       >
-        <Title level={4} style={{ marginBottom: '16px' }}>Agents & Managers</Title>
-        <Card title={<Text style={{ fontWeight: 500 }}>Generation</Text>}>
+        <Title level={4} style={{ marginBottom: '16px', fontSize: 13, fontWeight: 600 }}>Agents & Managers</Title>
+        <Card title={<Text style={{ fontWeight: 600, fontSize: 13 }}>Generation</Text>}>
           <Layout
             style={{
               background: 'transparent',
@@ -335,7 +357,7 @@ const WorkflowEditorConfigureInputs: React.FC = () => {
                   gap: 4,
                 }}
               >
-                <Text style={{ fontSize: 14, fontWeight: 600 }}>Max New Tokens</Text>
+                <Text style={{ fontSize: 13, fontWeight: 400 }}>Max New Tokens</Text>
                 <Tooltip
                   title="Determines how many new tokens the agents and manager agent can generate while making LLM calls. There may be LLM endpoint restrictions on this value."
                   placement="right"
@@ -378,7 +400,7 @@ const WorkflowEditorConfigureInputs: React.FC = () => {
                   gap: 4,
                 }}
               >
-                <Text style={{ fontSize: 14, fontWeight: 600 }}>Temperature</Text>
+                <Text style={{ fontSize: 13, fontWeight: 400 }}>Temperature</Text>
                 <Tooltip
                   title={
                     <>
@@ -427,13 +449,13 @@ const WorkflowEditorConfigureInputs: React.FC = () => {
           background: 'transparent',
           width: '100%',
           flexGrow: 1,
-          overflow: 'auto',
           display: 'flex',
           flexDirection: 'column',
           gap: '16px',
         }}
       >
-        {!hasAllRequiredParams && (
+        {/* Show invalid tools alert if any invalid tools exist */}
+        {invalidTools.length > 0 ? (
           <Layout
             style={{
               background: 'transparent',
@@ -442,91 +464,110 @@ const WorkflowEditorConfigureInputs: React.FC = () => {
             }}
           >
             {renderAlert(
-              TOOL_PARAMS_ALERT.message,
-              TOOL_PARAMS_ALERT.description,
+              'Invalid Tools Detected',
+              `The following tools are invalid: ${invalidTools.map(t => `${t.name} (${t.status})`).join(', ')}. Please go to Create or Edit Agent Modal to fix or delete these tools.`,
               'warning'
             )}
           </Layout>
-        )}
+        ) : (
+          <>
+            {/* Show required params alert and tool configuration only if no invalid tools */}
+            {!hasAllRequiredParams && (
+              <Layout
+                style={{
+                  background: 'transparent',
+                  width: '100%',
+                  flexShrink: 0,
+                }}
+              >
+                {renderAlert(
+                  TOOL_PARAMS_ALERT.message,
+                  TOOL_PARAMS_ALERT.description,
+                  'warning'
+                )}
+              </Layout>
+            )}
 
-        <Layout
-          style={{
-            background: 'transparent',
-            width: '100%',
-            flexGrow: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
-          }}
-        >
-          <Title level={4} style={{ marginBottom: '16px' }}>Tools</Title>
-          {!hasConfigurableTools && (
-            <Alert
-              style={{ 
-                marginBottom: '16px',
-                flexShrink: 0 
+            <Layout
+              style={{
+                background: 'transparent',
+                width: '100%',
+                flexGrow: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px',
               }}
-              message={
-                <Layout
+            >
+              <Title level={4} style={{ marginBottom: '16px', fontSize: 13, fontWeight: 600 }}>Tools</Title>
+              {!hasConfigurableTools && (
+                <Alert
                   style={{ 
-                    flexDirection: 'column', 
-                    gap: 4, 
-                    padding: 0, 
-                    background: 'transparent' 
+                    marginBottom: '16px',
+                    flexShrink: 0 
                   }}
-                >
-                  <Layout
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 8,
-                      background: 'transparent',
-                    }}
-                  >
-                    <InfoCircleOutlined style={{ color: '#1890ff' }} />
-                    <Text style={{ fontSize: 13, fontWeight: 600, background: 'transparent' }}>
-                      No Configuration Required
-                    </Text>
-                  </Layout>
-                  <Text style={{ fontSize: 13, fontWeight: 400, background: 'transparent' }}>
-                    This workflow has no tools that require configuration. You can proceed to test and
-                    deploy the workflow.
-                  </Text>
-                </Layout>
-              }
-              type="info"
-              showIcon={false}
-              closable={false}
-            />
-          )}
-          <Layout 
-            style={{ 
-              gap: '16px',
-              flexGrow: 1,
-            }}
-          >
-            {agents
-              ?.filter((agent) => agent.workflow_id === workflowId)
-              .map((agent, index) => {
-                const toolInstanceIds = agent.tools_id;
-                const worklfowTools = toolInstances?.filter((toolInstance) =>
-                  toolInstanceIds.includes(toolInstance.id),
-                );
-                return (
-                  <React.Fragment key={agent.id}>
-                    {worklfowTools?.map((toolInstance) => (
-                      <ToolConfigurationComponent
-                        key={toolInstance.id}
-                        agentName={agent.name}
-                        toolInstance={toolInstance}
-                        workflowId={workflowId!}
-                      />
-                    ))}
-                  </React.Fragment>
-                );
-              })}
-          </Layout>
-        </Layout>
+                  message={
+                    <Layout
+                      style={{ 
+                        flexDirection: 'column', 
+                        gap: 4, 
+                        padding: 0, 
+                        background: 'transparent' 
+                      }}
+                    >
+                      <Layout
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 8,
+                          background: 'transparent',
+                        }}
+                      >
+                        <InfoCircleOutlined style={{ color: '#1890ff' }} />
+                        <Text style={{ fontSize: 13, fontWeight: 600, background: 'transparent' }}>
+                          No Configuration Required
+                        </Text>
+                      </Layout>
+                      <Text style={{ fontSize: 13, fontWeight: 400, background: 'transparent' }}>
+                        This workflow has no tools that require configuration. You can proceed to test and
+                        deploy the workflow.
+                      </Text>
+                    </Layout>
+                  }
+                  type="info"
+                  showIcon={false}
+                  closable={false}
+                />
+              )}
+              <Layout 
+                style={{ 
+                  gap: '16px',
+                  flexGrow: 1,
+                }}
+              >
+                {agents
+                  ?.filter((agent) => agent.workflow_id === workflowId)
+                  .map((agent, index) => {
+                    const toolInstanceIds = agent.tools_id;
+                    const worklfowTools = toolInstances?.filter((toolInstance) =>
+                      toolInstanceIds.includes(toolInstance.id),
+                    );
+                    return (
+                      <React.Fragment key={agent.id}>
+                        {worklfowTools?.map((toolInstance) => (
+                          <ToolConfigurationComponent
+                            key={toolInstance.id}
+                            agentName={agent.name}
+                            toolInstance={toolInstance}
+                            workflowId={workflowId!}
+                          />
+                        ))}
+                      </React.Fragment>
+                    );
+                  })}
+              </Layout>
+            </Layout>
+          </>
+        )}
       </Layout>
     </Layout>
   );

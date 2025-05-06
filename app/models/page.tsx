@@ -17,6 +17,7 @@ import {
 import { useSearchParams } from 'next/navigation';
 import CommonBreadCrumb from '../components/CommonBreadCrumb';
 import ModelActionsDrawer from '../components/ModelActionsDrawer';
+import { useGlobalNotification } from '../components/Notifications';
 
 const { Title } = Typography;
 
@@ -54,6 +55,9 @@ const ModelsPageContent = () => {
   const [form] = Form.useForm();
   const searchParams = useSearchParams();
   const [setModelAsDefault, setSetModelAsDefault] = useState(false);
+
+  // Add notification API
+  const notificationsApi = useGlobalNotification();
 
   useEffect(() => {
     if (models) {
@@ -152,9 +156,16 @@ const ModelsPageContent = () => {
   const handleFormSubmit = async (values: any) => {
     try {
       if (drawerMode === 'edit') {
+        notificationsApi.info({
+          message: 'Updating Model',
+          description: 'Updating model configuration...',
+          placement: 'topRight',
+        });
+
         if (!selectedModel) throw new Error('Model not loaded for editing.');
         if (changedModel?.model_type !== selectedModel.model_type)
           throw new Error('Cannot change type when editing models.');
+        
         await updateModel({
           model_id: selectedModel.model_id,
           model_name: changedModel?.model_name || '',
@@ -164,46 +175,87 @@ const ModelsPageContent = () => {
         });
 
         aysncTestModelWithRetry(selectedModel.model_id);
-        setSubmitSuccess(`Model '${selectedModel.model_name}' updated successfully!`);
+        notificationsApi.success({
+          message: 'Model Updated',
+          description: `Model '${selectedModel.model_name}' updated successfully!`,
+          placement: 'topRight',
+        });
       } else {
         // register
-        if (
-          !changedModel?.model_name ||
-          !changedModel?.api_key ||
-          (['OPENAI_COMPATIBLE', 'AZURE_OPENAI'].includes(changedModel?.model_type) &&
-            !changedModel?.api_base) ||
-          (changedModel?.model_type === 'AZURE_OPENAI' && !changedModel?.provider_model)
-        ) {
+        notificationsApi.info({
+          message: 'Creating Model',
+          description: 'Registering new model...',
+          placement: 'topRight',
+        });
+
+        if (!changedModel?.model_name || !changedModel?.api_key ||
+            (['OPENAI_COMPATIBLE', 'AZURE_OPENAI'].includes(changedModel?.model_type) && !changedModel?.api_base) ||
+            (changedModel?.model_type === 'AZURE_OPENAI' && !changedModel?.provider_model)) {
           throw new Error('Please fill in all required fields.');
         }
 
-        const modelId = await addModel({
-          model_name: changedModel?.model_name,
-          model_type: changedModel?.model_type,
-          provider_model: changedModel?.provider_model,
-          api_base: changedModel?.api_base,
-          api_key: changedModel?.api_key,
-        }).unwrap();
+        try {
+          const modelId = await addModel({
+            model_name: changedModel?.model_name,
+            model_type: changedModel?.model_type,
+            provider_model: changedModel?.provider_model,
+            api_base: changedModel?.api_base,
+            api_key: changedModel?.api_key,
+          }).unwrap();
 
-        if (setModelAsDefault && models && models.length > 0) {
-          await setDefaultModel({ model_id: modelId });
+          if (setModelAsDefault && models && models.length > 0) {
+            await setDefaultModel({ model_id: modelId });
+          }
+
+          aysncTestModelWithRetry(modelId);
+          notificationsApi.success({
+            message: 'Model Created',
+            description: `Model '${changedModel?.model_name}' created successfully!`,
+            placement: 'topRight',
+          });
+
+          setIsDrawerOpen(false);
+          setSetModelAsDefault(false);
+          setSelectedModel(null);
+        } catch (error: any) {
+          const errorMessage = error.data?.error || error.message;
+          if (errorMessage.includes('failed to update governance for project')) {
+            notificationsApi.error({
+              message: 'Error Creating Model',
+              description: 'The system is currently experiencing high load. Please wait a few minutes and try again.',
+              placement: 'topRight',
+              duration: 10, // Show for longer since it's an important error
+            });
+          } else {
+            notificationsApi.error({
+              message: 'Error Creating Model',
+              description: errorMessage || 'Failed to create model.',
+              placement: 'topRight',
+            });
+          }
+          setSubmitError(errorMessage || 'Failed to create model.');
         }
-
-        aysncTestModelWithRetry(modelId);
-        setSubmitSuccess(`Model '${changedModel?.model_name}' created successfully!`);
       }
-
-      setIsDrawerOpen(false);
-      setSetModelAsDefault(false);
-      setSelectedModel(null);
     } catch (error: any) {
-      setSubmitError(error.message || 'Failed to save model.');
+      const errorMessage = error.data?.error || error.message || 'Failed to save model.';
+      notificationsApi.error({
+        message: drawerMode === 'edit' ? 'Error Updating Model' : 'Error Creating Model',
+        description: errorMessage,
+        placement: 'topRight',
+      });
+      setSubmitError(errorMessage);
     }
   };
 
   const handleTestModel = async (message: string) => {
     if (!selectedModel) return;
     try {
+      notificationsApi.info({
+        message: 'Testing Model',
+        description: 'Sending test request to model...',
+        placement: 'topRight',
+      });
+
       const response = await testModel({
         model_id: selectedModel.model_id,
         completion_role: 'user',
@@ -212,14 +264,62 @@ const ModelsPageContent = () => {
         max_tokens: 50,
         timeout: 3,
       }).unwrap();
-      setTestResponse(response);
 
-      // The test passed, set the status to success anyway.
       if (!response.startsWith('Model Test Failed')) {
         setModelTestStatus((prev) => ({ ...prev, [selectedModel.model_id]: 'success' }));
+        notificationsApi.success({
+          message: 'Model Test Successful',
+          description: 'The model responded successfully to the test request.',
+          placement: 'topRight',
+        });
+      } else {
+        notificationsApi.error({
+          message: 'Model Test Failed',
+          description: response,
+          placement: 'topRight',
+        });
       }
+      setTestResponse(response);
     } catch (error: any) {
-      setSubmitError(error.message || 'Failed to test model.');
+      const errorMessage = error.data?.error || error.message || 'Failed to test model.';
+      notificationsApi.error({
+        message: 'Model Test Error',
+        description: errorMessage,
+        placement: 'topRight',
+      });
+      setSubmitError(errorMessage);
+    }
+  };
+
+  const handleDeleteModel = async (modelId: string) => {
+    try {
+      notificationsApi.info({
+        message: 'Deleting Model',
+        description: 'Initiating model deletion...',
+        placement: 'topRight',
+      });
+
+      await removeModel({ model_id: modelId }).unwrap();
+      
+      notificationsApi.success({
+        message: 'Model Deleted',
+        description: 'Model deleted successfully!',
+        placement: 'topRight',
+      });
+
+      setModelTestStatus((prev) => {
+        const updated = { ...prev };
+        delete updated[modelId];
+        return updated;
+      });
+    } catch (error: any) {
+      const errorMessage = error.data?.error || error.message || 'Failed to delete model.';
+      notificationsApi.error({
+        message: 'Error Deleting Model',
+        description: errorMessage,
+        placement: 'topRight',
+      });
+      setSubmitError(errorMessage);
     }
   };
 
@@ -296,25 +396,30 @@ const ModelsPageContent = () => {
           modelTestStatus={modelTestStatus}
           onEdit={openEditModelDrawer}
           onTest={openTestModelDrawer}
-          onDelete={async (modelId) => {
-            try {
-              await removeModel({ model_id: modelId });
-              setSubmitSuccess('Model deleted successfully!');
-              setModelTestStatus((prev) => {
-                const updated = { ...prev };
-                delete updated[modelId];
-                return updated;
-              });
-            } catch (error: any) {
-              setSubmitError(error.message || 'Failed to delete model.');
-            }
-          }}
+          onDelete={handleDeleteModel}
           onSetDefault={async (modelId) => {
             try {
+              notificationsApi.info({
+                message: 'Setting Default Model',
+                description: 'Updating default model configuration...',
+                placement: 'topRight',
+              });
+
               await setDefaultModel({ model_id: modelId });
-              setSubmitSuccess('Default model updated successfully!');
+              
+              notificationsApi.success({
+                message: 'Default Model Updated',
+                description: 'Default model updated successfully!',
+                placement: 'topRight',
+              });
             } catch (error: any) {
-              setSubmitError(error.message || 'Failed to set default model.');
+              const errorMessage = error.data?.error || error.message || 'Failed to set default model.';
+              notificationsApi.error({
+                message: 'Error Setting Default Model',
+                description: errorMessage,
+                placement: 'topRight',
+              });
+              setSubmitError(errorMessage);
             }
           }}
         />

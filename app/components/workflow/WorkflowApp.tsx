@@ -377,6 +377,30 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
     );
   }, [workflow, agents, toolInstances, workflowConfiguration]);
 
+  // Add this function near the top with other functions
+  const getInvalidTools = (agents: AgentMetadata[] | undefined, toolInstances: ToolInstance[] | undefined, workflowId: string | undefined) => {
+    if (!agents || !toolInstances || !workflowId) return [];
+    
+    const invalidTools: { name: string; status: string }[] = [];
+    
+    agents.filter(agent => agent.workflow_id === workflowId).forEach(agent => {
+      agent.tools_id.forEach(toolId => {
+        const tool = toolInstances.find(t => t.id === toolId);
+        if (tool && !tool.is_valid) {
+          const status = tool.tool_metadata ? 
+            JSON.parse(typeof tool.tool_metadata === 'string' ? tool.tool_metadata : JSON.stringify(tool.tool_metadata)).status 
+            : 'Unknown error';
+          invalidTools.push({ name: tool.name, status });
+        }
+      });
+    });
+    
+    return invalidTools;
+  };
+
+  // In the component, add before the return:
+  const invalidTools = getInvalidTools(agents, toolInstances, workflow?.workflow_id);
+
   // Don't display anything if workflowId is nonexistent
   if (!workflow) {
     return (
@@ -431,7 +455,6 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
         >
           <Collapse
             bordered={false}
-            defaultActiveKey={['1']}
             style={{ marginBottom: '24px' }}
             items={[
               {
@@ -475,6 +498,12 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
             renderAlert(
               'No Default LLM Model',
               'Please configure a default LLM model on the LLMs page to use workflows.',
+              'warning'
+            )
+          ) : invalidTools.length > 0 ? (
+            renderAlert(
+              'Invalid Tools Detected',
+              `The following tools are invalid: ${invalidTools.map(t => `${t.name} (${t.status})`).join(', ')}. Please go to Create or Edit Agent Modal to fix or delete these tools.`,
               'warning'
             )
           ) : !workflow?.is_ready ? (

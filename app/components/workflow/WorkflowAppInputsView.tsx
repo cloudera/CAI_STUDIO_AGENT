@@ -218,7 +218,8 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
           padding: 12,
           background: 'transparent',
           display: 'flex',
-          height: 'calc(100vh - 200px)',
+          height: '100%',
+          overflowY: 'auto',
         }}
       >
         <div style={{ flexShrink: 0, marginBottom: '16px' }}>
@@ -289,15 +290,16 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
 
         <div
           style={{
-            flex: '1 1 auto',
             display: 'flex',
             flexDirection: 'column',
             background: '#fff',
             borderRadius: '8px',
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
-            overflow: 'hidden',
             minHeight: '200px',
             position: 'relative',
+            marginBottom: '16px',
+            alignSelf: 'stretch',
+            flex: '1 0 auto',
           }}
         >
           {crewOutput && (
@@ -308,8 +310,9 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
                 style={{
                   fontSize: '12px',
                   padding: '16px',
-                  overflow: 'auto',
-                  flex: 1,
+                  paddingBottom: '48px',
+                  width: '100%',
+                  lineHeight: '1.5',
                   fontFamily:
                     '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
                 }}

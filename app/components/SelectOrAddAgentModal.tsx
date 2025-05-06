@@ -16,6 +16,7 @@ import {
   Popconfirm,
   FormInstance,
   Select,
+  Result,
 } from 'antd';
 import {
   PlusOutlined,
@@ -28,6 +29,7 @@ import {
   CheckCircleOutlined,
   ExclamationCircleOutlined,
   UndoOutlined,
+  CloseCircleOutlined,
 } from '@ant-design/icons';
 import {
   useListGlobalAgentTemplatesQuery,
@@ -451,7 +453,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
   updateAgent,
   createAgentState,
 }) => {
-  const { data: defaultLanguageModel } = useGetDefaultModelQuery();
+  const { data: defaultModel } = useGetDefaultModelQuery();
   const { data: agentTemplates = [] } = useListGlobalAgentTemplatesQuery();
   const { data: toolTemplates = [] } = useListGlobalToolTemplatesQuery({});
   const { imageData: toolIconsData, refetch: refetchToolImages } = useImageAssetsData(
@@ -483,7 +485,6 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
   const selectedAssignedAgent = useAppSelector(selectEditorAgentViewAgent);
   const { data: models = [] } = useListModelsQuery({});
   const [getModel] = useGetModelMutation();
-  const [defaultModelId, setDefaultModelId] = useState<string>('');
 
   const toolTemplateCache = toolTemplates.reduce((acc: Record<string, any>, template: any) => {
     acc[template.id] = {
@@ -549,27 +550,12 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
     }
   }, [agents, selectedAssignedAgent]);
 
-  // Update the effect to fetch default model
+  // Add this effect to handle default model selection
   useEffect(() => {
-    const fetchDefaultModel = async () => {
-      if (models && models.length > 0) {
-        try {
-          // Find the model marked as studio default
-          const defaultModel = models.find(model => model.is_studio_default);
-          if (defaultModel) {
-            setDefaultModelId(defaultModel.model_id);
-          } else {
-            // Fallback to first model if no default is set
-            const firstModel = await getModel({ model_id: models[0].model_id }).unwrap();
-            setDefaultModelId(firstModel.model_id);
-          }
-        } catch (error) {
-          console.error('Error fetching default model:', error);
-        }
-      }
-    };
-    fetchDefaultModel();
-  }, [models, getModel]);
+    if (isCreateMode && defaultModel?.model_id) {
+      form.setFieldValue('llm_provider_model_id', defaultModel.model_id);
+    }
+  }, [isCreateMode, defaultModel, form]);
 
   const changeToCreateAgentMode = () => {
     setIsCreateMode(true);
@@ -585,10 +571,11 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
       }),
     );
     form.resetFields();
-    // Set default model for new agent
-    form.setFieldsValue({
-      llm_provider_model_id: defaultModelId,
-    });
+    
+    // Immediately set the default model if available
+    if (defaultModel?.model_id) {
+      form.setFieldValue('llm_provider_model_id', defaultModel.model_id);
+    }
   };
 
   const handleSelectAgentTemplate = (template: AgentTemplateMetadata) => {
@@ -610,7 +597,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
       role: template.role,
       backstory: template.backstory,
       goal: template.goal,
-      llm_provider_model_id: defaultModelId,
+      llm_provider_model_id: defaultModel?.model_id,
     });
   };
 
@@ -717,7 +704,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
         role: (agent.crew_ai_agent_metadata as CrewAIAgentMetadata)?.role || '',
         backstory: agent.crew_ai_agent_metadata?.backstory || '',
         goal: agent.crew_ai_agent_metadata?.goal || '',
-        llm_provider_model_id: agent.llm_provider_model_id || defaultModelId,
+        llm_provider_model_id: agent.llm_provider_model_id || defaultModel?.model_id,
       });
     }, 0);
 
@@ -794,7 +781,20 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                         />
                       )}
                     </div>
-                    <Text>{name}</Text>
+                    <Text
+                      style={{
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        maxWidth: '40%',
+                        display: 'inline-block'
+                      }}
+                      title={name}
+                    >
+                      {name}
+                    </Text>
                   </div>
                 </div>
               </div>
@@ -819,7 +819,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
         <List
           grid={{ gutter: 16, column: 2 }}
           dataSource={items}
-          renderItem={(tool: { id: string; tool_image_uri?: string; name: string }) => (
+          renderItem={(tool: { id: string; tool_image_uri?: string; name: string; is_valid?: boolean; tool_metadata?: Record<string, string> }) => (
             <List.Item>
               <div
                 style={{
@@ -839,18 +839,17 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                   style={{
                     display: 'flex',
                     alignItems: 'center',
+                    width: '100%',
                     justifyContent: 'space-between',
                     marginBottom: '8px',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
                     <div
                       style={{
                         width: '24px',
                         height: '24px',
                         minWidth: '24px',
-                        minHeight: '24px',
-                        flex: '0 0 24px',
                         borderRadius: '50%',
                         background: '#f1f1f1',
                         display: 'flex',
@@ -873,35 +872,56 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                         />
                       )}
                     </div>
-                    <Text
-                      style={{
-                        fontSize: '14px',
-                        fontWeight: 400,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
-                      title={tool.name}
-                    >
-                      {tool.name}
-                    </Text>
+                    <div style={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
+                      <Text
+                        style={{
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          maxWidth: '90%',
+                          display: 'inline-block'
+                        }}
+                        title={tool.name}
+                      >
+                        {tool.name}
+                      </Text>
+                      <Tooltip 
+                        title={
+                          tool.is_valid 
+                            ? 'Tool is valid' 
+                            : tool.tool_metadata 
+                              ? JSON.parse(typeof tool.tool_metadata === 'string' ? tool.tool_metadata : JSON.stringify(tool.tool_metadata)).status || 'Tool status unknown'
+                              : 'Tool status unknown'
+                        }
+                      >
+                        {tool.is_valid ? (
+                          <CheckCircleOutlined style={{ color: '#52c41a', fontSize: '15px', fontWeight: 1000, marginLeft: '12px' }} />
+                        ) : (
+                          <ExclamationCircleOutlined style={{ color: '#faad14', fontSize: '15px', fontWeight: 1000, marginLeft: '12px' }} />
+                        )}
+                      </Tooltip>
+                    </div>
                   </div>
-                  <Popconfirm
-                    title="Delete Tool"
-                    description="Are you sure you want to delete this tool?"
-                    onConfirm={(e) => {
-                      e?.stopPropagation();
-                      handleDeleteTool(tool.id, tool.name);
-                    }}
-                    onCancel={(e) => e?.stopPropagation()}
-                  >
-                    <Button
-                      type="link"
-                      icon={<DeleteOutlined style={{ color: '#ff4d4f' }} />}
-                      onClick={(e) => e.stopPropagation()}
-                      disabled={isFormDisabled}
-                    />
-                  </Popconfirm>
+                  <div style={{ marginLeft: 'auto', flexShrink: 0 }}>
+                    <Popconfirm
+                      title="Delete Tool"
+                      description="Are you sure you want to delete this tool?"
+                      onConfirm={(e) => {
+                        e?.stopPropagation();
+                        handleDeleteTool(tool.id, tool.name);
+                      }}
+                      onCancel={(e) => e?.stopPropagation()}
+                    >
+                      <Button
+                        type="link"
+                        icon={<DeleteOutlined style={{ color: '#ff4d4f' }} />}
+                        onClick={(e) => e.stopPropagation()}
+                        disabled={isFormDisabled}
+                      />
+                    </Popconfirm>
+                  </div>
                 </div>
               </div>
             </List.Item>
@@ -1409,7 +1429,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                 }}
               >
                 Agent Details
-                {defaultLanguageModel && (
+                {defaultModel && (
                   <Tooltip title="Generate agent properties using AI">
                     <Button
                       type="text"
@@ -1515,12 +1535,11 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
               }
               name="llm_provider_model_id"
               rules={[{ required: true, message: 'Language model is required' }]}
-              initialValue={selectedAssignedAgent?.llm_provider_model_id || defaultModelId}
             >
               <Select>
                 {models.map(model => (
                   <Select.Option key={model.model_id} value={model.model_id}>
-                    {model.model_name} {model.model_id === defaultModelId && '(Default)'}
+                    {model.model_name} {model.model_id === defaultModel?.model_id && '(Default)'}
                   </Select.Option>
                 ))}
               </Select>
@@ -1539,13 +1558,13 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
         onCancel={() => setViewToolModalVisible(false)}
         toolDetails={toolDetails}
       />
-      {defaultLanguageModel && (
+      {defaultModel && (
         <GenerateAgentPropertiesModal
           open={isGenerateAgentPropertiesModalVisible}
           setOpen={setIsGenerateAgentPropertiesModalVisible}
           onCancel={() => setIsGenerateAgentPropertiesModalVisible(false)}
           form={form}
-          llmModel={defaultLanguageModel}
+          llmModel={defaultModel}
           toolInstances={toolInstances}
         />
       )}
@@ -1608,6 +1627,21 @@ const SelectOrAddAgentModal: React.FC = () => {
   const selectedAssignedAgent = useAppSelector(selectEditorAgentViewAgent);
   const [updateAgent] = useUpdateAgentMutation();
   const createAgentState = useSelector(selectEditorAgentViewCreateAgentState);
+  const { data: defaultModel } = useGetDefaultModelQuery();
+
+  // Add useEffect to set default model when form is initialized or when defaultModel changes
+  useEffect(() => {
+    if (defaultModel && !selectedAssignedAgent) {
+      form.setFieldValue('llm_provider_model_id', defaultModel.model_id);
+    }
+  }, [defaultModel, form, selectedAssignedAgent]);
+
+  // When editing an existing agent, set its model
+  useEffect(() => {
+    if (selectedAssignedAgent) {
+      form.setFieldValue('llm_provider_model_id', selectedAssignedAgent.llm_provider_model_id);
+    }
+  }, [selectedAssignedAgent, form]);
 
   // Add this effect to reset everything when modal closes
   useEffect(() => {
@@ -1792,7 +1826,12 @@ const SelectOrAddAgentModal: React.FC = () => {
         <Button key="cancel" onClick={() => dispatch(updatedEditorAgentViewOpen(false))}>
           Close
         </Button>,
-        <Button key="add" type="primary" onClick={handleAddAgent}>
+        <Button 
+          key="add" 
+          type="primary" 
+          onClick={handleAddAgent}
+          disabled={!defaultModel} // Disable button if no default model
+        >
           {getButtonText()}
         </Button>,
       ]}

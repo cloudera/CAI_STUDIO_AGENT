@@ -106,12 +106,20 @@ def remove_model(
     """
     Remove an existing model by its ID.
     Also updates any agents using this model and removes the API key from environment variables.
+    Prevents deletion of the default LLM model.
     """
     with dao.get_session() as session:
         # Find the model
         m_ = session.query(db_model.Model).filter_by(model_id=request.model_id).one_or_none()
         if not m_:
             raise ValueError(f"Model with ID '{request.model_id}' not found.")
+            
+        # Check if this is the default model
+        if m_.is_studio_default:
+            raise ValueError(
+                "Cannot delete the default LLM Model. Please set a different model as default first, "
+                "or create a new default LLM Model before deleting this one."
+            )
             
         # Update all agents using this model to have empty llm_provider_model_id
         session.query(db_model.Agent).filter_by(

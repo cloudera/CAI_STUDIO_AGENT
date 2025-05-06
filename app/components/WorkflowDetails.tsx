@@ -41,13 +41,15 @@ import {
   selectEditorWorkflowProcess,
   selectWorkflowConfiguration,
 } from '../workflows/editorSlice';
-import { AgentMetadata, DeployedWorkflow } from '@/studio/proto/agent_studio';
+import { AgentMetadata, DeployedWorkflow, ToolInstance } from '@/studio/proto/agent_studio';
 import { getStatusColor, getStatusDisplay } from './WorkflowListItem';
 import { useGlobalNotification } from './Notifications';
 import { useGetDefaultModelQuery } from '../models/modelsApi';
 import { TOOL_PARAMS_ALERT } from '../lib/constants';
 import { hasValidToolConfiguration } from './WorkflowEditorConfigureInputs';
 import { renderAlert } from '../lib/alertUtils';
+import { usePathname } from 'next/navigation';
+
 const { Title, Text } = Typography;
 
 interface WorkflowDetailsProps {
@@ -56,11 +58,34 @@ interface WorkflowDetailsProps {
   onDeleteDeployedWorkflow: (deployedWorkflow: DeployedWorkflow) => void;
 }
 
+const getInvalidTools = (agents: AgentMetadata[] | undefined, toolInstances: ToolInstance[] | undefined, workflowId: string | undefined) => {
+  if (!agents || !toolInstances || !workflowId) return [];
+  
+  const invalidTools: { name: string; status: string }[] = [];
+  
+  agents.filter(agent => agent.workflow_id === workflowId).forEach(agent => {
+    agent.tools_id.forEach(toolId => {
+      const tool = toolInstances.find(t => t.id === toolId);
+      if (tool && !tool.is_valid) {
+        const status = tool.tool_metadata ? 
+          JSON.parse(typeof tool.tool_metadata === 'string' ? tool.tool_metadata : JSON.stringify(tool.tool_metadata)).status 
+          : 'Unknown error';
+        invalidTools.push({ name: tool.name, status });
+      }
+    });
+  });
+  
+  return invalidTools;
+};
+
 const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
   workflow,
   deployedWorkflows,
   onDeleteDeployedWorkflow,
 }) => {
+  const pathname = usePathname();
+  const isViewRoute = pathname?.startsWith('/workflows/view/');
+
   const {
     data: allAgents = [],
     isLoading: agentsLoading,
@@ -97,6 +122,8 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
     toolInstances,
     workflowConfiguration
   );
+
+  const invalidTools = getInvalidTools(allAgents, toolInstances, workflow.workflow_id);
 
   if (agentsLoading || toolInstancesLoading) {
     return (
@@ -549,46 +576,53 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
 
   return (
     <Layout style={{ padding: '16px', background: '#fff' }}>
-      {/* Show alerts in priority order */}
-      {!defaultModel
-        ? renderAlert(
-            'No Default LLM Model',
-            'Please configure a default LLM model in the Models section to use workflows.',
-            'warning',
-          )
-        : !isValid
+      {!isViewRoute && (
+        !defaultModel
           ? renderAlert(
-              TOOL_PARAMS_ALERT.message,
-              TOOL_PARAMS_ALERT.description,
+              'No Default LLM Model',
+              'Please configure a default LLM model in the Models section to use workflows.',
               'warning',
             )
-          : !workflow?.is_ready
-            ? renderAlert('Workflow Not Ready', 'This workflow is still being configured...', 'info')
-            : !hasAgents
+          : invalidTools.length > 0
+            ? renderAlert(
+                'Invalid Tools Detected',
+                `The following tools are invalid: ${invalidTools.map(t => `${t.name} (${t.status})`).join(', ')}. Please go to Create or Edit Agent Modal to fix or delete these tools.`,
+                'warning'
+              )
+            : !isValid
               ? renderAlert(
-                  'No Agents Found',
-                  'This workflow does not have any agents. You need at least one agent to test or deploy the workflow.',
+                  TOOL_PARAMS_ALERT.message,
+                  TOOL_PARAMS_ALERT.description,
                   'warning',
                 )
-              : !hasTasks
-                ? renderAlert(
-                    'No Tasks Found',
-                    'This workflow does not have any tasks. You need at least one task to test or deploy the workflow.',
-                    'warning',
-                  )
-                : hasUnassignedTasks
+              : !workflow?.is_ready
+                ? renderAlert('Workflow Not Ready', 'This workflow is still being configured...', 'info')
+                : !hasAgents
                   ? renderAlert(
-                      'Unassigned Tasks',
-                      'You need to assign tasks to an agent because there is no manager agent.',
+                      'No Agents Found',
+                      'This workflow does not have any agents. You need at least one agent to test or deploy the workflow.',
                       'warning',
                     )
-                  : workflowDeployments.length > 0
+                  : !hasTasks
                     ? renderAlert(
-                        'Existing Deployment',
-                        'There is an existing deployment for this workflow. Please delete it first to redeploy the workflow.',
+                        'No Tasks Found',
+                        'This workflow does not have any tasks. You need at least one task to test or deploy the workflow.',
                         'warning',
                       )
-                    : null}
+                    : hasUnassignedTasks
+                      ? renderAlert(
+                          'Unassigned Tasks',
+                          'You need to assign tasks to an agent because there is no manager agent.',
+                          'warning',
+                        )
+                      : workflowDeployments.length > 0
+                        ? renderAlert(
+                            'Existing Deployment',
+                            'There is an existing deployment for this workflow. Please delete it first to redeploy the workflow.',
+                            'warning',
+                          )
+                        : null
+      )}
       <Collapse
         style={{ marginBottom: '12px' }}
         bordered={false}

@@ -168,7 +168,7 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow, tas
     <>
       <Layout
         style={{
-          padding: 24,
+          padding: 1,
           background: 'transparent',
           flex: 1,
         }}

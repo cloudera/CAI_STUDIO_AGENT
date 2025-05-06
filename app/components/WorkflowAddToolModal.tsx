@@ -29,6 +29,8 @@ import {
   FileImageOutlined,
   DeleteOutlined,
   SearchOutlined,
+  CheckCircleOutlined,
+  ExclamationCircleOutlined,
 } from '@ant-design/icons';
 import {
   useListGlobalToolTemplatesQuery,
@@ -55,6 +57,7 @@ import { useUpdateAgentMutation, useListAgentsQuery } from '../agents/agentApi';
 import { uploadFile } from '../lib/fileUpload';
 import { useGetParentProjectDetailsQuery } from '../lib/crossCuttingApi';
 import { defaultToolPyCode, defaultRequirementsTxt } from '@/app/utils/defaultToolCode'; // Import default code
+import { renderAlert } from '@/app/lib/alertUtils';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -519,18 +522,37 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ open, onCan
                 />
               )}
             </div>
-            <Text
-              style={{
-                fontSize: '14px',
-                fontWeight: 400,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-              title={template.name}
-            >
-              {template.name}
-            </Text>
+            <div style={{ display: 'flex', alignItems: 'center', flex: 1, gap: '4px' }}>
+              <Text
+                style={{
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: '70%',
+                  display: 'inline-block'
+                }}
+                title={template.name}
+              >
+                {template.name}
+              </Text>
+              <Tooltip 
+                title={
+                  template.is_valid 
+                    ? 'Tool is valid' 
+                    : template.tool_metadata 
+                      ? JSON.parse(typeof template.tool_metadata === 'string' ? template.tool_metadata : JSON.stringify(template.tool_metadata)).status || 'Tool status unknown'
+                      : 'Tool status unknown'
+                }
+              >
+                {template.is_valid ? (
+                  <CheckCircleOutlined style={{ color: '#52c41a', fontSize: '15px', fontWeight: 1000, marginLeft: '4px' }} />
+                ) : (
+                  <ExclamationCircleOutlined style={{ color: '#faad14', fontSize: '15px', fontWeight: 1000, marginLeft: '4px' }} />
+                )}
+              </Tooltip>
+            </div>
           </div>
           <Tooltip title={template.tool_description || 'N/A'}>
             <Text
@@ -615,18 +637,37 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ open, onCan
                 />
               )}
             </div>
-            <Text
-              style={{
-                fontSize: '14px',
-                fontWeight: 400,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-              title={toolInstance.name}
-            >
-              {toolInstance.name}
-            </Text>
+            <div style={{ display: 'flex', alignItems: 'center', flex: 1, gap: '4px' }}>
+              <Text
+                style={{
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: '50%',
+                  display: 'inline-block'
+                }}
+                title={toolInstance.name}
+              >
+                {toolInstance.name}
+              </Text>
+              <Tooltip 
+                title={
+                  toolInstance.is_valid 
+                    ? 'Tool is valid' 
+                    : toolInstance.tool_metadata 
+                      ? JSON.parse(typeof toolInstance.tool_metadata === 'string' ? toolInstance.tool_metadata : JSON.stringify(toolInstance.tool_metadata)).status || 'Tool status unknown'
+                      : 'Tool status unknown'
+                }
+              >
+                {toolInstance.is_valid ? (
+                  <CheckCircleOutlined style={{ color: '#52c41a', fontSize: '15px', fontWeight: 1000, marginLeft: '4px' }} />
+                ) : (
+                  <ExclamationCircleOutlined style={{ color: '#faad14', fontSize: '15px', fontWeight: 1000, marginLeft: '4px' }} />
+                )}
+              </Tooltip>
+            </div>
           </div>
           <Tooltip title={description}>
             <Text
@@ -675,6 +716,22 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ open, onCan
               placeholder="Enter tool name"
             />
           </Form.Item>
+
+          {selectedToolInstance && toolInstancesMap[selectedToolInstance]?.is_valid === false && (
+            <div style={{ marginBottom: '16px' }}>
+              {renderAlert(
+                'Tool Validation Error',
+                `This tool instance is in an invalid state: ${
+                  toolInstancesMap[selectedToolInstance]?.tool_metadata 
+                    ? JSON.parse(typeof toolInstancesMap[selectedToolInstance]?.tool_metadata === 'string' 
+                        ? toolInstancesMap[selectedToolInstance]?.tool_metadata 
+                        : JSON.stringify(toolInstancesMap[selectedToolInstance]?.tool_metadata)).status 
+                    : 'Unknown error'
+                }. Please consider deleting this tool and creating a new one.`,
+                'warning'
+              )}
+            </div>
+          )}
 
           <Form.Item label="Tool Icon">
             <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
@@ -910,14 +967,26 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ open, onCan
             {getButtonText()}
           </Button>
         ) : selectedToolTemplate && !selectedToolInstance ? (
-          <Button
-            key="add"
-            type="primary"
-            onClick={() => handleCreateToolInstance(selectedToolTemplate)}
-            disabled={loading}
+          <Tooltip 
+            title={
+              !selectedTool?.is_valid 
+                ? selectedTool?.tool_metadata 
+                  ? JSON.parse(typeof selectedTool.tool_metadata === 'string' 
+                      ? selectedTool.tool_metadata 
+                      : JSON.stringify(selectedTool.tool_metadata)).status || 'Tool template is invalid' 
+                  : 'Tool template is invalid'
+                : ''
+            }
           >
-            {getButtonText()}
-          </Button>
+            <Button
+              key="add"
+              type="primary"
+              onClick={() => handleCreateToolInstance(selectedToolTemplate)}
+              disabled={loading || !selectedTool?.is_valid}
+            >
+              {getButtonText()}
+            </Button>
+          </Tooltip>
         ) : selectedToolInstance ? (
           <Button key="update" type="primary" onClick={handleUpdateToolInstance} disabled={loading}>
             {getButtonText()}
@@ -1104,8 +1173,40 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ open, onCan
                         </Space>
                       }
                     >
-                      <Input value={selectedTool?.name} readOnly={!isEditable} />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Input value={selectedTool?.name} readOnly={!isEditable} />
+                        <Tooltip 
+                          title={
+                            selectedTool.is_valid 
+                              ? 'Tool is valid' 
+                              : selectedTool.tool_metadata 
+                                ? JSON.parse(typeof selectedTool.tool_metadata === 'string' ? selectedTool.tool_metadata : JSON.stringify(selectedTool.tool_metadata)).status || 'Tool status unknown'
+                                : 'Tool status unknown'
+                          }
+                        >
+                          {selectedTool.is_valid ? (
+                            <CheckCircleOutlined style={{ color: '#52c41a', fontSize: '15px' }} />
+                          ) : (
+                            <ExclamationCircleOutlined style={{ color: '#faad14', fontSize: '15px' }} />
+                          )}
+                        </Tooltip>
+                      </div>
                     </Form.Item>
+
+                    {selectedTool && !selectedTool.is_valid && (
+                      <div style={{ marginBottom: '16px' }}>
+                        {renderAlert(
+                          'Tool Validation Error',
+                          `This tool template is in an invalid state: ${
+                            selectedTool.tool_metadata 
+                              ? JSON.parse(typeof selectedTool.tool_metadata === 'string' ? selectedTool.tool_metadata : JSON.stringify(selectedTool.tool_metadata)).status 
+                              : 'Unknown error'
+                          }. Please consider deleting this tool and creating a new one.`,
+                          'warning'
+                        )}
+                      </div>
+                    )}
+
                     <Form.Item
                       label={
                         <Space>

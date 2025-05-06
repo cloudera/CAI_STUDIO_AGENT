@@ -23,7 +23,6 @@ import { useGlobalNotification } from './Notifications';
 import * as semver from 'semver';
 import { useGetWorkflowDataQuery } from '../workflows/workflowAppApi';
 
-const { confirm } = Modal;
 const { Text, Title, Paragraph } = Typography;
 
 export interface UpgradeModalProps {
@@ -57,7 +56,8 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ upgradeStatus, isOpen, setI
       const interval = setInterval(() => {
         setCountdown((prev) => {
           if (prev <= 1) {
-            window.location.href = workbenchDetails.www + '/home' || 'https://www.cloudera.com';
+            const baseUrl = workbenchDetails?.www || 'https://www.cloudera.com';
+            window.location.href = `${baseUrl}/home`;
             clearInterval(interval);
             return 0;
           }
@@ -66,7 +66,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ upgradeStatus, isOpen, setI
       }, 1000);
       return () => clearInterval(interval);
     }
-  }, [upgradePressed]);
+  }, [upgradePressed, workbenchDetails?.www]);
 
   const isValidSemver = (version: string | undefined) => {
     return version && Boolean(semver.valid(version));
@@ -143,21 +143,35 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ upgradeStatus, isOpen, setI
 };
 
 const MessageBoxes: React.FC = () => {
-  const { data: isHealthy } = useHealthCheckQuery();
+  const { data: workflowData } = useGetWorkflowDataQuery();
+  const isWorkflowMode = workflowData?.renderMode === 'workflow';
+
+  // Skip all other API calls if in workflow mode
+  const { data: isHealthy } = useHealthCheckQuery(undefined, {
+    skip: isWorkflowMode
+  });
   const [hasInitialHealthCheck, setHasInitialHealthCheck] = useState(false);
   const { data: defaultModel } = useGetDefaultModelQuery(undefined, {
-    skip: !hasInitialHealthCheck
+    skip: isWorkflowMode || !hasInitialHealthCheck
   });
-  const { data: workbench } = useWorkbenchDetailsQuery();
-  const { data: upgradeStatus } = useCheckStudioUpgradeStatusQuery();
-  const { data: workflowData } = useGetWorkflowDataQuery();
+  const { data: workbench } = useWorkbenchDetailsQuery(undefined, {
+    skip: isWorkflowMode
+  });
+  const { data: upgradeStatus } = useCheckStudioUpgradeStatusQuery(undefined, {
+    skip: isWorkflowMode
+  });
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     if (isHealthy && !hasInitialHealthCheck) {
       setHasInitialHealthCheck(true);
     }
-  }, [isHealthy]);
+  }, [isHealthy, hasInitialHealthCheck]);
+
+  // Early return if in workflow mode
+  if (isWorkflowMode) {
+    return null;
+  }
 
   const isOutOfDate = (upgradeStatus: CheckStudioUpgradeStatusResponse | undefined) => {
     return upgradeStatus && upgradeStatus.local_version !== upgradeStatus.newest_version;

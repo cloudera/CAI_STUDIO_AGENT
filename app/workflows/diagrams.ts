@@ -157,6 +157,11 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
           id: `e-${mId}-${agent.id}`,
           source: `${mId}`,
           target: `${agent.id}`,
+          markerEnd: {
+            type: MarkerType.Arrow,
+            width: 20,
+            height: 20,
+          },
         });
       }
 
@@ -185,6 +190,11 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
             id: `e-${agent.id}-${toolInstance?.id}`,
             source: `${agent.id}`,
             target: `${toolInstance?.id}`,
+            markerEnd: {
+              type: MarkerType.Arrow,
+              width: 20,
+              height: 20,
+            },
           });
 
           xIndexOffset += 220;
