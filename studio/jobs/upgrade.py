@@ -18,7 +18,6 @@ from studio.cross_cutting.upgrades import (
 import time
 import subprocess
 import json
-from studio.migrations.migrate_api_keys import migrate_api_keys_to_env
 
 
 def upgrade_studio(cml: CMLServiceApi = None) -> UpgradeStudioResponse:
