@@ -27,6 +27,7 @@ class Input__ToolInstance(BaseModel):
     python_code_file_name: str
     python_requirements_file_name: str
     source_folder_path: str
+    tool_metadata: str
     tool_image_uri: Optional[str] = None
     is_venv_tool: Optional[bool] = False
 

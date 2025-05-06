@@ -12,6 +12,7 @@ import studio.tools.utils as tool_utils
 from studio.cross_cutting.global_thread_pool import get_thread_pool
 import studio.consts as consts
 import studio.cross_cutting.utils as cc_utils
+from studio.tools.utils import read_tool_instance_code
 
 # Import engine code manually. Eventually when this code becomes
 # a separate git repo, or a custom runtime image, this path call
@@ -205,10 +206,7 @@ def _get_tool_instance_impl(request: GetToolInstanceRequest, session: DbSession)
 
     # Try to read tool code and requirements
     try:
-        with open(os.path.join(tool_instance_dir, tool_instance.python_code_file_name), "r") as f:
-            tool_code = f.read()
-        with open(os.path.join(tool_instance_dir, tool_instance.python_requirements_file_name), "r") as f:
-            tool_requirements = f.read()
+        tool_code, tool_requirements = read_tool_instance_code(tool_instance)
     except FileNotFoundError as e:
         status_message = f"Tool instance files not found: {str(e)}"
         is_valid = False
@@ -285,7 +283,6 @@ def _list_tool_instances_impl(request: ListToolInstancesRequest, session: DbSess
 
     tool_instances_response = []
     for tool_instance in tool_instances:
-        tool_instance_dir = tool_instance.source_folder_path
         tool_code = ""
         tool_requirements = ""
         status_message = ""
@@ -293,10 +290,7 @@ def _list_tool_instances_impl(request: ListToolInstancesRequest, session: DbSess
 
         # Try to read tool code and requirements
         try:
-            with open(os.path.join(tool_instance_dir, tool_instance.python_code_file_name), "r") as f:
-                tool_code = f.read()
-            with open(os.path.join(tool_instance_dir, tool_instance.python_requirements_file_name), "r") as f:
-                tool_requirements = f.read()
+            tool_code, tool_requirements = read_tool_instance_code(tool_instance)
         except FileNotFoundError as e:
             status_message = f"Tool instance files not found: {str(e)}"
             is_valid = False

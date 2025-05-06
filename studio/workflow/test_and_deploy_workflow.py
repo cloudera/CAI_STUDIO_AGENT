@@ -20,6 +20,10 @@ from studio.cross_cutting.utils import get_studio_subdirectory
 import studio.consts as consts
 from studio.workflow.utils import is_custom_model_root_dir_feature_enabled
 from studio.workflow.runners import get_workflow_runners
+from studio.tools.utils import (
+    read_tool_instance_code,
+    extract_user_params_from_code
+)
 
 # Import engine code manually. Eventually when this code becomes
 # a separate git repo, or a custom runtime image, this path call
@@ -116,6 +120,14 @@ def _create_collated_input(
             tool_instance_db_model = next((t for t in tool_instance_db_models if t.id == t_id), None)
             if not tool_instance_db_model:
                 raise ValueError(f"Tool Instance with ID '{t_id}' not found.")
+            
+            status_message = ""
+            try: 
+                tool_code, _ = read_tool_instance_code(tool_instance_db_model)
+                user_params_dict = extract_user_params_from_code(tool_code)
+            except Exception as e:
+                status_message = f"Could not extract user param metadata from code: {str(e)}"
+                    
             tool_instance_inputs.append(
                 input_types.Input__ToolInstance(
                     id=tool_instance_db_model.id,
@@ -123,6 +135,11 @@ def _create_collated_input(
                     python_code_file_name=tool_instance_db_model.python_code_file_name,
                     python_requirements_file_name=tool_instance_db_model.python_requirements_file_name,
                     source_folder_path=tool_instance_db_model.source_folder_path,
+                    tool_metadata=json.dumps({
+                        "user_params": list(user_params_dict.keys()),
+                        "user_params_metadata": user_params_dict,
+                        "status": status_message
+                    }),
                     tool_image_uri=(
                         os.path.relpath(tool_instance_db_model.tool_image_path, consts.DYNAMIC_ASSETS_LOCATION)
                         if tool_instance_db_model.tool_image_path

@@ -81,6 +81,7 @@ def test_get_crewai_tool_venv_tool(
         name="",
         python_code_file_name="",
         python_requirements_file_name="",
+        tool_metadata='{"tool": "metadata"}',
         source_folder_path="",
         tool_image_uri="",
         is_venv_tool=False,  # DEPRECATED, not used
@@ -103,6 +104,7 @@ def test_get_crewai_tool_tool_proxy(
         name="",
         python_code_file_name="",
         python_requirements_file_name="",
+        tool_metadata='{"tool": "metadata"}',
         source_folder_path="",
         tool_image_uri="",
         is_venv_tool=False,  # DEPRECATED, not used

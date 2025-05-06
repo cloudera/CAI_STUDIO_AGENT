@@ -18,8 +18,9 @@
 
 
 #!/bin/bash
-export AGENT_STUDIO_DEPLOYED_MODEL_ID=b248979e-b712-414f-a618-4b87dda45b06
+export AGENT_STUDIO_DEPLOYED_MODEL_ID="" # populate this
 export AGENT_STUDIO_RENDER_MODE=workflow
 export AGENT_STUDIO_GRPC_MODE=disabled
 export AGENT_STUDIO_DEPLOYMENT_CONFIG=dev
+export MODEL_API_KEY_ZmUyMWEzN2QtZDljNi00YzViLTg0MTctZmEyMDM5MDQ4NWZi="" # Populate your correact model API keys
 python startup_scripts/run-app.py

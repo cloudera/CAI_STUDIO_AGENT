@@ -1,5 +1,8 @@
 import ast
+import os
 from typing import List, Optional, Dict
+
+from studio.db.model import ToolInstance
 
 # Import engine code manually. Eventually when this code becomes
 # a separate git repo, or a custom runtime image, this path call
@@ -7,6 +10,19 @@ from typing import List, Optional, Dict
 import sys
 
 sys.path.append("studio/workflow_engine/src/")
+
+
+def read_tool_instance_code(tool_instance: ToolInstance) -> tuple[str, str]:
+    """
+    Reads the Python code and requirements from a given tool instance.
+    """
+
+    tool_instance_dir = tool_instance.source_folder_path
+    with open(os.path.join(tool_instance_dir, tool_instance.python_code_file_name), "r") as f:
+        tool_code = f.read()
+    with open(os.path.join(tool_instance_dir, tool_instance.python_requirements_file_name), "r") as f:
+        tool_requirements = f.read()
+    return tool_code, tool_requirements
 
 
 def extract_user_params_from_code(code: str) -> Dict[str, Dict[str, bool]]:

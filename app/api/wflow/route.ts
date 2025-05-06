@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
       python_code: '', // These fields aren't in the config response
       python_requirements: '',
       source_folder_path: '',
-      tool_metadata: '',
+      tool_metadata: tool.tool_metadata,
       is_valid: true,
       tool_image_uri: tool.tool_image_uri,
       tool_description: '',
