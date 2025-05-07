@@ -43,8 +43,6 @@ def update_agent_studio_service_in_project(cml: cmlapi.CMLServiceApi):
         environment= json.dumps(proj_env)
     )
     out: cmlapi.Project = cml.update_project(updated_project, project_id=project_id)
-    print(out.environment)
-    
 
 
 if __name__ == "__main__":
