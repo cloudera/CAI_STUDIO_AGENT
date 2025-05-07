@@ -1,11 +1,18 @@
 import requests
 import os
+import json
 
 from crewai.utilities.events import *
-from crewai.utilities.events.base_event_listener import BaseEventListener
 
+from engine.crewai.trace_context import get_trace_id
 from engine.ops import get_ops_endpoint
 
+
+# List of event processors. These are lambdas that 
+# can add individual fields to CrewAI events, which are
+# pydantic BaseModels with event-specific fields. Only fields
+# that are explicitly added to these event processors are sent
+# to the workflow's event stream. These must be JSON serializable.
 EVENT_PROCESSORS = {
     CrewKickoffStartedEvent: lambda x: {"inputs": x.inputs},
     CrewKickoffCompletedEvent: lambda x: {"output": x.output.raw},
@@ -78,38 +85,65 @@ EVENT_PROCESSORS = {
 
 
 def process_event(event):
-    base_event = {
-        "type": str(event.type),
-        "timestamp": str(event.timestamp),
-    }
+    """
+    Process a specific event. Will only add fields
+    that are explicitly added in our EVENT_PROCESSORS.
+    """
+    processed_event = {}
     if event.__class__ in list(EVENT_PROCESSORS.keys()):
-        base_event.update(EVENT_PROCESSORS[event.__class__](event))
-    return base_event
+        processed_event.update(EVENT_PROCESSORS[event.__class__](event))
+    return processed_event
 
 
-class OpsServerMessageQueueEventListener(BaseEventListener):
-    def __init__(self, trace_id):
-        super().__init__()
-        self._trace_id = trace_id
-        self._endpoint = f"{get_ops_endpoint()}/events"
+def post_event(source, event):
+    """
+    Post a specific event to a specific queue in the Ops & Metrics
+    message broker (Kombu). The queu is the trace ID, which is a
+    context variable set specifically for the async workflow task.
+    """
+    trace_id = get_trace_id()
 
-    def _post_event(self, source, event):
-        event_dict = {
-            "timestamp": str(event.timestamp),
-            "type": str(event.type),
-            "agent_studio_id": getattr(source, "agent_studio_id", None),
-        }
-        event_dict.update(process_event(event))
+    # Maintain baseline event information 
+    # across all event types. Optionally, many of our crewAI classes
+    # are inherited base classes with an appended agent_studio_id
+    # (specifically tasks, agents, and llms). These agent studio 
+    # specific IDs can help in building frontend visualizations.
+    event_dict = {
+        "timestamp": str(event.timestamp),
+        "type": str(event.type),
+        "agent_studio_id": getattr(source, "agent_studio_id", None),
+    }
 
-        out = requests.post(
-            url=self._endpoint,
-            headers={"Authorization": f"Bearer {os.getenv('CDSW_APIV2_KEY')}"},
-            json={"trace_id": self._trace_id, "event": event_dict},
-        )
+    # Process the event given the specific event type
+    event_dict.update(process_event(event))
+    
+    requests.post(
+        url=f"{get_ops_endpoint()}/events",
+        headers={"Authorization": f"Bearer {os.getenv('CDSW_APIV2_KEY')}"},
+        json={"trace_id": trace_id, "event": event_dict},
+    )
+    
 
-    def setup_listeners(self, crewai_event_bus):
-        for event_type_cls in list(EVENT_PROCESSORS.keys()):
+# Globalsafety flag to avoid double registration
+_handlers_registered = False  
 
-            @crewai_event_bus.on(event_type_cls)
-            def on_crew_started(source, event):
-                self._post_event(source, event)
+
+def register_global_handlers():
+    """
+    Register global handlers that can be used on this specific workflow
+    engine process. The handlers are shared and used across all execution workflows
+    (across all async tasks), but each handler uses a contextvar to represent
+    trace id, which is different across every task. This effectively means that
+    handlers can be global (which plays nicely with CrewAI's crewai_event_bus
+    global singleton) while still only reporting events to a specific
+    context-specific trace ID.
+    """
+    global _handlers_registered
+    if _handlers_registered:
+        return
+
+    for event_cls in EVENT_PROCESSORS:
+        crewai_event_bus.on(event_cls)(post_event)
+
+    _handlers_registered = True
+

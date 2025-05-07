@@ -10,15 +10,6 @@ from crewai.utilities.events import crewai_event_bus
 from studio.cross_cutting import utils as cc_utils
 from studio import consts
 
-# Import engine code manually. Eventually when this code becomes
-# a separate git repo, or a custom runtime image, this path call
-# will go away and workflow engine features will be available already.
-import sys
-
-sys.path.append("studio/workflow_engine/src/")
-
-from engine.crewai.events import OpsServerMessageQueueEventListener
-
 
 #  Compare two different versions of Cloudera AI Workbench. Workbench
 #  gitShas follow semantic versioning, and this verion checker
@@ -100,13 +91,3 @@ def invalidate_workflow(preexisting_db_session, condition) -> None:
         for deployed_workflow in deployed_workflows:
             deployed_workflow.is_stale = True
     return
-
-
-def run_workflow_with_context(crew: Crew, inputs, trace_id):
-    with crewai_event_bus.scoped_handlers():
-        # Create our message broker
-        print("Creating event listener....")
-        listener = OpsServerMessageQueueEventListener(trace_id)
-
-        print(f"Running workflow {crew.name} with context")
-        return crew.kickoff(inputs=inputs)

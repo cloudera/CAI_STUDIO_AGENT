@@ -19,7 +19,7 @@ def get_crewai_agent(
         backstory=agent.crew_ai_backstory,
         goal=agent.crew_ai_goal,
         allow_delegation=agent.crew_ai_allow_delegation,
-        verbose=agent.crew_ai_verbose,
+        verbose=False,
         cache=agent.crew_ai_cache,
         max_iter=10 if agent.crew_ai_max_iter <= 0 else agent.crew_ai_max_iter,
         tools=crewai_tools or list(),

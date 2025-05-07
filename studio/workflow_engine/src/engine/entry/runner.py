@@ -20,6 +20,7 @@ import engine.types as input_types
 from engine.crewai.run import run_workflow
 from engine.crewai.tracing import instrument_crewai_workflow, reset_crewai_instrumentation
 from engine.ops import get_ops_endpoint
+from engine.crewai.events import register_global_handlers
 
 app = FastAPI()
 
@@ -39,17 +40,18 @@ class KickoffPayload(BaseModel):
     events_trace_id: str
 
 
+# Register our handlers. This can occur globally
+# because regardless of the actual workflow definition 
+# we run, the event handlers can remain the same (since
+# trace ID is written as a contextvar on each async task)
+register_global_handlers()
+
+
 def run_workflow_task(payload: KickoffPayload) -> None:
     global running_workflow
 
     """
-    This synchronous function mirrors your original CLI workflow.
-    It:
-      - resets instrumentation,
-      - instruments the workflow,
-      - builds a span and sets up the context, and
-      - runs the workflow.
-
+    Task definiton to be ran asynchronously.
     Any exceptions are caught and posted to the ops endpoint.
     """
     try:

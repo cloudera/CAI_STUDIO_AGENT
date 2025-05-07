@@ -1,3 +1,10 @@
 [run]
 omit = 
     */__init__.py
+source = src/engine
+
+[report]
+show_missing = True
+fail_under = 0
+skip_empty = False
+skip_covered = False

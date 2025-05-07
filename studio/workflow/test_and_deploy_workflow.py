@@ -498,8 +498,8 @@ def deploy_workflow(
             function_name="api_wrapper",
             runtime_identifier=cc_utils.get_deployed_workflow_runtime_identifier(cml),
             deployment_config=cmlapi.ShortCreateModelDeployment(
-                cpu=1,
-                memory=2,
+                cpu=2,
+                memory=4,
                 nvidia_gpus=0,
                 environment=env_vars_for_cml_model,
                 replicas=1,

@@ -52,7 +52,7 @@ def create_crewai_objects(
         manager_llm=language_models[workflow_input.llm_provider_model_id]
         if workflow_input.llm_provider_model_id
         else None,
-        verbose=True,
+        verbose=False,
     )
 
     return input_types.CrewAIObjects(

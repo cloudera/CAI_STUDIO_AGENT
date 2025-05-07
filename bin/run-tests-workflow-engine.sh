@@ -3,10 +3,10 @@
 cd studio/workflow_engine/
 
 PYTHONPATH=./src:$PYTHONPATH VIRTUAL_ENV=.venv uv run pytest -v \
-  --cov=src/ \
+  --cov=src/engine \
   --cov-report=html \
   --cov-report=xml \
-  --cov-report=term-missing \
+  --cov-report=term-missing:skip-covered \
   -s tests/
 
 

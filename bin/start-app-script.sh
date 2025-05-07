@@ -68,7 +68,7 @@ if [ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]; then
     
     # Launch the runner using the virtual environment's python
     studio/workflow_engine/.venv/bin/python -m uvicorn \
-      studio.workflow_engine.src.engine.entry.fastapi:app \
+      studio.workflow_engine.src.engine.entry.runner:app \
       --port "$PORT_NUM" &
     
     # Save the process PID.

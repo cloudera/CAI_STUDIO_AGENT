@@ -45,6 +45,7 @@ from engine import consts
 from engine.crewai.run import run_workflow_async
 from engine.crewai.tracing import instrument_crewai_workflow, reset_crewai_instrumentation
 from engine.crewai.tools import prepare_virtual_env_for_tool
+from engine.crewai.events import register_global_handlers
 
 import cml.models_v1 as cml_models
 
@@ -71,10 +72,17 @@ def base64_decode(encoded_str: str):
 
 
 # Instrument our workflow given a specific workflow name and
-# set up the instrumentation.
+# set up the instrumentation. Also register our handlers.
 reset_crewai_instrumentation()
 tracer_provider = instrument_crewai_workflow(f"{WORKFLOW_NAME}")
 tracer = tracer_provider.get_tracer("opentelemetry.agentstudio.workflow.model")
+
+
+# Register our handlers. This can occur globally
+# because regardless of the actual workflow definition 
+# we run, the event handlers can remain the same (since
+# trace ID is written as a contextvar on each async task)
+register_global_handlers()
 
 
 @cml_models.cml_model
