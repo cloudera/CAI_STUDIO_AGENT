@@ -281,14 +281,11 @@ def _prepare_virtual_env_for_tool_impl(
     try:
         if with_ == "uv":
             uv_venv_setup_command = [uv_bin, "venv", venv_dir]
-            out = subprocess.run(
+            subprocess.run(
                 uv_venv_setup_command,
                 check=True,
-                capture_output=True,
                 text=True,
             )
-            print(f"stdout for uv venv setup for tool {source_folder_path}: {out.stdout}")
-            print(f"stderr for uv venv setup for tool {source_folder_path}: {out.stderr}")
         else:
             venv.create(venv_dir, with_pip=True)
     except Exception as e:
@@ -312,6 +309,8 @@ def _prepare_virtual_env_for_tool_impl(
     # If the hash has changed, install the requirements
     try:
         if requirements_hash != previous_hash:
+            if os.path.exists(hash_file_path):
+                os.remove(hash_file_path)
             if with_ == "uv":
                 pip_install_command = [uv_bin, "pip", "install", "-r", requirements_file_path]
             else:
@@ -325,15 +324,12 @@ def _prepare_virtual_env_for_tool_impl(
                     "-r",
                     requirements_file_path,
                 ]
-            out = subprocess.run(
+            subprocess.run(
                 pip_install_command,
                 check=True,
-                capture_output=True,
                 text=True,
                 env={"VIRTUAL_ENV": venv_dir} if with_ == "uv" else None,
             )
-            print(f"stdout for pip install for tool {source_folder_path}: {out.stdout}")
-            print(f"stderr for pip install for tool {source_folder_path}: {out.stderr}")
 
             with open(hash_file_path, "w") as hash_file:
                 hash_file.write(requirements_hash)
@@ -344,7 +340,7 @@ def _prepare_virtual_env_for_tool_impl(
 
 
 def prepare_virtual_env_for_tool(source_folder_path: str, requirements_file_name: str):
-    return _prepare_virtual_env_for_tool_impl(source_folder_path, requirements_file_name, "venv")
+    return _prepare_virtual_env_for_tool_impl(source_folder_path, requirements_file_name, "uv")
 
 
 def get_venv_tool_output_key(code: str) -> Optional[str]:
@@ -465,17 +461,17 @@ def get_venv_tool(tool_instance: input_types.Input__ToolInstance, user_params_kv
 
         def _run(self, *args, **kwargs):
             try:
+                cmd = [
+                    self.python_executable,
+                    self.python_file,
+                    "--user-params", json.dumps(dict(user_params)),
+                    "--tool-params", json.dumps(dict(kwargs)),
+                ]
                 result = subprocess.run(
-                    [
-                        self.python_executable,
-                        self.python_file,
-                        "--user-params",
-                        json.dumps(dict(user_params)),
-                        "--tool-params",
-                        json.dumps(dict(kwargs)),
-                    ],
+                    cmd,
                     capture_output=True,
                     text=True,
+                    check=False,
                 )
             except Exception as e:
                 return f"Tool call failed: {e}"

@@ -9,6 +9,8 @@
 # way from the entitlement separately from the rest of the AI Studios features, we
 # need to make sure that we explicitly still check for the existence of the folder.
 
+# Ensure uv is available
+python -m pip install uv
 
 if [ -d "/home/cdsw/agent-studio" ]; then
     echo "agent-studio/ directory exists but model root dir feature is disabled."

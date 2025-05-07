@@ -7,6 +7,10 @@ import traceback
 import requests
 from datetime import datetime
 from opentelemetry.context import get_current
+import subprocess 
+
+# Ensure UV is available within the runner's env
+subprocess.run(["python", "-m", "pip", "install", "uv"], text=True, check=True)
 
 __import__("pysqlite3")
 sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")

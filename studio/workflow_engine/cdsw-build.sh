@@ -5,5 +5,8 @@
 # model root dir feature of Workbench Models enabled. There is a separate build 
 # script for workbenches that do not have this feature enabled.
 
+# Install UV for venv tool usage
+python -m pip install uv
+
 # Install engine code
 pip install .
