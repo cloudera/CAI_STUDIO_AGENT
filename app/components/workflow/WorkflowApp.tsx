@@ -368,6 +368,10 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
 
   // Update the hasValidTools check to use workflowConfiguration from redux
   const hasValidTools = React.useMemo(() => {
+    // Always return true if in workflow mode
+    if (workflowData?.renderMode === 'workflow') return true;
+    
+    // Otherwise do the normal validation
     if (!workflow) return true;
     return hasValidToolConfiguration(
       workflow.workflow_id,
@@ -375,7 +379,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
       toolInstances,
       workflowConfiguration
     );
-  }, [workflow, agents, toolInstances, workflowConfiguration]);
+  }, [workflow, agents, toolInstances, workflowConfiguration, workflowData?.renderMode]);
 
   // Add this function near the top with other functions
   const getInvalidTools = (agents: AgentMetadata[] | undefined, toolInstances: ToolInstance[] | undefined, workflowId: string | undefined) => {
