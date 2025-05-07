@@ -120,7 +120,7 @@ const ToolViewPage: React.FC = () => {
 
       router.push('/tools'); // Redirect to /tools page
     } catch (err: any) {
-      const errorMessage = err.message || 'Failed to update the tool.';
+      const errorMessage = err.data?.error || err.message || 'Failed to update the tool.';
       notificationApi.error({
         message: 'Error',
         description: errorMessage,
