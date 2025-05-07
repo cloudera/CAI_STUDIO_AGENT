@@ -360,6 +360,7 @@ def get_deployed_workflow_config(deployable_workflow_dir: str) -> dict:
             "model_root_dir": os.path.join(get_studio_subdirectory(), deployable_workflow_dir),
             "model_file_path": "src/engine/entry/workbench.py",
             "deployed_workflow_model_config_location": "/home/cdsw/workflow/config.json",
+            "model_execution_dir": "/home/cdsw"
         }
     else:
         return {
@@ -370,6 +371,7 @@ def get_deployed_workflow_config(deployable_workflow_dir: str) -> dict:
             "deployed_workflow_model_config_location": os.path.join(
                 "/home/cdsw", get_studio_subdirectory(), deployable_workflow_dir, "workflow", "config.json"
             ),
+            "model_execution_dir": os.path.join("/home/cdsw", get_studio_subdirectory(), deployable_workflow_dir)
         }
 
 
@@ -480,6 +482,7 @@ def deploy_workflow(
                 "AGENT_STUDIO_WORKFLOW_ARTIFACT_TYPE": "config_file",
                 "AGENT_STUDIO_WORKFLOW_ARTIFACT": deployed_workflow_config["deployed_workflow_model_config_location"],
                 "AGENT_STUDIO_WORKFLOW_NAME": deployed_workflow_instance_name,
+                "AGENT_STUDIO_MODEL_EXECUTION_DIR": deployed_workflow_config["model_execution_dir"],
                 "CDSW_APIV2_KEY": os.getenv("CDSW_APIV2_KEY"),
             }
         )

@@ -293,6 +293,7 @@ def _prepare_virtual_env_for_tool_impl(
             venv.create(venv_dir, with_pip=True)
     except Exception as e:
         print(f"Error creating virtual environment for tool directory {source_folder_path}: {e.with_traceback()}")
+        raise RuntimeError(f"COULD NOT CREATE VENV: {e.with_traceback()}")
         return
 
     # Check for previous requirements file hash
@@ -339,6 +340,7 @@ def _prepare_virtual_env_for_tool_impl(
     except subprocess.CalledProcessError as e:
         # We're not raising error as this will bring down the whole studio, as it's running in a thread
         print(f"Error installing venv requirements for tool directory {source_folder_path}: {e.with_traceback()}")
+        raise RuntimeError(f"COULD NOT INSTALL REQUIREMENTS: {e.with_traceback()}")
 
 
 def prepare_virtual_env_for_tool(source_folder_path: str, requirements_file_name: str):

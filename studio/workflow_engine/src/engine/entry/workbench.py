@@ -2,15 +2,31 @@ import os
 import sys
 import subprocess
 
+# Restore the original stdio file objects so the
+# jupyter kernel doesn't swallow our print statements
+sys.stdout = sys.__stdout__
+sys.stderr = sys.__stderr__
+
 # Extract workflow parameters from the environment
 WORKFLOW_ARTIFACT_TYPE = os.environ.get("AGENT_STUDIO_WORKFLOW_ARTIFACT_TYPE", "config_file")
 WORFKLOW_ARTIFACT = os.environ.get("AGENT_STUDIO_WORKFLOW_ARTIFACT", "/home/cdsw/workflow/config.json")
+MODEL_EXECUTION_DIR = os.environ.get("AGENT_STUDIO_MODEL_EXECUTION_DIR", "/home/cdsw")
 WORKFLOW_NAME = os.getenv("AGENT_STUDIO_WORKFLOW_NAME")
 CDSW_DOMAIN = os.getenv("CDSW_DOMAIN")
 
 # Install the cmlapi. This is a required dependency for cross-cutting util modules
 # and ops modules that are used in a workflow.
 subprocess.call(["pip", "install", f"https://{CDSW_DOMAIN}/api/v2/python.tar.gz"])
+
+# If we are in old workbenches, we cannot modify the model
+# root dir location. To get around this, we specify early what
+# the root dir of the deployed workflow artifact is and we
+# early change our directory. This script runs in a python
+# kernel so all commands after this will run in the kernel.
+# also ensure the workflow engine code is on the path.
+print(f"Model execution directory: {MODEL_EXECUTION_DIR}")
+os.chdir(MODEL_EXECUTION_DIR)
+sys.path.append(os.path.join("src/"))
 
 # Manual patch required for CrewAI compatability
 __import__("pysqlite3")
