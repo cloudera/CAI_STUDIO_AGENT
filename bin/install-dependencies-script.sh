@@ -23,6 +23,7 @@ npm run build
 
 echo "Configuring workflow engine virtual environment..."
 cd studio/workflow_engine
-rm -rf .venv
-uv venv
+if [ ! -d ".venv" ]; then
+    uv venv
+fi
 VIRTUAL_ENV=.venv uv sync --all-extras

@@ -30,7 +30,7 @@ export const fetchOpsUrl = async (): Promise<string | null> => {
 
   try {
     const response = await fetch(
-      `https://${CDSW_DOMAIN}/api/v2/projects/${CDSW_PROJECT_ID}/applications`,
+      `https://${CDSW_DOMAIN}/api/v2/projects/${CDSW_PROJECT_ID}/applications?page_size=100`,
       {
         headers: {
           authorization: `Bearer ${CDSW_APIV2_KEY}`,
