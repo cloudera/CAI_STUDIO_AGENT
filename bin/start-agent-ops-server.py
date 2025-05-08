@@ -65,7 +65,6 @@ def set_ops_server_discovery():
         environment= json.dumps(proj_env)
     )
     out: cmlapi.Project = cml.update_project(updated_project, project_id=project_id)
-    print(out.environment)
     print("LLM Ops Server discoverable through project env variables!")
 
 
