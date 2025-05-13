@@ -29,30 +29,31 @@ import {
   AppstoreOutlined,
   ApiOutlined,
 } from '@ant-design/icons';
-import { useListAgentsQuery } from '../agents/agentApi';
-import { useListTasksQuery } from '../tasks/tasksApi';
+import { useListAgentsQuery } from '../../agents/agentApi';
+import { useListTasksQuery } from '../../tasks/tasksApi';
 import { useImageAssetsData } from '@/app/lib/hooks/useAssetData';
-import { useListToolInstancesQuery } from '../tools/toolInstancesApi';
-import { useAppSelector } from '../lib/hooks/hooks';
+import { useListToolInstancesQuery } from '../../tools/toolInstancesApi';
+import { useAppSelector } from '../../lib/hooks/hooks';
 import {
   selectEditorWorkflowManagerAgentId,
   selectEditorWorkflowAgentIds,
   selectEditorWorkflowTaskIds,
   selectEditorWorkflowProcess,
   selectWorkflowConfiguration,
-} from '../workflows/editorSlice';
+} from '../../workflows/editorSlice';
 import { AgentMetadata, DeployedWorkflow, ToolInstance } from '@/studio/proto/agent_studio';
 import { getStatusColor, getStatusDisplay } from './WorkflowListItem';
-import { useGlobalNotification } from './Notifications';
-import { useGetDefaultModelQuery } from '../models/modelsApi';
-import { TOOL_PARAMS_ALERT } from '../lib/constants';
-import { hasValidToolConfiguration } from './WorkflowEditorConfigureInputs';
-import { renderAlert } from '../lib/alertUtils';
+import { useGlobalNotification } from '../Notifications';
+import { useGetDefaultModelQuery } from '../../models/modelsApi';
+import { TOOL_PARAMS_ALERT } from '../../lib/constants';
+import { hasValidToolConfiguration } from '../workflowEditor/WorkflowEditorConfigureInputs';
+import { renderAlert } from '../../lib/alertUtils';
 import { usePathname } from 'next/navigation';
 
 const { Title, Text } = Typography;
 
 interface WorkflowDetailsProps {
+  workflowId: string;
   workflow: any; // Update this type based on your workflow type
   deployedWorkflows: DeployedWorkflow[];
   onDeleteDeployedWorkflow: (deployedWorkflow: DeployedWorkflow) => void;
@@ -79,6 +80,7 @@ const getInvalidTools = (agents: AgentMetadata[] | undefined, toolInstances: Too
 };
 
 const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
+  workflowId,
   workflow,
   deployedWorkflows,
   onDeleteDeployedWorkflow,
@@ -90,15 +92,15 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
     data: allAgents = [],
     isLoading: agentsLoading,
     error: agentsError,
-  } = useListAgentsQuery({});
+  } = useListAgentsQuery({workflow_id: workflowId});
 
   const {
     data: toolInstances = [],
     isLoading: toolInstancesLoading,
     error: toolInstancesError,
-  } = useListToolInstancesQuery({});
+  } = useListToolInstancesQuery({workflow_id: workflowId});
 
-  const { data: tasks = [], isLoading: tasksLoading, error: tasksError } = useListTasksQuery({});
+  const { data: tasks = [], isLoading: tasksLoading, error: tasksError } = useListTasksQuery({workflow_id: workflowId});
 
   const { imageData } = useImageAssetsData([
     ...(Object.values(toolInstances).map((instance) => instance.tool_image_uri) ?? []),

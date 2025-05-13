@@ -25,7 +25,22 @@ export const toolsApi = apiSlice.injectEndpoints({
       transformResponse: (response: ListToolTemplatesResponse) => {
         return response.templates.filter((template) => !template.workflow_template_id);
       },
-      providesTags: ['ToolTemplate'],
+      providesTags: [{type: 'ToolTemplate', id: 'LIST'}],
+    }),
+
+    listToolTemplates: builder.query<ToolTemplate[], ListToolTemplatesRequest>({
+      query: (request) => ({
+        url: '/grpc/listToolTemplates',
+        method: 'POST',
+        body: request,
+      }),
+      transformResponse: (response: ListToolTemplatesResponse) => {
+        return response.templates;
+      },
+      providesTags: (result, error, request) => 
+        result && request.workflow_template_id
+          ? [{type: 'WorkflowTemplate', id: request.workflow_template_id}]
+          : [{type: 'ToolTemplate', id: 'LIST'}]
     }),
 
     // Get Tool Template
@@ -50,7 +65,13 @@ export const toolsApi = apiSlice.injectEndpoints({
       transformResponse: (response: AddToolTemplateResponse) => {
         return response.tool_template_id;
       },
-      invalidatesTags: ['ToolTemplate'],
+      invalidatesTags: (result, error, request) => 
+        result && request.workflow_template_id
+          ? [
+            {type: 'ToolTemplate', id: 'LIST'},
+            {type: 'WorkflowTemplate', id: request.workflow_template_id}
+          ]
+          : [{type: 'ToolTemplate', id: 'LIST'}]
     }),
 
     // Update Tool Template
@@ -63,7 +84,7 @@ export const toolsApi = apiSlice.injectEndpoints({
       transformResponse: (response: UpdateToolTemplateResponse) => {
         return response.tool_template_id;
       },
-      invalidatesTags: ['ToolTemplate'],
+      invalidatesTags: (result, error, request) => [{type: 'ToolTemplate', id: request.tool_template_id}],
     }),
 
     // Remove Tool Template
@@ -73,32 +94,16 @@ export const toolsApi = apiSlice.injectEndpoints({
         method: 'POST',
         body: request,
       }),
-      invalidatesTags: ['ToolTemplate'],
-    }),
-
-    listAllToolTemplates: builder.query<ToolTemplate[], void>({
-      query: () => ({
-        url: '/grpc/listToolTemplates',
-        method: 'POST',
-        body: { workflow_id: '' },
-      }),
-      transformResponse: (response: ListToolTemplatesResponse) => {
-        return response?.templates || [];
-      },
-      transformErrorResponse: (error: { status: number; data: any }) => {
-        console.error('Error in listAllToolTemplates:', error);
-        return [] as ToolTemplate[];
-      },
-      providesTags: ['ToolTemplate'],
-    }),
+      invalidatesTags: [{type: 'ToolTemplate', id: 'LIST'}],
+    })
   }),
 });
 
 export const {
   useListGlobalToolTemplatesQuery,
+  useListToolTemplatesQuery,
   useGetToolTemplateMutation, // Changed back to mutation
   useAddToolTemplateMutation,
   useUpdateToolTemplateMutation,
   useRemoveToolTemplateMutation,
-  useListAllToolTemplatesQuery,
 } = toolsApi;

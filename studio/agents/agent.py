@@ -22,14 +22,14 @@ def list_agents(
     List all agents with metadata.
     """
     try:
+        if not request.workflow_id:
+            raise ValueError("Every ListAgents request must specify a workflow ID.")
+            
         with dao.get_session() as session:
-            agents: List[db_model.Agent] = session.query(db_model.Agent).all()
+            
+            agents: List[db_model.Agent] = session.query(db_model.Agent).filter_by(workflow_id=request.workflow_id).all()
             if not agents:
                 return ListAgentsResponse(agents=[])
-
-            # Filter by workflow id
-            if is_field_set(request, "workflow_id"):
-                agents = list(filter(lambda x: x.workflow_id == request.workflow_id, agents))
 
             agent_list = []
             for agent in agents:
@@ -38,25 +38,6 @@ def list_agents(
                     session.query(db_model.Model).filter_by(model_id=agent.llm_provider_model_id).one_or_none()
                     is not None
                 )
-
-                # Validate tools associated with the agent
-                tools_valid = True
-                for tool_id in agent.tool_ids or []:
-                    try:
-                        tool_request = GetToolInstanceRequest(tool_instance_id=tool_id)
-                        tool_response = get_tool_instance(tool_request, cml, dao=None, preexisting_db_session=session)
-                        tool_template_id = tool_response.tool_instance.tool_template_id
-                        tool_template = get_tool_template(
-                            GetToolTemplateRequest(tool_template_id=tool_template_id), cml, dao
-                        ).template
-                        if not tool_template.is_valid:
-                            tools_valid = False
-                            break
-                    except Exception:
-                        tools_valid = False
-                        break
-
-                is_valid = is_valid and tools_valid
 
                 agent_image_uri = ""
                 if agent.agent_image_path:

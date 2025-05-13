@@ -18,6 +18,7 @@ import {
   AddAgentTemplateResponse,
   RemoveAgentTemplateRequest,
   UpdateAgentTemplateRequest,
+  ListAgentTemplatesRequest,
 } from '@/studio/proto/agent_studio';
 
 import { apiSlice } from '../api/apiSlice';
@@ -33,7 +34,7 @@ export const agentsApi = apiSlice.injectEndpoints({
       transformResponse: (response: ListAgentsResponse) => {
         return response.agents;
       },
-      providesTags: ['Agent'],
+      providesTags: [{type: 'Agent', id: 'LIST'}],
     }),
     getAgent: builder.query<AgentMetadata, GetAgentRequest>({
       query: (request) => ({
@@ -47,8 +48,7 @@ export const agentsApi = apiSlice.injectEndpoints({
         }
         return response.agent;
       },
-      providesTags: (result, error, { agent_id }) =>
-        result ? [{ type: 'Agent', id: agent_id }] : ['Agent'],
+      providesTags: (result, error, { agent_id }) => [{ type: 'Agent', id: agent_id }],
     }),
     addAgent: builder.mutation<string, AddAgentRequest>({
       query: (request) => ({
@@ -59,7 +59,10 @@ export const agentsApi = apiSlice.injectEndpoints({
       transformResponse: (response: AddAgentResponse) => {
         return response.agent_id;
       },
-      invalidatesTags: ['Agent', 'Workflow', 'ToolInstance'],
+      invalidatesTags: (result, error, request) => [
+        {type: 'Agent', id: 'LIST'},
+        {type: 'Workflow', id: request.workflow_id}
+      ],
     }),
     updateAgent: builder.mutation<void, UpdateAgentRequest>({
       query: (request) => ({
@@ -71,7 +74,10 @@ export const agentsApi = apiSlice.injectEndpoints({
         // No transformation needed as the API doesn't return a response body
         return;
       },
-      invalidatesTags: ['Agent', 'Workflow', 'ToolInstance'], // Ensure cache invalidation for agents
+      invalidatesTags: (result, error, request) => [
+        {type: 'Agent', id: 'LIST'},
+        {type: 'Agent', id: request.agent_id}, // TODO: add middleware to update the workflow too?
+      ],
     }),
     removeAgent: builder.mutation<void, RemoveAgentRequest>({
       query: (request) => ({
@@ -79,7 +85,9 @@ export const agentsApi = apiSlice.injectEndpoints({
         method: 'POST',
         body: request,
       }),
-      invalidatesTags: ['Agent', 'Workflow', 'ToolInstance'],
+      invalidatesTags: (result, error, request) => [
+        {type: 'Agent', id: 'LIST'},
+      ],
     }),
     testAgent: builder.mutation<TestAgentResponse, TestAgentRequest>({
       query: (request) => ({
@@ -100,7 +108,21 @@ export const agentsApi = apiSlice.injectEndpoints({
       transformResponse: (response: ListAgentTemplatesResponse) => {
         return response.agent_templates.filter((template) => !template.workflow_template_id);
       },
-      providesTags: ['AgentTemplate'],
+      providesTags: [{type: 'AgentTemplate', id: 'GLOBAL'}],
+    }),
+    listAgentTemplates: builder.query<AgentTemplateMetadata[], ListAgentTemplatesRequest>({
+      query: (request) => ({
+        url: '/grpc/listAgentTemplates',
+        method: 'POST',
+        body: request,
+      }),
+      transformResponse: (response: ListAgentTemplatesResponse) => {
+        return response.agent_templates;
+      },
+      providesTags: (result, error, { workflow_template_id }) =>
+        workflow_template_id 
+          ? [{ type: 'AgentTemplate', id: workflow_template_id }] 
+          : [{ type: 'AgentTemplate', id: 'GLOBAL' }],
     }),
     getAgentTemplate: builder.query<AgentTemplateMetadata, GetAgentTemplateRequest>({
       query: (request) => ({
@@ -114,7 +136,7 @@ export const agentsApi = apiSlice.injectEndpoints({
         }
         return response.agent_template;
       },
-      providesTags: ['AgentTemplate'],
+      providesTags: (result, error, { id }) => [{type: 'AgentTemplate', id}],
     }),
     addAgentTemplate: builder.mutation<string, AddAgentTemplateRequest>({
       query: (request) => ({
@@ -125,7 +147,10 @@ export const agentsApi = apiSlice.injectEndpoints({
       transformResponse: (response: AddAgentTemplateResponse) => {
         return response.id;
       },
-      invalidatesTags: ['AgentTemplate'],
+      invalidatesTags: (result, error, { workflow_template_id }) =>
+        workflow_template_id 
+          ? [{ type: 'AgentTemplate', id: workflow_template_id }] 
+          : [{ type: 'AgentTemplate', id: 'GLOBAL' }], // TODO: middleware to update workflow?
     }),
     removeAgentTemplate: builder.mutation<void, RemoveAgentTemplateRequest>({
       query: (request) => ({
@@ -133,7 +158,9 @@ export const agentsApi = apiSlice.injectEndpoints({
         method: 'POST',
         body: request,
       }),
-      invalidatesTags: ['AgentTemplate'],
+      invalidatesTags: [
+        {type: 'AgentTemplate', id: 'GLOBAL'} // TODO: not necessarily the case, need to invalidate middleware
+      ],
     }),
     updateAgentTemplate: builder.mutation<void, UpdateAgentTemplateRequest>({
       query: (request) => ({
@@ -141,18 +168,7 @@ export const agentsApi = apiSlice.injectEndpoints({
         method: 'POST',
         body: request,
       }),
-      invalidatesTags: ['AgentTemplate'],
-    }),
-    listAllAgentTemplates: builder.query<AgentTemplateMetadata[], void>({
-      query: () => ({
-        url: '/grpc/listAgentTemplates',
-        method: 'POST',
-        body: {},
-      }),
-      transformResponse: (response: ListAgentTemplatesResponse) => {
-        return response.agent_templates;
-      },
-      providesTags: ['AgentTemplate'],
+      invalidatesTags: (result, error, { agent_template_id }) => [{type: 'AgentTemplate', id: agent_template_id}],
     }),
   }),
 });
@@ -165,9 +181,9 @@ export const {
   useRemoveAgentMutation,
   useTestAgentMutation,
   useListGlobalAgentTemplatesQuery,
+  useListAgentTemplatesQuery,
   useGetAgentTemplateQuery,
   useAddAgentTemplateMutation,
   useRemoveAgentTemplateMutation,
   useUpdateAgentTemplateMutation,
-  useListAllAgentTemplatesQuery,
 } = agentsApi;

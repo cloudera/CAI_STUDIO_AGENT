@@ -276,10 +276,10 @@ def _list_tool_instances_impl(request: ListToolInstancesRequest, session: DbSess
     """
     Implementation of list tool instances logic
     """
-    if request.workflow_id:
-        tool_instances = session.query(db_model.ToolInstance).filter_by(workflow_id=request.workflow_id).all()
-    else:
-        tool_instances = session.query(db_model.ToolInstance).all()
+    if not request.workflow_id:
+        raise ValueError("Every ListToolInstances request must specify a workflow ID.")
+    
+    tool_instances = session.query(db_model.ToolInstance).filter_by(workflow_id=request.workflow_id).all()
 
     tool_instances_response = []
     for tool_instance in tool_instances:

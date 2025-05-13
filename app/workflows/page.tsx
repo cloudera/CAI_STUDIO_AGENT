@@ -1,19 +1,17 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Button, Typography, Layout, Image, Modal } from 'antd';
-import { ArrowRightOutlined, SyncOutlined } from '@ant-design/icons';
+import { Button, Typography, Layout, Image } from 'antd';
+import { ArrowRightOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation'; // Use Next.js router
 import {
-  useGetWorkflowMutation,
   useListWorkflowsQuery,
   useRemoveWorkflowMutation,
-  useDeployWorkflowMutation,
   useListWorkflowTemplatesQuery,
   useAddWorkflowMutation,
   useRemoveWorkflowTemplateMutation,
 } from './workflowsApi';
-import WorkflowList from '../components/WorkflowList';
+import WorkflowList from '../components/workflows/WorkflowList';
 import { useListDeployedWorkflowsQuery, useUndeployWorkflowMutation } from './deployedWorkflowsApi';
 import { resetEditor, updatedEditorStep } from './editorSlice';
 import { useAppDispatch } from '../lib/hooks/hooks';
@@ -21,38 +19,23 @@ import {
   Workflow,
   DeployedWorkflow,
   WorkflowTemplateMetadata,
-  CheckStudioUpgradeStatusRequest,
-  CheckStudioUpgradeStatusResponse,
 } from '@/studio/proto/agent_studio';
-import DeleteDeployedWorkflowModal from '../components/DeleteDeployedWorkflowModal';
-import DeleteWorkflowModal from '../components/DeleteWorkflowModal';
+import DeleteDeployedWorkflowModal from '../components/workflows/DeleteDeployedWorkflowModal';
+import DeleteWorkflowModal from '../components/workflows/DeleteWorkflowModal';
 import CommonBreadCrumb from '../components/CommonBreadCrumb';
-import { useListAgentsQuery, useListGlobalAgentTemplatesQuery } from '../agents/agentApi';
-import { useGlobalMessage, useGlobalNotification } from '../components/Notifications';
-import WorkflowGetStartModal from '../components/WorkflowGetStartModal';
+import { useGlobalNotification } from '../components/Notifications';
+import WorkflowGetStartModal from '../components/workflows/WorkflowGetStartModal';
 import { clearedWorkflowApp } from './workflowAppSlice';
-import {
-  useCheckStudioUpgradeStatusQuery,
-  useUpgradeStudioMutation,
-  useWorkbenchDetailsQuery,
-} from '../lib/crossCuttingApi';
 
 import ContentWithHealthCheck from '../components/ContentWithHealthCheck';
-import TopNav from '../components/TopNav';
-import { compareWorkbenchVersions } from '../lib/workbench';
+
 
 const { Text, Title, Paragraph } = Typography;
 
 const WorkflowsPageContent: React.FC = () => {
-  const { data: workflows, refetch: refetchWorkflows } = useListWorkflowsQuery({}, {
-    refetchOnMountOrArgChange: true
-  });
-  const { data: deployedWorkflowInstances, refetch: refetchDeployedWorkflowInstances } =
-    useListDeployedWorkflowsQuery({});
-  const { data: workflowTemplates, refetch: refetchWorkflowTemplates } =
-    useListWorkflowTemplatesQuery({});
-  const { data: agentTemplates } = useListGlobalAgentTemplatesQuery();
-  const { data: agents } = useListAgentsQuery({});
+  const { data: workflows } = useListWorkflowsQuery({});
+  const { data: deployedWorkflowInstances } = useListDeployedWorkflowsQuery({}, { pollingInterval: 10000 });
+  const { data: workflowTemplates } =useListWorkflowTemplatesQuery({});
   const [removeWorkflow] = useRemoveWorkflowMutation();
   const [undeployWorkflow] = useUndeployWorkflowMutation();
   const [removeWorkflowTemplate] = useRemoveWorkflowTemplateMutation();
@@ -66,17 +49,9 @@ const WorkflowsPageContent: React.FC = () => {
   );
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const [getWorkflow] = useGetWorkflowMutation();
   const [addWorkflow] = useAddWorkflowMutation();
   const notificationApi = useGlobalNotification();
-  const messagesApi = useGlobalMessage();
   const [isGetStartModalVisible, setGetStartModalVisible] = useState(false);
-  const { data: upgradeStatus } = useCheckStudioUpgradeStatusQuery();
-  const { data: workbenchDetails } = useWorkbenchDetailsQuery();
-
-  useEffect(() => {
-    refetchWorkflows();
-  }, []);
 
   const handleGetStarted = () => {
     setGetStartModalVisible(true);
@@ -174,7 +149,6 @@ const WorkflowsPageContent: React.FC = () => {
             }
 
             console.log('Successfully deleted deployments');
-            await refetchDeployedWorkflowInstances();
 
             notificationApi.success({
               message: 'Success',
@@ -190,7 +164,6 @@ const WorkflowsPageContent: React.FC = () => {
               description: 'Workflow and its deployments deleted successfully.',
               placement: 'topRight',
             });
-            refetchWorkflows();
             closeDeleteWorkflowModal();
           } catch (error: any) {
             console.error('Error deleting deployments:', error);
@@ -210,7 +183,6 @@ const WorkflowsPageContent: React.FC = () => {
             description: 'Workflow deleted successfully.',
             placement: 'topRight',
           });
-          refetchWorkflows();
           closeDeleteWorkflowModal();
         }
       } else if (selectedWorkflowTemplate) {
@@ -220,7 +192,6 @@ const WorkflowsPageContent: React.FC = () => {
           description: 'Workflow template deleted successfully.',
           placement: 'topRight',
         });
-        refetchWorkflowTemplates();
         closeDeleteWorkflowModal();
       }
     } catch (error: any) {
@@ -256,7 +227,6 @@ const WorkflowsPageContent: React.FC = () => {
       await undeployWorkflow({
         deployed_workflow_id: selectedDeployedWorkflow.deployed_workflow_id,
       }).unwrap();
-      refetchDeployedWorkflowInstances();
       closeDeleteDeployedWorkflowModal();
     } catch (error) {
       notificationApi.error({
@@ -345,9 +315,7 @@ const WorkflowsPageContent: React.FC = () => {
         <WorkflowList
           workflows={workflows || []}
           deployedWorkflows={deployedWorkflowInstances || []}
-          agents={agents || []}
           workflowTemplates={workflowTemplates || []}
-          agentTemplates={agentTemplates || []}
           editWorkflow={editExistingWorkflow}
           deleteWorkflow={onDeleteWorkflow}
           deleteWorkflowTemplate={onDeleteWorkflowTemplate}

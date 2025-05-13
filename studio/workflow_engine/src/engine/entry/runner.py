@@ -10,7 +10,10 @@ from opentelemetry.context import get_current
 import subprocess 
 
 # Ensure UV is available within the runner's env
-subprocess.run(["python", "-m", "pip", "install", "uv"], text=True, check=True)
+try:
+    subprocess.run(["pip", "install", "uv"], text=True, check=True)
+except Exception as e:
+    print(f"Skipping UV install into workflow runner venv: {str(e)}")
 
 __import__("pysqlite3")
 sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")

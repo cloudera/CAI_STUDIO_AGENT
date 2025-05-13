@@ -2,43 +2,18 @@
 
 import React, { useEffect, useState, Suspense } from 'react';
 import { Layout, Spin, Alert, Divider } from 'antd';
-import { useGetWorkflowTemplateMutation } from '@/app/workflows/workflowsApi';
+import { useGetWorkflowTemplateByIdQuery, useGetWorkflowTemplateMutation } from '@/app/workflows/workflowsApi';
 import WorkflowTemplateDetails from './WorkflowTemplateDetails';
-import { useAppDispatch } from '../lib/hooks/hooks';
-import ErrorBoundary from './ErrorBoundary';
-import { useListAllToolTemplatesQuery } from '../tools/toolTemplatesApi';
-import { useListTaskTemplatesQuery } from '../tasks/tasksApi';
-import { useListAllAgentTemplatesQuery } from '../agents/agentApi';
-import WorkflowTemplateDiagramView from './workflow/WorkflowTemplateDiagramView';
+import { useAppDispatch } from '../../lib/hooks/hooks';
+import ErrorBoundary from '../ErrorBoundary';
+import WorkflowTemplateDiagramView from '../workflowApp/WorkflowTemplateDiagramView';
 
 interface WorkflowTemplateOverviewProps {
   workflowTemplateId: string;
 }
 
 const WorkflowTemplateOverview: React.FC<WorkflowTemplateOverviewProps> = ({ workflowTemplateId }) => {
-  const [getWorkflowTemplate] = useGetWorkflowTemplateMutation();
-  const [templateDetails, setTemplateDetails] = useState<any | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const dispatch = useAppDispatch();
-
-  useEffect(() => {
-    const fetchTemplate = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const response = await getWorkflowTemplate({ id: workflowTemplateId }).unwrap();
-        setTemplateDetails(response);
-      } catch (err: any) {
-        setError(err.message || 'Failed to fetch template details.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    workflowTemplateId && fetchTemplate();
-  }, [workflowTemplateId, getWorkflowTemplate]);
+  const { data: templateDetails, isLoading: loading, error } = useGetWorkflowTemplateByIdQuery(workflowTemplateId);
 
   if (loading) {
     return (
@@ -70,7 +45,7 @@ const WorkflowTemplateOverview: React.FC<WorkflowTemplateOverviewProps> = ({ wor
             height: '100vh',
           }}
         >
-          <Alert message="Error" description={error} type="error" showIcon />
+          <Alert message="Error" description={JSON.stringify(error)} type="error" showIcon />
         </Layout>
       </ErrorBoundary>
     );

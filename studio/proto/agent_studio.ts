@@ -200,8 +200,8 @@ export interface RemoveToolTemplateResponse {
 
 /** Messages for ListToolInstances */
 export interface ListToolInstancesRequest {
-  /** Optional workflow id */
-  workflow_id?: string | undefined;
+  /** Mandatory workflow id */
+  workflow_id: string;
 }
 
 export interface ListToolInstancesResponse {
@@ -308,8 +308,8 @@ export interface ToolInstance {
 
 /** Agent Messages */
 export interface ListAgentsRequest {
-  /** Optional workflow id */
-  workflow_id?: string | undefined;
+  /** Mandatory workflow id */
+  workflow_id: string;
 }
 
 export interface ListAgentsResponse {
@@ -701,8 +701,8 @@ export interface AddTaskResponse {
 }
 
 export interface ListTasksRequest {
-  /** Optional workflow id */
-  workflow_id?: string | undefined;
+  /** Mandatory workflow id */
+  workflow_id: string;
 }
 
 export interface ListTasksResponse {
@@ -2988,12 +2988,12 @@ export const RemoveToolTemplateResponse: MessageFns<RemoveToolTemplateResponse> 
 };
 
 function createBaseListToolInstancesRequest(): ListToolInstancesRequest {
-  return { workflow_id: undefined };
+  return { workflow_id: "" };
 }
 
 export const ListToolInstancesRequest: MessageFns<ListToolInstancesRequest> = {
   encode(message: ListToolInstancesRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.workflow_id !== undefined) {
+    if (message.workflow_id !== "") {
       writer.uint32(10).string(message.workflow_id);
     }
     return writer;
@@ -3024,12 +3024,12 @@ export const ListToolInstancesRequest: MessageFns<ListToolInstancesRequest> = {
   },
 
   fromJSON(object: any): ListToolInstancesRequest {
-    return { workflow_id: isSet(object.workflow_id) ? globalThis.String(object.workflow_id) : undefined };
+    return { workflow_id: isSet(object.workflow_id) ? globalThis.String(object.workflow_id) : "" };
   },
 
   toJSON(message: ListToolInstancesRequest): unknown {
     const obj: any = {};
-    if (message.workflow_id !== undefined) {
+    if (message.workflow_id !== "") {
       obj.workflow_id = message.workflow_id;
     }
     return obj;
@@ -3040,7 +3040,7 @@ export const ListToolInstancesRequest: MessageFns<ListToolInstancesRequest> = {
   },
   fromPartial(object: DeepPartial<ListToolInstancesRequest>): ListToolInstancesRequest {
     const message = createBaseListToolInstancesRequest();
-    message.workflow_id = object.workflow_id ?? undefined;
+    message.workflow_id = object.workflow_id ?? "";
     return message;
   },
 };
@@ -4144,12 +4144,12 @@ export const ToolInstance: MessageFns<ToolInstance> = {
 };
 
 function createBaseListAgentsRequest(): ListAgentsRequest {
-  return { workflow_id: undefined };
+  return { workflow_id: "" };
 }
 
 export const ListAgentsRequest: MessageFns<ListAgentsRequest> = {
   encode(message: ListAgentsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.workflow_id !== undefined) {
+    if (message.workflow_id !== "") {
       writer.uint32(10).string(message.workflow_id);
     }
     return writer;
@@ -4180,12 +4180,12 @@ export const ListAgentsRequest: MessageFns<ListAgentsRequest> = {
   },
 
   fromJSON(object: any): ListAgentsRequest {
-    return { workflow_id: isSet(object.workflow_id) ? globalThis.String(object.workflow_id) : undefined };
+    return { workflow_id: isSet(object.workflow_id) ? globalThis.String(object.workflow_id) : "" };
   },
 
   toJSON(message: ListAgentsRequest): unknown {
     const obj: any = {};
-    if (message.workflow_id !== undefined) {
+    if (message.workflow_id !== "") {
       obj.workflow_id = message.workflow_id;
     }
     return obj;
@@ -4196,7 +4196,7 @@ export const ListAgentsRequest: MessageFns<ListAgentsRequest> = {
   },
   fromPartial(object: DeepPartial<ListAgentsRequest>): ListAgentsRequest {
     const message = createBaseListAgentsRequest();
-    message.workflow_id = object.workflow_id ?? undefined;
+    message.workflow_id = object.workflow_id ?? "";
     return message;
   },
 };
@@ -8071,12 +8071,12 @@ export const AddTaskResponse: MessageFns<AddTaskResponse> = {
 };
 
 function createBaseListTasksRequest(): ListTasksRequest {
-  return { workflow_id: undefined };
+  return { workflow_id: "" };
 }
 
 export const ListTasksRequest: MessageFns<ListTasksRequest> = {
   encode(message: ListTasksRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.workflow_id !== undefined) {
+    if (message.workflow_id !== "") {
       writer.uint32(10).string(message.workflow_id);
     }
     return writer;
@@ -8107,12 +8107,12 @@ export const ListTasksRequest: MessageFns<ListTasksRequest> = {
   },
 
   fromJSON(object: any): ListTasksRequest {
-    return { workflow_id: isSet(object.workflow_id) ? globalThis.String(object.workflow_id) : undefined };
+    return { workflow_id: isSet(object.workflow_id) ? globalThis.String(object.workflow_id) : "" };
   },
 
   toJSON(message: ListTasksRequest): unknown {
     const obj: any = {};
-    if (message.workflow_id !== undefined) {
+    if (message.workflow_id !== "") {
       obj.workflow_id = message.workflow_id;
     }
     return obj;
@@ -8123,7 +8123,7 @@ export const ListTasksRequest: MessageFns<ListTasksRequest> = {
   },
   fromPartial(object: DeepPartial<ListTasksRequest>): ListTasksRequest {
     const message = createBaseListTasksRequest();
-    message.workflow_id = object.workflow_id ?? undefined;
+    message.workflow_id = object.workflow_id ?? "";
     return message;
   },
 };

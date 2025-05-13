@@ -7,7 +7,7 @@ import {
   selectWorkflowGenerationConfig,
   updatedEditorStep,
   updatedEditorWorkflowId,
-} from '../workflows/editorSlice';
+} from '../../workflows/editorSlice';
 import {
   Button,
   Descriptions,
@@ -35,22 +35,26 @@ import {
   useUpdateWorkflowMutation,
   useGetWorkflowMutation,
   useAddWorkflowTemplateMutation,
-} from '../workflows/workflowsApi';
-import { createAddRequestFromEditor, createUpdateRequestFromEditor } from '../lib/workflow';
-import { useGlobalNotification } from './Notifications';
-import { useAppDispatch, useAppSelector } from '../lib/hooks/hooks';
-import { useListDeployedWorkflowsQuery } from '../workflows/deployedWorkflowsApi';
-import { useListTasksQuery } from '../tasks/tasksApi';
-import { useGetDefaultModelQuery } from '../models/modelsApi';
-import { clearedWorkflowApp } from '../workflows/workflowAppSlice';
+} from '../../workflows/workflowsApi';
+import { createAddRequestFromEditor, createUpdateRequestFromEditor } from '../../lib/workflow';
+import { useGlobalNotification } from '../Notifications';
+import { useAppDispatch, useAppSelector } from '../../lib/hooks/hooks';
+import { useListDeployedWorkflowsQuery } from '../../workflows/deployedWorkflowsApi';
+import { useListTasksQuery } from '../../tasks/tasksApi';
+import { useGetDefaultModelQuery } from '../../models/modelsApi';
+import { clearedWorkflowApp } from '../../workflows/workflowAppSlice';
 import { hasValidToolConfiguration } from './WorkflowEditorConfigureInputs';
-import { useListToolInstancesQuery } from '../tools/toolInstancesApi';
-import { useListAgentsQuery } from '../agents/agentApi';
+import { useListToolInstancesQuery } from '../../tools/toolInstancesApi';
+import { useListAgentsQuery } from '../../agents/agentApi';
 
 const { Header, Content } = Layout;
 const { Title, Text } = Typography;
 
-const WorkflowNavigation: React.FC = () => {
+interface WorkflowNavigationProps {
+  workflowId: string;
+}
+
+const WorkflowNavigation: React.FC<WorkflowNavigationProps> = ({workflowId}) => {
   const currentStep = useAppSelector(selectEditorCurrentStep);
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -67,7 +71,7 @@ const WorkflowNavigation: React.FC = () => {
   ] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
   const { data: deployedWorkflows = [] } = useListDeployedWorkflowsQuery({});
-  const { data: tasks } = useListTasksQuery({});
+  const { data: tasks } = useListTasksQuery({ workflow_id: workflowId });
   const [getWorkflow] = useGetWorkflowMutation();
   const [workflow, setWorkflow] = useState<any>(null);
   const [hasAgents, setHasAgents] = useState<boolean>(false);
@@ -78,8 +82,8 @@ const WorkflowNavigation: React.FC = () => {
   const workflowGenerationConfig = useAppSelector(selectWorkflowGenerationConfig);
   const workflowConfiguration = useAppSelector(selectWorkflowConfiguration);
 
-  const { data: agents } = useListAgentsQuery({});
-  const { data: toolInstances } = useListToolInstancesQuery({});
+  const { data: agents } = useListAgentsQuery({workflow_id: workflowId});
+  const { data: toolInstances } = useListToolInstancesQuery({workflow_id: workflowId});
 
   const isValid = useMemo(() => {
     const result = hasValidToolConfiguration(

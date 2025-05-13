@@ -1,4 +1,4 @@
-import { useAppDispatch, useAppSelector } from '../lib/hooks/hooks';
+import { useAppDispatch, useAppSelector } from '../../lib/hooks/hooks';
 import {
   selectEditorWorkflowAgentIds,
   selectEditorWorkflowId,
@@ -20,7 +20,7 @@ import {
   updatedEditorWorkflowId,
   selectEditorWorkflowProcess,
   updatedEditorWorkflowProcess,
-} from '../workflows/editorSlice';
+} from '../../workflows/editorSlice';
 import {
   Button,
   Divider,
@@ -47,25 +47,25 @@ import {
   UsergroupAddOutlined,
   UndoOutlined,
 } from '@ant-design/icons';
-import { useListAgentsQuery, useRemoveAgentMutation } from '../agents/agentApi';
+import { useListAgentsQuery, useRemoveAgentMutation } from '../../agents/agentApi';
 import { AgentMetadata } from '@/studio/proto/agent_studio';
 import {
   useAddTaskMutation,
   useListTasksQuery,
   useRemoveTaskMutation,
   useUpdateTaskMutation,
-} from '../tasks/tasksApi';
+} from '../../tasks/tasksApi';
 import SelectOrAddAgentModal from './SelectOrAddAgentModal';
-import { useGetDefaultModelQuery } from '../models/modelsApi';
+import { useGetDefaultModelQuery } from '../../models/modelsApi';
 import { useGetToolInstanceMutation } from '@/app/tools/toolInstancesApi';
 import { useState, useEffect } from 'react';
 import { useImageAssetsData } from '@/app/lib/hooks/useAssetData';
-import { useGlobalNotification } from './Notifications';
-import { useAddWorkflowMutation, useUpdateWorkflowMutation } from '../workflows/workflowsApi';
-import { createUpdateRequestFromEditor, createAddRequestFromEditor } from '../lib/workflow';
+import { useGlobalNotification } from '../Notifications';
+import { useAddWorkflowMutation, useUpdateWorkflowMutation } from '../../workflows/workflowsApi';
+import { createUpdateRequestFromEditor, createAddRequestFromEditor } from '../../lib/workflow';
 import SelectOrAddManagerAgentModal from './SelectOrAddManagerAgentModal';
 
-const WorkflowNameComponent: React.FC = () => {
+const WorkflowDescriptionComponent: React.FC = () => {
   const workflowDescription = useAppSelector(selectEditorWorkflowDescription);
   const dispatch = useAppDispatch();
 
@@ -102,8 +102,12 @@ const WorkflowNameComponent: React.FC = () => {
   );
 };
 
-const WorkflowAgentsComponent: React.FC = () => {
-  const { data: agents } = useListAgentsQuery({});
+interface WorkflowAgentsComponentProps {
+  workflowId: string;
+}
+
+const WorkflowAgentsComponent: React.FC<WorkflowAgentsComponentProps> = ({workflowId}) => {
+  const { data: agents } = useListAgentsQuery({workflow_id: workflowId});
   const workflowAgentIds = useAppSelector(selectEditorWorkflowAgentIds);
   const dispatch = useAppDispatch();
   const [getToolInstance] = useGetToolInstanceMutation();
@@ -142,6 +146,7 @@ const WorkflowAgentsComponent: React.FC = () => {
   }, [agents, getToolInstance]);
 
   // Add effect to refetch images when tool instances change
+  // TODO: this should be middleware at the RTK level
   useEffect(() => {
     const refreshData = async () => {
       await refetchImages();
@@ -188,7 +193,7 @@ const WorkflowAgentsComponent: React.FC = () => {
 
   return (
     <>
-      <SelectOrAddAgentModal />
+      <SelectOrAddAgentModal workflowId={workflowId} />
       <Layout
         style={{
           gap: '10px',
@@ -435,7 +440,11 @@ const WorkflowAgentsComponent: React.FC = () => {
   );
 };
 
-const WorkflowManagerAgentsComponent: React.FC = () => {
+interface WorkflowManagerAgentsComponentProps {
+  workflowId: string;
+}
+
+const WorkflowManagerAgentsComponent: React.FC<WorkflowManagerAgentsComponentProps> = ({workflowId}) => {
   const [isManagerModalOpen, setIsManagerModalOpen] = useState(false);
   const tasksTooltip = `
   A manager agent is responsible for delegating tasks to 
@@ -509,6 +518,7 @@ const WorkflowManagerAgentsComponent: React.FC = () => {
         </Layout>
       </Layout>
       <SelectOrAddManagerAgentModal
+        workflowId={workflowId}
         isOpen={isManagerModalOpen}
         onClose={() => setIsManagerModalOpen(false)}
       />
@@ -517,20 +527,20 @@ const WorkflowManagerAgentsComponent: React.FC = () => {
 };
 
 export interface ManagerAgentComponentProps {
+  workflowId: string;
   isDisabled: boolean;
 }
 
-const ManagerAgentCheckComponent: React.FC<ManagerAgentComponentProps> = ({ isDisabled }) => {
+const ManagerAgentCheckComponent: React.FC<ManagerAgentComponentProps> = ({ workflowId, isDisabled }) => {
   const dispatch = useAppDispatch();
-  const { data: defaultModel } = useGetDefaultModelQuery();
   const managerAgentId = useAppSelector(selectEditorWorkflowManagerAgentId);
   const taskIds = useAppSelector(selectEditorWorkflowTaskIds) ?? [];
-  const { data: tasks } = useListTasksQuery({});
+  const { data: tasks } = useListTasksQuery({workflow_id: workflowId});
   const [updateTask] = useUpdateTaskMutation();
   const workflowState = useAppSelector(selectEditorWorkflow);
   const [updateWorkflow] = useUpdateWorkflowMutation();
   const notificationApi = useGlobalNotification();
-  const { data: agents } = useListAgentsQuery({});
+  const { data: agents } = useListAgentsQuery({workflow_id: workflowId});
   const [removeAgent] = useRemoveAgentMutation();
 
   const hasManagerAgent = workflowState.workflowMetadata.process === 'hierarchical';
@@ -633,23 +643,21 @@ const ManagerAgentCheckComponent: React.FC<ManagerAgentComponentProps> = ({ isDi
   );
 };
 
-const SettingsComponent: React.FC = () => {
+interface SettingsComponentProps {
+  workflowId: string;
+}
+
+const SettingsComponent: React.FC<SettingsComponentProps> = ({workflowId}) => {
   const [isManagerModalOpen, setIsManagerModalOpen] = useState(false);
   const isConversational = useAppSelector(selectEditorWorkflowIsConversational);
   const dispatch = useAppDispatch();
-  const { data: agents } = useListAgentsQuery({});
-  const managerAgents =
-    agents?.filter(
-      (agent: AgentMetadata) => agent.crew_ai_agent_metadata?.allow_delegation === true,
-    ) || [];
+  const { data: agents } = useListAgentsQuery({workflow_id: workflowId});
   const [addTask] = useAddTaskMutation();
   const [removeTask] = useRemoveTaskMutation();
   const taskIds = useAppSelector(selectEditorWorkflowTaskIds) ?? [];
   const managerAgentId = useAppSelector(selectEditorWorkflowManagerAgentId);
   const process = useAppSelector(selectEditorWorkflowProcess);
   const hasManagerAgent: boolean = process === 'hierarchical';
-  const { data: defaultModel } = useGetDefaultModelQuery();
-  const workflowId = useAppSelector(selectEditorWorkflowId);
   const notificationApi = useGlobalNotification();
   const workflowState = useAppSelector(selectEditorWorkflow);
   const [updateWorkflow] = useUpdateWorkflowMutation();
@@ -795,8 +803,8 @@ const SettingsComponent: React.FC = () => {
           </Tooltip>
         </Space>
 
-        <ManagerAgentCheckComponent isDisabled={false} />
-        {hasManagerAgent && !managerAgentId && <WorkflowManagerAgentsComponent />}
+        <ManagerAgentCheckComponent workflowId={workflowId} isDisabled={false} />
+        {hasManagerAgent && !managerAgentId && <WorkflowManagerAgentsComponent workflowId={workflowId} />}
         {hasManagerAgent && managerAgentId && (
           <Layout
             style={{
@@ -943,6 +951,7 @@ const SettingsComponent: React.FC = () => {
         )}
       </Layout>
       <SelectOrAddManagerAgentModal
+        workflowId={workflowId}
         isOpen={isManagerModalOpen}
         onClose={() => setIsManagerModalOpen(false)}
       />
@@ -950,7 +959,13 @@ const SettingsComponent: React.FC = () => {
   );
 };
 
-const WorkflowEditorInputs: React.FC = () => {
+
+interface WorkflowEditorAgentInputsProps {
+  workflowId: string;
+}
+
+
+const WorkflowEditorAgentInputs: React.FC<WorkflowEditorAgentInputsProps> = ({workflowId}) => {
   return (
     <>
       <Layout
@@ -966,16 +981,16 @@ const WorkflowEditorInputs: React.FC = () => {
           overflow: 'auto',
         }}
       >
-        <WorkflowNameComponent />
-        <SettingsComponent />
+        <WorkflowDescriptionComponent />
+        <SettingsComponent workflowId={workflowId} />
         <Divider
           type="horizontal"
           style={{ marginTop: 0, marginBottom: 0, borderColor: 'lightgrey' }}
         />
-        <WorkflowAgentsComponent />
+        <WorkflowAgentsComponent workflowId={workflowId} />
       </Layout>
     </>
   );
 };
 
-export default WorkflowEditorInputs;
+export default WorkflowEditorAgentInputs;

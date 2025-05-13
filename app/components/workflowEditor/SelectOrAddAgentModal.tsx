@@ -37,8 +37,8 @@ import {
   useAddAgentMutation,
   useUpdateAgentMutation,
   useListAgentsQuery,
-} from '../agents/agentApi';
-import { useAppDispatch, useAppSelector } from '../lib/hooks/hooks';
+} from '../../agents/agentApi';
+import { useAppDispatch, useAppSelector } from '../../lib/hooks/hooks';
 import {
   updatedEditorAgentViewOpen,
   selectEditorAgentViewIsOpen,
@@ -54,24 +54,23 @@ import {
   selectEditorWorkflow,
   updatedEditorWorkflowAgentIds,
   updatedEditorAgentViewAgent,
-} from '../workflows/editorSlice';
+} from '../../workflows/editorSlice';
 import { AgentTemplateMetadata, Model, ToolInstance } from '@/studio/proto/agent_studio';
 import { useListGlobalToolTemplatesQuery } from '@/app/tools/toolTemplatesApi';
 import { useImageAssetsData } from '@/app/lib/hooks/useAssetData';
 import WorkflowAddToolModal from './WorkflowAddToolModal';
 import { useSelector } from 'react-redux';
-import { useAddWorkflowMutation, useUpdateWorkflowMutation } from '../workflows/workflowsApi';
-import { createAddRequestFromEditor, createUpdateRequestFromEditor } from '../lib/workflow';
-import { useGlobalNotification } from './Notifications';
-import WorkflowViewToolModal from './WorkflowViewToolModal';
+import { useAddWorkflowMutation, useUpdateWorkflowMutation } from '../../workflows/workflowsApi';
+import { createAddRequestFromEditor, createUpdateRequestFromEditor } from '../../lib/workflow';
+import { useGlobalNotification } from '../Notifications';
 import { AgentMetadata } from '@/studio/proto/agent_studio';
 import {
   useListToolInstancesQuery,
   useRemoveToolInstanceMutation,
 } from '@/app/tools/toolInstancesApi';
 import { CrewAIAgentMetadata } from '@/studio/proto/agent_studio';
-import { useGetDefaultModelQuery, useGetModelMutation, useListModelsQuery } from '../models/modelsApi';
-import { useTestModelMutation } from '../models/modelsApi';
+import { useGetDefaultModelQuery, useGetModelMutation, useListModelsQuery } from '../../models/modelsApi';
+import { useTestModelMutation } from '../../models/modelsApi';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -424,6 +423,7 @@ If the user's description is not clear, just do not generate the requested XML. 
 };
 
 interface SelectAgentComponentProps {
+  workflowId: string;
   parentModalOpen: boolean;
   form: FormInstance<{
     name: string;
@@ -445,6 +445,7 @@ interface SelectAgentComponentProps {
 }
 
 const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
+  workflowId,
   parentModalOpen,
   form,
   selectedAgentTemplate,
@@ -481,7 +482,6 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
     pythonRequirements: '',
   });
   const notificationApi = useGlobalNotification();
-  const [isViewToolModalVisible, setViewToolModalVisible] = useState(false);
   const [isCreateMode, setIsCreateMode] = useState(false);
   const [deleteToolInstance] = useRemoveToolInstanceMutation();
   const combinedToolTemplates = [
@@ -501,7 +501,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
 
   // Add refetch for tool instances
   const { data: toolInstancesList = [], refetch: refetchToolInstances } = useListToolInstancesQuery(
-    {},
+    {workflow_id: workflowId},
   );
 
   // Add effect to refetch when tool instances are updated
@@ -580,42 +580,6 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
     // Immediately set the default model if available
     if (defaultModel?.model_id) {
       form.setFieldValue('llm_provider_model_id', defaultModel.model_id);
-    }
-  };
-
-  const handleSelectAgentTemplate = (template: AgentTemplateMetadata) => {
-    setSelectedAgentTemplate(template);
-    dispatch(updatedEditorAgentViewAgent(undefined));
-    setIsCreateMode(false);
-    dispatch(
-      updatedEditorAgentViewCreateAgentState({
-        name: template.name,
-        role: template.role,
-        backstory: template.backstory,
-        goal: template.goal,
-        toolTemplateIds: template.tool_template_ids || [],
-      }),
-    );
-    // Set form values including default model
-    form.setFieldsValue({
-      name: template.name,
-      role: template.role,
-      backstory: template.backstory,
-      goal: template.goal,
-      llm_provider_model_id: defaultModel?.model_id,
-    });
-  };
-
-  const handleViewToolDetails = (toolId: string) => {
-    const tool = toolTemplates.find((t) => t.id === toolId);
-    if (tool) {
-      setToolDetails({
-        name: tool.name,
-        description: tool.tool_description || '',
-        pythonCode: tool.python_code || '',
-        pythonRequirements: tool.python_requirements || '',
-      });
-      setViewToolModalVisible(true);
     }
   };
 
@@ -1234,11 +1198,6 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                 Edit Agents in Workflow
               </Typography.Title>
             </Layout>
-            {/* <Layout style={{ flex: 1, backgroundColor: '#fff', paddingLeft: '16px' }}>
-              <Typography.Title level={5} style={{ marginBottom: '16px' }}>
-                Create Agent From Template
-              </Typography.Title>
-            </Layout> */}
           </Layout>
           <Layout
             style={{
@@ -1253,163 +1212,6 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
             >
               {renderAssignedAgents()}
             </Layout>
-            {/* <Layout
-              style={{ flex: 1, overflowY: 'auto', backgroundColor: '#fff', paddingLeft: '16px' }}
-            >
-              <List
-                grid={{ gutter: 16, column: 1 }}
-                dataSource={filteredAgentTemplates}
-                renderItem={(item: AgentTemplateMetadata) => (
-                  <List.Item>
-                    <div
-                      style={{
-                        borderRadius: '4px',
-                        border: 'solid 1px #f0f0f0',
-                        backgroundColor: selectedAgentTemplate?.id === item.id ? '#e6ffe6' : '#fff',
-                        width: '100%',
-                        height: '160px',
-                        padding: '16px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        cursor: 'pointer',
-                        transition: 'transform 0.2s, box-shadow 0.2s',
-                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                      }}
-                      onClick={() => handleSelectAgentTemplate(item)}
-                      onMouseEnter={(e: React.MouseEvent<HTMLElement>) => {
-                        e.currentTarget.style.transform = 'scale(1.03)';
-                        e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
-                      }}
-                      onMouseLeave={(e: React.MouseEvent<HTMLElement>) => {
-                        e.currentTarget.style.transform = 'scale(1)';
-                        e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          gap: '12px',
-                          marginBottom: '16px',
-                        }}
-                      >
-                        <Avatar
-                          style={{
-                            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-                            backgroundColor: '#4b85d1',
-                            minWidth: '24px',
-                            minHeight: '24px',
-                            width: '24px',
-                            height: '24px',
-                            flex: '0 0 24px'
-                          }}
-                          size={24}
-                          icon={<UserOutlined />}
-                        />
-                        <Text
-                          style={{
-                            fontSize: '14px',
-                            fontWeight: 400,
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                          }}
-                          title={item.name}
-                        >
-                          {item.name}
-                        </Text>
-                      </div>
-                      <Text
-                        style={{
-                          fontSize: '11px',
-                          opacity: 0.45,
-                          fontWeight: 400,
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          marginBottom: '4px',
-                        }}
-                      >
-                        Goal:{' '}
-                        <span style={{ color: 'black', fontWeight: 400 }}>
-                          {item.goal || 'N/A'}
-                        </span>
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: '11px',
-                          opacity: 0.45,
-                          fontWeight: 400,
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                      >
-                        Backstory:{' '}
-                        <span style={{ color: 'black', fontWeight: 400 }}>
-                          {item.backstory || 'N/A'}
-                        </span>
-                      </Text>
-                      {item.tool_template_ids?.length > 0 && (
-                        <Space
-                          style={{
-                            marginTop: '12px',
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: '10px',
-                          }}
-                        >
-                          {item.tool_template_ids.map((toolTemplateId) => {
-                            const toolTemplate = toolTemplateCache[toolTemplateId];
-                            return toolTemplate ? (
-                              <Tooltip
-                                title={toolTemplate.name}
-                                key={toolTemplateId}
-                                placement="top"
-                              >
-                                <div
-                                  style={{
-                                    width: '24px',
-                                    height: '24px',
-                                    minWidth: '24px',
-                                    minHeight: '24px',
-                                    flex: '0 0 24px',
-                                    borderRadius: '50%',
-                                    background: '#f1f1f1',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    cursor: 'pointer',
-                                  }}
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <Image
-                                    src={
-                                      toolTemplate.imageURI && toolIconsData[toolTemplate.imageURI]
-                                        ? toolIconsData[toolTemplate.imageURI]
-                                        : '/fallback-image.png'
-                                    }
-                                    alt={toolTemplate.name}
-                                    width={16}
-                                    height={16}
-                                    preview={false}
-                                    style={{
-                                      borderRadius: '2px',
-                                      objectFit: 'cover',
-                                    }}
-                                  />
-                                </div>
-                              </Tooltip>
-                            ) : null;
-                          })}
-                        </Space>
-                      )}
-                    </div>
-                  </List.Item>
-                )}
-              />
-            </Layout> */}
           </Layout>
         </Layout>
         <Divider type="vertical" style={{ height: 'auto', backgroundColor: '#f0f0f0' }} />
@@ -1553,13 +1355,9 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
       </Layout>
       <Divider style={{ margin: 0, backgroundColor: '#f0f0f0' }} />
       <WorkflowAddToolModal
+        workflowId={workflowId}
         open={isAddToolModalVisible}
         onCancel={() => setAddToolModalVisible(false)}
-      />
-      <WorkflowViewToolModal
-        open={isViewToolModalVisible}
-        onCancel={() => setViewToolModalVisible(false)}
-        toolDetails={toolDetails}
       />
       {defaultModel && (
         <GenerateAgentPropertiesModal
@@ -1575,7 +1373,11 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
   );
 };
 
-const SelectOrAddAgentModal: React.FC = () => {
+interface SelectOrAddAgentModalProps {
+  workflowId: string;
+}
+
+const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({workflowId}) => {
   const isModalOpen = useAppSelector(selectEditorAgentViewIsOpen);
   const modalLayout = useAppSelector(selectEditorAgentViewStep);
   const dispatch = useAppDispatch();
@@ -1587,7 +1389,6 @@ const SelectOrAddAgentModal: React.FC = () => {
     llm_provider_model_id: string;
   }>();
   const [addAgent] = useAddAgentMutation();
-  const workflowId = useSelector(selectEditorWorkflowId);
   const [selectedAgentTemplate, setSelectedAgentTemplate] = useState<AgentTemplateMetadata | null>(
     null,
   );
@@ -1597,7 +1398,6 @@ const SelectOrAddAgentModal: React.FC = () => {
   const [addWorkflow] = useAddWorkflowMutation();
   const workflowState = useAppSelector(selectEditorWorkflow);
   const notificationApi = useGlobalNotification();
-  const [isViewToolModalVisible, setViewToolModalVisible] = useState(false);
   const [toolDetails, setToolDetails] = useState<{
     name: string;
     description: string;
@@ -1609,11 +1409,11 @@ const SelectOrAddAgentModal: React.FC = () => {
     pythonCode: '',
     pythonRequirements: '',
   });
-  const { data: agents = [] } = useListAgentsQuery({});
+  const { data: agents = [] } = useListAgentsQuery({workflow_id: workflowId});
   const workflowAgentIds = useAppSelector(
     (state) => state.editor.workflow?.workflowMetadata?.agentIds || [],
   );
-  const { data: toolInstancesList = [] } = useListToolInstancesQuery({});
+  const { data: toolInstancesList = [] } = useListToolInstancesQuery({workflow_id: workflowId});
   const toolInstances = toolInstancesList.reduce(
     (acc: Record<string, ToolInstance>, instance: ToolInstance) => {
       acc[instance.id] = instance;
@@ -1669,7 +1469,6 @@ const SelectOrAddAgentModal: React.FC = () => {
         pythonCode: '',
         pythonRequirements: '',
       });
-      setViewToolModalVisible(false);
     } else {
       setSelectedAgentTemplate(null);
     }
@@ -1860,6 +1659,7 @@ const SelectOrAddAgentModal: React.FC = () => {
         )}
         <div style={{ overflowY: 'auto', height: 'calc(95vh - 108px)' }}>
           <SelectAgentComponent
+            workflowId={workflowId}
             parentModalOpen={isModalOpen || false}
             form={form}
             selectedAgentTemplate={selectedAgentTemplate}

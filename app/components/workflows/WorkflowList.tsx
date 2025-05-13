@@ -11,10 +11,11 @@ import {
 import SearchBar from './WorkflowSearchBar';
 import WorkflowListItem from './WorkflowListItem';
 import { useListDeployedWorkflowsQuery } from '@/app/workflows/deployedWorkflowsApi';
-import { useImageAssetsData } from '../lib/hooks/useAssetData';
+import { useImageAssetsData } from '../../lib/hooks/useAssetData';
 import { useImportWorkflowTemplateMutation } from '@/app/workflows/workflowsApi';
 import { PlusCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { useGlobalNotification } from './Notifications';
+import { useGlobalNotification } from '../Notifications';
+import { useListAgentsQuery, useListGlobalAgentTemplatesQuery } from '../../agents/agentApi';
 
 const { Text } = Typography;
 
@@ -152,9 +153,7 @@ const ImportWorkflowTemplateModal: React.FC<ImportWorkflowTemplateModalProps> = 
 interface WorkflowListProps {
   workflows: Workflow[];
   deployedWorkflows: DeployedWorkflow[];
-  agents: AgentMetadata[];
   workflowTemplates: WorkflowTemplateMetadata[];
-  agentTemplates: AgentTemplateMetadata[];
   editWorkflow: (workflowId: string) => void;
   deleteWorkflow: (workflowId: string) => void;
   deleteWorkflowTemplate: (workflowTemplateId: string) => void;
@@ -166,9 +165,7 @@ interface WorkflowListProps {
 const WorkflowList: React.FC<WorkflowListProps> = ({
   workflows,
   deployedWorkflows,
-  agents,
   workflowTemplates,
-  agentTemplates,
   editWorkflow,
   deleteWorkflow,
   deleteWorkflowTemplate,
@@ -179,31 +176,9 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [importModalVisible, setImportModalVisible] = useState(false);
 
-  const { imageData: agentIconsData } = useImageAssetsData(agents.map((_a) => _a.agent_image_uri));
-  const { imageData: agentTemplateIconsData } = useImageAssetsData(
-    agentTemplates.map((_a) => _a.agent_image_uri),
-  );
-  const combinedAgentIconsData = { ...agentIconsData, ...agentTemplateIconsData }; // two API calls to reduce load on backend?
-
-  // Update the deployment status handling
-  const { data: latestDeployments } = useListDeployedWorkflowsQuery(
-    {},
-    {
-      pollingInterval: 10000,
-    },
-  );
-
-  // Use latestDeployments if available, otherwise fall back to deployedWorkflows prop
-  const currentDeployments = latestDeployments || deployedWorkflows;
-
-  // Create the map from the current deployments
-  const deployedWorkflowMap = currentDeployments.reduce<Record<string, DeployedWorkflow[]>>(
-    (acc, dw) => {
-      if (!acc[dw.workflow_id]) acc[dw.workflow_id] = [];
-      acc[dw.workflow_id].push(dw);
-      return acc;
-    },
-    {},
+  // Filter out based on search term
+  const filteredDeployedWorkflows = deployedWorkflows.filter((deployedWorkflow) => 
+    deployedWorkflow.workflow_name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const filteredWorkflows = workflows.filter((workflow) =>
@@ -213,6 +188,17 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
   // Add this new filter for workflow templates
   const filteredWorkflowTemplates = workflowTemplates.filter((template) =>
     template.name.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+  
+  // Create a map where key is workflow ID and value is list of deployed workflow IDs.
+  // TODO: pass deployed workflow IDs in each workflow message as part of listWorkflows/getWorkflow
+  const deployedWorkflowMap = filteredDeployedWorkflows.reduce<Record<string, DeployedWorkflow[]>>(
+    (acc, dw) => {
+      if (!acc[dw.workflow_id]) acc[dw.workflow_id] = [];
+      acc[dw.workflow_id].push(dw);
+      return acc;
+    },
+    {},
   );
 
   // Modify to exclude workflows that are deployed from draft section
@@ -290,8 +276,6 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
                       key={workflowId}
                       workflow={workflow}
                       deployments={deployments}
-                      agents={agents}
-                      agentIconsData={combinedAgentIconsData}
                       editWorkflow={editWorkflow}
                       deleteWorkflow={deleteWorkflow}
                       testWorkflow={testWorkflow}
@@ -332,8 +316,6 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
                     key={workflow.workflow_id}
                     workflow={workflow}
                     deployments={deployedWorkflowMap[workflow.workflow_id] || []}
-                    agents={agents}
-                    agentIconsData={combinedAgentIconsData}
                     editWorkflow={editWorkflow}
                     deleteWorkflow={deleteWorkflow}
                     testWorkflow={testWorkflow}
@@ -387,8 +369,6 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
                   <WorkflowListItem
                     key={workflowTemplate.id}
                     workflowTemplate={workflowTemplate}
-                    agentTemplates={agentTemplates}
-                    agentIconsData={combinedAgentIconsData}
                     deleteWorkflowTemplate={deleteWorkflowTemplate}
                     sectionType="Template"
                   />

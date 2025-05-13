@@ -5,9 +5,9 @@ import { ReactFlowProvider } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { ApiOutlined } from '@ant-design/icons';
 import WorkflowTemplateDiagram from './WorkflowTemplateDiagram';
-import { useListAllAgentTemplatesQuery } from '../../agents/agentApi';
+import { useListAgentTemplatesQuery } from '../../agents/agentApi';
 import { useListTaskTemplatesQuery } from '../../tasks/tasksApi';
-import { useListAllToolTemplatesQuery } from '../../tools/toolTemplatesApi';
+import { useListToolTemplatesQuery } from '../../tools/toolTemplatesApi';
 import { WorkflowTemplateMetadata } from '@/studio/proto/agent_studio';
 
 interface WorkflowTemplateDiagramViewProps {
@@ -15,9 +15,9 @@ interface WorkflowTemplateDiagramViewProps {
 }
 
 const WorkflowTemplateDiagramView: React.FC<WorkflowTemplateDiagramViewProps> = ({ template }) => {
-  const { data: agentTemplates, isLoading: agentsLoading } = useListAllAgentTemplatesQuery();
-  const { data: taskTemplates, isLoading: tasksLoading } = useListTaskTemplatesQuery({});
-  const { data: toolTemplates, isLoading: toolsLoading } = useListAllToolTemplatesQuery();
+  const { data: agentTemplates, isLoading: agentsLoading } = useListAgentTemplatesQuery({workflow_template_id: template.id});
+  const { data: taskTemplates, isLoading: tasksLoading } = useListTaskTemplatesQuery({workflow_template_id: template.id});
+  const { data: toolTemplates, isLoading: toolsLoading } = useListToolTemplatesQuery({workflow_template_id: template.id});
 
   const isLoading = agentsLoading || tasksLoading || toolsLoading;
 

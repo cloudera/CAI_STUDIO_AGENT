@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import 'antd/dist/reset.css';
-import WorkflowDataView from './components/WorkflowDataView';
+import WorkflowAppDeployed from './components/workflowApp/WorkflowAppDeployed';
 import { Layout, Spin, Typography } from 'antd';
 import { useGetWorkflowDataQuery } from './workflows/workflowAppApi';
 import { LocalStorageState, ViewSettings } from './lib/types';
@@ -105,7 +105,7 @@ const HomePage: React.FC = () => {
             </Text>
           </Layout>
         </Layout>
-        <WorkflowDataView workflowData={wflowData} />
+        <WorkflowAppDeployed workflowData={wflowData} />
       </Layout>
     );
   }

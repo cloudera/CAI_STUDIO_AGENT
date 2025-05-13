@@ -13,7 +13,6 @@ import {
   updatedCrewOutput,
   updatedCurrentEventIndex,
   updatedCurrentEvents,
-  updatedCurrentPhoenixProjectId,
   updatedIsRunning,
   clearedWorkflowApp,
 } from '@/app/workflows/workflowAppSlice';
@@ -31,47 +30,37 @@ import {
 } from '@/studio/proto/agent_studio';
 import WorkflowAppChatView from './WorkflowAppChatView';
 import {
-  InfoCircleOutlined,
-  WarningOutlined,
   CloseOutlined,
   DashboardOutlined,
-  LoadingOutlined,
-  EditOutlined,
 } from '@ant-design/icons';
 import { useGetDefaultModelQuery } from '@/app/models/modelsApi';
-import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
 import { useGetEventsMutation } from '@/app/ops/opsApi';
 import { useUpdateWorkflowMutation } from '@/app/workflows/workflowsApi';
-import { createUpdateRequestFromEditor } from '@/app/lib/workflow';
 import { useTestModelMutation } from '@/app/models/modelsApi';
 import { useGlobalNotification } from '../Notifications';
 import { renderAlert } from '@/app/lib/alertUtils';
-import { hasValidToolConfiguration } from '@/app/components/WorkflowEditorConfigureInputs';
+import { hasValidToolConfiguration } from '@/app/components/workflowEditor/WorkflowEditorConfigureInputs';
 import { TOOL_PARAMS_ALERT } from '@/app/lib/constants';
 
 const { Title, Text } = Typography;
 
 export interface WorkflowAppProps {
-  workflow?: Workflow;
-  refetchWorkflow?: () => void;
-  toolInstances?: ToolInstance[];
-  tasks?: CrewAITaskMetadata[];
-  agents?: AgentMetadata[];
+  workflow: Workflow;
+  refetchWorkflow: () => void;
+  agents: AgentMetadata[];
+  toolInstances: ToolInstance[];
+  tasks: CrewAITaskMetadata[];
+  renderMode: 'studio' | 'workflow';
 }
 
 const WorkflowApp: React.FC<WorkflowAppProps> = ({
   workflow,
   refetchWorkflow,
+  agents,
   toolInstances,
   tasks,
-  agents,
+  renderMode
 }) => {
-  // TODO: pass render mode in to the workflow app directly
-  // TODO: pass model url and render mode down to child components through props
-  const { data: workflowData, isLoading } = useGetWorkflowDataQuery();
-  const renderMode = workflowData?.renderMode;
-  const workflowModelUrl = workflowData?.workflowModelUrl;
-
   const isRunning = useAppSelector(selectWorkflowIsRunning);
   const currentTraceId = useAppSelector(selectWorkflowCurrentTraceId);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -369,7 +358,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
   // Update the hasValidTools check to use workflowConfiguration from redux
   const hasValidTools = React.useMemo(() => {
     // Always return true if in workflow mode
-    if (workflowData?.renderMode === 'workflow') return true;
+    if (renderMode === 'workflow') return true;
     
     // Otherwise do the normal validation
     if (!workflow) return true;
@@ -379,7 +368,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
       toolInstances,
       workflowConfiguration
     );
-  }, [workflow, agents, toolInstances, workflowConfiguration, workflowData?.renderMode]);
+  }, [workflow, agents, toolInstances, workflowConfiguration, renderMode]);
 
   // Add this function near the top with other functions
   const getInvalidTools = (agents: AgentMetadata[] | undefined, toolInstances: ToolInstance[] | undefined, workflowId: string | undefined) => {
@@ -493,7 +482,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
                       </Tooltip>
                     </div>
                   ) : (
-                    <div>{workflowData?.workflow?.description}</div>
+                    <div>{workflow.description}</div>
                   ),
               },
             ]}

@@ -7,9 +7,9 @@ import {
   UsergroupAddOutlined,
   FileDoneOutlined,
 } from '@ant-design/icons';
-import { useListAllAgentTemplatesQuery } from '../agents/agentApi';
-import { useListTaskTemplatesQuery } from '../tasks/tasksApi';
-import { useListAllToolTemplatesQuery } from '../tools/toolTemplatesApi';
+import { useListAgentTemplatesQuery } from '../../agents/agentApi';
+import { useListTaskTemplatesQuery } from '../../tasks/tasksApi';
+import { useListToolTemplatesQuery } from '../../tools/toolTemplatesApi';
 import { useImageAssetsData } from '@/app/lib/hooks/useAssetData';
 import { WorkflowTemplateMetadata } from '@/studio/proto/agent_studio';
 
@@ -20,9 +20,9 @@ interface WorkflowTemplateDetailsProps {
 }
 
 const WorkflowTemplateDetails: React.FC<WorkflowTemplateDetailsProps> = ({ template }) => {
-  const { data: agentTemplates } = useListAllAgentTemplatesQuery();
-  const { data: taskTemplates } = useListTaskTemplatesQuery({});
-  const { data: toolTemplates = [] } = useListAllToolTemplatesQuery();
+  const { data: agentTemplates } = useListAgentTemplatesQuery({workflow_template_id: template.id})
+  const { data: taskTemplates } = useListTaskTemplatesQuery({workflow_template_id: template.id});
+  const { data: toolTemplates = [] } = useListToolTemplatesQuery({workflow_template_id: template.id});
 
   // Get manager agent template if exists
   const managerAgentTemplate = template.manager_agent_template_id

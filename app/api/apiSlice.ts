@@ -2,19 +2,18 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 export const TagTypes = [
   'Model',
-  'ToolTemplate',
-  'ToolInstance',
-  'Workflow',
-  'WorkflowApp',
   'Ops',
+  'Workflow',
   'Agent',
-  'ExternalAgentFamily',
+  'Tool',
   'Task',
-  'DeployedWorkflow',
+  'WorkflowTemplate',
   'AgentTemplate',
   'TaskTemplate',
-  'WorkflowTemplate',
-];
+  'ToolTemplate',
+  'DeployedWorkflow',
+  'WorkflowApp'
+]
 
 export const apiSlice = createApi({
   reducerPath: 'api',

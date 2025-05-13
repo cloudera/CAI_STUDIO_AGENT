@@ -12,10 +12,10 @@ import {
   Slider,
   InputNumber,
 } from 'antd';
-import { useListToolInstancesQuery } from '../tools/toolInstancesApi';
+import { useListToolInstancesQuery } from '../../tools/toolInstancesApi';
 import { ToolInstance, AgentMetadata } from '@/studio/proto/agent_studio';
-import { useListAgentsQuery } from '../agents/agentApi';
-import { useAppDispatch, useAppSelector } from '../lib/hooks/hooks';
+import { useListAgentsQuery } from '../../agents/agentApi';
+import { useAppDispatch, useAppSelector } from '../../lib/hooks/hooks';
 import {
   selectEditorWorkflowId,
   selectWorkflowConfiguration,
@@ -23,17 +23,17 @@ import {
   updatedWorkflowConfiguration,
   updatedWorkflowGenerationConfig,
   updatedWorkflowToolParameter,
-} from '../workflows/editorSlice';
+} from '../../workflows/editorSlice';
 import {
   readWorkflowConfigurationFromLocalStorage,
   writeWorkflowConfigurationToLocalStorage,
-} from '../lib/localStorage';
-import { WorkflowGenerationConfig, WorkflowConfiguration } from '../lib/types';
+} from '../../lib/localStorage';
+import { WorkflowGenerationConfig, WorkflowConfiguration } from '../../lib/types';
 import { InfoCircleOutlined, QuestionCircleOutlined, UserOutlined } from '@ant-design/icons';
-import { DEFAULT_GENERATION_CONFIG } from '../lib/constants';
+import { DEFAULT_GENERATION_CONFIG } from '../../lib/constants';
 import React from 'react';
-import { TOOL_PARAMS_ALERT } from '../lib/constants';
-import { renderAlert } from '../lib/alertUtils';
+import { TOOL_PARAMS_ALERT } from '../../lib/constants';
+import { renderAlert } from '../../lib/alertUtils';
 
 const { Title, Text } = Typography;
 const { Password } = Input;
@@ -255,10 +255,13 @@ const ToolConfigurationComponent: React.FC<ToolConfigurationComponentProps> = ({
   );
 };
 
-const WorkflowEditorConfigureInputs: React.FC = () => {
-  const { data: agents } = useListAgentsQuery({});
-  const workflowId = useAppSelector(selectEditorWorkflowId);
-  const { data: toolInstances } = useListToolInstancesQuery({});
+interface WorkflowEditorConfigureInputsProps {
+  workflowId: string;
+}
+
+const WorkflowEditorConfigureInputs: React.FC<WorkflowEditorConfigureInputsProps> = ({workflowId}) => {
+  const { data: agents } = useListAgentsQuery({workflow_id: workflowId});
+  const { data: toolInstances } = useListToolInstancesQuery({workflow_id: workflowId});
   const workflowConfiguration = useAppSelector(selectWorkflowConfiguration);
   const workflowGenerationConfig = useAppSelector(selectWorkflowGenerationConfig);
   const dispatch = useAppDispatch();

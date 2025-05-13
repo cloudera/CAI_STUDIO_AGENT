@@ -11,7 +11,7 @@ import {
   CopyOutlined,
 } from '@ant-design/icons';
 import { useParams, useRouter } from 'next/navigation';
-import WorkflowOverview from '@/app/components/WorkflowOverview';
+import WorkflowOverview from '@/app/components/workflows/WorkflowOverview';
 import {
   useGetWorkflowMutation,
   useRemoveWorkflowMutation,
@@ -21,7 +21,7 @@ import {
 import CommonBreadCrumb from '@/app/components/CommonBreadCrumb';
 import { resetEditor, updatedEditorStep } from '@/app/workflows/editorSlice';
 import { useAppDispatch } from '@/app/lib/hooks/hooks';
-import DeleteWorkflowModal from '@/app/components/DeleteWorkflowModal';
+import DeleteWorkflowModal from '@/app/components/workflows/DeleteWorkflowModal';
 import { useGlobalNotification } from '@/app/components/Notifications';
 import { Workflow } from '@/studio/proto/agent_studio';
 import {
@@ -342,7 +342,7 @@ const WorkflowPage: React.FC = () => {
           marginTop: '10px',
         }}
       >
-        <WorkflowOverview workflowId={workflowId as string} />
+        <WorkflowOverview workflowId={workflowId} />
       </Layout>
       <DeleteWorkflowModal
         resourceType="workflow"

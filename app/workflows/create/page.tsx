@@ -4,7 +4,7 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import { Button, Input, Layout, Spin } from 'antd';
 import { useRouter, useSearchParams } from 'next/navigation';
-import WorkflowEditorAgentView from '@/app/components/WorkflowEditorAgentView';
+import WorkflowEditorAgentView from '@/app/components/workflowEditor/WorkflowEditorAgentView';
 import { Typography } from 'antd/lib';
 import { useAppSelector, useAppDispatch } from '@/app/lib/hooks/hooks';
 import {
@@ -16,27 +16,24 @@ import {
   updatedEditorWorkflowName,
   selectEditorWorkflow,
 } from '../editorSlice';
-import WorkflowApp from '@/app/components/workflow/WorkflowApp';
-import WorkflowStepView from '@/app/components/WorkflowStepView';
-import WorkflowNavigation from '@/app/components/WorkflowNavigation';
+import WorkflowApp from '@/app/components/workflowApp/WorkflowApp';
+import WorkflowStepView from '@/app/components/workflowEditor/WorkflowStepView';
+import WorkflowNavigation from '@/app/components/workflowEditor/WorkflowNavigation';
 import { Workflow } from '@/studio/proto/agent_studio';
 import {
-  useGetWorkflowByIdQuery,
   useGetWorkflowMutation,
   useUpdateWorkflowMutation,
 } from '../workflowsApi';
-import WorkflowEditorTaskView from '@/app/components/WorkflowEditorTaskView';
-import WorkflowOverview from '@/app/components/WorkflowOverview';
+import WorkflowEditorTaskView from '@/app/components/workflowEditor/WorkflowEditorTaskView';
+import WorkflowOverview from '@/app/components/workflows/WorkflowOverview';
 import CommonBreadCrumb from '@/app/components/CommonBreadCrumb';
-import WorkflowEditorConfigureView from '@/app/components/WorkflowEditorConfigureView';
-import { useListToolInstancesQuery } from '@/app/tools/toolInstancesApi';
-import { useListTasksQuery } from '@/app/tasks/tasksApi';
-import { useListAgentsQuery } from '@/app/agents/agentApi';
+import WorkflowEditorConfigureView from '@/app/components/workflowEditor/WorkflowEditorConfigureView';
 import { clearedWorkflowApp } from '../workflowAppSlice';
 import { readWorkflowConfigurationFromLocalStorage } from '@/app/lib/localStorage';
 import { EditOutlined, SaveOutlined } from '@ant-design/icons';
 import { useGlobalNotification } from '@/app/components/Notifications';
 import { createUpdateRequestFromEditor } from '@/app/lib/workflow';
+import WorkflowAppTest from '@/app/components/workflowApp/WorkflowAppTest';
 
 const { Title } = Typography;
 
@@ -53,11 +50,6 @@ const CreateWorkflowContent: React.FC = () => {
   const currentStep = useAppSelector(selectEditorCurrentStep);
   const dispatch = useAppDispatch();
   const [getWorkflow] = useGetWorkflowMutation();
-  const router = useRouter();
-  const { data: workflow, refetch: refetchWorkflow } = useGetWorkflowByIdQuery(workflowId);
-  const { data: toolInstances } = useListToolInstancesQuery({});
-  const { data: tasks } = useListTasksQuery({});
-  const { data: agents } = useListAgentsQuery({});
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [updateWorkflow] = useUpdateWorkflowMutation();
   const notificationApi = useGlobalNotification();
@@ -211,23 +203,17 @@ const CreateWorkflowContent: React.FC = () => {
       >
         <WorkflowStepView />
         {currentStep === 'Agents' ? (
-          <WorkflowEditorAgentView />
+          <WorkflowEditorAgentView workflowId={workflowId} />
         ) : currentStep === 'Tasks' ? (
-          <WorkflowEditorTaskView />
+          <WorkflowEditorTaskView workflowId={workflowId} />
         ) : currentStep === 'Configure' ? (
-          <WorkflowEditorConfigureView />
+          <WorkflowEditorConfigureView workflowId={workflowId} />
         ) : currentStep === 'Test' ? (
-          <WorkflowApp
-            workflow={workflow}
-            refetchWorkflow={refetchWorkflow}
-            toolInstances={toolInstances}
-            agents={agents}
-            tasks={tasks}
-          />
+          <WorkflowAppTest workflowId={workflowId} />
         ) : (
-          <WorkflowOverview workflowId={workflowId!} />
+          <WorkflowOverview workflowId={workflowId} />
         )}
-        <WorkflowNavigation />
+        <WorkflowNavigation workflowId={workflowId} />
       </Layout>
     </Layout>
   );

@@ -12,7 +12,7 @@ import {
   DownloadOutlined,
 } from '@ant-design/icons';
 import { useParams, useRouter } from 'next/navigation';
-import WorkflowTemplateOverview from '@/app/components/WorkflowTemplateOverview';
+import WorkflowTemplateOverview from '@/app/components/workflows/WorkflowTemplateOverview';
 import {
   useGetWorkflowMutation,
   useRemoveWorkflowMutation,
@@ -24,7 +24,7 @@ import {
 import CommonBreadCrumb from '@/app/components/CommonBreadCrumb';
 import { resetEditor, updatedEditorStep } from '@/app/workflows/editorSlice';
 import { useAppDispatch } from '@/app/lib/hooks/hooks';
-import DeleteWorkflowModal from '@/app/components/DeleteWorkflowModal';
+import DeleteWorkflowModal from '@/app/components/workflows/DeleteWorkflowModal';
 import { useGlobalNotification } from '@/app/components/Notifications';
 import { Workflow, WorkflowTemplateMetadata } from '@/studio/proto/agent_studio';
 import {

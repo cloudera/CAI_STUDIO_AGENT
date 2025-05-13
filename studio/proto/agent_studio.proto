@@ -287,8 +287,8 @@ message RemoveToolTemplateResponse {
 
 // Messages for ListToolInstances
 message ListToolInstancesRequest {
-  // Optional workflow id
-  optional string workflow_id = 1;
+  // Mandatory workflow id
+  string workflow_id = 1;
 }
 
 message ListToolInstancesResponse {
@@ -369,8 +369,8 @@ message ToolInstance {
 
 // Agent Messages
 message ListAgentsRequest {
-  // Optional workflow id
-  optional string workflow_id = 1;
+  // Mandatory workflow id
+  string workflow_id = 1;
 }
 
 message ListAgentsResponse {
@@ -662,8 +662,8 @@ message AddTaskResponse {
 }
 
 message ListTasksRequest {
-  // Optional workflow id
-  optional string workflow_id = 1;
+  // Mandatory workflow id
+  string workflow_id = 1;
 }
 
 message ListTasksResponse {

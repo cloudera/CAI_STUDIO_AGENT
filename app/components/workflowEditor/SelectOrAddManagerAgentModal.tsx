@@ -20,19 +20,19 @@ import {
   useAddAgentMutation,
   useUpdateAgentMutation,
   useListAgentsQuery,
-} from '../agents/agentApi';
-import { useAppDispatch, useAppSelector } from '../lib/hooks/hooks';
+} from '../../agents/agentApi';
+import { useAppDispatch, useAppSelector } from '../../lib/hooks/hooks';
 import {
   selectEditorWorkflowId,
   updatedEditorWorkflowManagerAgentId,
   selectEditorWorkflow,
   updatedEditorWorkflowProcess,
-} from '../workflows/editorSlice';
+} from '../../workflows/editorSlice';
 import { AgentTemplateMetadata, AgentMetadata } from '@/studio/proto/agent_studio';
-import { useUpdateWorkflowMutation, useAddWorkflowMutation } from '../workflows/workflowsApi';
-import { createUpdateRequestFromEditor, createAddRequestFromEditor } from '../lib/workflow';
-import { useGlobalNotification } from './Notifications';
-import { useListModelsQuery, useGetModelMutation } from '../models/modelsApi';
+import { useUpdateWorkflowMutation, useAddWorkflowMutation } from '../../workflows/workflowsApi';
+import { createUpdateRequestFromEditor, createAddRequestFromEditor } from '../../lib/workflow';
+import { useGlobalNotification } from '../Notifications';
+import { useListModelsQuery, useGetModelMutation } from '../../models/modelsApi';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -251,11 +251,13 @@ const SelectManagerAgentComponent: React.FC<{
 };
 
 interface SelectOrAddManagerAgentModalProps {
+  workflowId: string;
   isOpen: boolean;
   onClose: () => void;
 }
 
 const SelectOrAddManagerAgentModal: React.FC<SelectOrAddManagerAgentModalProps> = ({
+  workflowId,
   isOpen,
   onClose,
 }) => {
@@ -263,7 +265,6 @@ const SelectOrAddManagerAgentModal: React.FC<SelectOrAddManagerAgentModalProps> 
   const [form] = Form.useForm();
   const [addAgent] = useAddAgentMutation();
   const [updateAgent] = useUpdateAgentMutation();
-  const workflowId = useAppSelector(selectEditorWorkflowId);
   const [selectedAgentTemplate, setSelectedAgentTemplate] = useState<AgentTemplateMetadata | null>(
     null,
   );
@@ -271,7 +272,7 @@ const SelectOrAddManagerAgentModal: React.FC<SelectOrAddManagerAgentModalProps> 
   const [addWorkflow] = useAddWorkflowMutation();
   const workflowState = useAppSelector(selectEditorWorkflow);
   const notificationApi = useGlobalNotification();
-  const { data: agents = [] } = useListAgentsQuery({});
+  const { data: agents = [] } = useListAgentsQuery({workflow_id: workflowId});
   const existingManagerAgent =
     agents.find((agent) => agent.id === workflowState.workflowMetadata.managerAgentId) || null;
   const { data: models = [] } = useListModelsQuery({});

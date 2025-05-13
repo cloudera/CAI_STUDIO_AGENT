@@ -8,15 +8,15 @@ import {
   useUndeployWorkflowMutation,
 } from '@/app/workflows/deployedWorkflowsApi';
 import WorkflowDetails from './WorkflowDetails';
-import { useAppDispatch } from '../lib/hooks/hooks';
-import { updatedEditorWorkflowFromExisting } from '../workflows/editorSlice';
+import { useAppDispatch } from '../../lib/hooks/hooks';
+import { updatedEditorWorkflowFromExisting } from '../../workflows/editorSlice';
 import { DeployedWorkflow } from '@/studio/proto/agent_studio';
-import { useGlobalNotification } from '../components/Notifications';
-import ErrorBoundary from './ErrorBoundary';
-import { useListToolInstancesQuery } from '../tools/toolInstancesApi';
-import { useListTasksQuery } from '../tasks/tasksApi';
-import { useListAgentsQuery } from '../agents/agentApi';
-import WorkflowDiagramView from './workflow/WorkflowDiagramView';
+import { useGlobalNotification } from '../Notifications';
+import ErrorBoundary from '../ErrorBoundary';
+import { useListToolInstancesQuery } from '../../tools/toolInstancesApi';
+import { useListTasksQuery } from '../../tasks/tasksApi';
+import { useListAgentsQuery } from '../../agents/agentApi';
+import WorkflowDiagramView from '../workflowApp/WorkflowDiagramView';
 
 interface WorkflowOverviewProps {
   workflowId: string;
@@ -31,9 +31,9 @@ const WorkflowOverview: React.FC<WorkflowOverviewProps> = ({ workflowId }) => {
   const { data: deployedWorkflows = [] } = useListDeployedWorkflowsQuery({});
   const [undeployWorkflow] = useUndeployWorkflowMutation();
   const notificationsApi = useGlobalNotification();
-  const { data: toolInstances } = useListToolInstancesQuery({});
-  const { data: tasks } = useListTasksQuery({});
-  const { data: agents } = useListAgentsQuery({});
+  const { data: toolInstances } = useListToolInstancesQuery({workflow_id: workflowId});
+  const { data: tasks } = useListTasksQuery({workflow_id: workflowId});
+  const { data: agents } = useListAgentsQuery({workflow_id: workflowId});
 
   useEffect(() => {
     const fetchWorkflow = async () => {
@@ -41,7 +41,7 @@ const WorkflowOverview: React.FC<WorkflowOverviewProps> = ({ workflowId }) => {
       setError(null);
 
       try {
-        const response = await getWorkflow({ workflow_id: workflowId! }).unwrap();
+        const response = await getWorkflow({ workflow_id: workflowId }).unwrap();
         setWorkflowDetails(response);
         dispatch(updatedEditorWorkflowFromExisting(response));
       } catch (err: any) {
@@ -155,6 +155,7 @@ const WorkflowOverview: React.FC<WorkflowOverviewProps> = ({ workflowId }) => {
             }}
           >
             <WorkflowDetails
+              workflowId={workflowId}
               workflow={workflowDetails}
               deployedWorkflows={deployedWorkflows}
               onDeleteDeployedWorkflow={handleDeleteDeployedWorkflow}

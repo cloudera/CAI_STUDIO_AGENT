@@ -17,38 +17,37 @@ import { useRouter } from 'next/navigation';
 import {
   Workflow,
   DeployedWorkflow,
-  AgentMetadata,
   WorkflowTemplateMetadata,
-  AgentTemplateMetadata,
 } from '@/studio/proto/agent_studio';
 import {
   useAddWorkflowMutation,
   useAddWorkflowTemplateMutation,
   useExportWorkflowTemplateMutation,
-} from '../workflows/workflowsApi';
-import { useGlobalNotification } from './Notifications';
-import { useAppDispatch } from '../lib/hooks/hooks';
-import { resetEditor } from '../workflows/editorSlice';
-import { clearedWorkflowApp } from '../workflows/workflowAppSlice';
-import { downloadAndSaveFile, downloadFile } from '../lib/fileDownload';
+} from '../../workflows/workflowsApi';
+import { useGlobalNotification } from '../Notifications';
+import { useAppDispatch } from '../../lib/hooks/hooks';
+import { resetEditor } from '../../workflows/editorSlice';
+import { clearedWorkflowApp } from '../../workflows/workflowAppSlice';
+import { downloadAndSaveFile, downloadFile } from '../../lib/fileDownload';
+import { useListAgentsQuery, useListAgentTemplatesQuery } from '@/app/agents/agentApi';
+import { useImageAssetsData } from '@/app/lib/hooks/useAssetData';
 
 const { Text } = Typography;
 
 interface WorkflowDisplayCardProps {
-  workflow?: Workflow;
-  agents?: AgentMetadata[];
+  workflow: Workflow;
   deployment?: DeployedWorkflow;
   sectionType: 'Deployed' | 'Draft' | 'Template';
-  agentIconsData: Record<string, string>;
 }
 
 const WorkflowDisplayCard: React.FC<WorkflowDisplayCardProps> = ({
   workflow,
-  agents,
   deployment,
   sectionType,
-  agentIconsData,
 }) => {
+  const { data: agents } = useListAgentsQuery({workflow_id: workflow.workflow_id});
+  const { imageData: agentIconsData } = useImageAssetsData(agents ? agents.map((_a) => _a.agent_image_uri) : []);
+
   const agentIconsColorPalette = ['#a9ccb9', '#cca9a9', '#c4a9cc', '#ccc7a9'];
 
   return (
@@ -105,13 +104,12 @@ const WorkflowDisplayCard: React.FC<WorkflowDisplayCardProps> = ({
             gap: '8px',
           }}
         >
-          {workflow?.crew_ai_workflow_metadata?.agent_id.map((agentId, index) => {
-            const agent = agents?.find((a) => a.id === agentId);
+          {agents?.map((agent, index) => {
             return (
               <Tooltip key={agent?.id || `agent-${index}`} title={agent?.name || 'Unknown'}>
                 <Button
                   style={{
-                    backgroundColor: agentIconsData[agent?.agent_image_uri || '']
+                    backgroundColor: agentIconsData[agent.agent_image_uri || '']
                       ? `${agentIconsColorPalette[index % agentIconsColorPalette.length]}80` // 50% opacity
                       : `${agentIconsColorPalette[index % agentIconsColorPalette.length]}c0`,
                     color: 'black',
@@ -149,16 +147,16 @@ const WorkflowDisplayCard: React.FC<WorkflowDisplayCardProps> = ({
 };
 
 interface WorkflowTemplateDisplayCardProps {
-  workflowTemplate?: WorkflowTemplateMetadata;
-  agentTemplates?: AgentTemplateMetadata[];
-  agentIconsData: Record<string, string>;
+  workflowTemplate: WorkflowTemplateMetadata;
 }
 
 const WorkflowTemplateDisplayCard: React.FC<WorkflowTemplateDisplayCardProps> = ({
   workflowTemplate,
-  agentTemplates,
-  agentIconsData,
 }) => {
+  const { data: agentTemplates } = useListAgentTemplatesQuery({workflow_template_id: workflowTemplate.id});
+  const { imageData: agentIconsData } = useImageAssetsData(
+    agentTemplates ? agentTemplates.map((_a) => _a.agent_image_uri) : []
+  );
   const agentIconsColorPalette = ['#a9ccb9', '#cca9a9', '#c4a9cc', '#ccc7a9'];
 
   return (
@@ -238,10 +236,7 @@ const WorkflowTemplateDisplayCard: React.FC<WorkflowTemplateDisplayCardProps> = 
 interface WorkflowListItemProps {
   workflow?: Workflow;
   workflowTemplate?: WorkflowTemplateMetadata;
-  agentTemplates?: AgentTemplateMetadata[];
   deployments?: (DeployedWorkflow & { statusTag?: React.ReactNode })[];
-  agents?: AgentMetadata[];
-  agentIconsData: Record<string, string>;
   editWorkflow?: (workflowId: string) => void;
   deleteWorkflow?: (workflowId: string) => void;
   deleteWorkflowTemplate?: (workflowTemplateId: string) => void;
@@ -294,10 +289,7 @@ export const getStatusDisplay = (status: string): string => {
 const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
   workflow,
   workflowTemplate,
-  agentTemplates,
   deployments,
-  agents,
-  agentIconsData,
   editWorkflow,
   deleteWorkflow,
   deleteWorkflowTemplate,
@@ -427,25 +419,22 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
           }}
           onClick={handleCardClick}
         >
-          {sectionType === 'Template' ? (
-            <>
-              <WorkflowTemplateDisplayCard
-                workflowTemplate={workflowTemplate}
-                agentTemplates={agentTemplates}
-                agentIconsData={agentIconsData}
-              />
-            </>
-          ) : (
-            <>
-              <WorkflowDisplayCard
-                workflow={workflow}
-                agents={agents}
-                deployment={deployments?.[0]}
-                sectionType={sectionType}
-                agentIconsData={agentIconsData}
-              />
-            </>
-          )}
+          {sectionType === 'Template' && workflowTemplate ? (
+            <WorkflowTemplateDisplayCard
+              workflowTemplate={workflowTemplate}
+            />
+          ) : sectionType === 'Deployed' && workflow && deployments?.[0] ? (
+            <WorkflowDisplayCard
+              workflow={workflow}
+              deployment={deployments?.[0]}
+              sectionType={sectionType}
+            />
+          ) : sectionType === 'Draft' && workflow ? (
+            <WorkflowDisplayCard
+              workflow={workflow}
+              sectionType={sectionType}
+            />
+          ) : (<>Cannot render workflow information.</>)}
           <Divider style={{ margin: '0' }} />
           <Layout
             style={{

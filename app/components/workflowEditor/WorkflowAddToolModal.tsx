@@ -47,15 +47,15 @@ import {
   selectEditorAgentViewCreateAgentState,
   updatedEditorAgentViewCreateAgentState,
 } from '@/app/workflows/editorSlice';
-import { useGlobalNotification } from './Notifications'; // Import the notification hook
+import { useGlobalNotification } from '../Notifications'; // Import the notification hook
 import {
   useListToolInstancesQuery,
   useCreateToolInstanceMutation,
   useUpdateToolInstanceMutation,
 } from '@/app/tools/toolInstancesApi';
-import { useUpdateAgentMutation, useListAgentsQuery } from '../agents/agentApi';
-import { uploadFile } from '../lib/fileUpload';
-import { useGetParentProjectDetailsQuery } from '../lib/crossCuttingApi';
+import { useUpdateAgentMutation, useListAgentsQuery } from '../../agents/agentApi';
+import { uploadFile } from '../../lib/fileUpload';
+import { useGetParentProjectDetailsQuery } from '../../lib/crossCuttingApi';
 import { defaultToolPyCode, defaultRequirementsTxt } from '@/app/utils/defaultToolCode'; // Import default code
 import { renderAlert } from '@/app/lib/alertUtils';
 
@@ -63,11 +63,12 @@ const { Text } = Typography;
 const { TextArea } = Input;
 
 interface WorkflowAddToolModalProps {
+  workflowId: string;
   open: boolean;
   onCancel: () => void;
 }
 
-const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ open, onCancel }) => {
+const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId, open, onCancel }) => {
   const { data: toolTemplates = [], refetch } = useListGlobalToolTemplatesQuery({});
   const { data: parentProjectDetails } = useGetParentProjectDetailsQuery({});
   const [selectedToolTemplate, setSelectedToolTemplate] = useState<string | null>(null);
@@ -75,7 +76,6 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ open, onCan
   const [loading, setLoading] = useState<boolean>(false);
   const [addToolTemplate] = useAddToolTemplateMutation();
   const workflowName = useSelector(selectEditorWorkflowName);
-  const workflowId = useSelector(selectEditorWorkflowId);
   const listRef = useRef<HTMLDivElement>(null);
   const dispatch = useDispatch();
   const existingToolTemplateIds = useSelector(selectEditorAgentViewCreateAgentToolTemplates) || [];
@@ -83,11 +83,11 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ open, onCan
   const [isCreateSelected, setIsCreateSelected] = useState(false);
   const [selectedToolInstance, setSelectedToolInstance] = useState<string | null>(null);
   const createAgentState = useSelector(selectEditorAgentViewCreateAgentState);
-  const { data: toolInstancesList = [] } = useListToolInstancesQuery({});
+  const { data: toolInstancesList = [] } = useListToolInstancesQuery({workflow_id: workflowId});
   const [createToolInstance] = useCreateToolInstanceMutation();
   const [selectedAssignedAgent, setSelectedAssignedAgent] = useState<any>(null);
   const [updateAgent] = useUpdateAgentMutation();
-  const { data: agents = [] } = useListAgentsQuery({});
+  const { data: agents = [] } = useListAgentsQuery({workflow_id: workflowId});
   const [uploadedFilePath, setUploadedFilePath] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setUploading] = useState(false);

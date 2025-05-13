@@ -1,4 +1,4 @@
-import { useAppDispatch, useAppSelector } from '../lib/hooks/hooks';
+import { useAppDispatch, useAppSelector } from '../../lib/hooks/hooks';
 import {
   selectEditorWorkflow,
   selectEditorWorkflowIsConversational,
@@ -8,7 +8,7 @@ import {
   addedEditorWorkflowTask,
   removedEditorWorkflowTask,
   selectEditorWorkflowProcess,
-} from '../workflows/editorSlice';
+} from '../../workflows/editorSlice';
 import {
   Alert,
   Button,
@@ -36,18 +36,18 @@ import {
   WarningOutlined,
   SaveOutlined,
 } from '@ant-design/icons';
-import { useListAgentsQuery } from '../agents/agentApi';
+import { useListAgentsQuery } from '../../agents/agentApi';
 import { AgentMetadata, RemoveTaskRequest } from '@/studio/proto/agent_studio';
 import {
   useListTasksQuery,
   useRemoveTaskMutation,
   useAddTaskMutation,
   useUpdateTaskMutation,
-} from '../tasks/tasksApi';
-import { useUpdateWorkflowMutation } from '../workflows/workflowsApi';
+} from '../../tasks/tasksApi';
+import { useUpdateWorkflowMutation } from '../../workflows/workflowsApi';
 import { useState } from 'react';
-import { createUpdateRequestFromEditor, createAddRequestFromEditor } from '../lib/workflow';
-import { useGlobalNotification } from './Notifications';
+import { createUpdateRequestFromEditor, createAddRequestFromEditor } from '../../lib/workflow';
+import { useGlobalNotification } from '../Notifications';
 import React from 'react';
 const { Text } = Typography;
 
@@ -68,13 +68,17 @@ const getTagColor = (agentName: string): string => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-const AlertsComponent: React.FC = () => {
+interface AlertsComponentProps {
+  workflowId: string;
+}
+
+const AlertsComponent: React.FC<AlertsComponentProps> = ({workflowId}) => {
   const isConversational = useAppSelector(selectEditorWorkflowIsConversational);
   const managerAgentId = useAppSelector(selectEditorWorkflowManagerAgentId);
   const process = useAppSelector(selectEditorWorkflowProcess);
   const hasManagerAgent: boolean = process === 'hierarchical';
   const workflowTaskIds = useAppSelector(selectEditorWorkflowTaskIds) || [];
-  const { data: tasks } = useListTasksQuery({});
+  const { data: tasks } = useListTasksQuery({workflow_id: workflowId});
 
   const hasUnassignedTasks = workflowTaskIds.some((taskId) => {
     const task = tasks?.find((t) => t.task_id === taskId);
@@ -189,7 +193,13 @@ const AlertsComponent: React.FC = () => {
   );
 };
 
-const WorkflowTasksComponent: React.FC = () => {
+
+interface WorkflowTasksComponentProps {
+  workflowId: string;
+}
+
+
+const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({workflowId}) => {
   const alertStyle = {
     alignItems: 'flex-start',
     justifyContent: 'flex-start',
@@ -207,8 +217,8 @@ const WorkflowTasksComponent: React.FC = () => {
   can either be manually assigned to an agent, or a "Manager Agent" can delegate
   these tasks as seen fit.
   `;
-  const { data: tasks } = useListTasksQuery({});
-  const { data: agents } = useListAgentsQuery({});
+  const { data: tasks } = useListTasksQuery({workflow_id: workflowId});
+  const { data: agents } = useListAgentsQuery({workflow_id: workflowId});
   const workflowTaskIds = useAppSelector(selectEditorWorkflowTaskIds) || [];
   const workflowAgentIds = useAppSelector(selectEditorWorkflow).workflowMetadata.agentIds || [];
   const dispatch = useAppDispatch();
@@ -378,7 +388,7 @@ const WorkflowTasksComponent: React.FC = () => {
 
   return (
     <>
-      <AlertsComponent />
+      <AlertsComponent workflowId={workflowId} />
       <Layout
         style={{
           gap: '10px',
@@ -729,7 +739,11 @@ const WorkflowTasksComponent: React.FC = () => {
   );
 };
 
-const WorkflowEditorInputs: React.FC = () => {
+interface WorklfowEditorInputsProps {
+  workflowId: string;
+}
+
+const WorkflowEditorInputs: React.FC<WorklfowEditorInputsProps> = ({workflowId}) => {
   return (
     <>
       <Layout
@@ -745,7 +759,7 @@ const WorkflowEditorInputs: React.FC = () => {
           overflow: 'auto',
         }}
       >
-        <WorkflowTasksComponent />
+        <WorkflowTasksComponent workflowId={workflowId} />
       </Layout>
     </>
   );

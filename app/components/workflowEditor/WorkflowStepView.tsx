@@ -1,5 +1,5 @@
-import { useAppSelector } from '../lib/hooks/hooks';
-import { selectEditorCurrentStep } from '../workflows/editorSlice';
+import { useAppSelector } from '../../lib/hooks/hooks';
+import { selectEditorCurrentStep } from '../../workflows/editorSlice';
 import { Avatar, Divider, Layout } from 'antd';
 import { Typography } from 'antd/lib';
 const { Text } = Typography;
