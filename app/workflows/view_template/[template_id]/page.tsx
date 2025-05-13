@@ -14,67 +14,42 @@ import {
 import { useParams, useRouter } from 'next/navigation';
 import WorkflowTemplateOverview from '@/app/components/workflows/WorkflowTemplateOverview';
 import {
-  useGetWorkflowMutation,
-  useRemoveWorkflowMutation,
-  useDeployWorkflowMutation,
   useAddWorkflowTemplateMutation,
   useAddWorkflowMutation,
   useExportWorkflowTemplateMutation,
+  useGetWorkflowTemplateByIdQuery,
 } from '@/app/workflows/workflowsApi';
 import CommonBreadCrumb from '@/app/components/CommonBreadCrumb';
 import { resetEditor, updatedEditorStep } from '@/app/workflows/editorSlice';
 import { useAppDispatch } from '@/app/lib/hooks/hooks';
 import DeleteWorkflowModal from '@/app/components/workflows/DeleteWorkflowModal';
 import { useGlobalNotification } from '@/app/components/Notifications';
-import { Workflow, WorkflowTemplateMetadata } from '@/studio/proto/agent_studio';
 import {
-  useGetWorkflowTemplateMutation,
   useRemoveWorkflowTemplateMutation,
 } from '@/app/workflows/workflowsApi';
 import { downloadAndSaveFile } from '@/app/lib/fileDownload';
 
 const { Title } = Typography;
 
-const WorkflowTemplatePage: React.FC = () => {
-  const params = useParams();
-  const templateId = Array.isArray(params?.template_id)
-    ? params.template_id[0]
-    : params?.template_id;
 
+interface WorkflowTemplateContentProps {
+  templateId: string;
+}
+
+const WorkflowTemplateContent: React.FC<WorkflowTemplateContentProps> = ({templateId}) => {
+  const { data: template, isLoading: loading } = useGetWorkflowTemplateByIdQuery(templateId);
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const [getWorkflowTemplate] = useGetWorkflowTemplateMutation();
   const [removeWorkflowTemplate] = useRemoveWorkflowTemplateMutation();
   const notificationApi = useGlobalNotification();
-  const [templateName, setTemplateName] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [template, setTemplate] = useState<WorkflowTemplateMetadata | null>(null);
   const [addWorkflowTemplate] = useAddWorkflowTemplateMutation();
   const [addWorkflow] = useAddWorkflowMutation();
   const [exportWorkflowTemplate] = useExportWorkflowTemplateMutation();
   const [downloadingTemplate, setDownloadingTemplate] = useState(false);
+  const templateName = template?.name;
 
-  useEffect(() => {
-    if (!templateId) return;
-
-    const fetchTemplateData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const templateData = await getWorkflowTemplate({ id: templateId }).unwrap();
-        setTemplate(templateData);
-        setTemplateName(templateData.name);
-      } catch (err: any) {
-        setError(err.message || 'Failed to fetch workflow template.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTemplateData();
-  }, [templateId, getWorkflowTemplate]);
 
   const handleDeleteTemplate = async () => {
     if (!template) return;
@@ -179,17 +154,6 @@ const WorkflowTemplatePage: React.FC = () => {
     }] : []),
   ];
 
-  if (!templateId) {
-    return (
-      <Alert
-        message="Error"
-        description="No template ID provided in the route."
-        type="error"
-        showIcon
-      />
-    );
-  }
-
   if (loading) {
     return (
       <Layout
@@ -219,7 +183,9 @@ const WorkflowTemplatePage: React.FC = () => {
     );
   }
 
-  return (
+
+
+  return (<>
     <Layout style={{ flex: 1, padding: '16px 24px 22px', flexDirection: 'column' }}>
       <CommonBreadCrumb
         items={[{ title: 'Workflows', href: '/workflows' }, { title: 'View Template' }]}
@@ -236,7 +202,7 @@ const WorkflowTemplatePage: React.FC = () => {
         }}
       >
         <Title level={4} style={{ margin: 0 }}>
-          {templateName || 'Unknown Template'}
+          {template?.name || 'Unknown Template'}
         </Title>
         <Dropdown
           menu={{ items: menuItems, onClick: handleMenuClick }}
@@ -271,6 +237,30 @@ const WorkflowTemplatePage: React.FC = () => {
         workflowTemplateId={templateId as string}
       />
     </Layout>
+  </>)
+}
+
+
+
+const WorkflowTemplatePage: React.FC = () => {
+  const params = useParams();
+  const templateId = Array.isArray(params?.template_id)
+    ? params.template_id[0]
+    : params?.template_id;
+
+  if (!templateId) {
+    return (
+      <Alert
+        message="Error"
+        description="No template ID provided in the route."
+        type="error"
+        showIcon
+      />
+    );
+  }
+
+  return (
+    <WorkflowTemplateContent templateId={templateId} />
   );
 };
 

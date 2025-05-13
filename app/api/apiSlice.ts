@@ -5,7 +5,7 @@ export const TagTypes = [
   'Ops',
   'Workflow',
   'Agent',
-  'Tool',
+  'ToolInstance',
   'Task',
   'WorkflowTemplate',
   'AgentTemplate',

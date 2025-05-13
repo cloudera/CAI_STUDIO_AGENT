@@ -12,7 +12,7 @@
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/graph.png"
     },
     {
-      "id": "abcdd1d9-abcd-4b89-bbbb-6934c8d9010",
+      "id": "610f1fce-8ddc-43c9-8b36-cb734409d3b5",
       "name": "Calculator Tool",
       "python_code_file_name": "tool.py",
       "python_requirements_file_name": "requirements.txt",
@@ -22,7 +22,7 @@
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/calculator.png"
     },
     {
-      "id": "dfedd1d9-6b90-4b89-98a2-6934c8dcc077",
+      "id": "12835c8c-8aa0-4978-9013-bad482c6989d",
       "name": "Jira Integration Tool",
       "python_code_file_name": "tool.py",
       "python_requirements_file_name": "requirements.txt",
@@ -32,7 +32,7 @@
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/jira.png"
     },
     {
-      "id": "5d61f046-425c-4b89-b023-a9ed53b048aa",
+      "id": "b9e6db70-0f8e-4102-9542-f3fad7bb3fbc",
       "name": "Web Search Tool",
       "python_code_file_name": "tool.py",
       "python_requirements_file_name": "requirements.txt",
@@ -42,7 +42,7 @@
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/internet.png"
     },
     {
-      "id": "2cbafffb-f874-4505-a7d0-c13990be8bef",
+      "id": "576cc193-8e10-4b11-b551-4935b8ca6c69",
       "name": "Webpage Scraper Tool",
       "python_code_file_name": "tool.py",
       "python_requirements_file_name": "requirements.txt",
@@ -52,7 +52,7 @@
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/web-crawler.png"
     },
     {
-      "id": "0d65d035-30ff-45a8-98c6-be307feba1af",
+      "id": "6f4e3653-7d53-4108-8910-01024b8080e4",
       "name": "Email Tool",
       "python_code_file_name": "tool.py",
       "python_requirements_file_name": "requirements.txt",
@@ -62,7 +62,17 @@
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/mail.png"
     },
     {
-      "id": "a17c9f25-4b8e-4d2b-b6e1-49dcf2a7a5d8",
+      "id": "79502d03-05ea-4043-abff-42a00c6945e6",
+      "name": "Email Tool",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/email_tool",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/mail.png"
+    },
+    {
+      "id": "5b2d9315-2624-47ec-8a4e-ccae3da3e868",
       "name": "Slack Tool",
       "python_code_file_name": "tool.py",
       "python_requirements_file_name": "requirements.txt",
@@ -70,6 +80,216 @@
       "pre_built": true,
       "is_venv_tool": true,
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/slack.png"
+    },
+    {
+      "id": "04d4a591-281f-4a58-a330-781a59638264",
+      "name": "Calendar Tool",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/calendar_tool",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/calendar_icon.png"
+    },
+    {
+      "id": "37ec4e49-cec5-4c3c-8592-df6605caf8c0",
+      "name": "Pdf Tool",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/pdf_tool",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/pdf.png"
+    },
+    {
+      "id": "2c736b60-e6fa-44a4-a1ce-5d5c599b69e0",
+      "name": "File Read Tool",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/fileread_tool",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/google-docs.png"
+    },
+    {
+      "id": "fa420946-9e0d-4959-b9e1-e57decc32af5",
+      "name": "Directory Read Tool",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/directoryread_tool",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/folder.png"
+    },
+    {
+      "id": "9e035f5d-7221-42ee-a0f0-784380b07832",
+      "name": "CDF HuggingFace Readyflow Deploy",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/cdf_readyflow_deploy_hf_tool",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/cdf_icon.png"
+    },
+    {
+      "id": "6ec579d2-2446-4644-9c53-5aab6ec37410",
+      "name": "CDV Dataset Creation Tool",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/cdv_dataset_tool",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/cdv_icon.png"
+    },
+    {
+      "id": "eb6a3fc0-f7dd-4233-b371-ec2b9cf44ff9",
+      "name": "CDV Smart Visual Tool",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/cdv_smart_visual_tool",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/cdv_icon.png"
+    },
+    {
+      "id": "6e26dfbd-f49b-4bce-9588-29a6b1097809",
+      "name": "CDW Hive Table from S3 Parquet",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/cdw_hive_from_s3_parquet",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/hive_icon.png"
+    },
+    {
+      "id": "ae1c0e16-6c61-4baf-80a5-d5c15369c297",
+      "name": "Stock Ticker History Lookup Tool",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/fsi_timeseries_stock_tool",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/yfinance.png"
+    },
+    {
+      "id": "62855566-f0a1-4710-a1b4-c30efa23cc7a",
+      "name": "Investment Portfolio Optimization Tool",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/fsi_portfolio_optimization_tool",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/graph.png"
+    },
+    {
+      "id": "abcdd1d9-abcd-4b89-bbbb-6934c8d9010",
+      "name": "Calculator Tool",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/calculator",
+      "is_venv_tool": true,
+      "pre_built": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/calculator.png",
+      "workflow_template_id": "acce204a-f085-4962-820c-131b1b7b2a40"
+    },
+    {
+      "id": "dfedd1d9-6b90-4b89-98a2-6934c8dcc077",
+      "name": "Jira Integration Tool",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/jira_integration",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/jira.png",
+      "workflow_template_id": "129960de-f9aa-4c4f-9111-f9c8a931bb44"
+    },
+    {
+      "id": "5d61f046-425c-4b89-b023-a9ed53b048aa",
+      "name": "Web Search Tool",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/search_internet",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/internet.png",
+      "workflow_template_id": "129960de-f9aa-4c4f-9111-f9c8a931bb44"
+    },
+    {
+      "id": "f85701f0-b093-4d41-98cc-972477350347",
+      "name": "Web Search Tool",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/search_internet",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/internet.png",
+      "workflow_template_id": "a77aed0a-7d43-48ec-9495-8728dd97e66d"
+    },
+    {
+      "id": "6b3d9e81-5bad-4ecb-b274-ff5d7ad638f3",
+      "name": "Web Search Tool",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/search_internet",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/internet.png",
+      "workflow_template_id": "6eccbfa6-66f9-418a-bc6c-74516ac8219d"
+    },
+    {
+      "id": "2cbafffb-f874-4505-a7d0-c13990be8bef",
+      "name": "Webpage Scraper Tool",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/scrape_website",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/web-crawler.png",
+      "workflow_template_id": "129960de-f9aa-4c4f-9111-f9c8a931bb44"
+    },
+    {
+      "id": "0d65d035-30ff-45a8-98c6-be307feba1af",
+      "name": "Email Tool",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/email_tool",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/mail.png",
+      "workflow_template_id": "po90dff2-703a-43f0-847d-e2647595dde2"
+    },
+    {
+      "id": "c023ea4d-d6a0-4dc6-8db9-655679dbbc03",
+      "name": "Email Tool",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/email_tool",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/mail.png",
+      "workflow_template_id": "13508ed8-b164-4af3-8f6e-2b91a72d1f68"
+    },
+    {
+      "id": "2188c698-50d2-43f4-9759-813888e03b0e",
+      "name": "Email Tool",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/email_tool",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/mail.png",
+      "workflow_template_id": "4274629b-159e-4434-b779-93442528f71e"
+    },
+    {
+      "id": "a17c9f25-4b8e-4d2b-b6e1-49dcf2a7a5d8",
+      "name": "Slack Tool",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/slack_tool",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/slack.png",
+      "workflow_template_id": "4274629b-159e-4434-b779-93442528f71e"
     },
     {
       "id": "e6f2c85b-548a-4079-8b50-c450d5b2ccc2",
@@ -89,7 +309,8 @@
       "source_folder_path": "studio-data/tool_templates/pdf_tool",
       "pre_built": true,
       "is_venv_tool": true,
-      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/pdf.png"
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/pdf.png",
+      "workflow_template_id": "po90dff2-703a-43f0-847d-e2647595dde2"
     },
     {
       "id": "2159600d-p09c-5524-af42-9911e05dd017",
@@ -99,7 +320,8 @@
       "source_folder_path": "studio-data/tool_templates/fileread_tool",
       "pre_built": true,
       "is_venv_tool": true,
-      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/google-docs.png"
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/google-docs.png",
+      "workflow_template_id": "po90dff2-703a-43f0-847d-e2647595dde2"
     },
     {
       "id": "2159600d-p09c-5524-af32-9922e05dd017",
@@ -109,7 +331,8 @@
       "source_folder_path": "studio-data/tool_templates/directoryread_tool",
       "pre_built": true,
       "is_venv_tool": true,
-      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/folder.png"
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/folder.png",
+      "workflow_template_id": "po90dff2-703a-43f0-847d-e2647595dde2"
     },
     {
       "id": "fd2caa76-ddc8-4049-b0cc-a4ca84310a78",
@@ -119,7 +342,8 @@
       "source_folder_path": "studio-data/tool_templates/cdf_readyflow_deploy_hf_tool",
       "pre_built": true,
       "is_venv_tool": true,
-      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/cdf_icon.png"
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/cdf_icon.png",
+      "workflow_template_id": "13508ed8-b164-4af3-8f6e-2b91a72d1f68"
     },
     {
       "id": "64d862d6-cc46-4785-bc5f-b51c4cc26f21",
@@ -129,7 +353,8 @@
       "source_folder_path": "studio-data/tool_templates/cdv_dataset_tool",
       "pre_built": true,
       "is_venv_tool": true,
-      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/cdv_icon.png"
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/cdv_icon.png",
+      "workflow_template_id": "4274629b-159e-4434-b779-93442528f71e"
     },
     {
       "id": "948f6229-5806-443e-bee9-ab6dc31cb7fa",
@@ -139,7 +364,8 @@
       "source_folder_path": "studio-data/tool_templates/cdv_smart_visual_tool",
       "pre_built": true,
       "is_venv_tool": true,
-      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/cdv_icon.png"
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/cdv_icon.png",
+      "workflow_template_id": "4274629b-159e-4434-b779-93442528f71e"
     },
     {
       "id": "f142c82a-eb45-483a-95cc-56876bda8a31",
@@ -149,7 +375,8 @@
       "source_folder_path": "studio-data/tool_templates/cdw_hive_from_s3_parquet",
       "pre_built": true,
       "is_venv_tool": true,
-      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/hive_icon.png"
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/hive_icon.png",
+      "workflow_template_id": "4274629b-159e-4434-b779-93442528f71e"
     },
     {
       "id": "a6d9699f-93b9-4f69-bedc-f261c171bedd",
@@ -159,7 +386,8 @@
       "source_folder_path": "studio-data/tool_templates/fsi_timeseries_stock_tool",
       "pre_built": true,
       "is_venv_tool": true,
-      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/yfinance.png"
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/yfinance.png",
+      "workflow_template_id": "6eccbfa6-66f9-418a-bc6c-74516ac8219d"
     },
     {
       "id": "4231985c-cd71-4ead-abfc-547fa9d596ec",
@@ -169,7 +397,8 @@
       "source_folder_path": "studio-data/tool_templates/fsi_portfolio_optimization_tool",
       "pre_built": true,
       "is_venv_tool": true,
-      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/graph.png"
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/graph.png",
+      "workflow_template_id": "6eccbfa6-66f9-418a-bc6c-74516ac8219d"
     },
     {
       "id": "c5c7704b-f816-4ba1-9f10-5e532764acb8",
@@ -179,7 +408,8 @@
       "source_folder_path": "studio-data/tool_templates/fsi_sample_portfolio_lookup_tool",
       "pre_built": true,
       "is_venv_tool": true,
-      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/guide.png"
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/guide.png",
+      "workflow_template_id": "6eccbfa6-66f9-418a-bc6c-74516ac8219d"
     },
     {
       "id": "5f27c552-4837-4e39-9e61-9c63448cca09",
@@ -189,7 +419,8 @@
       "source_folder_path": "studio-data/tool_templates/fsi_customer_profile_lookup_tool",
       "pre_built": true,
       "is_venv_tool": true,
-      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/partners.png"
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/partners.png",
+      "workflow_template_id": "6eccbfa6-66f9-418a-bc6c-74516ac8219d"
     }
   ],
   "task_templates": [
@@ -197,19 +428,22 @@
       "id": "ee39afd9-336b-462b-b422-78111bbbe198",
       "name": "Basic conversational task",
       "description": "Respond to the user's message: '{user_input}'. Conversation history:\n{context}.",
-      "expected_output": "Provide a response that aligns with the conversation history."
+      "expected_output": "Provide a response that aligns with the conversation history.",
+      "workflow_template_id": "129960de-f9aa-4c4f-9111-f9c8a931bb44"
     },
     {
       "id": "c68bc9b4-078a-4782-a49d-0d94c7c872c5",
       "name": "Basic conversational task",
       "description": "Respond to the user's message: '{user_input}'. Conversation history:\n{context}.",
-      "expected_output": "Provide a response that aligns with the conversation history."
+      "expected_output": "Provide a response that aligns with the conversation history.",
+      "workflow_template_id": "6eccbfa6-66f9-418a-bc6c-74516ac8219d"
     },
     {
       "id": "861fbb3e-73e7-4a47-99d3-8b7d3df20ce3",
       "name": "Basic conversational task",
       "description": "Respond to the user's message: '{user_input}'. Conversation history:\n{context}.",
-      "expected_output": "Provide a response that aligns with the conversation history."
+      "expected_output": "Provide a response that aligns with the conversation history.",
+      "workflow_template_id": "4274629b-159e-4434-b779-93442528f71e"
     },
     {
       "id": "861ffb3e-73e7-4a47-99d3-8b7d3df20c43",
@@ -236,10 +470,18 @@
     {
       "id": "a5f8bfc8-646f-460e-8872-34ce803a6152",
       "name": "Conversation task",
-      "workflow_template_id": "ab79fdf2-703a-43f0-847d-e2647595dde2",
+      "workflow_template_id": "db79fdf2-703a-43f0-847d-e2647595dde2",
       "description": "User's message: '{user_input}'.\n\nConversation history:\n{context}.\n\nYou need to first analyse user message, and check if it aligns with any intended user action from last message in Conversation history.\nIf yes then give the apt response, if no then give the response without focusing on conversation history",
       "expected_output": "The output should be well structured and visually appealing.",
       "assigned_agent_template_id": "bc7e5cb3-815d-47a7-af05-c6da6dba94b3"
+    },
+    {
+      "id": "a5f8bfc8-646f-460e-8872-34ce803a6152",
+      "name": "Conversation task",
+      "workflow_template_id": "ab79fdf2-703a-43f0-847d-e2647595dde2",
+      "description": "User's message: '{user_input}'.\n\nConversation history:\n{context}.\n\nYou need to first analyse user message, and check if it aligns with any intended user action from last message in Conversation history.\nIf yes then give the apt response, if no then give the response without focusing on conversation history",
+      "expected_output": "The output should be well structured and visually appealing.",
+      "assigned_agent_template_id": "9c3c087c-e9c2-47b1-b8f5-4f2faf30d44a"
     },
     {
       "id": "e5883a10-8293-4e6f-9d0d-8156bdf87aa6",
@@ -307,7 +549,8 @@
         "abcdd1d9-abcd-4b89-bbbb-6934c8d9010"
       ],
       "pre_packaged": true,
-      "agent_image_path": ""
+      "agent_image_path": "",
+      "workflow_template_id": "acce204a-f085-4962-820c-131b1b7b2a40"
     },
     {
       "id": "0ba29977-5441-49e7-a776-1b1dea0edaaf",
@@ -326,7 +569,8 @@
         "2cbafffb-f874-4505-a7d0-c13990be8bef"
       ],
       "pre_packaged": true,
-      "agent_image_path": "studio-data/dynamic_assets/agent_template_icons/internet.png"
+      "agent_image_path": "studio-data/dynamic_assets/agent_template_icons/internet.png",
+      "workflow_template_id": "129960de-f9aa-4c4f-9111-f9c8a931bb44"
     },
     {
       "id": "e4195dfd-fae5-453c-8b66-5367173964ef",
@@ -344,7 +588,8 @@
         "dfedd1d9-6b90-4b89-98a2-6934c8dcc077"
       ],
       "pre_packaged": true,
-      "agent_image_path": "studio-data/dynamic_assets/agent_template_icons/jira.png"
+      "agent_image_path": "studio-data/dynamic_assets/agent_template_icons/jira.png",
+      "workflow_template_id": "129960de-f9aa-4c4f-9111-f9c8a931bb44"
     },
     {
       "id": "5db2f37c-e36e-4fa5-95bf-3bfe8bbfc681",
@@ -360,7 +605,8 @@
       "max_iter": 10,
       "tool_template_ids": [],
       "pre_packaged": true,
-      "agent_image_path": ""
+      "agent_image_path": "",
+      "workflow_template_id": "129960de-f9aa-4c4f-9111-f9c8a931bb44"
     },
     {
       "id": "4d84a505-430c-4d39-95e2-afe64d7cecf9",
@@ -376,7 +622,8 @@
       "max_iter": 10,
       "tool_template_ids": [],
       "pre_packaged": true,
-      "agent_image_path": ""
+      "agent_image_path": "",
+      "workflow_template_id": "db79fdf2-703a-43f0-847d-e2647595dde2"
     },
     {
       "id": "14296df9-f03b-4729-aa5d-2c334c071e51",
@@ -392,7 +639,8 @@
       "max_iter": 10,
       "tool_template_ids": [],
       "pre_packaged": true,
-      "agent_image_path": ""
+      "agent_image_path": "",
+      "workflow_template_id": "db79fdf2-703a-43f0-847d-e2647595dde2"
     },
     {
       "id": "a4d71bcc-094f-4870-89a1-bfcc20e78b61",
@@ -408,7 +656,8 @@
       "max_iter": 10,
       "tool_template_ids": [],
       "pre_packaged": true,
-      "agent_image_path": ""
+      "agent_image_path": "",
+      "workflow_template_id": "db79fdf2-703a-43f0-847d-e2647595dde2"
     },
     {
       "id": "bc7e5cb3-815d-47a7-af05-c6da6dba94b3",
@@ -423,7 +672,24 @@
       "temperature": 0.1,
       "max_iter": 10,
       "tool_template_ids": [],
-      "pre_packaged": true
+      "pre_packaged": true,
+      "workflow_template_id": "db79fdf2-703a-43f0-847d-e2647595dde2"
+    },
+    {
+      "id": "9c3c087c-e9c2-47b1-b8f5-4f2faf30d44a",
+      "name": "Cloudera Manufacturing industry Analyst",
+      "description": "",
+      "role": "Sales and Account Analyst team at Cloudera, focusing on the Manufacturing industry",
+      "backstory": "Role Overview: \nYou are a member of the Sales and Account Analyst team at Cloudera, focusing on the Manufacturing industry. Your responsibilities include: \n\u25cf Creating Revenue Growth Ideas: Generate potential or hypothetical new sales opportunities for the Account teams at Cloudera. \n\u25cf Company Analysis: Provide analysis to expand Cloudera's footprint at existing companies or to secure new deals with potential prospect accounts. \u25cf Opportunity Discovery: Uncover challenges or potential opportunities for the Cloudera account team to close new business with prospective companies. \u25cf Account Plan Research: Provide research and analysis to complete a comprehensive account plan using Altify from Upland Software. \n",
+      "goal": "Top Ten Use Cases for Digital Transformation in Manufacturing: \nCost Management Focus: \n1. Demand Optimization: Identify real-time demand variations and align planning accordingly. \n2. Remote Asset Management: Continuously monitor equipment health and provide remote diagnostics for customer products. \n3. Quality/Yield Analytics: Identify when processes or equipment shift out of specifications and spot quality outliers. \n4. Predictive Maintenance: Avoid unplanned plant downtime due to equipment failure and reduce asset replacement costs. \n5. Energy Optimization: Real-time monitoring of energy usage and improved energy usage forecasting. \nGrowth/Revenue Focus: \n6. Warranty Analytics: Identify quality and safety issues with products and optimize warranty policies. \n7. Track and Trace: Manage material flow, track delivery and condition of products, and optimize logistics activities. \n8. Remote Diagnostics: Remotely identify and assess equipment issues as they arise and provide timely recommendations. \n9. User Experience: Provide an improved and personalized customer experience and gather insights into product usage and customer habits. \n10. Supply Chain Risk: Balance stock levels, trigger the use of alternative vendors, and optimize costs and order sizes.\n\nInstructions: \n\nPrepare a comprehensive, meticulously detailed, and visually well-organized report that thoroughly covers all topics, subtopics, and tasks outlined below without any omissions. Ensure the report is exhaustive yet concise, addressing every aspect in depth. Deliver the complete report in a single submission, making it as extensive and detailed as possible while strictly adhering to all provided instructions. For tasks 1 through 7, include every detail of each subtopic with the highest level of granularity and structure. Additionally, include all relevant links and sources for the information gathered, ensuring they are cited in the appropriate sections of the report.\nWhen provided with a company name, perform comprehensive account research by analyzing the following sources and any other verifiable, publicly available information. Use the research to find strategies, goals, and initiatives. Review earnings releases, analyst reviews, social media, news sources, indications of mergers/acquisitions, the company's website, and trade journals. \nSources to Analyze: \n\u25cf Financial Documents: Annual and Quarterly Reports, 10-K Reports (use the most recent filings to gather up-to-date information). \n\u25cf Public Communications: Earnings Releases, Analyst Reviews, Social Media, News Articles. \n\u25cf Company Resources: Official Website, Trade Journals. \n\u25cf Industry Engagement: Participation in relevant data conferences or collaborations. \nResearch Focus Areas: \n1. Operational Issues: Identify delays, customer complaints, cost-cutting measures, etc. \n2. Strategic Issues: Explore expansions into new markets, new products/technology, transformations, leadership changes, mergers/acquisitions. \n3. Outside Pressures: Assess regulatory changes, compliance fines, competitor actions. \n4. Activity in Our Domain: Determine participation in relevant data conferences, collaborations, and adoption of advanced analytics. \nOutput Requirements: \nPlease complete the following tasks for [Company Name]. \nExecutive Summary \n\nExplain Executive Summary  thoroughly, ensuring every point mentioned below is addressed in detail. Be as comprehensive as possible\n\u25cf Provide a brief overview of the company's current state and key opportunities for Cloudera. \n\u25cf Highlight the most critical findings from the research that align with Cloudera\u2019s use cases in the Manufacturing industry.\n\u25cf Emphasize opportunities for Cloudera to support the company's digital transformation. \nTask 1: Summarized Findings in the Four Areas \n\nExplain Task 1 thoroughly, ensuring every point mentioned below is addressed in detail. Be as comprehensive as possible\n1. Operational Issues: \n\u25cf Provide a detailed analysis of operational challenges such as delays, customer complaints, and cost-cutting measures. \n\u25cf Include specific examples and competitor comparisons where applicable. 2. Strategic Issues: \n\u25cf Identify specific strategic drivers of the company, such as data-driven initiatives, cost efficiency, sustainability, and growth drivers. \n\u25cf These strategic drivers will be used to outline the Customer's Three Boardroom Drivers in the Altify summary. \n\u25cf Examine the company\u2019s strategic initiatives, including market expansions, technological advancements, transformations, leadership changes, and mergers/acquisitions. \n\u25cf Highlight cloud strategies or digital transformations (e.g., migration to cloud environments or preferences for cloud providers) for the Customer's Cloud Directives. \n\u25cf Assess AI initiatives and maturity to inform the Customer's AI Maturity Level and Goals. \n\u25cf Highlight how these strategies may present opportunities for Cloudera. 3. Outside Pressures: \n\u25cf Assess external factors affecting the company, including regulatory changes, compliance fines, and competitor actions. \n\u25cf Discuss potential impacts on the company\u2019s operations and strategic direction. 4. Activity in Our Domain: \n\u25cf Provide an overview of the company\u2019s engagement in data-related activities, such as participation in data conferences, collaborations with technology providers, and adoption of advanced analytics. \n\u25cf Identify signs of investment in data and analytics, cloud, or digital services that align with Cloudera\u2019s offerings, helping determine the Customer's Data Strategy. \nTask 2: Alignment of Research Findings to Top Use Cases \n\nExplain Task 2 thoroughly, ensuring every point mentioned below is addressed in detail. Be as comprehensive as possible\n\u25cf Identify the Top Three Use Cases from the \"Top Ten Use Cases for Digital Transformation in Manufacturing\" that align with the company's needs and challenges based on your research findings.\n\u25cf For each of these three use cases: \n\u25cb List Key Strategic Points: Extract from your research specific points that align with the use case. \n\u25cb Align with Use Case Category and Topic: Match these points to the relevant use case from the Top Ten list. \n\u25cb Structure According to Altify Customer Strategy Map: \n\u25a0 Goals: What the company aims to achieve. \n\u25a0 Strategies: How the company plans to achieve these goals. \n\u25a0 Initiatives: Specific projects or programs in place. \n\u25a0 Challenges: Obstacles that may impede success. \n\u25a0 Solutions: How Cloudera can address these challenges. \nTask 3: Identification of Relevant Personas \n\nExplain Task 3 thoroughly, ensuring every point mentioned below is addressed in detail. Be as comprehensive as possible\nFor each of the top three use cases and associated challenges: \n\u25cf Identify Appropriate Personas: Determine the roles within the company that are most concerned with the use case. \n\u25cf Explain Relevance: Describe why each persona cares about the use case and the associated challenges. \n\u25cf Complete the Altify Relationship Map: Use this information to map relationships within the company. \nTask 4: 30-Second Elevator Pitches \n\nExplain Task 4 thoroughly, ensuring every point mentioned below is addressed in detail. Be as comprehensive as possible\nFor each use case and persona combination: \n\u25cf Craft a Concise Pitch: Provide a tailored 30-second elevator pitch addressing the persona's challenges and how the use case offers solutions. \n\u25cf Focus on Value Proposition: Highlight the benefits without mentioning specific products. \nTask 5: Identify Key Data & Analytics Challenges and Apply \nExplain Task 5 thoroughly, ensuring every point mentioned below is addressed in detail. Be as comprehensive as possible\nMEDDPPICCC Framework For each key data and analytics challenge identified in the three use cases, give the response in the following format. Do note to cover all the use cases in detail:\n:\n\u25cf Apply the MEDDPPICCC Framework: \n\u25cb Metrics: Define measurable outcomes. \n\u25cb Economic Buyer: Identify who controls the budget. \n\u25cb Decision Criteria: Determine what factors influence their decision. \u25cb Decision Process: Outline how the decision will be made. \n\u25cb Paper Process: Understand administrative steps. \n\u25cb Partners: Note any existing partners or vendors. \n\u25cb Identify Pain: Specify the challenges. \n\u25cb Champion: Identify internal advocates. \n\u25cb Competition: Acknowledge other solutions or the status quo. \n\u25cb Compelling Event: Recognize deadlines or events pushing for change. \nTask 6: Revenue Growth Ideas \n\nExplain Task 6 thoroughly, ensuring every point mentioned below is addressed in detail. Be as comprehensive as possible\nFor each of the top three use cases, give the response in the following format. Do note to cover all the use cases in detail:: \n\u25cf Combine Insights: \n\u25cb Start with the key data and analytics challenges identified. \n\u25cb Align each challenge with the corresponding use case. \n\u25cf Incorporate Altify Strategy and Relationship Map Elements: \n\u25cb Key Personas: Who is involved and why they care. \n\u25cb Goals, Strategies, Initiatives, Challenges, Solutions: Outline as per the Altify Strategy Map. \n\u25cb Elevator Pitch: Use the tailored pitch from Task 4. \n\u25cf Analyze Using MEDDPPICCC Framework: \n\u25cb Ensure each revenue growth idea is thoroughly analyzed with the MEDDPPICCC framework. Use the MEDDPPICCC framework data from Task 5 to correctly show the data\nTask 7: Potential Altify Summary Data \n\nExplain Task 7 thoroughly, ensuring every point mentioned below is addressed in detail. Be as comprehensive as possible\nPopulate the Altify executive summary sections using information from previous tasks: Executive Summary \n\u25cf Company Business Overview: Summarize key points from Task 1. \u25cf Customer's Three Boardroom Drivers: Highlight from Task 1's Strategic Issues.\n\u25cf Customer's Data Strategy: Detail from Task 1's Activity in Our Domain. \u25cf Customer's Cloud Directives: Extract from Task 1's findings. \n\u25cf Customer's AI Maturity Level and Goals: Assess from Task 1's analysis. Buying History, Growth Path, and Value \n\u25cf Customer Interest in Expansion: Identify from Tasks 1 and 6. \n\u25cf Next Target Groups/LOBs: Suggest based on Tasks 2 and 6. \nHelp Needed \n\u25cf Strategic Partners for Expansion: Note from Task 5's Partners section. \u25cf Roadblocks Encountered: Summarize from Tasks 1 and 5. \n\u25cf Help Needed from Cloudera Execs: Indicate areas from Task 6 where executive support is beneficial. \nImportant Notes: \n\u25cf Limit the Use Cases to the Top Three: Focus on the three most relevant use cases based on your research. \n\u25cf Ensure Consistency Across Tasks: Each use case should be thoroughly covered in all tasks. \n\u25cf Provide Clear Transition Prompts: Ask if the user wishes to continue after each segment. \n\u25cf Maintain Professional Tone: Present information clearly and professionally. \u25cf Citations and Sources: \n\u25cb Use APA Citation Style for all references. \n\u25cb Provide accurate citations and links for all sources. \nFinal Review: \n\u25cf Ensure all tasks are thoroughly completed for each of the top three use cases. \u25cf Verify the accuracy and relevance of all information. \n\u25cf Avoid speculative information; base all content on verified sources and publicly available information. \n\u25cf Maintain clarity, coherence, and logical flow throughout the report.\n",
+      "allow_delegation": false,
+      "verbose": false,
+      "cache": true,
+      "temperature": 0.1,
+      "max_iter": 10,
+      "tool_template_ids": [],
+      "pre_packaged": true,
+      "workflow_template_id": "ab79fdf2-703a-43f0-847d-e2647595dde2"
     },
     {
       "id": "cg7e5cb3-815s-47a7-af05-c6da7fba94b3",
@@ -439,7 +705,8 @@
       "max_iter": 10,
       "tool_template_ids": [],
       "pre_packaged": true,
-      "agent_image_path": ""
+      "agent_image_path": "",
+      "workflow_template_id": "po90dff2-703a-43f0-847d-e2647595dde2"
     },
     {
       "id": "17013d0a-ca8c-4621-8c3f-b8c41a88ca8e",
@@ -455,7 +722,8 @@
       "max_iter": 10,
       "tool_template_ids": [],
       "pre_packaged": true,
-      "agent_image_path": ""
+      "agent_image_path": "",
+      "workflow_template_id": "db79fdf2-703a-43f0-847d-e2647595dde2"
     },
     {
       "id": "29813d0a-fg8c-4621-8c3f-b8v41p88ca8e",
@@ -474,7 +742,8 @@
         "2159600d-p09c-5524-af32-9922e05dd017"
       ],
       "pre_packaged": true,
-      "agent_image_path": ""
+      "agent_image_path": "",
+      "workflow_template_id": "po90dff2-703a-43f0-847d-e2647595dde2"
     },
     {
       "id": "56413d0a-fg8c-4621-8f3f-b8v41p88ca8e",
@@ -493,7 +762,8 @@
         "0d65d035-30ff-45a8-98c6-be307feba1af"
       ],
       "pre_packaged": true,
-      "agent_image_path": ""
+      "agent_image_path": "",
+      "workflow_template_id": "po90dff2-703a-43f0-847d-e2647595dde2"
     },
     {
       "id": "7b408440-efdb-4ad2-92e3-3ce61abc50f3",
@@ -501,7 +771,7 @@
       "description": "Data Ingestion Assistant CDF",
       "tool_template_ids": [
         "fd2caa76-ddc8-4049-b0cc-a4ca84310a78",
-        "0d65d035-30ff-45a8-98c6-be307feba1af"
+        "c023ea4d-d6a0-4dc6-8db9-655679dbbc03"
       ],
       "role": "Assistant responsible for Ingesting external data from various sources",
       "backstory": "You create data ingestion readyflows when asked to ingest external datasets. These datasets may live in places like huggingface or salesforce\nYou have access to multiple data ingestion tools each suited for different external sources.\nAlways ask for any missing parameters for the tools you use.\nIf there are any issues executing tools, report those issues to the user.",
@@ -512,7 +782,8 @@
       "temperature": 0.1,
       "max_iter": 1,
       "pre_packaged": true,
-      "agent_image_path": "studio-data/dynamic_assets/agent_template_icons/cdf-agent.png"
+      "agent_image_path": "studio-data/dynamic_assets/agent_template_icons/cdf-agent.png",
+      "workflow_template_id": "13508ed8-b164-4af3-8f6e-2b91a72d1f68"
     },
     {
       "id": "7454f27b-9758-4b52-9c96-c8b1ae315c1e",
@@ -530,7 +801,8 @@
       "temperature": 0.1,
       "max_iter": 0,
       "pre_packaged": false,
-      "agent_image_path": "studio-data/dynamic_assets/agent_template_icons/cdw-agent.png"
+      "agent_image_path": "studio-data/dynamic_assets/agent_template_icons/cdw-agent.png",
+      "workflow_template_id": "4274629b-159e-4434-b779-93442528f71e"
     },
     {
       "id": "3d11b7ce-cdb3-4a9a-ad77-feac1b4f196e",
@@ -538,7 +810,7 @@
       "description": "Communications Assistant",
       "tool_template_ids": [
         "a17c9f25-4b8e-4d2b-b6e1-49dcf2a7a5d8",
-        "0d65d035-30ff-45a8-98c6-be307feba1af"
+        "2188c698-50d2-43f4-9759-813888e03b0e"
       ],
       "role": "Sends messages to the right people with details from the workflow",
       "backstory": "You are a communications assistant capable of crafting well formatted messages to send to recipients.\nAttempt to summarize the requested content, compiling any links or attachments and use the appropriate tools to send to recipients using the right communication method.\n\nCommunication Methods Supported:\n- Email\n- Slack Message",
@@ -549,7 +821,8 @@
       "temperature": 0.1,
       "max_iter": 0,
       "pre_packaged": false,
-      "agent_image_path": "studio-data/dynamic_assets/agent_template_icons/communications_icon.png"
+      "agent_image_path": "studio-data/dynamic_assets/agent_template_icons/communications_icon.png",
+      "workflow_template_id": "4274629b-159e-4434-b779-93442528f71e"
     },
     {
       "id": "5d826de3-69bf-405d-8a8a-ecbbeafcb391",
@@ -568,7 +841,8 @@
       "temperature": 0.1,
       "max_iter": 0,
       "pre_packaged": false,
-      "agent_image_path": "studio-data/dynamic_assets/agent_template_icons/viz-agent.png"
+      "agent_image_path": "studio-data/dynamic_assets/agent_template_icons/viz-agent.png",
+      "workflow_template_id": "4274629b-159e-4434-b779-93442528f71e"
     },
     {
       "id": "3616ba1a-b05c-47b0-a79b-c1a6ba7cea8e",
@@ -584,7 +858,8 @@
       "max_iter": 10,
       "tool_template_ids": [],
       "pre_packaged": true,
-      "agent_image_path": "studio-data/dynamic_assets/agent_template_icons/cloudera.png"
+      "agent_image_path": "studio-data/dynamic_assets/agent_template_icons/cloudera.png",
+      "workflow_template_id": "4274629b-159e-4434-b779-93442528f71e"
     },
     {
       "id": "3616ba1a-b05c-47b0-a79b-c1a6ba7cea8d",
@@ -600,14 +875,15 @@
       "max_iter": 10,
       "tool_template_ids": [],
       "pre_packaged": true,
-      "agent_image_path": "studio-data/dynamic_assets/agent_template_icons/cloudera.png"
+      "agent_image_path": "studio-data/dynamic_assets/agent_template_icons/cloudera.png",
+      "workflow_template_id": "6eccbfa6-66f9-418a-bc6c-74516ac8219d"
     },
     {
       "id": "5a033be9-b70c-4820-988b-0f50a0334cd9",
       "name": "Senior Research Analyst",
       "description": "Senior Research Analyst",
       "tool_template_ids": [
-        "5d61f046-425c-4b89-b023-a9ed53b048aa"
+        "f85701f0-b093-4d41-98cc-972477350347"
       ],
       "role": "Senior Research Analyst",
       "backstory": "You work at a leading tech think tank. Your expertise lies in identifying emerging trends. You have a knack for dissecting complex data and presenting actionable insights.",
@@ -618,7 +894,8 @@
       "temperature": 0.10000000149011612,
       "max_iter": 0,
       "pre_packaged": true,
-      "agent_image_path": ""
+      "agent_image_path": "",
+      "workflow_template_id": "a77aed0a-7d43-48ec-9495-8728dd97e66d"
     },
     {
       "id": "5f04af28-52c6-4fdb-9357-06c0a5083587",
@@ -634,7 +911,8 @@
       "temperature": 0.10000000149011612,
       "max_iter": 0,
       "pre_packaged": true,
-      "agent_image_path": ""
+      "agent_image_path": "",
+      "workflow_template_id": "a77aed0a-7d43-48ec-9495-8728dd97e66d"
     },
     {
       "id": "f3f729d6-cfc4-454b-a67c-14018d54a6ff",
@@ -650,7 +928,8 @@
       "temperature": 0.10000000149011612,
       "max_iter": 0,
       "pre_packaged": true,
-      "agent_image_path": ""
+      "agent_image_path": "",
+      "workflow_template_id": "a77aed0a-7d43-48ec-9495-8728dd97e66d"
     },
     {
       "id": "835b622c-ca33-4a6c-b1c4-ef7b86ba6c81",
@@ -669,14 +948,15 @@
       "temperature": 0.1,
       "max_iter": 0,
       "pre_packaged": true,
-      "agent_image_path": "studio-data/dynamic_assets/agent_template_icons/profile-agent.png"
+      "agent_image_path": "studio-data/dynamic_assets/agent_template_icons/profile-agent.png",
+      "workflow_template_id": "6eccbfa6-66f9-418a-bc6c-74516ac8219d"
     },
     {
       "id": "879f13f2-d84a-43d3-baf3-1f41116efc18",
       "name": "Investment Researcher",
       "description": "Investment Researcher",
       "tool_template_ids": [
-        "5d61f046-425c-4b89-b023-a9ed53b048aa"
+        "6b3d9e81-5bad-4ecb-b274-ff5d7ad638f3"
       ],
       "role": "Investment Researcher",
       "backstory": "You are a skilled investment researcher who can identify stocks that align with specific investment themes and strategies.\nYou use various screening tools and research to build targeted stock lists. Limit the selection for the portfolio to 5 to 10 stocks.\n\nYou must select bloomberg ticker and only for the US market. The stocks must make sense with customer idea\nFor all stock tickers you select, also retrieve the historical performance for those stocks.\n\nWhen complete return a summarized list of the tickers you selected\nWhenever possible format your response to list information in a clear table.",
@@ -687,7 +967,8 @@
       "temperature": 0.1,
       "max_iter": 0,
       "pre_packaged": true,
-      "agent_image_path": "studio-data/dynamic_assets/agent_template_icons/research-agent.png"
+      "agent_image_path": "studio-data/dynamic_assets/agent_template_icons/research-agent.png",
+      "workflow_template_id": "6eccbfa6-66f9-418a-bc6c-74516ac8219d"
     },
     {
       "id": "7a0e3869-79bb-445a-a1cd-56f85727bd28",
@@ -705,7 +986,8 @@
       "temperature": 0.100000001490116,
       "max_iter": 0,
       "pre_packaged": true,
-      "agent_image_path": "studio-data/dynamic_assets/agent_template_icons/optimizer-agent.png"
+      "agent_image_path": "studio-data/dynamic_assets/agent_template_icons/optimizer-agent.png",
+      "workflow_template_id": "6eccbfa6-66f9-418a-bc6c-74516ac8219d"
     },
     {
       "id": "2b53cad3-81be-447c-8819-f9cdea1310c0",
@@ -723,7 +1005,8 @@
       "temperature": 0.100000001490116,
       "max_iter": 0,
       "pre_packaged": false,
-      "agent_image_path": "studio-data/dynamic_assets/agent_template_icons/history-agent.png"
+      "agent_image_path": "studio-data/dynamic_assets/agent_template_icons/history-agent.png",
+      "workflow_template_id": "6eccbfa6-66f9-418a-bc6c-74516ac8219d"
     }
   ],
   "workflow_templates": [
@@ -783,7 +1066,7 @@
       "description": "This workflow enables an Analyst Agent to generate tailored company reports for the Manufacturing industry, delivering research-driven, actionable insights to support sales teams",
       "process": "sequential",
       "agent_template_ids": [
-        "bc7e5cb3-815d-47a7-af05-c6da6dba94b3"
+        "9c3c087c-e9c2-47b1-b8f5-4f2faf30d44a"
       ],
       "task_template_ids": [
         "a5f8bfc8-646f-460e-8872-34ce803a6152"

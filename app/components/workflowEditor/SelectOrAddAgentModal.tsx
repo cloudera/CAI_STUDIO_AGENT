@@ -460,27 +460,14 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
   setIsLoading,
 }) => {
   const { data: defaultModel } = useGetDefaultModelQuery();
-  const { data: agentTemplates = [] } = useListGlobalAgentTemplatesQuery();
   const { data: toolTemplates = [] } = useListGlobalToolTemplatesQuery({});
-  const { imageData: toolIconsData, refetch: refetchToolImages } = useImageAssetsData(
+  const { imageData: toolIconsData } = useImageAssetsData(
     toolTemplates.map((tool) => tool.tool_image_uri),
   );
   const dispatch = useAppDispatch();
   const [isAddToolModalVisible, setAddToolModalVisible] = useState(false);
   const [isGenerateAgentPropertiesModalVisible, setIsGenerateAgentPropertiesModalVisible] =
     useState(false);
-  const tools = useSelector(selectEditorAgentViewCreateAgentTools);
-  const [toolDetails, setToolDetails] = useState<{
-    name: string;
-    description: string;
-    pythonCode: string;
-    pythonRequirements: string;
-  }>({
-    name: '',
-    description: '',
-    pythonCode: '',
-    pythonRequirements: '',
-  });
   const notificationApi = useGlobalNotification();
   const [isCreateMode, setIsCreateMode] = useState(false);
   const [deleteToolInstance] = useRemoveToolInstanceMutation();
@@ -489,7 +476,6 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
   ];
   const selectedAssignedAgent = useAppSelector(selectEditorAgentViewAgent);
   const { data: models = [] } = useListModelsQuery({});
-  const [getModel] = useGetModelMutation();
 
   const toolTemplateCache = toolTemplates.reduce((acc: Record<string, any>, template: any) => {
     acc[template.id] = {
@@ -498,20 +484,6 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
     };
     return acc;
   }, {});
-
-  // Add refetch for tool instances
-  const { data: toolInstancesList = [], refetch: refetchToolInstances } = useListToolInstancesQuery(
-    {workflow_id: workflowId},
-  );
-
-  // Add effect to refetch when tool instances are updated
-  useEffect(() => {
-    const refreshData = async () => {
-      await refetchToolInstances();
-      await refetchToolImages();
-    };
-    refreshData();
-  }, [toolInstancesList.length]);
 
   useEffect(() => {
     if (selectedAgentTemplate) {

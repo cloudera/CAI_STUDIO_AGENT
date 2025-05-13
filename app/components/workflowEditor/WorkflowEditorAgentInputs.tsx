@@ -48,7 +48,7 @@ import {
   UndoOutlined,
 } from '@ant-design/icons';
 import { useListAgentsQuery, useRemoveAgentMutation } from '../../agents/agentApi';
-import { AgentMetadata } from '@/studio/proto/agent_studio';
+import { AgentMetadata, ToolInstance } from '@/studio/proto/agent_studio';
 import {
   useAddTaskMutation,
   useListTasksQuery,
@@ -57,7 +57,7 @@ import {
 } from '../../tasks/tasksApi';
 import SelectOrAddAgentModal from './SelectOrAddAgentModal';
 import { useGetDefaultModelQuery } from '../../models/modelsApi';
-import { useGetToolInstanceMutation } from '@/app/tools/toolInstancesApi';
+import { useGetToolInstanceMutation, useListToolInstancesQuery } from '@/app/tools/toolInstancesApi';
 import { useState, useEffect } from 'react';
 import { useImageAssetsData } from '@/app/lib/hooks/useAssetData';
 import { useGlobalNotification } from '../Notifications';
@@ -108,50 +108,32 @@ interface WorkflowAgentsComponentProps {
 
 const WorkflowAgentsComponent: React.FC<WorkflowAgentsComponentProps> = ({workflowId}) => {
   const { data: agents } = useListAgentsQuery({workflow_id: workflowId});
+  const { data: toolInstances } = useListToolInstancesQuery({workflow_id: workflowId});
   const workflowAgentIds = useAppSelector(selectEditorWorkflowAgentIds);
   const dispatch = useAppDispatch();
-  const [getToolInstance] = useGetToolInstanceMutation();
-  const [toolInstances, setToolInstances] = useState<Record<string, any>>({});
+  const [toolInstancesMap, setToolInstancesMap] = useState<Record<string, any>>({});
   const [removeAgent] = useRemoveAgentMutation();
   const notificationApi = useGlobalNotification();
   const [updateWorkflow] = useUpdateWorkflowMutation();
   const [addWorkflow] = useAddWorkflowMutation();
   const workflowState = useAppSelector(selectEditorWorkflow);
 
-  const { imageData, refetch: refetchImages } = useImageAssetsData(
-    Object.values(toolInstances).map((instance) => instance.tool_image_uri),
+  const { imageData } = useImageAssetsData(
+    Object.values(toolInstancesMap).map((instance) => instance.tool_image_uri),
   );
-
-  useEffect(() => {
-    const fetchToolInstances = async () => {
-      const instances: Record<string, any> = {};
-      for (const agent of agents || []) {
-        for (const toolId of agent.tools_id || []) {
-          try {
-            const toolInstanceResponse = await getToolInstance({
-              tool_instance_id: toolId,
-            }).unwrap();
-            instances[toolId] = toolInstanceResponse.tool_instance;
-          } catch (error) {
-            console.error(`Failed to fetch tool instance for ID ${toolId}:`, error);
-          }
-        }
-      }
-      setToolInstances(instances);
-    };
-
-    if (agents) {
-      fetchToolInstances();
-    }
-  }, [agents, getToolInstance]);
 
   // Add effect to refetch images when tool instances change
   // TODO: this should be middleware at the RTK level
   useEffect(() => {
-    const refreshData = async () => {
-      await refetchImages();
-    };
-    refreshData();
+    if (!toolInstances) {
+      return;
+    }
+    const tiMap = toolInstances.reduce<Record<string, ToolInstance>>(
+      (acc, ti) => ({ ...acc, [ti.id]: ti }),
+      {}
+    );
+    setToolInstancesMap(tiMap);
+    
   }, [toolInstances]);
 
   const handleDeleteAgent = async (agentId: string, agentName: string) => {
@@ -359,7 +341,7 @@ const WorkflowAgentsComponent: React.FC<WorkflowAgentsComponentProps> = ({workfl
                         }}
                       >
                         {agent.tools_id.map((toolId) => {
-                          const toolInstance = toolInstances[toolId];
+                          const toolInstance = toolInstancesMap[toolId];
                           const imageUri = toolInstance?.tool_image_uri;
                           const imageSrc =
                             imageUri && imageData[imageUri]

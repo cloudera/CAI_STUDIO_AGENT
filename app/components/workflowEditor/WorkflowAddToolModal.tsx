@@ -275,9 +275,6 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId,
       // Automatically select the new tool instance
       setEditedToolName(toolName);
       handleSelectToolInstance(response);
-
-      // Refetch tool instances
-      await refetch();
     } catch (error: any) {
       const errorMessage = error.data?.error || 'Failed to create tool. Please try again.';
       notificationApi.error({
@@ -428,15 +425,6 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId,
 
       // Clear the uploaded file path
       setUploadedFilePath('');
-
-      // Refetch everything
-      await refetch();
-
-      // Wait a brief moment to ensure the backend has processed the image
-      setTimeout(async () => {
-        await refetch();
-        await refetchImages();
-      }, 500);
     } catch (error: any) {
       const errorMessage = error.data?.error || 'Failed to update tool. Please try again.';
       notificationApi.error({

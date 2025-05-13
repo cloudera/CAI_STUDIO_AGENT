@@ -81,7 +81,7 @@ export const workflowsApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: (result, error, request) => [
         { type: 'Workflow', id: request.workflow_id },
-        { type: 'Workflow', id: 'LIST' }
+        // { type: 'Workflow', id: 'LIST' }
       ]
     }),
     removeWorkflow: builder.mutation<void, RemoveWorkflowRequest>({
@@ -142,12 +142,12 @@ export const workflowsApi = apiSlice.injectEndpoints({
       query: (request) => ({
         url: '/grpc/getWorkflowTemplate',
         method: 'POST',
-        body: { workflow_template_id: request },
+        body: { id: request },
       }),
       transformResponse: (response: GetWorkflowTemplateResponse) => {
         return response.workflow_template!;
       },
-      providesTags: (result, error, workflow_template_id) => [{ type: 'WorkflowTemplate', id: workflow_template_id }],
+      providesTags: (result, error, id) => [{ type: 'WorkflowTemplate', id }],
     }),
     addWorkflowTemplate: builder.mutation<string, AddWorkflowTemplateRequest>({
       query: (request) => ({
