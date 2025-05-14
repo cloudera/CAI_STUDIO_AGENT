@@ -1,15 +1,16 @@
-import { Alert, Card, Layout, Tabs, Typography } from 'antd';
+import { Alert, Card, Layout, Tabs, Tooltip, Typography } from 'antd';
 import { ReactFlowProvider } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useLayoutEffect, useRef } from 'react';
 import { AgentMetadata, CrewAITaskMetadata, ToolInstance } from '@/studio/proto/agent_studio';
 import { WorkflowState } from '@/app/workflows/editorSlice';
 import WorkflowDiagram from './WorkflowDiagram';
-import { ApiOutlined, BugOutlined, MonitorOutlined } from '@ant-design/icons';
+import { ApiOutlined, BugOutlined, ExportOutlined, EyeOutlined, MonitorOutlined } from '@ant-design/icons';
 import OpsIFrame from '../OpsIFrame';
 import ReactMarkdown from 'react-markdown';
 import { useAppSelector } from '@/app/lib/hooks/hooks';
 import { selectCurrentEventIndex } from '@/app/workflows/workflowAppSlice';
+import { useGetOpsDataQuery } from '@/app/ops/opsApi';
 
 const { Text, Paragraph } = Typography;
 
@@ -31,6 +32,7 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
   displayDiagnostics,
 }) => {
   const currentEventIndex = useAppSelector(selectCurrentEventIndex);
+  const { data: opsData } = useGetOpsDataQuery();
 
   const eventLogs = useRef<(HTMLDivElement | null)[]>([]); // Create refs array
 
@@ -204,6 +206,69 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
                           )}
                         </Card>
                       ))}
+                  </Layout>
+                )}
+              </div>
+            ),
+          },
+          {
+            key: '3',
+            label: (
+              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <EyeOutlined
+                  style={{
+                    color: 'white',
+                    background: '#1890ff',
+                    borderRadius: '50%',
+                    width: '24px',
+                    height: '24px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '4px',
+                  }}
+                />
+                Monitoring
+                <Tooltip title="Open the Agent Ops & Metrics application in a new tab">
+                  <ExportOutlined 
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '4px',
+                    }}
+                    onClick={() => window.open(opsData?.ops_display_url)}
+                  />
+                </Tooltip>
+              </span>
+            ),
+            children: (
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  overflow: 'auto',
+                  padding: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
+              >
+                {!events ? (
+                  <Alert message="No telemetry yet" type="info" showIcon />
+                ) : events && events.length === 0 ? (
+                  <Alert message="No telemetry yet" type="info" showIcon />
+                ) : (
+                  <Layout
+                    style={{
+                      background: 'transparent',
+                      flex: 1,
+                      overflowY: 'auto',
+                      overflowX: 'hidden',
+                      gap: 16,
+                      padding: 4,
+                    }}
+                  >
+                    <OpsIFrame />
                   </Layout>
                 )}
               </div>

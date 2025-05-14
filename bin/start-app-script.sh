@@ -117,6 +117,17 @@ else
   echo "Starting up workflow app UI."
 fi 
 
+# For local development, we need to set up an http proxy to the ops server.
+# For both production and development builds, whenever we iframe content, we need to make sure that:
+#  1. the iframed application runs in the same domain as the main application, and
+#  2. transport layer security matches (either HTTP or HTTPS)
+# For this reason, for local dev, we need to iframe from the samme origin (127.0.0.1).
+# In production CML application, we need to get the full application URL.
+if [ "$AGENT_STUDIO_DEPLOYMENT_CONFIG" = "dev" ]; then
+  echo "Starting ops proxy server..."
+  PYTHONUNBUFFERED=1 uv run bin/start-ops-proxy.py &
+fi
+
 # If running in development mode, run the dev server so we get live
 # updates. If in production mode, build the optimized server and serve it.
 if [ "$AGENT_STUDIO_DEPLOYMENT_CONFIG" = "dev" ]; then
