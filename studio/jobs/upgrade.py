@@ -120,6 +120,13 @@ def upgrade_studio(cml: CMLServiceApi = None) -> UpgradeStudioResponse:
     except subprocess.CalledProcessError as e:
         print(f"Error running 'uv run bin/initialize-project-defaults.py': {e}")
 
+    # Run post upgrade hook
+    print("Running the pre-upgrade hoook...")
+    try:
+        subprocess.run(["uv", "run", "bin/pre-upgrade-hook.py"], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error running p upgrade: {e}")
+
     print("Restarting all running applications in the Agent Studio ecosystem...")
     for application in [studio_application, ops_application]:
         print(f"Starting the '{application.name}' application...")

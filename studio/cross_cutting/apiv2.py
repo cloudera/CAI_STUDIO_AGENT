@@ -3,51 +3,38 @@ import json
 import logging
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
+from concurrent.futures import ThreadPoolExecutor
 from cmlapi import CMLServiceApi
 import os
-from cmlapi.models import CreateV2KeyRequest
+from cmlapi.models import CreateV2KeyRequest, CreateModelDeploymentRequest
 import cmlapi
 
 from studio.db.dao import AgentStudioDao
-from studio.proto.agent_studio_pb2 import CmlApiCheckResponse, RotateCmlApiResponse
+from studio.proto.agent_studio_pb2 import (
+    CmlApiCheckResponse, 
+    RotateCmlApiResponse,
+    DeployedWorkflow
+)
 from studio.api import CmlApiCheckRequest, RotateCmlApiRequest
-from studio.cross_cutting.workflow_redeploy import redeploy_all_workflows
+from studio.db import model as db_model
 
-# Configure logging to print to terminal
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
-# Create console handler and set level
-console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.INFO)
-
-# Create formatter
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-console_handler.setFormatter(formatter)
-
-# Add handler to logger
-logger.addHandler(console_handler)
 
 def _encode_value(value: str) -> str:
     """Encode value for storage in environment variables using base64"""
     if not value or not isinstance(value, str):
-        logger.debug("Empty or non-string value provided for encoding")
         return ""
     try:
         return base64.b64encode(value.encode()).decode()
     except Exception as e:
-        logger.error(f"Failed to encode value: {str(e)}")
         return ""
 
 def _decode_value(encoded_value: str) -> str:
     """Decode base64-encoded value from environment variables"""
     if not encoded_value:
-        logger.debug("No encoded value provided for decoding")
         return None
     try:
         return base64.b64decode(encoded_value.encode()).decode()
     except Exception as e:
-        logger.error(f"Failed to decode value: {str(e)}")
         return None
 
 def _get_api_key_env_keys() -> Tuple[str, str]:
@@ -278,3 +265,124 @@ def rotate_cml_api(request: RotateCmlApiRequest, cml: CMLServiceApi, dao: AgentS
         error_msg = f"Error rotating API key: {str(e)}"
         logger.error(error_msg)
         return RotateCmlApiResponse(message=error_msg)
+
+def get_deployed_workflows(cml: CMLServiceApi, dao: AgentStudioDao, logger: logging.Logger = None) -> list[DeployedWorkflow]:
+    """Get list of deployed workflows"""
+    if logger is None:
+        logger = logging.getLogger(__name__)
+    
+    try:
+        # Get list of deployed workflows from database
+        with dao.get_session() as session:
+            deployed_workflows = session.query(db_model.DeployedWorkflowInstance).all()
+            return [
+                DeployedWorkflow(
+                    deployed_workflow_id=dw.id,
+                    workflow_id=dw.workflow_id,
+                    cml_deployed_model_id=dw.cml_deployed_model_id
+                ) for dw in deployed_workflows
+            ]
+    except Exception as e:
+        logger.error(f"Error getting deployed workflows: {str(e)}")
+        return []
+
+def redeploy_single_workflow(workflow_id: str, cml: CMLServiceApi, dao: AgentStudioDao, logger: logging.Logger = None):
+    """Redeploy a single workflow"""
+    if logger is None:
+        logger = logging.getLogger(__name__)
+
+    try:
+        with dao.get_session() as session:
+            deployed_workflow = session.query(db_model.DeployedWorkflowInstance).filter_by(id=workflow_id).one_or_none()
+            if not deployed_workflow:
+                logger.error(f"Deployed workflow with ID '{workflow_id}' not found")
+                return
+
+            # Get latest build and its deployment
+            builds = cml.list_model_builds(
+                project_id=os.getenv("CDSW_PROJECT_ID"),
+                model_id=deployed_workflow.cml_deployed_model_id
+            ).model_builds
+
+            if not builds:
+                logger.error(f"No builds found for model {deployed_workflow.cml_deployed_model_id}")
+                return
+
+            latest_build = builds[0]
+            deployments = cml.list_model_deployments(
+                project_id=os.getenv("CDSW_PROJECT_ID"),
+                model_id=deployed_workflow.cml_deployed_model_id,
+                build_id=latest_build.id
+            ).model_deployments
+
+            if not deployments:
+                logger.error(f"No deployments found for model {deployed_workflow.cml_deployed_model_id}")
+                return
+
+            current_deployment = deployments[0]
+
+            # Get environment vars - fail if we can't read them
+            try:
+                env_vars = json.loads(current_deployment.environment) if current_deployment.environment else {}
+                if not env_vars:
+                    raise ValueError("Current deployment has no environment variables")
+            except Exception as e:
+                logger.error(f"Failed to read environment variables from current deployment: {str(e)}")
+                return
+
+            # Get API key using the method from apiv2
+            key_id, key_value = get_api_key_from_env(cml, logger)
+            if not key_id or not key_value:
+                raise RuntimeError("CML API v2 key not found. You need to configure a CML API v2 key for Agent Studio to deploy workflows.")
+
+            # Update API key while preserving all other env vars
+            env_vars["CDSW_APIV2_KEY"] = key_value
+
+            # Create new deployment with same settings
+            new_deployment = CreateModelDeploymentRequest(
+                cpu=current_deployment.cpu,
+                memory=current_deployment.memory,
+                nvidia_gpus=0,
+                environment=env_vars,
+                replicas=current_deployment.replicas
+            )
+
+            # Create new deployment with latest build
+            cml.create_model_deployment(
+                new_deployment,
+                os.getenv("CDSW_PROJECT_ID"),
+                deployed_workflow.cml_deployed_model_id,
+                latest_build.id
+            )
+
+            logger.info(f"Successfully redeployed workflow {workflow_id}")
+
+    except Exception as e:
+        logger.error(f"Failed to redeploy workflow {workflow_id}: {str(e)}") 
+
+
+def redeploy_all_workflows(cml: CMLServiceApi, dao: AgentStudioDao, logger: logging.Logger = None):
+    """Redeploy all deployed workflows"""
+    if logger is None:
+        logger = logging.getLogger(__name__)
+        
+    try:
+        # Get list of deployed workflows
+        deployed_workflows = get_deployed_workflows(cml, dao, logger)
+        
+        # Create thread pool for async redeployments
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            for workflow in deployed_workflows:
+                # Submit each redeployment to thread pool
+                executor.submit(
+                    redeploy_single_workflow,
+                    workflow.deployed_workflow_id,
+                    cml,
+                    dao,
+                    logger
+                )
+        
+        logger.info("All workflow redeployments initiated")
+        
+    except Exception as e:
+        logger.error(f"Error redeploying workflows: {str(e)}") 
