@@ -131,12 +131,12 @@ def update_api_key_in_env(key_id: str, key_value: str, cml: CMLServiceApi, logge
         raise ValueError(f"Failed to update API key in environment: {str(e)}")
 
 def generate_api_key(cml: CMLServiceApi, logger: logging.Logger = None) -> Tuple[str, str]:
-    """Generate new API v2 key with 1 year expiry"""
+    """Generate new API v2 key with 1 year expiry and both API and Application audiences"""
     if logger is None:
         logger = logging.getLogger(__name__)
         
     try:
-        logger.info("Generating new API v2 key")
+        logger.info("Generating new API v2 key with API and Application audiences")
         
         # Get username from environment
         username = os.getenv("HADOOP_USER_NAME") or os.getenv("USER")
@@ -149,15 +149,24 @@ def generate_api_key(cml: CMLServiceApi, logger: logging.Logger = None) -> Tuple
         # Create API key with 1 year expiry
         expiry = datetime.now() + timedelta(days=365)
         
-        # Create request body as a dict
+        # Create request body as a dict with both audiences
         body = {
             "expiry": expiry.isoformat(),
-            "key_type": "API_KEY_TYPE_V2"
+            "key_type": "API_KEY_TYPE_V2",
+            "audiences": ["API", "Application"]  # Add both audiences
         }
         
         # Make API call with proper types
         logger.debug(f"Making API call with username: {username} and body: {body}")
-        response = cml.create_v2_key(body=body, username=username)
+        try:
+            response = cml.create_v2_key(body=body, username=username)
+        except Exception as e:
+            # If creating with both audiences fails, try with default audience
+            logger.warning(f"Failed to create key with both audiences: {str(e)}")
+            logger.info("Falling back to default audience")
+            body.pop("audiences", None)  # Remove audiences field
+            response = cml.create_v2_key(body=body, username=username)
+            
         logger.debug(f"API key creation response type: {type(response)}")
         
         if not response:
