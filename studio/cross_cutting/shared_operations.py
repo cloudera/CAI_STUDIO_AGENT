@@ -8,6 +8,7 @@ from studio.db import model as db_model
 from studio.proto.agent_studio_pb2 import (
     DeployedWorkflow
 )
+from studio.cross_cutting.apiv2 import get_api_key_from_env
 
 def get_deployed_workflows(cml: CMLServiceApi, dao: AgentStudioDao, logger: logging.Logger = None) -> list[DeployedWorkflow]:
     """Get list of deployed workflows"""
@@ -73,8 +74,13 @@ def redeploy_single_workflow(workflow_id: str, cml: CMLServiceApi, dao: AgentStu
                 logger.error(f"Failed to read environment variables from current deployment: {str(e)}")
                 return
 
+            # Get API key using the method from apiv2
+            key_id, key_value = get_api_key_from_env(cml, logger)
+            if not key_id or not key_value:
+                raise RuntimeError("CML API v2 key not found. You need to configure a CML API v2 key for Agent Studio to deploy workflows.")
+
             # Update API key while preserving all other env vars
-            env_vars["CDSW_APIV2_KEY"] = os.getenv("CDSW_APIV2_KEY")
+            env_vars["CDSW_APIV2_KEY"] = key_value
 
             # Create new deployment with same settings
             new_deployment = CreateModelDeploymentRequest(
