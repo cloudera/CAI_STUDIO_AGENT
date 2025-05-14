@@ -1675,3 +1675,23 @@ class HealthCheckResponse(_message.Message):
     MESSAGE_FIELD_NUMBER: _ClassVar[int]
     message: str
     def __init__(self, message: _Optional[str] = ...) -> None: ...
+
+class CmlApiCheckRequest(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class CmlApiCheckResponse(_message.Message):
+    __slots__ = ("message",)
+    MESSAGE_FIELD_NUMBER: _ClassVar[int]
+    message: str
+    def __init__(self, message: _Optional[str] = ...) -> None: ...
+
+class RotateCmlApiRequest(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class RotateCmlApiResponse(_message.Message):
+    __slots__ = ("message",)
+    MESSAGE_FIELD_NUMBER: _ClassVar[int]
+    message: str
+    def __init__(self, message: _Optional[str] = ...) -> None: ...

@@ -322,6 +322,8 @@ const WorkflowsPageContent: React.FC = () => {
           testWorkflow={testWorkflow}
           onDeploy={onDeploy}
           onDeleteDeployedWorkflow={onDeleteDeployedWorkflow}
+          onCreateWorkflow={handleCreateWorkflow}
+          handleGetStarted={handleGetStarted}
         />
       </Layout>
       <DeleteDeployedWorkflowModal

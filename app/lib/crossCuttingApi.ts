@@ -6,6 +6,7 @@ import {
   GetParentProjectDetailsResponse,
   DownloadTemporaryFileRequest,
   HealthCheckResponse,
+  CmlApiCheckResponse,
 } from '@/studio/proto/agent_studio';
 
 import { apiSlice } from '../api/apiSlice';
@@ -63,6 +64,20 @@ export const crossCuttingApi = apiSlice.injectEndpoints({
         method: 'GET',
       }),
     }),
+    rotateApiKey: builder.mutation<void, void>({
+      query: () => ({
+        url: '/grpc/rotateCmlApi',
+        method: 'POST',
+        body: {},
+      }),
+    }),
+    cmlApiCheck: builder.query<CmlApiCheckResponse, void>({
+      query: () => ({
+        url: '/grpc/cmlApiCheck',
+        method: 'POST',
+        body: {},
+      }),
+    }),
   }),
 });
 
@@ -73,4 +88,6 @@ export const {
   useUpgradeStudioMutation,
   useHealthCheckQuery,
   useWorkbenchDetailsQuery,
+  useRotateApiKeyMutation,
+  useCmlApiCheckQuery,
 } = crossCuttingApi;

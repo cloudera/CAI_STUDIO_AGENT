@@ -1,6 +1,7 @@
 import React from 'react';
 import { WorkflowGenerationConfig, LocalStorageState } from './types';
 import Link from 'next/link';
+import { Button } from 'antd';
 
 /**
  * Default generation config parameters for our
@@ -81,3 +82,13 @@ export const VERSION_WARNING_OUT_OF_DATE = (openModal: () => void) => {
     </>
   );
 };
+
+export const API_KEY_ROTATION_NEEDED = (onRotateClick: () => void): React.ReactNode => (
+  <>
+    The CML API keys that Agent Studio uses are not valid.{' '}
+    <Button type="link" onClick={onRotateClick} style={{ padding: 0 }}>
+      Rotate Keys
+    </Button>{' '}
+    to address this issue.
+  </>
+);

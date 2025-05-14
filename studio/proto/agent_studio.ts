@@ -1092,6 +1092,20 @@ export interface HealthCheckResponse {
   message: string;
 }
 
+export interface CmlApiCheckRequest {
+}
+
+export interface CmlApiCheckResponse {
+  message: string;
+}
+
+export interface RotateCmlApiRequest {
+}
+
+export interface RotateCmlApiResponse {
+  message: string;
+}
+
 function createBaseModel(): Model {
   return { model_id: "", model_name: "", provider_model: "", model_type: "", api_base: "", is_studio_default: false };
 }
@@ -12884,6 +12898,208 @@ export const HealthCheckResponse: MessageFns<HealthCheckResponse> = {
   },
 };
 
+function createBaseCmlApiCheckRequest(): CmlApiCheckRequest {
+  return {};
+}
+
+export const CmlApiCheckRequest: MessageFns<CmlApiCheckRequest> = {
+  encode(_: CmlApiCheckRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CmlApiCheckRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCmlApiCheckRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(_: any): CmlApiCheckRequest {
+    return {};
+  },
+
+  toJSON(_: CmlApiCheckRequest): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  create(base?: DeepPartial<CmlApiCheckRequest>): CmlApiCheckRequest {
+    return CmlApiCheckRequest.fromPartial(base ?? {});
+  },
+  fromPartial(_: DeepPartial<CmlApiCheckRequest>): CmlApiCheckRequest {
+    const message = createBaseCmlApiCheckRequest();
+    return message;
+  },
+};
+
+function createBaseCmlApiCheckResponse(): CmlApiCheckResponse {
+  return { message: "" };
+}
+
+export const CmlApiCheckResponse: MessageFns<CmlApiCheckResponse> = {
+  encode(message: CmlApiCheckResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.message !== "") {
+      writer.uint32(10).string(message.message);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CmlApiCheckResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCmlApiCheckResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.message = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CmlApiCheckResponse {
+    return { message: isSet(object.message) ? globalThis.String(object.message) : "" };
+  },
+
+  toJSON(message: CmlApiCheckResponse): unknown {
+    const obj: any = {};
+    if (message.message !== "") {
+      obj.message = message.message;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<CmlApiCheckResponse>): CmlApiCheckResponse {
+    return CmlApiCheckResponse.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<CmlApiCheckResponse>): CmlApiCheckResponse {
+    const message = createBaseCmlApiCheckResponse();
+    message.message = object.message ?? "";
+    return message;
+  },
+};
+
+function createBaseRotateCmlApiRequest(): RotateCmlApiRequest {
+  return {};
+}
+
+export const RotateCmlApiRequest: MessageFns<RotateCmlApiRequest> = {
+  encode(_: RotateCmlApiRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): RotateCmlApiRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRotateCmlApiRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(_: any): RotateCmlApiRequest {
+    return {};
+  },
+
+  toJSON(_: RotateCmlApiRequest): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  create(base?: DeepPartial<RotateCmlApiRequest>): RotateCmlApiRequest {
+    return RotateCmlApiRequest.fromPartial(base ?? {});
+  },
+  fromPartial(_: DeepPartial<RotateCmlApiRequest>): RotateCmlApiRequest {
+    const message = createBaseRotateCmlApiRequest();
+    return message;
+  },
+};
+
+function createBaseRotateCmlApiResponse(): RotateCmlApiResponse {
+  return { message: "" };
+}
+
+export const RotateCmlApiResponse: MessageFns<RotateCmlApiResponse> = {
+  encode(message: RotateCmlApiResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.message !== "") {
+      writer.uint32(10).string(message.message);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): RotateCmlApiResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRotateCmlApiResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.message = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RotateCmlApiResponse {
+    return { message: isSet(object.message) ? globalThis.String(object.message) : "" };
+  },
+
+  toJSON(message: RotateCmlApiResponse): unknown {
+    const obj: any = {};
+    if (message.message !== "") {
+      obj.message = message.message;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<RotateCmlApiResponse>): RotateCmlApiResponse {
+    return RotateCmlApiResponse.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<RotateCmlApiResponse>): RotateCmlApiResponse {
+    const message = createBaseRotateCmlApiResponse();
+    message.message = object.message ?? "";
+    return message;
+  },
+};
+
 /** gRPC service for basic Agent Studio operations. */
 export type AgentStudioService = typeof AgentStudioService;
 export const AgentStudioService = {
@@ -13335,6 +13551,24 @@ export const AgentStudioService = {
     responseSerialize: (value: HealthCheckResponse) => Buffer.from(HealthCheckResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer) => HealthCheckResponse.decode(value),
   },
+  cmlApiCheck: {
+    path: "/agent_studio.AgentStudio/CmlApiCheck",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CmlApiCheckRequest) => Buffer.from(CmlApiCheckRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => CmlApiCheckRequest.decode(value),
+    responseSerialize: (value: CmlApiCheckResponse) => Buffer.from(CmlApiCheckResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => CmlApiCheckResponse.decode(value),
+  },
+  rotateCmlApi: {
+    path: "/agent_studio.AgentStudio/RotateCmlApi",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: RotateCmlApiRequest) => Buffer.from(RotateCmlApiRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => RotateCmlApiRequest.decode(value),
+    responseSerialize: (value: RotateCmlApiResponse) => Buffer.from(RotateCmlApiResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => RotateCmlApiResponse.decode(value),
+  },
   /** Agent templates operations */
   listAgentTemplates: {
     path: "/agent_studio.AgentStudio/ListAgentTemplates",
@@ -13554,6 +13788,8 @@ export interface AgentStudioServer extends UntypedServiceImplementation {
   checkStudioUpgradeStatus: handleUnaryCall<CheckStudioUpgradeStatusRequest, CheckStudioUpgradeStatusResponse>;
   upgradeStudio: handleUnaryCall<UpgradeStudioRequest, UpgradeStudioResponse>;
   healthCheck: handleUnaryCall<HealthCheckRequest, HealthCheckResponse>;
+  cmlApiCheck: handleUnaryCall<CmlApiCheckRequest, CmlApiCheckResponse>;
+  rotateCmlApi: handleUnaryCall<RotateCmlApiRequest, RotateCmlApiResponse>;
   /** Agent templates operations */
   listAgentTemplates: handleUnaryCall<ListAgentTemplatesRequest, ListAgentTemplatesResponse>;
   getAgentTemplate: handleUnaryCall<GetAgentTemplateRequest, GetAgentTemplateResponse>;
@@ -14268,6 +14504,36 @@ export interface AgentStudioClient extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: HealthCheckResponse) => void,
+  ): ClientUnaryCall;
+  cmlApiCheck(
+    request: CmlApiCheckRequest,
+    callback: (error: ServiceError | null, response: CmlApiCheckResponse) => void,
+  ): ClientUnaryCall;
+  cmlApiCheck(
+    request: CmlApiCheckRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CmlApiCheckResponse) => void,
+  ): ClientUnaryCall;
+  cmlApiCheck(
+    request: CmlApiCheckRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CmlApiCheckResponse) => void,
+  ): ClientUnaryCall;
+  rotateCmlApi(
+    request: RotateCmlApiRequest,
+    callback: (error: ServiceError | null, response: RotateCmlApiResponse) => void,
+  ): ClientUnaryCall;
+  rotateCmlApi(
+    request: RotateCmlApiRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: RotateCmlApiResponse) => void,
+  ): ClientUnaryCall;
+  rotateCmlApi(
+    request: RotateCmlApiRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: RotateCmlApiResponse) => void,
   ): ClientUnaryCall;
   /** Agent templates operations */
   listAgentTemplates(

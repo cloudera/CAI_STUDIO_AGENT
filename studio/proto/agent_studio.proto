@@ -81,6 +81,8 @@ service AgentStudio {
   rpc CheckStudioUpgradeStatus (CheckStudioUpgradeStatusRequest) returns (CheckStudioUpgradeStatusResponse) {}
   rpc UpgradeStudio (UpgradeStudioRequest) returns (UpgradeStudioResponse) {}
   rpc HealthCheck (HealthCheckRequest) returns (HealthCheckResponse) {}
+  rpc CmlApiCheck (CmlApiCheckRequest) returns (CmlApiCheckResponse) {}
+  rpc RotateCmlApi (RotateCmlApiRequest) returns (RotateCmlApiResponse) {}
 
   // Agent templates operations
   rpc ListAgentTemplates (ListAgentTemplatesRequest) returns (ListAgentTemplatesResponse) {}
@@ -1006,3 +1008,16 @@ message HealthCheckRequest {}
 message HealthCheckResponse {
   string message = 1;
 }
+
+message CmlApiCheckRequest {}
+
+message CmlApiCheckResponse {
+  string message = 1;
+}
+
+message RotateCmlApiRequest {}
+
+message RotateCmlApiResponse {
+  string message = 1;
+}
+

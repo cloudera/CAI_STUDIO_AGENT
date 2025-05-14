@@ -7,18 +7,21 @@ import {
   ENTITLEMENT_WARNING_ML_ENABLE_COMPOSABLE_AMPS,
   NO_DEFAULT_LLM_NOTIFICATION,
   VERSION_WARNING_OUT_OF_DATE,
+  API_KEY_ROTATION_NEEDED,
 } from '../lib/constants';
 import {
   useCheckStudioUpgradeStatusQuery,
   useUpgradeStudioMutation,
   useWorkbenchDetailsQuery,
   useHealthCheckQuery,
+  useRotateApiKeyMutation,
+  useCmlApiCheckQuery,
 } from '../lib/crossCuttingApi';
 import { compareWorkbenchVersions } from '../lib/workbench';
 import WarningMessageBox from './WarningMessageBox';
-import { Button, Layout, Modal, Typography } from 'antd';
+import { Button, Layout, Modal, Typography, Alert } from 'antd';
 import { CheckStudioUpgradeStatusResponse } from '@/studio/proto/agent_studio';
-import { SyncOutlined } from '@ant-design/icons';
+import { SyncOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { useGlobalNotification } from './Notifications';
 import * as semver from 'semver';
 import { useGetWorkflowDataQuery } from '../workflows/workflowAppApi';
@@ -161,6 +164,15 @@ const MessageBoxes: React.FC = () => {
     skip: isWorkflowMode
   });
   const [isOpen, setIsOpen] = useState(false);
+  const [isRotateModalOpen, setIsRotateModalOpen] = useState(false);
+  const [rotateApiKey] = useRotateApiKeyMutation();
+  const notificationsApi = useGlobalNotification();
+  const [isRotating, setIsRotating] = useState(false);
+
+  // Add CML API check with proper skip condition
+  const { data: cmlApiCheck, refetch: refetchApiCheck } = useCmlApiCheckQuery(undefined, {
+    skip: isWorkflowMode || !hasInitialHealthCheck
+  });
 
   useEffect(() => {
     if (isHealthy && !hasInitialHealthCheck) {
@@ -179,7 +191,7 @@ const MessageBoxes: React.FC = () => {
 
   const currentWarningMessages = [
     {
-      messageTrigger: hasInitialHealthCheck && workflowData && workflowData?.renderMode === 'studio' && !defaultModel,
+      messageTrigger: hasInitialHealthCheck && workflowData?.renderMode === 'studio' && !defaultModel,
       message: NO_DEFAULT_LLM_NOTIFICATION,
     },
   ];
@@ -200,29 +212,129 @@ const MessageBoxes: React.FC = () => {
       message: VERSION_WARNING_OUT_OF_DATE(() => setIsOpen(true)),
     });
 
+  const handleRotateKeys = async () => {
+    try {
+      setIsRotating(true);
+      
+      // Show acknowledgment notification
+      notificationsApi.info({
+        message: 'Rotating API Keys',
+        description: 'Your request to rotate API keys is being processed...',
+        placement: 'topRight',
+      });
+
+      await rotateApiKey().unwrap();
+      setIsRotateModalOpen(false);
+      setIsRotating(false);
+      
+      notificationsApi.success({
+        message: 'API Keys Rotated Successfully',
+        description: (
+          <Layout style={{ flexDirection: 'column', gap: 4, background: 'transparent' }}>
+            <Text>New API keys have been generated.</Text>
+            <Text>All deployed workflows will be redeployed automatically.</Text>
+          </Layout>
+        ),
+        placement: 'topRight',
+        duration: 5,
+      });
+
+      await refetchApiCheck();
+      
+    } catch (err: any) {
+      setIsRotating(false);
+      notificationsApi.error({
+        message: 'Failed to Rotate Keys',
+        description: err.message || 'An error occurred while rotating API keys.',
+        placement: 'topRight',
+      });
+      setIsRotateModalOpen(false);
+    }
+  };
+
+  // Only add API key warning if we have a response and there's an error message
+  if (hasInitialHealthCheck && workflowData?.renderMode === 'studio' && cmlApiCheck?.message) {
+    currentWarningMessages.push({
+      messageTrigger: true,
+      message: API_KEY_ROTATION_NEEDED(() => setIsRotateModalOpen(true)),
+    });
+  }
+
   return (
     <>
-      <UpgradeModal upgradeStatus={upgradeStatus} isOpen={isOpen} setIsOpen={setIsOpen} />
-      {currentWarningMessages.map((warningMessage) =>
-        warningMessage.messageTrigger ? (
-          <>
-            <Layout
-              style={{
-                padding: 10,
-                flexGrow: 0,
-                flexShrink: 0,
-                paddingBottom: 0,
-              }}
-            >
-              <WarningMessageBox
-                message={warningMessage.message}
-                messageTrigger={warningMessage.messageTrigger}
-              />
+      <Modal
+        open={isRotateModalOpen}
+        title="Rotate API Keys"
+        onCancel={() => setIsRotateModalOpen(false)}
+        centered
+        footer={[
+          <Button key="cancel" onClick={() => setIsRotateModalOpen(false)} disabled={isRotating}>
+            Cancel
+          </Button>,
+          <Button 
+            key="rotate" 
+            type="primary" 
+            onClick={handleRotateKeys}
+            loading={isRotating}
+          >
+            {isRotating ? 'Rotating Keys' : 'Rotate Keys'}
+          </Button>,
+        ]}
+      >
+        <Alert
+          style={{
+            alignItems: 'flex-start',
+            justifyContent: 'flex-start',
+            padding: 12,
+            marginBottom: 12,
+          }}
+          message={
+            <Layout style={{ flexDirection: 'column', gap: 4, padding: 0, background: 'transparent' }}>
+              <Layout
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 8,
+                  background: 'transparent',
+                }}
+              >
+                <InfoCircleOutlined style={{ fontSize: 16, color: '#faad14' }} />
+                <Text style={{ fontSize: 13, fontWeight: 600 }}>
+                  Warning: Workflow Redeployment
+                </Text>
+              </Layout>
+              <Text style={{ fontSize: 13, fontWeight: 400 }}>
+                Rotating API keys will create new user API keys and trigger redeployment of all deployed workflows.
+              </Text>
             </Layout>
-          </>
-        ) : (
-          <></>
-        ),
+          }
+          type="warning"
+          showIcon={false}
+          closable={false}
+        />
+        <Typography.Paragraph>
+          Are you sure you want to rotate the API keys?
+        </Typography.Paragraph>
+      </Modal>
+
+      <UpgradeModal upgradeStatus={upgradeStatus} isOpen={isOpen} setIsOpen={setIsOpen} />
+      {currentWarningMessages.map((warningMessage, index) =>
+        warningMessage.messageTrigger ? (
+          <Layout
+            key={`warning-${index}`}
+            style={{
+              padding: 10,
+              flexGrow: 0,
+              flexShrink: 0,
+              paddingBottom: 0,
+            }}
+          >
+            <WarningMessageBox
+              message={warningMessage.message}
+              messageTrigger={warningMessage.messageTrigger}
+            />
+          </Layout>
+        ) : null
       )}
     </>
   );
