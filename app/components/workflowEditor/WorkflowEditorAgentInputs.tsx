@@ -57,7 +57,10 @@ import {
 } from '../../tasks/tasksApi';
 import SelectOrAddAgentModal from './SelectOrAddAgentModal';
 import { useGetDefaultModelQuery } from '../../models/modelsApi';
-import { useGetToolInstanceMutation, useListToolInstancesQuery } from '@/app/tools/toolInstancesApi';
+import {
+  useGetToolInstanceMutation,
+  useListToolInstancesQuery,
+} from '@/app/tools/toolInstancesApi';
 import { useState, useEffect } from 'react';
 import { useImageAssetsData } from '@/app/lib/hooks/useAssetData';
 import { useGlobalNotification } from '../Notifications';
@@ -106,9 +109,9 @@ interface WorkflowAgentsComponentProps {
   workflowId: string;
 }
 
-const WorkflowAgentsComponent: React.FC<WorkflowAgentsComponentProps> = ({workflowId}) => {
-  const { data: agents } = useListAgentsQuery({workflow_id: workflowId});
-  const { data: toolInstances } = useListToolInstancesQuery({workflow_id: workflowId});
+const WorkflowAgentsComponent: React.FC<WorkflowAgentsComponentProps> = ({ workflowId }) => {
+  const { data: agents } = useListAgentsQuery({ workflow_id: workflowId });
+  const { data: toolInstances } = useListToolInstancesQuery({ workflow_id: workflowId });
   const workflowAgentIds = useAppSelector(selectEditorWorkflowAgentIds);
   const dispatch = useAppDispatch();
   const [toolInstancesMap, setToolInstancesMap] = useState<Record<string, any>>({});
@@ -130,10 +133,9 @@ const WorkflowAgentsComponent: React.FC<WorkflowAgentsComponentProps> = ({workfl
     }
     const tiMap = toolInstances.reduce<Record<string, ToolInstance>>(
       (acc, ti) => ({ ...acc, [ti.id]: ti }),
-      {}
+      {},
     );
     setToolInstancesMap(tiMap);
-    
   }, [toolInstances]);
 
   const handleDeleteAgent = async (agentId: string, agentName: string) => {
@@ -426,7 +428,9 @@ interface WorkflowManagerAgentsComponentProps {
   workflowId: string;
 }
 
-const WorkflowManagerAgentsComponent: React.FC<WorkflowManagerAgentsComponentProps> = ({workflowId}) => {
+const WorkflowManagerAgentsComponent: React.FC<WorkflowManagerAgentsComponentProps> = ({
+  workflowId,
+}) => {
   const [isManagerModalOpen, setIsManagerModalOpen] = useState(false);
   const tasksTooltip = `
   A manager agent is responsible for delegating tasks to 
@@ -513,16 +517,19 @@ export interface ManagerAgentComponentProps {
   isDisabled: boolean;
 }
 
-const ManagerAgentCheckComponent: React.FC<ManagerAgentComponentProps> = ({ workflowId, isDisabled }) => {
+const ManagerAgentCheckComponent: React.FC<ManagerAgentComponentProps> = ({
+  workflowId,
+  isDisabled,
+}) => {
   const dispatch = useAppDispatch();
   const managerAgentId = useAppSelector(selectEditorWorkflowManagerAgentId);
   const taskIds = useAppSelector(selectEditorWorkflowTaskIds) ?? [];
-  const { data: tasks } = useListTasksQuery({workflow_id: workflowId});
+  const { data: tasks } = useListTasksQuery({ workflow_id: workflowId });
   const [updateTask] = useUpdateTaskMutation();
   const workflowState = useAppSelector(selectEditorWorkflow);
   const [updateWorkflow] = useUpdateWorkflowMutation();
   const notificationApi = useGlobalNotification();
-  const { data: agents } = useListAgentsQuery({workflow_id: workflowId});
+  const { data: agents } = useListAgentsQuery({ workflow_id: workflowId });
   const [removeAgent] = useRemoveAgentMutation();
 
   const hasManagerAgent = workflowState.workflowMetadata.process === 'hierarchical';
@@ -629,11 +636,11 @@ interface SettingsComponentProps {
   workflowId: string;
 }
 
-const SettingsComponent: React.FC<SettingsComponentProps> = ({workflowId}) => {
+const SettingsComponent: React.FC<SettingsComponentProps> = ({ workflowId }) => {
   const [isManagerModalOpen, setIsManagerModalOpen] = useState(false);
   const isConversational = useAppSelector(selectEditorWorkflowIsConversational);
   const dispatch = useAppDispatch();
-  const { data: agents } = useListAgentsQuery({workflow_id: workflowId});
+  const { data: agents } = useListAgentsQuery({ workflow_id: workflowId });
   const [addTask] = useAddTaskMutation();
   const [removeTask] = useRemoveTaskMutation();
   const taskIds = useAppSelector(selectEditorWorkflowTaskIds) ?? [];
@@ -786,7 +793,9 @@ const SettingsComponent: React.FC<SettingsComponentProps> = ({workflowId}) => {
         </Space>
 
         <ManagerAgentCheckComponent workflowId={workflowId} isDisabled={false} />
-        {hasManagerAgent && !managerAgentId && <WorkflowManagerAgentsComponent workflowId={workflowId} />}
+        {hasManagerAgent && !managerAgentId && (
+          <WorkflowManagerAgentsComponent workflowId={workflowId} />
+        )}
         {hasManagerAgent && managerAgentId && (
           <Layout
             style={{
@@ -941,13 +950,11 @@ const SettingsComponent: React.FC<SettingsComponentProps> = ({workflowId}) => {
   );
 };
 
-
 interface WorkflowEditorAgentInputsProps {
   workflowId: string;
 }
 
-
-const WorkflowEditorAgentInputs: React.FC<WorkflowEditorAgentInputsProps> = ({workflowId}) => {
+const WorkflowEditorAgentInputs: React.FC<WorkflowEditorAgentInputsProps> = ({ workflowId }) => {
   return (
     <>
       <Layout

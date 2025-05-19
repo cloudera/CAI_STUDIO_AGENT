@@ -151,17 +151,17 @@ const MessageBoxes: React.FC = () => {
 
   // Skip all other API calls if in workflow mode
   const { data: isHealthy } = useHealthCheckQuery(undefined, {
-    skip: isWorkflowMode
+    skip: isWorkflowMode,
   });
   const [hasInitialHealthCheck, setHasInitialHealthCheck] = useState(false);
   const { data: defaultModel } = useGetDefaultModelQuery(undefined, {
-    skip: isWorkflowMode || !hasInitialHealthCheck
+    skip: isWorkflowMode || !hasInitialHealthCheck,
   });
   const { data: workbench } = useWorkbenchDetailsQuery(undefined, {
-    skip: isWorkflowMode
+    skip: isWorkflowMode,
   });
   const { data: upgradeStatus } = useCheckStudioUpgradeStatusQuery(undefined, {
-    skip: isWorkflowMode
+    skip: isWorkflowMode,
   });
   const [isOpen, setIsOpen] = useState(false);
   const [isRotateModalOpen, setIsRotateModalOpen] = useState(false);
@@ -171,7 +171,7 @@ const MessageBoxes: React.FC = () => {
 
   // Add CML API check with proper skip condition
   const { data: cmlApiCheck, refetch: refetchApiCheck } = useCmlApiCheckQuery(undefined, {
-    skip: isWorkflowMode || !hasInitialHealthCheck
+    skip: isWorkflowMode || !hasInitialHealthCheck,
   });
 
   useEffect(() => {
@@ -191,7 +191,8 @@ const MessageBoxes: React.FC = () => {
 
   const currentWarningMessages = [
     {
-      messageTrigger: hasInitialHealthCheck && workflowData?.renderMode === 'studio' && !defaultModel,
+      messageTrigger:
+        hasInitialHealthCheck && workflowData?.renderMode === 'studio' && !defaultModel,
       message: NO_DEFAULT_LLM_NOTIFICATION,
     },
   ];
@@ -215,7 +216,7 @@ const MessageBoxes: React.FC = () => {
   const handleRotateKeys = async () => {
     try {
       setIsRotating(true);
-      
+
       // Show acknowledgment notification
       notificationsApi.info({
         message: 'Rotating API Keys',
@@ -226,7 +227,7 @@ const MessageBoxes: React.FC = () => {
       await rotateApiKey().unwrap();
       setIsRotateModalOpen(false);
       setIsRotating(false);
-      
+
       notificationsApi.success({
         message: 'API Keys Rotated Successfully',
         description: (
@@ -240,7 +241,6 @@ const MessageBoxes: React.FC = () => {
       });
 
       await refetchApiCheck();
-      
     } catch (err: any) {
       setIsRotating(false);
       notificationsApi.error({
@@ -271,12 +271,7 @@ const MessageBoxes: React.FC = () => {
           <Button key="cancel" onClick={() => setIsRotateModalOpen(false)} disabled={isRotating}>
             Cancel
           </Button>,
-          <Button 
-            key="rotate" 
-            type="primary" 
-            onClick={handleRotateKeys}
-            loading={isRotating}
-          >
+          <Button key="rotate" type="primary" onClick={handleRotateKeys} loading={isRotating}>
             {isRotating ? 'Rotating Keys' : 'Rotate Keys'}
           </Button>,
         ]}
@@ -289,7 +284,9 @@ const MessageBoxes: React.FC = () => {
             marginBottom: 12,
           }}
           message={
-            <Layout style={{ flexDirection: 'column', gap: 4, padding: 0, background: 'transparent' }}>
+            <Layout
+              style={{ flexDirection: 'column', gap: 4, padding: 0, background: 'transparent' }}
+            >
               <Layout
                 style={{
                   flexDirection: 'row',
@@ -304,7 +301,8 @@ const MessageBoxes: React.FC = () => {
                 </Text>
               </Layout>
               <Text style={{ fontSize: 13, fontWeight: 400 }}>
-                Rotating API keys will create new user API keys and trigger redeployment of all deployed workflows.
+                Rotating API keys will create new user API keys and trigger redeployment of all
+                deployed workflows.
               </Text>
             </Layout>
           }
@@ -312,9 +310,7 @@ const MessageBoxes: React.FC = () => {
           showIcon={false}
           closable={false}
         />
-        <Typography.Paragraph>
-          Are you sure you want to rotate the API keys?
-        </Typography.Paragraph>
+        <Typography.Paragraph>Are you sure you want to rotate the API keys?</Typography.Paragraph>
       </Modal>
 
       <UpgradeModal upgradeStatus={upgradeStatus} isOpen={isOpen} setIsOpen={setIsOpen} />
@@ -334,7 +330,7 @@ const MessageBoxes: React.FC = () => {
               messageTrigger={warningMessage.messageTrigger}
             />
           </Layout>
-        ) : null
+        ) : null,
       )}
     </>
   );

@@ -13,7 +13,12 @@ import WorkflowListItem from './WorkflowListItem';
 import { useListDeployedWorkflowsQuery } from '@/app/workflows/deployedWorkflowsApi';
 import { useImageAssetsData } from '../../lib/hooks/useAssetData';
 import { useImportWorkflowTemplateMutation } from '@/app/workflows/workflowsApi';
-import { PlusCircleOutlined, LoadingOutlined, RightOutlined, LeftOutlined } from '@ant-design/icons';
+import {
+  PlusCircleOutlined,
+  LoadingOutlined,
+  RightOutlined,
+  LeftOutlined,
+} from '@ant-design/icons';
 import { useGlobalNotification } from '../Notifications';
 import { useListAgentsQuery, useListGlobalAgentTemplatesQuery } from '../../agents/agentApi';
 
@@ -188,7 +193,7 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
   const [showAllDeployed, setShowAllDeployed] = useState(false);
 
   // Filter out based on search term
-  const filteredDeployedWorkflows = deployedWorkflows.filter((deployedWorkflow) => 
+  const filteredDeployedWorkflows = deployedWorkflows.filter((deployedWorkflow) =>
     deployedWorkflow.workflow_name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
@@ -200,7 +205,7 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
   const filteredWorkflowTemplates = workflowTemplates.filter((template) =>
     template.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
-  
+
   // Create a map where key is workflow ID and value is list of deployed workflow IDs.
   // TODO: pass deployed workflow IDs in each workflow message as part of listWorkflows/getWorkflow
   const deployedWorkflowMap = filteredDeployedWorkflows.reduce<Record<string, DeployedWorkflow[]>>(
@@ -219,29 +224,29 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
   );
 
   // Modify template display logic
-  const displayedTemplates = showAllTemplates 
-    ? filteredWorkflowTemplates 
+  const displayedTemplates = showAllTemplates
+    ? filteredWorkflowTemplates
     : filteredWorkflowTemplates.slice(0, 5);
 
-  const displayedDrafts = showAllDrafts
-    ? draftWorkflows
-    : draftWorkflows.slice(0, 5);
+  const displayedDrafts = showAllDrafts ? draftWorkflows : draftWorkflows.slice(0, 5);
 
   const displayedDeployed = showAllDeployed
     ? Object.keys(deployedWorkflowMap)
     : Object.keys(deployedWorkflowMap).slice(0, 5);
 
   const EmptyWorkflowState = () => (
-    <div style={{ 
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '40px',
-      background: 'white',
-      borderRadius: '8px',
-      margin: '20px 0'
-    }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '40px',
+        background: 'white',
+        borderRadius: '8px',
+        margin: '20px 0',
+      }}
+    >
       <Text>No workflows here yet</Text>
       <Text style={{ color: '#666', marginBottom: '20px' }}>
         Explore our different workflow templates or create one yourself.
@@ -255,7 +260,7 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
   // Common button style
   const buttonStyle = {
     background: 'white',
-    border: '1px solid #d9d9d9',  // Ant Design's default grey border color
+    border: '1px solid #d9d9d9', // Ant Design's default grey border color
   };
 
   return (
@@ -268,14 +273,16 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
       }}
     >
       {/* Search and Filter Bar */}
-      <div style={{
-        display: 'flex',
-        gap: '12px',
-        position: 'sticky',
-        top: 0,
-        zIndex: 1,
-        borderBottom: '1px solid #f0f0f0',
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          gap: '12px',
+          position: 'sticky',
+          top: 0,
+          zIndex: 1,
+          borderBottom: '1px solid #f0f0f0',
+        }}
+      >
         <div style={{ width: '25%' }}>
           <SearchBar
             onSearch={(value) => setSearchTerm(value)}
@@ -294,15 +301,15 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
           }}
           options={[
             { value: 'all', label: 'All Workflows' },
-            { 
-              value: 'draft', 
+            {
+              value: 'draft',
               label: 'Draft Workflows',
-              disabled: draftWorkflows.length === 0 
+              disabled: draftWorkflows.length === 0,
             },
-            { 
-              value: 'deployed', 
+            {
+              value: 'deployed',
               label: 'Deployed Workflows',
-              disabled: Object.keys(deployedWorkflowMap).length === 0 
+              disabled: Object.keys(deployedWorkflowMap).length === 0,
             },
             { value: 'templates', label: 'Workflow Templates' },
           ]}
@@ -312,107 +319,111 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
       {/* Scrollable content area */}
       <div style={{ overflowY: 'auto', height: 'calc(100% - 70px)' }}>
         {/* Show empty state when no workflows exist */}
-        {!Object.keys(deployedWorkflowMap).length && !draftWorkflows.length && 
-         (workflowFilter === 'all' || workflowFilter === 'draft' || workflowFilter === 'deployed') && (
-          <EmptyWorkflowState />
-        )}
+        {!Object.keys(deployedWorkflowMap).length &&
+          !draftWorkflows.length &&
+          (workflowFilter === 'all' ||
+            workflowFilter === 'draft' ||
+            workflowFilter === 'deployed') && <EmptyWorkflowState />}
 
         {/* Deployed Workflows */}
-        {(workflowFilter === 'all' || workflowFilter === 'deployed') && 
-         Object.keys(deployedWorkflowMap).length > 0 && (
-          <div>
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center',
-              marginBottom: '10px' 
-            }}>
-              <Text style={{ fontSize: '18px', fontWeight: 600 }}>
-                Deployed Workflows
-              </Text>
-              <div style={{
-                display: 'flex',
-                gap: '8px',
-                padding: '2px 8px',
-                height: '32px',
-                alignItems: 'center'
-              }}>
-                <Button 
-                  type="link"
-                  size="small"
-                  onClick={() => setShowAllDeployed(!showAllDeployed)}
-                  style={buttonStyle}
+        {(workflowFilter === 'all' || workflowFilter === 'deployed') &&
+          Object.keys(deployedWorkflowMap).length > 0 && (
+            <div>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '10px',
+                }}
+              >
+                <Text style={{ fontSize: '18px', fontWeight: 600 }}>Deployed Workflows</Text>
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: '8px',
+                    padding: '2px 8px',
+                    height: '32px',
+                    alignItems: 'center',
+                  }}
                 >
-                  {showAllDeployed ? (
-                    <>
-                      <LeftOutlined /> View Less
-                    </>
-                  ) : (
-                    <>
-                      View All <RightOutlined />
-                    </>
-                  )}
-                </Button>
+                  <Button
+                    type="link"
+                    size="small"
+                    onClick={() => setShowAllDeployed(!showAllDeployed)}
+                    style={buttonStyle}
+                  >
+                    {showAllDeployed ? (
+                      <>
+                        <LeftOutlined /> View Less
+                      </>
+                    ) : (
+                      <>
+                        View All <RightOutlined />
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
-            </div>
-            <List
-              grid={{
-                gutter: 10,
-                xs: 1,
-                sm: 2,
-                md: 3,
-                lg: 4,
-                xl: 5,
-                xxl: 5,
-              }}
-              style={{ width: '100%', padding: 0 }}
-              dataSource={displayedDeployed}
-              renderItem={(workflowId) => {
-                const workflow = workflows.find((w) => w.workflow_id === workflowId);
-                const deployments = deployedWorkflowMap[workflowId] || [];
+              <List
+                grid={{
+                  gutter: 10,
+                  xs: 1,
+                  sm: 2,
+                  md: 3,
+                  lg: 4,
+                  xl: 5,
+                  xxl: 5,
+                }}
+                style={{ width: '100%', padding: 0 }}
+                dataSource={displayedDeployed}
+                renderItem={(workflowId) => {
+                  const workflow = workflows.find((w) => w.workflow_id === workflowId);
+                  const deployments = deployedWorkflowMap[workflowId] || [];
 
-                return workflow ? (
-                  <List.Item style={{ width: '100%' }}>
-                    <WorkflowListItem
-                      key={workflowId}
-                      workflow={workflow}
-                      deployments={deployments}
-                      editWorkflow={editWorkflow}
-                      deleteWorkflow={deleteWorkflow}
-                      testWorkflow={testWorkflow}
-                      onDeploy={onDeploy}
-                      onDeleteDeployedWorkflow={onDeleteDeployedWorkflow}
-                      sectionType="Deployed"
-                    />
-                  </List.Item>
-                ) : null;
-              }}
-            />
-          </div>
-        )}
+                  return workflow ? (
+                    <List.Item style={{ width: '100%' }}>
+                      <WorkflowListItem
+                        key={workflowId}
+                        workflow={workflow}
+                        deployments={deployments}
+                        editWorkflow={editWorkflow}
+                        deleteWorkflow={deleteWorkflow}
+                        testWorkflow={testWorkflow}
+                        onDeploy={onDeploy}
+                        onDeleteDeployedWorkflow={onDeleteDeployedWorkflow}
+                        sectionType="Deployed"
+                      />
+                    </List.Item>
+                  ) : null;
+                }}
+              />
+            </div>
+          )}
 
         {/* Draft Workflows */}
-        {(workflowFilter === 'all' || workflowFilter === 'draft') && 
-         draftWorkflows.length > 0 && (
+        {(workflowFilter === 'all' || workflowFilter === 'draft') && draftWorkflows.length > 0 && (
           <div>
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center',
-              marginTop: '25px',
-              marginBottom: '10px' 
-            }}>
-              <Text style={{ fontSize: '18px', fontWeight: 600 }}>
-                Draft Workflows
-              </Text>
-              <div style={{
+            <div
+              style={{
                 display: 'flex',
-                gap: '8px',
-                padding: '2px 8px',
-                height: '32px',
-                alignItems: 'center'
-              }}>
-                <Button 
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginTop: '25px',
+                marginBottom: '10px',
+              }}
+            >
+              <Text style={{ fontSize: '18px', fontWeight: 600 }}>Draft Workflows</Text>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '8px',
+                  padding: '2px 8px',
+                  height: '32px',
+                  alignItems: 'center',
+                }}
+              >
+                <Button
                   type="link"
                   size="small"
                   onClick={() => setShowAllDrafts(!showAllDrafts)}
@@ -462,76 +473,80 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
         )}
 
         {/* Templates */}
-        {(workflowFilter === 'all' || workflowFilter === 'templates') && 
-         displayedTemplates.length > 0 && (
-          <div>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginTop: '25px',
-              marginBottom: '10px',
-            }}>
-              <Text style={{ fontSize: '18px', fontWeight: 600 }}>Workflow Templates</Text>
-              <div style={{
-                display: 'flex',
-                gap: '12px',
-                padding: '2px 8px',
-                height: '32px',
-                alignItems: 'center'
-              }}>
-                <Button
-                  type="text"
-                  size="small"
-                  onClick={() => setImportModalVisible(true)}
-                  style={buttonStyle}
+        {(workflowFilter === 'all' || workflowFilter === 'templates') &&
+          displayedTemplates.length > 0 && (
+            <div>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginTop: '25px',
+                  marginBottom: '10px',
+                }}
+              >
+                <Text style={{ fontSize: '18px', fontWeight: 600 }}>Workflow Templates</Text>
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: '12px',
+                    padding: '2px 8px',
+                    height: '32px',
+                    alignItems: 'center',
+                  }}
                 >
-                  <PlusCircleOutlined /> Import Template
-                </Button>
-                <div style={{ width: '1px', background: '#d9d9d9' }} />
-                <Button 
-                  type="link"
-                  size="small"
-                  onClick={() => setShowAllTemplates(!showAllTemplates)}
-                  style={buttonStyle}
-                >
-                  {showAllTemplates ? (
-                    <>
-                      <LeftOutlined /> View Less
-                    </>
-                  ) : (
-                    <>
-                      View All <RightOutlined />
-                    </>
-                  )}
-                </Button>
+                  <Button
+                    type="text"
+                    size="small"
+                    onClick={() => setImportModalVisible(true)}
+                    style={buttonStyle}
+                  >
+                    <PlusCircleOutlined /> Import Template
+                  </Button>
+                  <div style={{ width: '1px', background: '#d9d9d9' }} />
+                  <Button
+                    type="link"
+                    size="small"
+                    onClick={() => setShowAllTemplates(!showAllTemplates)}
+                    style={buttonStyle}
+                  >
+                    {showAllTemplates ? (
+                      <>
+                        <LeftOutlined /> View Less
+                      </>
+                    ) : (
+                      <>
+                        View All <RightOutlined />
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
+              <List
+                grid={{
+                  gutter: 10,
+                  xs: 1,
+                  sm: 2,
+                  md: 3,
+                  lg: 4,
+                  xl: 5,
+                  xxl: 5,
+                }}
+                style={{ width: '100%', marginTop: '10px' }}
+                dataSource={displayedTemplates}
+                renderItem={(workflowTemplate) => (
+                  <List.Item style={{ width: '100%', margin: 0 }}>
+                    <WorkflowListItem
+                      key={workflowTemplate.id}
+                      workflowTemplate={workflowTemplate}
+                      deleteWorkflowTemplate={deleteWorkflowTemplate}
+                      sectionType="Template"
+                    />
+                  </List.Item>
+                )}
+              />
             </div>
-            <List
-              grid={{
-                gutter: 10,
-                xs: 1,
-                sm: 2,
-                md: 3,
-                lg: 4,
-                xl: 5,
-                xxl: 5,
-              }}
-              style={{ width: '100%', marginTop: '10px' }}
-              dataSource={displayedTemplates}
-              renderItem={(workflowTemplate) => (
-                <List.Item style={{ width: '100%', margin: 0 }}>
-                  <WorkflowListItem
-                    key={workflowTemplate.id}
-                    workflowTemplate={workflowTemplate}
-                    deleteWorkflowTemplate={deleteWorkflowTemplate}
-                    sectionType="Template"
-                  />
-                </List.Item>
-              )}
-            />
-          </div>
-        )}
+          )}
       </div>
 
       {/* Import Workflow Template Modal */}

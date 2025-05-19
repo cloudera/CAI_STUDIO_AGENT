@@ -29,16 +29,16 @@ import { useListAgentTemplatesQuery } from '@/app/agents/agentApi';
 
 const { Text, Title } = Typography;
 
-
-
 interface WorkflowTemplateDetailsProps {
-  template: WorkflowTemplateMetadata
+  template: WorkflowTemplateMetadata;
 }
 
-const WorkflowTemplateDetails: React.FC<WorkflowTemplateDetailsProps> = ({template}) => {
-  const {data: agentTemplates} = useListAgentTemplatesQuery({workflow_template_id: template.id});
-  const {data: toolTemplates} = useListToolTemplatesQuery({workflow_template_id: template.id});
-  const {data: taskTemplates} = useListTaskTemplatesQuery({workflow_template_id: template.id})
+const WorkflowTemplateDetails: React.FC<WorkflowTemplateDetailsProps> = ({ template }) => {
+  const { data: agentTemplates } = useListAgentTemplatesQuery({
+    workflow_template_id: template.id,
+  });
+  const { data: toolTemplates } = useListToolTemplatesQuery({ workflow_template_id: template.id });
+  const { data: taskTemplates } = useListTaskTemplatesQuery({ workflow_template_id: template.id });
   const managerAgentTemplate = template.manager_agent_template_id
     ? agentTemplates?.find((a) => a.id === template.manager_agent_template_id)
     : null;
@@ -73,7 +73,7 @@ const WorkflowTemplateDetails: React.FC<WorkflowTemplateDetailsProps> = ({templa
       ?.filter((template) => template?.tool_image_uri)
       .map((template) => template.tool_image_uri) || [],
   );
-  
+
   return (
     <Layout style={{ background: '#fff' }}>
       {/* Show Manager Agent Template if exists */}
@@ -154,9 +154,7 @@ const WorkflowTemplateDetails: React.FC<WorkflowTemplateDetailsProps> = ({templa
                       }}
                     >
                       Goal:{' '}
-                      <span style={{ color: 'black', fontWeight: 400 }}>
-                        {agent.goal || 'N/A'}
-                      </span>
+                      <span style={{ color: 'black', fontWeight: 400 }}>{agent.goal || 'N/A'}</span>
                     </Text>
                     <Text
                       style={{
@@ -513,27 +511,27 @@ const WorkflowTemplateDetails: React.FC<WorkflowTemplateDetailsProps> = ({templa
   );
 };
 
-
-
-
 interface WorkflowTemplateCardProps {
-  template: WorkflowTemplateMetadata
-  selectedTemplate: WorkflowTemplateMetadata | null
-  setSelectedTemplate: any
+  template: WorkflowTemplateMetadata;
+  selectedTemplate: WorkflowTemplateMetadata | null;
+  setSelectedTemplate: any;
 }
 
-const WorkflowTemplateCard: React.FC<WorkflowTemplateCardProps> = ({template, selectedTemplate, setSelectedTemplate}) => {
-  const {data: agentTemplates} = useListAgentTemplatesQuery({workflow_template_id: template.id});
-                
+const WorkflowTemplateCard: React.FC<WorkflowTemplateCardProps> = ({
+  template,
+  selectedTemplate,
+  setSelectedTemplate,
+}) => {
+  const { data: agentTemplates } = useListAgentTemplatesQuery({
+    workflow_template_id: template.id,
+  });
+
   return (
     <Card
       key={template.id}
       style={{
         cursor: 'pointer',
-        boxShadow:
-          selectedTemplate?.id === template.id
-            ? '0 4px 8px rgba(0, 0, 0, 0.2)'
-            : 'none',
+        boxShadow: selectedTemplate?.id === template.id ? '0 4px 8px rgba(0, 0, 0, 0.2)' : 'none',
         backgroundColor: selectedTemplate?.id === template.id ? '#e6ffe6' : '#fff',
         height: '180px',
         display: 'flex',
@@ -587,14 +585,12 @@ const WorkflowTemplateCard: React.FC<WorkflowTemplateCardProps> = ({template, se
           {template.agent_template_ids?.map((agentId, index) => {
             const agentIconsColorPalette = ['#a9ccb9', '#cca9a9', '#c4a9cc', '#ccc7a9'];
             const agentName =
-              agentTemplates?.find((a) => a.id === agentId)?.name ||
-              `Agent ${index + 1}`;
+              agentTemplates?.find((a) => a.id === agentId)?.name || `Agent ${index + 1}`;
             return (
               <Tooltip key={agentId} title={agentName}>
                 <Button
                   style={{
-                    backgroundColor:
-                      agentIconsColorPalette[index % agentIconsColorPalette.length],
+                    backgroundColor: agentIconsColorPalette[index % agentIconsColorPalette.length],
                     color: 'black',
                     fontSize: '10px',
                     height: '20px',
@@ -610,10 +606,8 @@ const WorkflowTemplateCard: React.FC<WorkflowTemplateCardProps> = ({template, se
         </Space>
       </Layout>
     </Card>
-    )
-  };
-
-
+  );
+};
 
 interface WorkflowGetStartModalProps {
   visible: boolean;
@@ -630,7 +624,6 @@ const WorkflowGetStartModal: React.FC<WorkflowGetStartModalProps> = ({
 }) => {
   const [form] = Form.useForm();
   const [selectedTemplate, setSelectedTemplate] = useState<WorkflowTemplateMetadata | null>(null);
-
 
   const handleCreateWorkflow = () => {
     form.validateFields().then((values) => {
@@ -731,13 +724,13 @@ const WorkflowGetStartModal: React.FC<WorkflowGetStartModalProps> = ({
             >
               {workflowTemplates.map((template, index) => {
                 return (
-                  <WorkflowTemplateCard 
+                  <WorkflowTemplateCard
                     key={index}
                     template={template}
                     selectedTemplate={selectedTemplate}
                     setSelectedTemplate={setSelectedTemplate}
                   />
-                )
+                );
               })}
             </div>
           </Layout>
@@ -768,7 +761,7 @@ const WorkflowGetStartModal: React.FC<WorkflowGetStartModalProps> = ({
               </Form.Item>
             </Form>
 
-            {selectedTemplate && (<WorkflowTemplateDetails template={selectedTemplate} />)}
+            {selectedTemplate && <WorkflowTemplateDetails template={selectedTemplate} />}
           </Layout>
         </Layout>
         <Divider style={{ margin: 0, backgroundColor: '#f0f0f0' }} />

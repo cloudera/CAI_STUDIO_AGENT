@@ -34,9 +34,11 @@ export const createDiagramStateFromTemplate = (templateData: TemplateDiagramInpu
   // Add task nodes
   templateData.template.task_template_ids?.forEach((taskId, index) => {
     const task = templateData.taskTemplates?.find((t) => t.id === taskId);
-    const taskLabel = task && (templateData.template.is_conversational
-      ? 'Conversation'
-      : `${task.description.substring(0, 50)}...`);
+    const taskLabel =
+      task &&
+      (templateData.template.is_conversational
+        ? 'Conversation'
+        : `${task.description.substring(0, 50)}...`);
 
     if (task) {
       initialNodes.push({
@@ -198,4 +200,4 @@ export const createDiagramStateFromTemplate = (templateData: TemplateDiagramInpu
     nodes: initialNodes,
     edges: initialEdges,
   };
-}; 
+};

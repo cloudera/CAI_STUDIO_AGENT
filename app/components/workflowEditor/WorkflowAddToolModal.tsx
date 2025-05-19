@@ -68,7 +68,11 @@ interface WorkflowAddToolModalProps {
   onCancel: () => void;
 }
 
-const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId, open, onCancel }) => {
+const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
+  workflowId,
+  open,
+  onCancel,
+}) => {
   const { data: toolTemplates = [], refetch } = useListGlobalToolTemplatesQuery({});
   const { data: parentProjectDetails } = useGetParentProjectDetailsQuery({});
   const [selectedToolTemplate, setSelectedToolTemplate] = useState<string | null>(null);
@@ -83,11 +87,11 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId,
   const [isCreateSelected, setIsCreateSelected] = useState(false);
   const [selectedToolInstance, setSelectedToolInstance] = useState<string | null>(null);
   const createAgentState = useSelector(selectEditorAgentViewCreateAgentState);
-  const { data: toolInstancesList = [] } = useListToolInstancesQuery({workflow_id: workflowId});
+  const { data: toolInstancesList = [] } = useListToolInstancesQuery({ workflow_id: workflowId });
   const [createToolInstance] = useCreateToolInstanceMutation();
   const [selectedAssignedAgent, setSelectedAssignedAgent] = useState<any>(null);
   const [updateAgent] = useUpdateAgentMutation();
-  const { data: agents = [] } = useListAgentsQuery({workflow_id: workflowId});
+  const { data: agents = [] } = useListAgentsQuery({ workflow_id: workflowId });
   const [uploadedFilePath, setUploadedFilePath] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setUploading] = useState(false);
@@ -437,18 +441,20 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId,
   };
 
   const filterToolTemplates = (templates: any[]) => {
-    return templates.filter(template => 
-      template.name.toLowerCase().includes(searchTemplates.toLowerCase()) ||
-      (template.tool_description || '').toLowerCase().includes(searchTemplates.toLowerCase())
+    return templates.filter(
+      (template) =>
+        template.name.toLowerCase().includes(searchTemplates.toLowerCase()) ||
+        (template.tool_description || '').toLowerCase().includes(searchTemplates.toLowerCase()),
     );
   };
 
   const filterToolInstances = (toolIds: string[]) => {
-    return toolIds.filter(id => {
+    return toolIds.filter((id) => {
       const tool = toolInstancesMap[id];
-      return tool && (
-        tool.name.toLowerCase().includes(searchTools.toLowerCase()) ||
-        (tool.tool_description || '').toLowerCase().includes(searchTools.toLowerCase())
+      return (
+        tool &&
+        (tool.name.toLowerCase().includes(searchTools.toLowerCase()) ||
+          (tool.tool_description || '').toLowerCase().includes(searchTools.toLowerCase()))
       );
     });
   };
@@ -524,25 +530,43 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   maxWidth: '70%',
-                  display: 'inline-block'
+                  display: 'inline-block',
                 }}
                 title={template.name}
               >
                 {template.name}
               </Text>
-              <Tooltip 
+              <Tooltip
                 title={
-                  template.is_valid 
-                    ? 'Tool is valid' 
-                    : template.tool_metadata 
-                      ? JSON.parse(typeof template.tool_metadata === 'string' ? template.tool_metadata : JSON.stringify(template.tool_metadata)).status || 'Tool status unknown'
+                  template.is_valid
+                    ? 'Tool is valid'
+                    : template.tool_metadata
+                      ? JSON.parse(
+                          typeof template.tool_metadata === 'string'
+                            ? template.tool_metadata
+                            : JSON.stringify(template.tool_metadata),
+                        ).status || 'Tool status unknown'
                       : 'Tool status unknown'
                 }
               >
                 {template.is_valid ? (
-                  <CheckCircleOutlined style={{ color: '#52c41a', fontSize: '15px', fontWeight: 1000, marginLeft: '4px' }} />
+                  <CheckCircleOutlined
+                    style={{
+                      color: '#52c41a',
+                      fontSize: '15px',
+                      fontWeight: 1000,
+                      marginLeft: '4px',
+                    }}
+                  />
                 ) : (
-                  <ExclamationCircleOutlined style={{ color: '#faad14', fontSize: '15px', fontWeight: 1000, marginLeft: '4px' }} />
+                  <ExclamationCircleOutlined
+                    style={{
+                      color: '#faad14',
+                      fontSize: '15px',
+                      fontWeight: 1000,
+                      marginLeft: '4px',
+                    }}
+                  />
                 )}
               </Tooltip>
             </div>
@@ -639,25 +663,43 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   maxWidth: '50%',
-                  display: 'inline-block'
+                  display: 'inline-block',
                 }}
                 title={toolInstance.name}
               >
                 {toolInstance.name}
               </Text>
-              <Tooltip 
+              <Tooltip
                 title={
-                  toolInstance.is_valid 
-                    ? 'Tool is valid' 
-                    : toolInstance.tool_metadata 
-                      ? JSON.parse(typeof toolInstance.tool_metadata === 'string' ? toolInstance.tool_metadata : JSON.stringify(toolInstance.tool_metadata)).status || 'Tool status unknown'
+                  toolInstance.is_valid
+                    ? 'Tool is valid'
+                    : toolInstance.tool_metadata
+                      ? JSON.parse(
+                          typeof toolInstance.tool_metadata === 'string'
+                            ? toolInstance.tool_metadata
+                            : JSON.stringify(toolInstance.tool_metadata),
+                        ).status || 'Tool status unknown'
                       : 'Tool status unknown'
                 }
               >
                 {toolInstance.is_valid ? (
-                  <CheckCircleOutlined style={{ color: '#52c41a', fontSize: '15px', fontWeight: 1000, marginLeft: '4px' }} />
+                  <CheckCircleOutlined
+                    style={{
+                      color: '#52c41a',
+                      fontSize: '15px',
+                      fontWeight: 1000,
+                      marginLeft: '4px',
+                    }}
+                  />
                 ) : (
-                  <ExclamationCircleOutlined style={{ color: '#faad14', fontSize: '15px', fontWeight: 1000, marginLeft: '4px' }} />
+                  <ExclamationCircleOutlined
+                    style={{
+                      color: '#faad14',
+                      fontSize: '15px',
+                      fontWeight: 1000,
+                      marginLeft: '4px',
+                    }}
+                  />
                 )}
               </Tooltip>
             </div>
@@ -715,13 +757,15 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId,
               {renderAlert(
                 'Tool Validation Error',
                 `This tool instance is in an invalid state: ${
-                  toolInstancesMap[selectedToolInstance]?.tool_metadata 
-                    ? JSON.parse(typeof toolInstancesMap[selectedToolInstance]?.tool_metadata === 'string' 
-                        ? toolInstancesMap[selectedToolInstance]?.tool_metadata 
-                        : JSON.stringify(toolInstancesMap[selectedToolInstance]?.tool_metadata)).status 
+                  toolInstancesMap[selectedToolInstance]?.tool_metadata
+                    ? JSON.parse(
+                        typeof toolInstancesMap[selectedToolInstance]?.tool_metadata === 'string'
+                          ? toolInstancesMap[selectedToolInstance]?.tool_metadata
+                          : JSON.stringify(toolInstancesMap[selectedToolInstance]?.tool_metadata),
+                      ).status
                     : 'Unknown error'
                 }. Please consider deleting this tool and creating a new one.`,
-                'warning'
+                'warning',
               )}
             </div>
           )}
@@ -962,13 +1006,15 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId,
             {getButtonText()}
           </Button>
         ) : selectedToolTemplate && !selectedToolInstance ? (
-          <Tooltip 
+          <Tooltip
             title={
-              !selectedTool?.is_valid 
-                ? selectedTool?.tool_metadata 
-                  ? JSON.parse(typeof selectedTool.tool_metadata === 'string' 
-                      ? selectedTool.tool_metadata 
-                      : JSON.stringify(selectedTool.tool_metadata)).status || 'Tool template is invalid' 
+              !selectedTool?.is_valid
+                ? selectedTool?.tool_metadata
+                  ? JSON.parse(
+                      typeof selectedTool.tool_metadata === 'string'
+                        ? selectedTool.tool_metadata
+                        : JSON.stringify(selectedTool.tool_metadata),
+                    ).status || 'Tool template is invalid'
                   : 'Tool template is invalid'
                 : ''
             }
@@ -984,10 +1030,10 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId,
             </Button>
           </Tooltip>
         ) : selectedToolInstance ? (
-          <Button 
-            key="update" 
-            type="primary" 
-            onClick={handleUpdateToolInstance} 
+          <Button
+            key="update"
+            type="primary"
+            onClick={handleUpdateToolInstance}
             disabled={loading || isLoading}
           >
             {getButtonText()}
@@ -997,7 +1043,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId,
     >
       <div style={{ position: 'relative' }}>
         {isLoading && (
-          <div 
+          <div
             style={{
               position: 'absolute',
               top: 0,
@@ -1009,19 +1055,21 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId,
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              cursor: 'not-allowed'
+              cursor: 'not-allowed',
             }}
           >
             <Spin size="large" />
           </div>
         )}
         {loading ? (
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '100%',
-          }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '100%',
+            }}
+          >
             <Spin size="large" />
           </div>
         ) : (
@@ -1052,7 +1100,11 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId,
                   onClick={handleCreateCardSelect}
                 >
                   <div
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
                   >
                     <Space size={16}>
                       <div
@@ -1094,7 +1146,14 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId,
                   </div>
                 </div>
 
-                <Layout style={{ display: 'flex', flexDirection: 'row', backgroundColor: '#fff', marginBottom: '8px'}}>
+                <Layout
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    backgroundColor: '#fff',
+                    marginBottom: '8px',
+                  }}
+                >
                   <Layout style={{ flex: 1, backgroundColor: '#fff', paddingRight: '16px' }}>
                     <Space direction="vertical" style={{ width: '100%', marginBottom: '0px' }}>
                       <Typography.Title level={5} style={{ marginBottom: '8px' }}>
@@ -1131,7 +1190,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId,
                     flexDirection: 'row',
                     height: '100%',
                     backgroundColor: '#fff',
-                    marginTop: '8px'
+                    marginTop: '8px',
                   }}
                 >
                   <Layout
@@ -1194,19 +1253,25 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId,
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <Input value={selectedTool?.name} readOnly={!isEditable} />
-                          <Tooltip 
+                          <Tooltip
                             title={
-                              selectedTool.is_valid 
-                                ? 'Tool is valid' 
-                                : selectedTool.tool_metadata 
-                                  ? JSON.parse(typeof selectedTool.tool_metadata === 'string' ? selectedTool.tool_metadata : JSON.stringify(selectedTool.tool_metadata)).status || 'Tool status unknown'
+                              selectedTool.is_valid
+                                ? 'Tool is valid'
+                                : selectedTool.tool_metadata
+                                  ? JSON.parse(
+                                      typeof selectedTool.tool_metadata === 'string'
+                                        ? selectedTool.tool_metadata
+                                        : JSON.stringify(selectedTool.tool_metadata),
+                                    ).status || 'Tool status unknown'
                                   : 'Tool status unknown'
                             }
                           >
                             {selectedTool.is_valid ? (
                               <CheckCircleOutlined style={{ color: '#52c41a', fontSize: '15px' }} />
                             ) : (
-                              <ExclamationCircleOutlined style={{ color: '#faad14', fontSize: '15px' }} />
+                              <ExclamationCircleOutlined
+                                style={{ color: '#faad14', fontSize: '15px' }}
+                              />
                             )}
                           </Tooltip>
                         </div>
@@ -1217,11 +1282,15 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId,
                           {renderAlert(
                             'Tool Validation Error',
                             `This tool template is in an invalid state: ${
-                              selectedTool.tool_metadata 
-                                ? JSON.parse(typeof selectedTool.tool_metadata === 'string' ? selectedTool.tool_metadata : JSON.stringify(selectedTool.tool_metadata)).status 
+                              selectedTool.tool_metadata
+                                ? JSON.parse(
+                                    typeof selectedTool.tool_metadata === 'string'
+                                      ? selectedTool.tool_metadata
+                                      : JSON.stringify(selectedTool.tool_metadata),
+                                  ).status
                                 : 'Unknown error'
                             }. Please consider deleting this tool and creating a new one.`,
-                            'warning'
+                            'warning',
                           )}
                         </div>
                       )}

@@ -318,9 +318,9 @@ def update_tool_template(
                         db_model.ToolTemplate.name == request.tool_template_name,
                         db_model.ToolTemplate.id != request.tool_template_id,
                         (
-                            (db_model.ToolTemplate.workflow_template_id == tool_template.workflow_template_id) |
-                            (db_model.ToolTemplate.workflow_template_id.is_(None))
-                        )
+                            (db_model.ToolTemplate.workflow_template_id == tool_template.workflow_template_id)
+                            | (db_model.ToolTemplate.workflow_template_id.is_(None))
+                        ),
                     )
                     .first()
                 )

@@ -20,10 +20,7 @@ import WorkflowApp from '@/app/components/workflowApp/WorkflowApp';
 import WorkflowStepView from '@/app/components/workflowEditor/WorkflowStepView';
 import WorkflowNavigation from '@/app/components/workflowEditor/WorkflowNavigation';
 import { Workflow } from '@/studio/proto/agent_studio';
-import {
-  useGetWorkflowMutation,
-  useUpdateWorkflowMutation,
-} from '../workflowsApi';
+import { useGetWorkflowMutation, useUpdateWorkflowMutation } from '../workflowsApi';
 import WorkflowEditorTaskView from '@/app/components/workflowEditor/WorkflowEditorTaskView';
 import WorkflowOverview from '@/app/components/workflows/WorkflowOverview';
 import CommonBreadCrumb from '@/app/components/CommonBreadCrumb';
@@ -104,12 +101,12 @@ const CreateWorkflowContent: React.FC = () => {
         name: currentWorkflowName,
         workflowMetadata: {
           ...workflowState.workflowMetadata,
-          name: currentWorkflowName
-        }
+          name: currentWorkflowName,
+        },
       };
 
       await updateWorkflow(createUpdateRequestFromEditor(updatedWorkflowState)).unwrap();
-      
+
       notificationApi.success({
         message: 'Workflow Updated',
         description: 'Workflow name has been updated successfully.',

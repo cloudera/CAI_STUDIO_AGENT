@@ -39,7 +39,7 @@ export const workflowsApi = apiSlice.injectEndpoints({
       transformResponse: (response: ListWorkflowsResponse) => {
         return response.workflows;
       },
-      providesTags: [{type: 'Workflow', id: 'LIST'}],
+      providesTags: [{ type: 'Workflow', id: 'LIST' }],
     }),
     getWorkflow: builder.mutation<Workflow, GetWorkflowRequest>({
       query: (request) => ({
@@ -71,7 +71,7 @@ export const workflowsApi = apiSlice.injectEndpoints({
       transformResponse: (response: AddWorkflowResponse) => {
         return response.workflow_id;
       },
-      invalidatesTags: [{type: 'Workflow', id: 'LIST'}],
+      invalidatesTags: [{ type: 'Workflow', id: 'LIST' }],
     }),
     updateWorkflow: builder.mutation<void, UpdateWorkflowRequest>({
       query: (request) => ({
@@ -82,7 +82,7 @@ export const workflowsApi = apiSlice.injectEndpoints({
       invalidatesTags: (result, error, request) => [
         { type: 'Workflow', id: request.workflow_id },
         // { type: 'Workflow', id: 'LIST' }
-      ]
+      ],
     }),
     removeWorkflow: builder.mutation<void, RemoveWorkflowRequest>({
       query: (request) => ({
@@ -92,8 +92,8 @@ export const workflowsApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: (result, error, request) => [
         { type: 'Workflow', id: request.workflow_id },
-        { type: 'Workflow', id: 'LIST' }
-      ]
+        { type: 'Workflow', id: 'LIST' },
+      ],
     }),
     testWorkflow: builder.mutation<TestWorkflowResponse, TestWorkflowRequest>({
       query: (request) => ({
@@ -114,8 +114,8 @@ export const workflowsApi = apiSlice.injectEndpoints({
       invalidatesTags: (result, error, request) => [
         { type: 'Workflow', id: request.workflow_id },
         { type: 'Workflow', id: 'LIST' },
-        { type: 'DeployedWorkflow', id: 'LIST' }
-      ]
+        { type: 'DeployedWorkflow', id: 'LIST' },
+      ],
     }),
     listWorkflowTemplates: builder.query<WorkflowTemplateMetadata[], ListWorkflowTemplatesRequest>({
       query: (request) => ({
@@ -126,7 +126,7 @@ export const workflowsApi = apiSlice.injectEndpoints({
       transformResponse: (response: ListWorkflowTemplatesResponse) => {
         return response.workflow_templates;
       },
-      providesTags: [{type: 'WorkflowTemplate', id: 'LIST'}],
+      providesTags: [{ type: 'WorkflowTemplate', id: 'LIST' }],
     }),
     getWorkflowTemplate: builder.mutation<WorkflowTemplateMetadata, GetWorkflowTemplateRequest>({
       query: (request) => ({
@@ -158,7 +158,7 @@ export const workflowsApi = apiSlice.injectEndpoints({
       transformResponse: (response: AddWorkflowTemplateResponse) => {
         return response.id;
       },
-      invalidatesTags: [{type: 'WorkflowTemplate', id: 'LIST'}],
+      invalidatesTags: [{ type: 'WorkflowTemplate', id: 'LIST' }],
     }),
     removeWorkflowTemplate: builder.mutation<void, RemoveWorkflowTemplateRequest>({
       query: (request) => ({
@@ -167,8 +167,8 @@ export const workflowsApi = apiSlice.injectEndpoints({
         body: request,
       }),
       invalidatesTags: (result, error, request) => [
-        {type: 'WorkflowTemplate', id: request.id},
-        {type: 'WorkflowTemplate', id: 'LIST'}
+        { type: 'WorkflowTemplate', id: request.id },
+        { type: 'WorkflowTemplate', id: 'LIST' },
       ],
     }),
     exportWorkflowTemplate: builder.mutation<string, ExportWorkflowTemplateRequest>({
@@ -190,7 +190,7 @@ export const workflowsApi = apiSlice.injectEndpoints({
       transformResponse: (response: ImportWorkflowTemplateResponse) => {
         return response.id;
       },
-      invalidatesTags: [{type: 'WorkflowTemplate', id: 'LIST'}],
+      invalidatesTags: [{ type: 'WorkflowTemplate', id: 'LIST' }],
     }),
   }),
 });

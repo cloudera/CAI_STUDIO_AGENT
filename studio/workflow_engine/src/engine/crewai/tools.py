@@ -464,8 +464,10 @@ def get_venv_tool(tool_instance: input_types.Input__ToolInstance, user_params_kv
                 cmd = [
                     self.python_executable,
                     self.python_file,
-                    "--user-params", json.dumps(dict(user_params)),
-                    "--tool-params", json.dumps(dict(kwargs)),
+                    "--user-params",
+                    json.dumps(dict(user_params)),
+                    "--tool-params",
+                    json.dumps(dict(kwargs)),
                 ]
                 result = subprocess.run(
                     cmd,

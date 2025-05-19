@@ -31,9 +31,9 @@ const WorkflowOverview: React.FC<WorkflowOverviewProps> = ({ workflowId }) => {
   const { data: deployedWorkflows = [] } = useListDeployedWorkflowsQuery({});
   const [undeployWorkflow] = useUndeployWorkflowMutation();
   const notificationsApi = useGlobalNotification();
-  const { data: toolInstances } = useListToolInstancesQuery({workflow_id: workflowId});
-  const { data: tasks } = useListTasksQuery({workflow_id: workflowId});
-  const { data: agents } = useListAgentsQuery({workflow_id: workflowId});
+  const { data: toolInstances } = useListToolInstancesQuery({ workflow_id: workflowId });
+  const { data: tasks } = useListTasksQuery({ workflow_id: workflowId });
+  const { data: agents } = useListAgentsQuery({ workflow_id: workflowId });
 
   useEffect(() => {
     const fetchWorkflow = async () => {

@@ -280,7 +280,7 @@ def _list_tool_instances_impl(request: ListToolInstancesRequest, session: DbSess
     """
     if not request.workflow_id:
         raise ValueError("Every ListToolInstances request must specify a workflow ID.")
-    
+
     tool_instances = session.query(db_model.ToolInstance).filter_by(workflow_id=request.workflow_id).all()
 
     tool_instances_response = []

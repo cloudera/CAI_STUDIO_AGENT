@@ -43,7 +43,13 @@ const SelectManagerAgentComponent: React.FC<{
   setSelectedAgentTemplate: React.Dispatch<React.SetStateAction<AgentTemplateMetadata | null>>;
   existingManagerAgent: AgentMetadata | null;
   defaultModelId: string;
-}> = ({ form, selectedAgentTemplate, setSelectedAgentTemplate, existingManagerAgent, defaultModelId }) => {
+}> = ({
+  form,
+  selectedAgentTemplate,
+  setSelectedAgentTemplate,
+  existingManagerAgent,
+  defaultModelId,
+}) => {
   const { data: models = [] } = useListModelsQuery({});
 
   return (
@@ -235,7 +241,7 @@ const SelectManagerAgentComponent: React.FC<{
               initialValue={existingManagerAgent?.llm_provider_model_id || defaultModelId}
             >
               <Select>
-                {models.map(model => (
+                {models.map((model) => (
                   <Select.Option key={model.model_id} value={model.model_id}>
                     {model.model_name} {model.model_id === defaultModelId && '(Default)'}
                   </Select.Option>
@@ -272,7 +278,7 @@ const SelectOrAddManagerAgentModal: React.FC<SelectOrAddManagerAgentModalProps> 
   const [addWorkflow] = useAddWorkflowMutation();
   const workflowState = useAppSelector(selectEditorWorkflow);
   const notificationApi = useGlobalNotification();
-  const { data: agents = [] } = useListAgentsQuery({workflow_id: workflowId});
+  const { data: agents = [] } = useListAgentsQuery({ workflow_id: workflowId });
   const existingManagerAgent =
     agents.find((agent) => agent.id === workflowState.workflowMetadata.managerAgentId) || null;
   const { data: models = [] } = useListModelsQuery({});
@@ -284,7 +290,7 @@ const SelectOrAddManagerAgentModal: React.FC<SelectOrAddManagerAgentModalProps> 
       if (models && models.length > 0) {
         try {
           // Find the model marked as studio default
-          const defaultModel = models.find(model => model.is_studio_default);
+          const defaultModel = models.find((model) => model.is_studio_default);
           if (defaultModel) {
             setDefaultModelId(defaultModel.model_id);
           } else {

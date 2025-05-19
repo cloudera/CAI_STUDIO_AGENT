@@ -48,7 +48,9 @@ const McpTemplateViewPage: React.FC = () => {
     );
   }
 
-  const { data: mcpTemplate, isLoading: isMcpTemplateLoading } = useGetMcpTemplateQuery({mcp_template_id: mcpTemplateId});
+  const { data: mcpTemplate, isLoading: isMcpTemplateLoading } = useGetMcpTemplateQuery({
+    mcp_template_id: mcpTemplateId,
+  });
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
@@ -95,10 +97,7 @@ const McpTemplateViewPage: React.FC = () => {
   return (
     <Layout style={{ flex: 1, padding: '16px 24px 22px', flexDirection: 'column' }}>
       <CommonBreadCrumb
-        items={[
-          { title: 'Tool Catalog', href: '/tools' },
-          { title: 'View MCP' },
-        ]}
+        items={[{ title: 'Tool Catalog', href: '/tools' }, { title: 'View MCP' }]}
       />
       <Layout
         style={{
@@ -134,10 +133,7 @@ const McpTemplateViewPage: React.FC = () => {
         </Dropdown>
       </Layout>
       <Layout style={{ marginTop: '20px' }}>
-        <McpTemplateView
-          mcpTemplateDetails={mcpTemplate}
-          onRefresh={() => {}}
-        />
+        <McpTemplateView mcpTemplateDetails={mcpTemplate} onRefresh={() => {}} />
       </Layout>
       <DeleteMcpTemplateModal
         isOpen={isDeleteModalOpen}
@@ -146,7 +142,7 @@ const McpTemplateViewPage: React.FC = () => {
         onDelete={handleDelete}
       />
     </Layout>
-  )
+  );
 };
 
 export default McpTemplateViewPage;

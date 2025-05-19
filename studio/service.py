@@ -86,7 +86,6 @@ from studio.cross_cutting.apiv2 import cml_api_check, rotate_cml_api
 import os
 import sys
 import cmlapi
-from cmlapi import CMLServiceApi
 
 from studio.proto.agent_studio_pb2_grpc import AgentStudioServicer
 
@@ -97,8 +96,8 @@ import logging
 # Configure root logger
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler()]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler()],
 )
 
 logger = logging.getLogger(__name__)
@@ -129,7 +128,7 @@ class AgentStudioApp(AgentStudioServicer):
             # First get default client
             self.cml = cmlapi.default_client()
             self.dao = dao or get_dao()
-            
+
             # Check API key status and rotate if needed
             check_response = cml_api_check(CmlApiCheckRequest(), self.cml, self.dao, logger=self.logger)
             if check_response.message:  # If there's an error message

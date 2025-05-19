@@ -23,7 +23,7 @@ const WorkflowAppTest: React.FC<WorkflowAppTestProps> = ({ workflowId }) => {
   const { data: tasks } = useListTasksQuery({ workflow_id: workflowId });
 
   if (!workflow) {
-    return (<></>)
+    return <></>;
   }
 
   return (
@@ -34,7 +34,7 @@ const WorkflowAppTest: React.FC<WorkflowAppTestProps> = ({ workflowId }) => {
         tasks={tasks || []}
         toolInstances={toolInstances || []}
         agents={agents || []}
-        renderMode='studio'
+        renderMode="studio"
       />
     </>
   );

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Modal, Input, Layout, Radio, Typography, Tooltip, Button } from 'antd';
 import { DeleteOutlined, InfoCircleFilled, PlusCircleOutlined } from '@ant-design/icons';
 
-
 const { Text } = Typography;
 
 interface RegisterMCPTemplateModalProps {
@@ -22,15 +21,15 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
   const [envNames, setEnvNames] = useState<string[]>([]);
 
   const mcpTypeMappings = {
-    'PYTHON': {
+    PYTHON: {
       command: 'uvx',
-      guidance: 'uvx is used to run python-based MCPs.'
+      guidance: 'uvx is used to run python-based MCPs.',
     },
-    'NODE': {
+    NODE: {
       command: 'npx',
-      guidance: 'npx is used to run node-based MCPs.'
+      guidance: 'npx is used to run node-based MCPs.',
     },
-  }
+  };
 
   const handleRegister = () => {
     if (mcpName.trim() && mcpType && mcpArgs.trim()) {
@@ -72,7 +71,7 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
                     <InfoCircleFilled style={{ marginLeft: 8, cursor: 'pointer' }} />
                   </Tooltip>
                 </div>
-              )
+              ),
             },
             {
               value: 'NODE',
@@ -83,22 +82,16 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
                     <InfoCircleFilled style={{ marginLeft: 8, cursor: 'pointer' }} />
                   </Tooltip>
                 </div>
-              )
-            }
+              ),
+            },
           ]}
         />
-        <p style={{ marginBottom: '10px' }}>
-          Enter the command to run the MCP.
-        </p>
+        <p style={{ marginBottom: '10px' }}>Enter the command to run the MCP.</p>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <span style={{ marginRight: '4px', color: '#850020', fontFamily: 'monospace' }}>
             {mcpTypeMappings[mcpType].command}
           </span>
-          <Input
-            value={mcpArgs}
-            onChange={(e) => setMcpArgs(e.target.value)}
-            placeholder=''
-          />
+          <Input value={mcpArgs} onChange={(e) => setMcpArgs(e.target.value)} placeholder="" />
         </div>
         <p style={{ marginBottom: '10px' }}>
           Please mention the environment variable names that are required by the MCP.
@@ -155,7 +148,7 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
         </div>
       </Layout>
     </Modal>
-  )
-}
+  );
+};
 
 export default RegisterMCPTemplateModal;

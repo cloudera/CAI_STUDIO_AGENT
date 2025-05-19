@@ -1,6 +1,11 @@
 import React from 'react';
 import { Layout, List, Typography, Popconfirm, Button, Divider, Tooltip } from 'antd';
-import { DeleteOutlined, CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import {
+  DeleteOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  CloseCircleOutlined,
+} from '@ant-design/icons';
 import { MCPTemplate } from '@/studio/proto/agent_studio';
 import { useRouter } from 'next/navigation';
 
@@ -28,7 +33,10 @@ const getStatusIcon = (status: string) => {
   }
 };
 
-const MCPTemplateList: React.FC<MCPTemplateListProps> = ({ mcpTemplates, deleteExistingTemplate }) => {
+const MCPTemplateList: React.FC<MCPTemplateListProps> = ({
+  mcpTemplates,
+  deleteExistingTemplate,
+}) => {
   const router = useRouter();
 
   return (
@@ -98,7 +106,7 @@ const MCPTemplateList: React.FC<MCPTemplateListProps> = ({ mcpTemplates, deleteE
                 >
                   {getStatusIcon(item.status)}
                 </div>
-                
+
                 {/* Text */}
                 <div style={{ flex: 1, maxWidth: '220px' }}>
                   <Tooltip title={item.name}>

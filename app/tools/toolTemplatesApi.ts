@@ -25,7 +25,7 @@ export const toolsApi = apiSlice.injectEndpoints({
       transformResponse: (response: ListToolTemplatesResponse) => {
         return response.templates.filter((template) => !template.workflow_template_id);
       },
-      providesTags: [{type: 'ToolTemplate', id: 'LIST'}],
+      providesTags: [{ type: 'ToolTemplate', id: 'LIST' }],
     }),
 
     listToolTemplates: builder.query<ToolTemplate[], ListToolTemplatesRequest>({
@@ -37,10 +37,10 @@ export const toolsApi = apiSlice.injectEndpoints({
       transformResponse: (response: ListToolTemplatesResponse) => {
         return response.templates;
       },
-      providesTags: (result, error, request) => 
+      providesTags: (result, error, request) =>
         result && request.workflow_template_id
-          ? [{type: 'WorkflowTemplate', id: request.workflow_template_id}]
-          : [{type: 'ToolTemplate', id: 'LIST'}]
+          ? [{ type: 'WorkflowTemplate', id: request.workflow_template_id }]
+          : [{ type: 'ToolTemplate', id: 'LIST' }],
     }),
 
     // Get Tool Template
@@ -65,13 +65,13 @@ export const toolsApi = apiSlice.injectEndpoints({
       transformResponse: (response: AddToolTemplateResponse) => {
         return response.tool_template_id;
       },
-      invalidatesTags: (result, error, request) => 
+      invalidatesTags: (result, error, request) =>
         result && request.workflow_template_id
           ? [
-            {type: 'ToolTemplate', id: 'LIST'},
-            {type: 'WorkflowTemplate', id: request.workflow_template_id}
-          ]
-          : [{type: 'ToolTemplate', id: 'LIST'}]
+              { type: 'ToolTemplate', id: 'LIST' },
+              { type: 'WorkflowTemplate', id: request.workflow_template_id },
+            ]
+          : [{ type: 'ToolTemplate', id: 'LIST' }],
     }),
 
     // Update Tool Template
@@ -84,7 +84,9 @@ export const toolsApi = apiSlice.injectEndpoints({
       transformResponse: (response: UpdateToolTemplateResponse) => {
         return response.tool_template_id;
       },
-      invalidatesTags: (result, error, request) => [{type: 'ToolTemplate', id: request.tool_template_id}],
+      invalidatesTags: (result, error, request) => [
+        { type: 'ToolTemplate', id: request.tool_template_id },
+      ],
     }),
 
     // Remove Tool Template
@@ -94,8 +96,8 @@ export const toolsApi = apiSlice.injectEndpoints({
         method: 'POST',
         body: request,
       }),
-      invalidatesTags: [{type: 'ToolTemplate', id: 'LIST'}],
-    })
+      invalidatesTags: [{ type: 'ToolTemplate', id: 'LIST' }],
+    }),
   }),
 });
 

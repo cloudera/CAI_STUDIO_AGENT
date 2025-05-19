@@ -339,7 +339,9 @@ def get_agent_studio_install_path() -> str:
         return "/home/cdsw"
 
 
-def get_deployed_workflows_with_applications(cml: cmlapi.CMLServiceApi, dao: AgentStudioDao) -> list[tuple[dict, cmlapi.Application]]:
+def get_deployed_workflows_with_applications(
+    cml: cmlapi.CMLServiceApi, dao: AgentStudioDao
+) -> list[tuple[dict, cmlapi.Application]]:
     """
     Get all deployed workflows and their associated applications.
     Returns list of tuples containing (workflow_data, application)
@@ -348,26 +350,23 @@ def get_deployed_workflows_with_applications(cml: cmlapi.CMLServiceApi, dao: Age
         result = []
         with dao.get_session() as session:
             deployed_workflows = session.query(db_model.DeployedWorkflowInstance).all()
-            
+
             for workflow in deployed_workflows:
                 try:
                     # Copy needed data instead of using SQLAlchemy object
-                    workflow_data = {
-                        'id': workflow.id,
-                        'name': workflow.name
-                    }
-                    
+                    workflow_data = {"id": workflow.id, "name": workflow.name}
+
                     # Find matching application
                     app_name = f"Workflow: {workflow_data['name']}"
                     apps = cml.list_applications(os.getenv("CDSW_PROJECT_ID"), page_size=5000).applications
                     app = next((a for a in apps if a.name == app_name), None)
-                    
+
                     if app:
                         result.append((workflow_data, app))
                 except Exception as e:
                     print(f"Error getting application for workflow {workflow.id}: {str(e)}")
                     continue
-                    
+
         return result
     except Exception as e:
         print(f"Error getting deployed workflows: {str(e)}")

@@ -1,6 +1,5 @@
 import requests
 import os
-import json
 
 from crewai.utilities.events import *
 
@@ -8,7 +7,7 @@ from engine.crewai.trace_context import get_trace_id
 from engine.ops import get_ops_endpoint
 
 
-# List of event processors. These are lambdas that 
+# List of event processors. These are lambdas that
 # can add individual fields to CrewAI events, which are
 # pydantic BaseModels with event-specific fields. Only fields
 # that are explicitly added to these event processors are sent
@@ -103,10 +102,10 @@ def post_event(source, event):
     """
     trace_id = get_trace_id()
 
-    # Maintain baseline event information 
+    # Maintain baseline event information
     # across all event types. Optionally, many of our crewAI classes
     # are inherited base classes with an appended agent_studio_id
-    # (specifically tasks, agents, and llms). These agent studio 
+    # (specifically tasks, agents, and llms). These agent studio
     # specific IDs can help in building frontend visualizations.
     event_dict = {
         "timestamp": str(event.timestamp),
@@ -116,16 +115,16 @@ def post_event(source, event):
 
     # Process the event given the specific event type
     event_dict.update(process_event(event))
-    
+
     requests.post(
         url=f"{get_ops_endpoint()}/events",
         headers={"Authorization": f"Bearer {os.getenv('CDSW_APIV2_KEY')}"},
         json={"trace_id": trace_id, "event": event_dict},
     )
-    
+
 
 # Globalsafety flag to avoid double registration
-_handlers_registered = False  
+_handlers_registered = False
 
 
 def register_global_handlers():
@@ -146,4 +145,3 @@ def register_global_handlers():
         crewai_event_bus.on(event_cls)(post_event)
 
     _handlers_registered = True
-

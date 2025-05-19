@@ -5,7 +5,13 @@ import { useLayoutEffect, useRef } from 'react';
 import { AgentMetadata, CrewAITaskMetadata, ToolInstance } from '@/studio/proto/agent_studio';
 import { WorkflowState } from '@/app/workflows/editorSlice';
 import WorkflowDiagram from './WorkflowDiagram';
-import { ApiOutlined, BugOutlined, ExportOutlined, EyeOutlined, MonitorOutlined } from '@ant-design/icons';
+import {
+  ApiOutlined,
+  BugOutlined,
+  ExportOutlined,
+  EyeOutlined,
+  MonitorOutlined,
+} from '@ant-design/icons';
 import OpsIFrame from '../OpsIFrame';
 import ReactMarkdown from 'react-markdown';
 import { useAppSelector } from '@/app/lib/hooks/hooks';
@@ -230,7 +236,7 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
                 />
                 Monitoring
                 <Tooltip title="Open the Agent Ops & Metrics application in a new tab">
-                  <ExportOutlined 
+                  <ExportOutlined
                     style={{
                       display: 'flex',
                       alignItems: 'center',

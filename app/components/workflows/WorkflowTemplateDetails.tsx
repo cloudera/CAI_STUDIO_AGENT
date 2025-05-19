@@ -2,11 +2,7 @@
 
 import React from 'react';
 import { Layout, Typography, List, Space, Avatar, Tag, Image, Tooltip } from 'antd';
-import {
-  UserOutlined,
-  UsergroupAddOutlined,
-  FileDoneOutlined,
-} from '@ant-design/icons';
+import { UserOutlined, UsergroupAddOutlined, FileDoneOutlined } from '@ant-design/icons';
 import { useListAgentTemplatesQuery } from '../../agents/agentApi';
 import { useListTaskTemplatesQuery } from '../../tasks/tasksApi';
 import { useListToolTemplatesQuery } from '../../tools/toolTemplatesApi';
@@ -20,9 +16,13 @@ interface WorkflowTemplateDetailsProps {
 }
 
 const WorkflowTemplateDetails: React.FC<WorkflowTemplateDetailsProps> = ({ template }) => {
-  const { data: agentTemplates } = useListAgentTemplatesQuery({workflow_template_id: template.id})
-  const { data: taskTemplates } = useListTaskTemplatesQuery({workflow_template_id: template.id});
-  const { data: toolTemplates = [] } = useListToolTemplatesQuery({workflow_template_id: template.id});
+  const { data: agentTemplates } = useListAgentTemplatesQuery({
+    workflow_template_id: template.id,
+  });
+  const { data: taskTemplates } = useListTaskTemplatesQuery({ workflow_template_id: template.id });
+  const { data: toolTemplates = [] } = useListToolTemplatesQuery({
+    workflow_template_id: template.id,
+  });
 
   // Get manager agent template if exists
   const managerAgentTemplate = template.manager_agent_template_id
@@ -30,15 +30,16 @@ const WorkflowTemplateDetails: React.FC<WorkflowTemplateDetailsProps> = ({ templ
     : null;
 
   // Get agent templates
-  const agentTemplateDetails = template.agent_template_ids
-    ?.map((id) => agentTemplates?.find((a) => a.id === id))
-    .filter(Boolean) || [];
+  const agentTemplateDetails =
+    template.agent_template_ids
+      ?.map((id) => agentTemplates?.find((a) => a.id === id))
+      .filter(Boolean) || [];
 
   // Get image data for tools
   const { imageData } = useImageAssetsData(
     toolTemplates
       ?.filter((template) => template?.tool_image_uri)
-      .map((template) => template.tool_image_uri) || []
+      .map((template) => template.tool_image_uri) || [],
   );
 
   const renderAgentCard = (agent: any, isManager: boolean = false) => (
@@ -134,10 +135,15 @@ const WorkflowTemplateDetails: React.FC<WorkflowTemplateDetailsProps> = ({ templ
             {agent.tool_template_ids.map((toolTemplateId: string) => {
               const toolTemplate = toolTemplates.find((t) => t.id === toolTemplateId);
               const imageUri = toolTemplate?.tool_image_uri;
-              const imageSrc = imageUri && imageData[imageUri] ? imageData[imageUri] : '/fallback-image.png';
+              const imageSrc =
+                imageUri && imageData[imageUri] ? imageData[imageUri] : '/fallback-image.png';
 
               return (
-                <Tooltip title={toolTemplate?.name || toolTemplateId} key={toolTemplateId} placement="top">
+                <Tooltip
+                  title={toolTemplate?.name || toolTemplateId}
+                  key={toolTemplateId}
+                  placement="top"
+                >
                   <div
                     style={{
                       width: '24px',
@@ -206,7 +212,10 @@ const WorkflowTemplateDetails: React.FC<WorkflowTemplateDetailsProps> = ({ templ
           size={24}
           icon={<FileDoneOutlined />}
         />
-        <Text ellipsis style={{ flexBasis: '60%', fontSize: 13, fontWeight: 400, marginLeft: '12px' }}>
+        <Text
+          ellipsis
+          style={{ flexBasis: '60%', fontSize: 13, fontWeight: 400, marginLeft: '12px' }}
+        >
           <span style={{ fontWeight: 600 }}>{`Task ${index + 1}: `}</span>
           {taskTemplate?.description || 'No description'}
         </Text>
@@ -231,7 +240,15 @@ const WorkflowTemplateDetails: React.FC<WorkflowTemplateDetailsProps> = ({ templ
                   gap: 4,
                 }}
               >
-                <span style={{ maxWidth: '80%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
+                <span
+                  style={{
+                    maxWidth: '80%',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    display: 'block',
+                  }}
+                >
                   {assignedAgent.name || 'Unassigned'}
                 </span>
               </Tag>
@@ -260,25 +277,31 @@ const WorkflowTemplateDetails: React.FC<WorkflowTemplateDetailsProps> = ({ templ
           <Title level={5}>Manager Agent</Title>
           <List
             grid={{ gutter: 16, column: 2 }}
-            dataSource={[{
-              id: 'default-manager',
-              name: 'Default Manager',
-              goal: 'Uses default LLM model to manage workflow tasks',
-              backstory: null,
-            }]}
+            dataSource={[
+              {
+                id: 'default-manager',
+                name: 'Default Manager',
+                goal: 'Uses default LLM model to manage workflow tasks',
+                backstory: null,
+              },
+            ]}
             renderItem={(agent) => <List.Item>{renderAgentCard(agent, true)}</List.Item>}
           />
         </>
       )}
 
-      <Title level={5} style={{ marginTop: '20px' }}>Agents</Title>
+      <Title level={5} style={{ marginTop: '20px' }}>
+        Agents
+      </Title>
       <List
         grid={{ gutter: 16, column: 2 }}
         dataSource={agentTemplateDetails}
         renderItem={(agent) => <List.Item>{renderAgentCard(agent)}</List.Item>}
       />
 
-      <Title level={5} style={{ marginTop: '20px' }}>Tasks</Title>
+      <Title level={5} style={{ marginTop: '20px' }}>
+        Tasks
+      </Title>
       <List
         dataSource={template.task_template_ids || []}
         renderItem={(taskId, index) => <List.Item>{renderTaskCard(taskId, index)}</List.Item>}

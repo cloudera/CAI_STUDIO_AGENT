@@ -165,7 +165,7 @@ const ModelsPageContent = () => {
         if (!selectedModel) throw new Error('Model not loaded for editing.');
         if (changedModel?.model_type !== selectedModel.model_type)
           throw new Error('Cannot change type when editing models.');
-        
+
         await updateModel({
           model_id: selectedModel.model_id,
           model_name: changedModel?.model_name || '',
@@ -188,9 +188,13 @@ const ModelsPageContent = () => {
           placement: 'topRight',
         });
 
-        if (!changedModel?.model_name || !changedModel?.api_key ||
-            (['OPENAI_COMPATIBLE', 'AZURE_OPENAI'].includes(changedModel?.model_type) && !changedModel?.api_base) ||
-            (changedModel?.model_type === 'AZURE_OPENAI' && !changedModel?.provider_model)) {
+        if (
+          !changedModel?.model_name ||
+          !changedModel?.api_key ||
+          (['OPENAI_COMPATIBLE', 'AZURE_OPENAI'].includes(changedModel?.model_type) &&
+            !changedModel?.api_base) ||
+          (changedModel?.model_type === 'AZURE_OPENAI' && !changedModel?.provider_model)
+        ) {
           throw new Error('Please fill in all required fields.');
         }
 
@@ -222,7 +226,8 @@ const ModelsPageContent = () => {
           if (errorMessage.includes('failed to update governance for project')) {
             notificationsApi.error({
               message: 'Error Creating Model',
-              description: 'The system is currently experiencing high load. Please wait a few minutes and try again.',
+              description:
+                'The system is currently experiencing high load. Please wait a few minutes and try again.',
               placement: 'topRight',
               duration: 10, // Show for longer since it's an important error
             });
@@ -300,7 +305,7 @@ const ModelsPageContent = () => {
       });
 
       await removeModel({ model_id: modelId }).unwrap();
-      
+
       notificationsApi.success({
         message: 'Model Deleted',
         description: 'Model deleted successfully!',
@@ -406,14 +411,15 @@ const ModelsPageContent = () => {
               });
 
               await setDefaultModel({ model_id: modelId });
-              
+
               notificationsApi.success({
                 message: 'Default Model Updated',
                 description: 'Default model updated successfully!',
                 placement: 'topRight',
               });
             } catch (error: any) {
-              const errorMessage = error.data?.error || error.message || 'Failed to set default model.';
+              const errorMessage =
+                error.data?.error || error.message || 'Failed to set default model.';
               notificationsApi.error({
                 message: 'Error Setting Default Model',
                 description: errorMessage,

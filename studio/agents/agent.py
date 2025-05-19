@@ -25,10 +25,11 @@ def list_agents(
     try:
         if not request.workflow_id:
             raise ValueError("Every ListAgents request must specify a workflow ID.")
-            
+
         with dao.get_session() as session:
-            
-            agents: List[db_model.Agent] = session.query(db_model.Agent).filter_by(workflow_id=request.workflow_id).all()
+            agents: List[db_model.Agent] = (
+                session.query(db_model.Agent).filter_by(workflow_id=request.workflow_id).all()
+            )
             if not agents:
                 return ListAgentsResponse(agents=[])
 

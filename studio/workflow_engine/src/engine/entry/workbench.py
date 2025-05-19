@@ -147,7 +147,9 @@ def api_wrapper(args: Union[dict, str]) -> str:
 
             # Start the workflow in the background using the parent context
             asyncio.create_task(
-                run_workflow_async(collated_input_copy, tool_user_params, mcp_instance_env_vars, inputs, parent_context, trace_id)
+                run_workflow_async(
+                    collated_input_copy, tool_user_params, mcp_instance_env_vars, inputs, parent_context, trace_id
+                )
             )
 
         return {"trace_id": str(trace_id)}

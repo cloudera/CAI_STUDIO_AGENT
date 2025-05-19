@@ -15,7 +15,11 @@ import { useRouter } from 'next/navigation';
 import CreateToolTemplateModal from '../components/CreateToolTemplateModal';
 import { useGlobalNotification } from '../components/Notifications'; // Assuming global notification
 import RegisterMCPTemplateModal from '../components/RegisterMCPTemplateModal';
-import { useListMcpTemplatesQuery, useRemoveMcpTemplateMutation, useAddMcpTemplateMutation } from '../mcp/mcpTemplatesApi';
+import {
+  useListMcpTemplatesQuery,
+  useRemoveMcpTemplateMutation,
+  useAddMcpTemplateMutation,
+} from '../mcp/mcpTemplatesApi';
 import MCPTemplateList from '../components/MCPTemplateList';
 
 const { Text } = Typography;
@@ -192,14 +196,19 @@ const ToolsTabContent = () => {
 const MCPTabContent = () => {
   const [addMcpTemplate] = useAddMcpTemplateMutation();
   const [removeMcpTemplate] = useRemoveMcpTemplateMutation();
-  const {data: mcps} = useListMcpTemplatesQuery({});
+  const { data: mcps } = useListMcpTemplatesQuery({});
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const notificationApi = useGlobalNotification();
   const router = useRouter();
-  
-  const handleRegisterMCP = async (mcpName: string, mcpType: string, mcpArgs: string, envNames: string[]) => {
+
+  const handleRegisterMCP = async (
+    mcpName: string,
+    mcpType: string,
+    mcpArgs: string,
+    envNames: string[],
+  ) => {
     try {
       notificationApi.info({
         message: 'Adding MCP Template',
@@ -207,7 +216,11 @@ const MCPTabContent = () => {
         placement: 'topRight',
       });
 
-      const mcpArgsArray = mcpArgs.trim().split(' ').filter(arg => arg.trim() !== '').map(arg => arg.trim());
+      const mcpArgsArray = mcpArgs
+        .trim()
+        .split(' ')
+        .filter((arg) => arg.trim() !== '')
+        .map((arg) => arg.trim());
 
       // Call the addToolTemplate mutation and wait for the response
       const response = await addMcpTemplate({
@@ -238,7 +251,7 @@ const MCPTabContent = () => {
         placement: 'topRight',
       });
     }
-  }
+  };
 
   const deleteExistingMCPTemplate = async (mcpTemplateId: string) => {
     try {
@@ -288,7 +301,7 @@ const MCPTabContent = () => {
             margin: '0px',
           }}
         >
-          <Image src="/mcp-icon.svg" alt="MCP Icon" style={{ padding: '12px' }}/>
+          <Image src="/mcp-icon.svg" alt="MCP Icon" style={{ padding: '12px' }} />
         </div>
         <Layout
           style={{
@@ -300,9 +313,7 @@ const MCPTabContent = () => {
           }}
         >
           <Text style={{ fontWeight: 600, fontSize: '18px' }}>Register a MCP Server</Text>
-          <Text style={{ fontWeight: 350 }}>
-            Register a MCP Server to use in your AI agents.
-          </Text>
+          <Text style={{ fontWeight: 350 }}>Register a MCP Server to use in your AI agents.</Text>
         </Layout>
         <Button
           type="primary"
@@ -349,8 +360,8 @@ const ToolsPage = () => {
             <TabPane tab="Agent Studio Tools" key="tools">
               <ToolsTabContent />
             </TabPane>
-          <TabPane tab="MCP Servers" key="mcp">
-            <MCPTabContent />
+            <TabPane tab="MCP Servers" key="mcp">
+              <MCPTabContent />
             </TabPane>
           </Tabs>
         )}

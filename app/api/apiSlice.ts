@@ -14,8 +14,8 @@ export const TagTypes = [
   'DeployedWorkflow',
   'WorkflowApp',
   'MCPTemplate',
-  'MCPInstance'
-]
+  'MCPInstance',
+];
 
 export const apiSlice = createApi({
   reducerPath: 'api',

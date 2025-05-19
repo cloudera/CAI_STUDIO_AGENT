@@ -25,7 +25,7 @@ const WorkflowAppDeployed: React.FC<WorkflowAppDeployedProps> = ({ workflowData 
         tasks={workflowData.tasks}
         toolInstances={workflowData.toolInstances}
         agents={workflowData.agents}
-        renderMode='workflow'
+        renderMode="workflow"
       />
     </>
   );

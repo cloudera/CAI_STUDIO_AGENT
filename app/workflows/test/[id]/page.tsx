@@ -19,9 +19,7 @@ const TestWorkflowPage: React.FC = () => {
       <CommonBreadCrumb
         items={[{ title: 'Agentic Workflows', href: '/workflows' }, { title: 'Test Workflow' }]}
       />
-      <WorkflowAppTest
-        workflowId={workflowId}
-      />
+      <WorkflowAppTest workflowId={workflowId} />
     </Layout>
   );
 };

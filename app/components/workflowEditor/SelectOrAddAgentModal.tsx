@@ -69,7 +69,11 @@ import {
   useRemoveToolInstanceMutation,
 } from '@/app/tools/toolInstancesApi';
 import { CrewAIAgentMetadata } from '@/studio/proto/agent_studio';
-import { useGetDefaultModelQuery, useGetModelMutation, useListModelsQuery } from '../../models/modelsApi';
+import {
+  useGetDefaultModelQuery,
+  useGetModelMutation,
+  useListModelsQuery,
+} from '../../models/modelsApi';
 import { useTestModelMutation } from '../../models/modelsApi';
 
 const { Text } = Typography;
@@ -548,7 +552,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
       }),
     );
     form.resetFields();
-    
+
     // Immediately set the default model if available
     if (defaultModel?.model_id) {
       form.setFieldValue('llm_provider_model_id', defaultModel.model_id);
@@ -560,7 +564,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
 
     try {
       setIsLoading(true);
-      
+
       notificationApi.info({
         message: 'Initiating Tool Removal',
         description: `Starting to remove ${toolName} from the agent...`,
@@ -619,7 +623,9 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
         );
       }
     } catch (error: unknown) {
-      const errorMessage = (error as { data?: { error?: string } })?.data?.error || 'Failed to remove tool. Please try again.';
+      const errorMessage =
+        (error as { data?: { error?: string } })?.data?.error ||
+        'Failed to remove tool. Please try again.';
       notificationApi.error({
         message: 'Error Removing Tool',
         description: errorMessage,
@@ -728,7 +734,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         maxWidth: '40%',
-                        display: 'inline-block'
+                        display: 'inline-block',
                       }}
                       title={name}
                     >
@@ -758,7 +764,13 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
         <List
           grid={{ gutter: 16, column: 2 }}
           dataSource={items}
-          renderItem={(tool: { id: string; tool_image_uri?: string; name: string; is_valid?: boolean; tool_metadata?: Record<string, string> }) => (
+          renderItem={(tool: {
+            id: string;
+            tool_image_uri?: string;
+            name: string;
+            is_valid?: boolean;
+            tool_metadata?: Record<string, string>;
+          }) => (
             <List.Item>
               <div
                 style={{
@@ -820,25 +832,43 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           maxWidth: '90%',
-                          display: 'inline-block'
+                          display: 'inline-block',
                         }}
                         title={tool.name}
                       >
                         {tool.name}
                       </Text>
-                      <Tooltip 
+                      <Tooltip
                         title={
-                          tool.is_valid 
-                            ? 'Tool is valid' 
-                            : tool.tool_metadata 
-                              ? JSON.parse(typeof tool.tool_metadata === 'string' ? tool.tool_metadata : JSON.stringify(tool.tool_metadata)).status || 'Tool status unknown'
+                          tool.is_valid
+                            ? 'Tool is valid'
+                            : tool.tool_metadata
+                              ? JSON.parse(
+                                  typeof tool.tool_metadata === 'string'
+                                    ? tool.tool_metadata
+                                    : JSON.stringify(tool.tool_metadata),
+                                ).status || 'Tool status unknown'
                               : 'Tool status unknown'
                         }
                       >
                         {tool.is_valid ? (
-                          <CheckCircleOutlined style={{ color: '#52c41a', fontSize: '15px', fontWeight: 1000, marginLeft: '12px' }} />
+                          <CheckCircleOutlined
+                            style={{
+                              color: '#52c41a',
+                              fontSize: '15px',
+                              fontWeight: 1000,
+                              marginLeft: '12px',
+                            }}
+                          />
                         ) : (
-                          <ExclamationCircleOutlined style={{ color: '#faad14', fontSize: '15px', fontWeight: 1000, marginLeft: '12px' }} />
+                          <ExclamationCircleOutlined
+                            style={{
+                              color: '#faad14',
+                              fontSize: '15px',
+                              fontWeight: 1000,
+                              marginLeft: '12px',
+                            }}
+                          />
                         )}
                       </Tooltip>
                     </div>
@@ -1314,7 +1344,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
               rules={[{ required: true, message: 'Language model is required' }]}
             >
               <Select>
-                {models.map(model => (
+                {models.map((model) => (
                   <Select.Option key={model.model_id} value={model.model_id}>
                     {model.model_name} {model.model_id === defaultModel?.model_id && '(Default)'}
                   </Select.Option>
@@ -1349,7 +1379,7 @@ interface SelectOrAddAgentModalProps {
   workflowId: string;
 }
 
-const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({workflowId}) => {
+const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowId }) => {
   const isModalOpen = useAppSelector(selectEditorAgentViewIsOpen);
   const modalLayout = useAppSelector(selectEditorAgentViewStep);
   const dispatch = useAppDispatch();
@@ -1381,11 +1411,11 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({workflowId
     pythonCode: '',
     pythonRequirements: '',
   });
-  const { data: agents = [] } = useListAgentsQuery({workflow_id: workflowId});
+  const { data: agents = [] } = useListAgentsQuery({ workflow_id: workflowId });
   const workflowAgentIds = useAppSelector(
     (state) => state.editor.workflow?.workflowMetadata?.agentIds || [],
   );
-  const { data: toolInstancesList = [] } = useListToolInstancesQuery({workflow_id: workflowId});
+  const { data: toolInstancesList = [] } = useListToolInstancesQuery({ workflow_id: workflowId });
   const toolInstances = toolInstancesList.reduce(
     (acc: Record<string, ToolInstance>, instance: ToolInstance) => {
       acc[instance.id] = instance;
@@ -1603,9 +1633,9 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({workflowId
         <Button key="cancel" onClick={() => dispatch(updatedEditorAgentViewOpen(false))}>
           Close
         </Button>,
-        <Button 
-          key="add" 
-          type="primary" 
+        <Button
+          key="add"
+          type="primary"
           onClick={handleAddAgent}
           disabled={!defaultModel} // Disable button if no default model
         >
@@ -1615,19 +1645,21 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({workflowId
     >
       <div style={{ position: 'relative' }}>
         {isLoading && (
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(255, 255, 255, 0.6)',
-            zIndex: 1000,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            cursor: 'not-allowed'
-          }}>
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(255, 255, 255, 0.6)',
+              zIndex: 1000,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              cursor: 'not-allowed',
+            }}
+          >
             <Spin size="large" />
           </div>
         )}

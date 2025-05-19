@@ -1,11 +1,8 @@
 # No top level studio.db imports allowed to support wokrflow model deployment
 
 from typing import List
-import sys
 import os
 import requests
-from crewai import Crew
-from crewai.utilities.events import crewai_event_bus
 
 from studio.cross_cutting import utils as cc_utils
 from studio import consts

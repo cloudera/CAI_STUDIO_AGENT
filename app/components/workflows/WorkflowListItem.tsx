@@ -14,11 +14,7 @@ import {
   LoadingOutlined,
 } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
-import {
-  Workflow,
-  DeployedWorkflow,
-  WorkflowTemplateMetadata,
-} from '@/studio/proto/agent_studio';
+import { Workflow, DeployedWorkflow, WorkflowTemplateMetadata } from '@/studio/proto/agent_studio';
 import {
   useAddWorkflowMutation,
   useAddWorkflowTemplateMutation,
@@ -45,8 +41,10 @@ const WorkflowDisplayCard: React.FC<WorkflowDisplayCardProps> = ({
   deployment,
   sectionType,
 }) => {
-  const { data: agents } = useListAgentsQuery({workflow_id: workflow.workflow_id});
-  const { imageData: agentIconsData } = useImageAssetsData(agents ? agents.map((_a) => _a.agent_image_uri) : []);
+  const { data: agents } = useListAgentsQuery({ workflow_id: workflow.workflow_id });
+  const { imageData: agentIconsData } = useImageAssetsData(
+    agents ? agents.map((_a) => _a.agent_image_uri) : [],
+  );
 
   const agentIconsColorPalette = ['#a9ccb9', '#cca9a9', '#c4a9cc', '#ccc7a9'];
 
@@ -153,9 +151,11 @@ interface WorkflowTemplateDisplayCardProps {
 const WorkflowTemplateDisplayCard: React.FC<WorkflowTemplateDisplayCardProps> = ({
   workflowTemplate,
 }) => {
-  const { data: agentTemplates } = useListAgentTemplatesQuery({workflow_template_id: workflowTemplate.id});
+  const { data: agentTemplates } = useListAgentTemplatesQuery({
+    workflow_template_id: workflowTemplate.id,
+  });
   const { imageData: agentIconsData } = useImageAssetsData(
-    agentTemplates ? agentTemplates.map((_a) => _a.agent_image_uri) : []
+    agentTemplates ? agentTemplates.map((_a) => _a.agent_image_uri) : [],
   );
   const agentIconsColorPalette = ['#a9ccb9', '#cca9a9', '#c4a9cc', '#ccc7a9'];
 
@@ -420,9 +420,7 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
           onClick={handleCardClick}
         >
           {sectionType === 'Template' && workflowTemplate ? (
-            <WorkflowTemplateDisplayCard
-              workflowTemplate={workflowTemplate}
-            />
+            <WorkflowTemplateDisplayCard workflowTemplate={workflowTemplate} />
           ) : sectionType === 'Deployed' && workflow && deployments?.[0] ? (
             <WorkflowDisplayCard
               workflow={workflow}
@@ -430,11 +428,10 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
               sectionType={sectionType}
             />
           ) : sectionType === 'Draft' && workflow ? (
-            <WorkflowDisplayCard
-              workflow={workflow}
-              sectionType={sectionType}
-            />
-          ) : (<>Cannot render workflow information.</>)}
+            <WorkflowDisplayCard workflow={workflow} sectionType={sectionType} />
+          ) : (
+            <>Cannot render workflow information.</>
+          )}
           <Divider style={{ margin: '0' }} />
           <Layout
             style={{

@@ -59,23 +59,33 @@ interface WorkflowDetailsProps {
   onDeleteDeployedWorkflow: (deployedWorkflow: DeployedWorkflow) => void;
 }
 
-const getInvalidTools = (agents: AgentMetadata[] | undefined, toolInstances: ToolInstance[] | undefined, workflowId: string | undefined) => {
+const getInvalidTools = (
+  agents: AgentMetadata[] | undefined,
+  toolInstances: ToolInstance[] | undefined,
+  workflowId: string | undefined,
+) => {
   if (!agents || !toolInstances || !workflowId) return [];
-  
+
   const invalidTools: { name: string; status: string }[] = [];
-  
-  agents.filter(agent => agent.workflow_id === workflowId).forEach(agent => {
-    agent.tools_id.forEach(toolId => {
-      const tool = toolInstances.find(t => t.id === toolId);
-      if (tool && !tool.is_valid) {
-        const status = tool.tool_metadata ? 
-          JSON.parse(typeof tool.tool_metadata === 'string' ? tool.tool_metadata : JSON.stringify(tool.tool_metadata)).status 
-          : 'Unknown error';
-        invalidTools.push({ name: tool.name, status });
-      }
+
+  agents
+    .filter((agent) => agent.workflow_id === workflowId)
+    .forEach((agent) => {
+      agent.tools_id.forEach((toolId) => {
+        const tool = toolInstances.find((t) => t.id === toolId);
+        if (tool && !tool.is_valid) {
+          const status = tool.tool_metadata
+            ? JSON.parse(
+                typeof tool.tool_metadata === 'string'
+                  ? tool.tool_metadata
+                  : JSON.stringify(tool.tool_metadata),
+              ).status
+            : 'Unknown error';
+          invalidTools.push({ name: tool.name, status });
+        }
+      });
     });
-  });
-  
+
   return invalidTools;
 };
 
@@ -92,15 +102,19 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
     data: allAgents = [],
     isLoading: agentsLoading,
     error: agentsError,
-  } = useListAgentsQuery({workflow_id: workflowId});
+  } = useListAgentsQuery({ workflow_id: workflowId });
 
   const {
     data: toolInstances = [],
     isLoading: toolInstancesLoading,
     error: toolInstancesError,
-  } = useListToolInstancesQuery({workflow_id: workflowId});
+  } = useListToolInstancesQuery({ workflow_id: workflowId });
 
-  const { data: tasks = [], isLoading: tasksLoading, error: tasksError } = useListTasksQuery({workflow_id: workflowId});
+  const {
+    data: tasks = [],
+    isLoading: tasksLoading,
+    error: tasksError,
+  } = useListTasksQuery({ workflow_id: workflowId });
 
   const { imageData } = useImageAssetsData([
     ...(Object.values(toolInstances).map((instance) => instance.tool_image_uri) ?? []),
@@ -122,7 +136,7 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
     workflow.workflow_id,
     allAgents,
     toolInstances,
-    workflowConfiguration
+    workflowConfiguration,
   );
 
   const invalidTools = getInvalidTools(allAgents, toolInstances, workflow.workflow_id);
@@ -578,8 +592,8 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
 
   return (
     <Layout style={{ padding: '16px', background: '#fff' }}>
-      {!isViewRoute && (
-        !defaultModel
+      {!isViewRoute &&
+        (!defaultModel
           ? renderAlert(
               'No Default LLM Model',
               'Please configure a default LLM model in the Models section to use workflows.',
@@ -588,17 +602,17 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
           : invalidTools.length > 0
             ? renderAlert(
                 'Invalid Tools Detected',
-                `The following tools are invalid: ${invalidTools.map(t => `${t.name} (${t.status})`).join(', ')}. Please go to Create or Edit Agent Modal to fix or delete these tools.`,
-                'warning'
+                `The following tools are invalid: ${invalidTools.map((t) => `${t.name} (${t.status})`).join(', ')}. Please go to Create or Edit Agent Modal to fix or delete these tools.`,
+                'warning',
               )
             : !isValid
-              ? renderAlert(
-                  TOOL_PARAMS_ALERT.message,
-                  TOOL_PARAMS_ALERT.description,
-                  'warning',
-                )
+              ? renderAlert(TOOL_PARAMS_ALERT.message, TOOL_PARAMS_ALERT.description, 'warning')
               : !workflow?.is_ready
-                ? renderAlert('Workflow Not Ready', 'This workflow is still being configured...', 'info')
+                ? renderAlert(
+                    'Workflow Not Ready',
+                    'This workflow is still being configured...',
+                    'info',
+                  )
                 : !hasAgents
                   ? renderAlert(
                       'No Agents Found',
@@ -623,8 +637,7 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
                             'There is an existing deployment for this workflow. Please delete it first to redeploy the workflow.',
                             'warning',
                           )
-                        : null
-      )}
+                        : null)}
       <Collapse
         style={{ marginBottom: '12px' }}
         bordered={false}

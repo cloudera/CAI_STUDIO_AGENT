@@ -26,7 +26,7 @@ export const toolInstancesApi = apiSlice.injectEndpoints({
       transformResponse: (response: ListToolInstancesResponse) => {
         return response.tool_instances;
       },
-      providesTags: [{type: 'ToolInstance', id: 'LIST'}],
+      providesTags: [{ type: 'ToolInstance', id: 'LIST' }],
     }),
 
     // Get Tool Instance
@@ -52,9 +52,9 @@ export const toolInstancesApi = apiSlice.injectEndpoints({
         return response.tool_instance_id;
       },
       invalidatesTags: (result, error, { workflow_id }) => [
-        {type: 'ToolInstance', id: 'LIST'},
-        {type: 'Workflow', id: workflow_id},
-      ]
+        { type: 'ToolInstance', id: 'LIST' },
+        { type: 'Workflow', id: workflow_id },
+      ],
     }),
 
     // Remove Tool Instance
@@ -64,7 +64,7 @@ export const toolInstancesApi = apiSlice.injectEndpoints({
         method: 'POST',
         body: request,
       }),
-      invalidatesTags: [{type: 'ToolInstance', id: 'LIST'}],
+      invalidatesTags: [{ type: 'ToolInstance', id: 'LIST' }],
     }),
 
     // Update Tool Instance
@@ -77,7 +77,9 @@ export const toolInstancesApi = apiSlice.injectEndpoints({
       transformResponse: (response: UpdateToolInstanceResponse) => {
         return response.tool_instance_id;
       },
-      invalidatesTags: (result, error, { tool_instance_id }) =>[{type: 'ToolInstance', id: tool_instance_id}],
+      invalidatesTags: (result, error, { tool_instance_id }) => [
+        { type: 'ToolInstance', id: tool_instance_id },
+      ],
     }),
   }),
 });

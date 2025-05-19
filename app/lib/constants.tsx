@@ -16,7 +16,8 @@ export const DEFAULT_GENERATION_CONFIG = {
 
 export const TOOL_PARAMS_ALERT = {
   message: 'Required Tool Parameters Not Configured',
-  description: 'Some of the required tool parameters are not set to enable testing and deployment of workflow. Either set them or change the tool code to make them optional.'
+  description:
+    'Some of the required tool parameters are not set to enable testing and deployment of workflow. Either set them or change the tool code to make them optional.',
 };
 
 /**
@@ -66,9 +67,9 @@ export const COMPATIBILITY_WARNING_2_0_47: React.ReactNode = (
  */
 export const ENTITLEMENT_WARNING_ML_ENABLE_COMPOSABLE_AMPS: React.ReactNode = (
   <>
-    Agent Studio is running without the <b>AI Studios</b> entitlement enabled for
-    your account. This may cause degraded performance of deployed workflows. Please work with your
-    administrator to enable the <b>AI Studios</b> entitlement.
+    Agent Studio is running without the <b>AI Studios</b> entitlement enabled for your account. This
+    may cause degraded performance of deployed workflows. Please work with your administrator to
+    enable the <b>AI Studios</b> entitlement.
   </>
 );
 

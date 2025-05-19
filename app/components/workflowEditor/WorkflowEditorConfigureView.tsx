@@ -11,11 +11,13 @@ interface WorkflowEditorConfigureViewProps {
   workflowId: string;
 }
 
-const WorkflowEditorConfigureView: React.FC<WorkflowEditorConfigureViewProps> = ({workflowId}) => {
+const WorkflowEditorConfigureView: React.FC<WorkflowEditorConfigureViewProps> = ({
+  workflowId,
+}) => {
   const workflowState = useAppSelector(selectEditorWorkflow);
-  const { data: toolInstances } = useListToolInstancesQuery({workflow_id: workflowId});
-  const { data: tasks } = useListTasksQuery({workflow_id: workflowId});
-  const { data: agents } = useListAgentsQuery({workflow_id: workflowId});
+  const { data: toolInstances } = useListToolInstancesQuery({ workflow_id: workflowId });
+  const { data: tasks } = useListTasksQuery({ workflow_id: workflowId });
+  const { data: agents } = useListAgentsQuery({ workflow_id: workflowId });
 
   return (
     <>

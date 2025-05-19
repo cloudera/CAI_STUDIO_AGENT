@@ -24,19 +24,16 @@ import { resetEditor, updatedEditorStep } from '@/app/workflows/editorSlice';
 import { useAppDispatch } from '@/app/lib/hooks/hooks';
 import DeleteWorkflowModal from '@/app/components/workflows/DeleteWorkflowModal';
 import { useGlobalNotification } from '@/app/components/Notifications';
-import {
-  useRemoveWorkflowTemplateMutation,
-} from '@/app/workflows/workflowsApi';
+import { useRemoveWorkflowTemplateMutation } from '@/app/workflows/workflowsApi';
 import { downloadAndSaveFile } from '@/app/lib/fileDownload';
 
 const { Title } = Typography;
-
 
 interface WorkflowTemplateContentProps {
   templateId: string;
 }
 
-const WorkflowTemplateContent: React.FC<WorkflowTemplateContentProps> = ({templateId}) => {
+const WorkflowTemplateContent: React.FC<WorkflowTemplateContentProps> = ({ templateId }) => {
   const { data: template, isLoading: loading } = useGetWorkflowTemplateByIdQuery(templateId);
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -49,7 +46,6 @@ const WorkflowTemplateContent: React.FC<WorkflowTemplateContentProps> = ({templa
   const [exportWorkflowTemplate] = useExportWorkflowTemplateMutation();
   const [downloadingTemplate, setDownloadingTemplate] = useState(false);
   const templateName = template?.name;
-
 
   const handleDeleteTemplate = async () => {
     if (!template) return;
@@ -143,15 +139,19 @@ const WorkflowTemplateContent: React.FC<WorkflowTemplateContentProps> = ({templa
         </Space>
       ),
     },
-    ...((!template?.pre_packaged) ? [{
-      key: 'delete',
-      label: (
-        <Space>
-          <DeleteOutlined />
-          Delete Template
-        </Space>
-      ),
-    }] : []),
+    ...(!template?.pre_packaged
+      ? [
+          {
+            key: 'delete',
+            label: (
+              <Space>
+                <DeleteOutlined />
+                Delete Template
+              </Space>
+            ),
+          },
+        ]
+      : []),
   ];
 
   if (loading) {
@@ -183,64 +183,62 @@ const WorkflowTemplateContent: React.FC<WorkflowTemplateContentProps> = ({templa
     );
   }
 
-
-
-  return (<>
-    <Layout style={{ flex: 1, padding: '16px 24px 22px', flexDirection: 'column' }}>
-      <CommonBreadCrumb
-        items={[{ title: 'Workflows', href: '/workflows' }, { title: 'View Template' }]}
-      />
-      <Layout
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          borderBottom: '1px solid #f0f0f0',
-          flexGrow: 0,
-          flexShrink: 0,
-        }}
-      >
-        <Title level={4} style={{ margin: 0 }}>
-          {template?.name || 'Unknown Template'}
-        </Title>
-        <Dropdown
-          menu={{ items: menuItems, onClick: handleMenuClick }}
-          trigger={['click']}
-          placement="bottomRight"
+  return (
+    <>
+      <Layout style={{ flex: 1, padding: '16px 24px 22px', flexDirection: 'column' }}>
+        <CommonBreadCrumb
+          items={[{ title: 'Workflows', href: '/workflows' }, { title: 'View Template' }]}
+        />
+        <Layout
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderBottom: '1px solid #f0f0f0',
+            flexGrow: 0,
+            flexShrink: 0,
+          }}
         >
-          <Button
-            style={{
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-            }}
+          <Title level={4} style={{ margin: 0 }}>
+            {template?.name || 'Unknown Template'}
+          </Title>
+          <Dropdown
+            menu={{ items: menuItems, onClick: handleMenuClick }}
+            trigger={['click']}
+            placement="bottomRight"
           >
-            Actions <DownOutlined />
-          </Button>
-        </Dropdown>
+            <Button
+              style={{
+                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              Actions <DownOutlined />
+            </Button>
+          </Dropdown>
+        </Layout>
+        <Layout
+          style={{
+            marginTop: '10px',
+          }}
+        >
+          <WorkflowTemplateOverview workflowTemplateId={templateId as string} />
+        </Layout>
+        <DeleteWorkflowModal
+          resourceType="workflowTemplate"
+          visible={isDeleteModalVisible}
+          onCancel={() => setDeleteModalVisible(false)}
+          onDelete={handleDeleteTemplate}
+          workflowId={undefined}
+          workflowTemplateId={templateId as string}
+        />
       </Layout>
-      <Layout
-        style={{
-          marginTop: '10px',
-        }}
-      >
-        <WorkflowTemplateOverview workflowTemplateId={templateId as string} />
-      </Layout>
-      <DeleteWorkflowModal
-        resourceType="workflowTemplate"
-        visible={isDeleteModalVisible}
-        onCancel={() => setDeleteModalVisible(false)}
-        onDelete={handleDeleteTemplate}
-        workflowId={undefined}
-        workflowTemplateId={templateId as string}
-      />
-    </Layout>
-  </>)
-}
-
-
+    </>
+  );
+};
 
 const WorkflowTemplatePage: React.FC = () => {
   const params = useParams();
@@ -259,9 +257,7 @@ const WorkflowTemplatePage: React.FC = () => {
     );
   }
 
-  return (
-    <WorkflowTemplateContent templateId={templateId} />
-  );
+  return <WorkflowTemplateContent templateId={templateId} />;
 };
 
 export default WorkflowTemplatePage;

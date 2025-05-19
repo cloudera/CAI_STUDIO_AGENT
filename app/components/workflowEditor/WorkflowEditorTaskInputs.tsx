@@ -72,13 +72,13 @@ interface AlertsComponentProps {
   workflowId: string;
 }
 
-const AlertsComponent: React.FC<AlertsComponentProps> = ({workflowId}) => {
+const AlertsComponent: React.FC<AlertsComponentProps> = ({ workflowId }) => {
   const isConversational = useAppSelector(selectEditorWorkflowIsConversational);
   const managerAgentId = useAppSelector(selectEditorWorkflowManagerAgentId);
   const process = useAppSelector(selectEditorWorkflowProcess);
   const hasManagerAgent: boolean = process === 'hierarchical';
   const workflowTaskIds = useAppSelector(selectEditorWorkflowTaskIds) || [];
-  const { data: tasks } = useListTasksQuery({workflow_id: workflowId});
+  const { data: tasks } = useListTasksQuery({ workflow_id: workflowId });
 
   const hasUnassignedTasks = workflowTaskIds.some((taskId) => {
     const task = tasks?.find((t) => t.task_id === taskId);
@@ -193,13 +193,11 @@ const AlertsComponent: React.FC<AlertsComponentProps> = ({workflowId}) => {
   );
 };
 
-
 interface WorkflowTasksComponentProps {
   workflowId: string;
 }
 
-
-const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({workflowId}) => {
+const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflowId }) => {
   const alertStyle = {
     alignItems: 'flex-start',
     justifyContent: 'flex-start',
@@ -217,8 +215,8 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({workflow
   can either be manually assigned to an agent, or a "Manager Agent" can delegate
   these tasks as seen fit.
   `;
-  const { data: tasks } = useListTasksQuery({workflow_id: workflowId});
-  const { data: agents } = useListAgentsQuery({workflow_id: workflowId});
+  const { data: tasks } = useListTasksQuery({ workflow_id: workflowId });
+  const { data: agents } = useListAgentsQuery({ workflow_id: workflowId });
   const workflowTaskIds = useAppSelector(selectEditorWorkflowTaskIds) || [];
   const workflowAgentIds = useAppSelector(selectEditorWorkflow).workflowMetadata.agentIds || [];
   const dispatch = useAppDispatch();
@@ -419,7 +417,8 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({workflow
                   </Text>
                 </Layout>
                 <Text style={{ fontSize: 13, fontWeight: 400, background: 'transparent' }}>
-                  The following {workflowTaskIds.length} tasks will be executed in the order specified below.
+                  The following {workflowTaskIds.length} tasks will be executed in the order
+                  specified below.
                 </Text>
               </Layout>
             }
@@ -743,7 +742,7 @@ interface WorklfowEditorInputsProps {
   workflowId: string;
 }
 
-const WorkflowEditorInputs: React.FC<WorklfowEditorInputsProps> = ({workflowId}) => {
+const WorkflowEditorInputs: React.FC<WorklfowEditorInputsProps> = ({ workflowId }) => {
   return (
     <>
       <Layout

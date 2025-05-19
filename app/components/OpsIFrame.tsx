@@ -6,7 +6,6 @@ import { Spin } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import { useGetOpsDataQuery } from '../ops/opsApi';
 
-
 const OpsIFrame: React.FC = () => {
   const { data: opsData, isLoading } = useGetOpsDataQuery();
   const [iframeUrl, setIFrameUrl] = useState(opsData?.ops_display_url);

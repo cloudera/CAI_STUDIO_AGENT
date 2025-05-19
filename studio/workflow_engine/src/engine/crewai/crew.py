@@ -28,7 +28,7 @@ def create_crewai_objects(
     mcps: Dict[str, input_types.MCPObjects] = {}
     for m_ in collated_input.mcp_instances:
         mcps[m_.id] = get_mcp_tools(m_, mcp_instance_env_vars.get(m_.id, {}))
-        
+
     agents: Dict[str, AgentStudioCrewAIAgent] = {}
     for agent in collated_input.agents:
         crewai_tools = [tools[tool_id] for tool_id in agent.tool_instance_ids]

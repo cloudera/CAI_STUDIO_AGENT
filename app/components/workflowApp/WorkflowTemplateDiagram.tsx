@@ -18,11 +18,11 @@ import { useCallback, useEffect, useState } from 'react';
 import AgentNode from '../diagram/AgentNode';
 import TaskNode from '../diagram/TaskNode';
 import ToolNode from '../diagram/ToolNode';
-import { 
-  AgentTemplateMetadata, 
-  TaskTemplateMetadata, 
+import {
+  AgentTemplateMetadata,
+  TaskTemplateMetadata,
   ToolTemplate,
-  WorkflowTemplateMetadata 
+  WorkflowTemplateMetadata,
 } from '@/studio/proto/agent_studio';
 import { useImageAssetsData } from '../../lib/hooks/useAssetData';
 import { createDiagramStateFromTemplate } from '../../workflows/diagramTemplate';

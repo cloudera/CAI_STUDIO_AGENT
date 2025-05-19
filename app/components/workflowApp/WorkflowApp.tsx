@@ -1,7 +1,19 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Layout, Spin, Typography, Slider, Alert, Button, Tooltip, Input, Collapse, Card, Divider } from 'antd';
+import {
+  Layout,
+  Spin,
+  Typography,
+  Slider,
+  Alert,
+  Button,
+  Tooltip,
+  Input,
+  Collapse,
+  Card,
+  Divider,
+} from 'antd';
 import WorkflowAppInputsView from './WorkflowAppInputsView';
 import { useAppDispatch, useAppSelector } from '@/app/lib/hooks/hooks';
 import {
@@ -29,10 +41,7 @@ import {
   Workflow,
 } from '@/studio/proto/agent_studio';
 import WorkflowAppChatView from './WorkflowAppChatView';
-import {
-  CloseOutlined,
-  DashboardOutlined,
-} from '@ant-design/icons';
+import { CloseOutlined, DashboardOutlined } from '@ant-design/icons';
 import { useGetDefaultModelQuery } from '@/app/models/modelsApi';
 import { useGetEventsMutation } from '@/app/ops/opsApi';
 import { useUpdateWorkflowMutation } from '@/app/workflows/workflowsApi';
@@ -59,7 +68,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
   agents,
   toolInstances,
   tasks,
-  renderMode
+  renderMode,
 }) => {
   const isRunning = useAppSelector(selectWorkflowIsRunning);
   const currentTraceId = useAppSelector(selectWorkflowCurrentTraceId);
@@ -323,7 +332,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
     dispatch(clearedWorkflowApp());
     setSliderValue(0);
     setShowMonitoring(renderMode === 'studio');
-    
+
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
@@ -345,7 +354,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
         clearInterval(workflowPollingRef.current);
         workflowPollingRef.current = null;
       }
-      
+
       dispatch(clearedWorkflowApp());
       setSliderValue(0);
       setShowMonitoring(renderMode === 'studio');
@@ -359,35 +368,45 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
   const hasValidTools = React.useMemo(() => {
     // Always return true if in workflow mode
     if (renderMode === 'workflow') return true;
-    
+
     // Otherwise do the normal validation
     if (!workflow) return true;
     return hasValidToolConfiguration(
       workflow.workflow_id,
       agents,
       toolInstances,
-      workflowConfiguration
+      workflowConfiguration,
     );
   }, [workflow, agents, toolInstances, workflowConfiguration, renderMode]);
 
   // Add this function near the top with other functions
-  const getInvalidTools = (agents: AgentMetadata[] | undefined, toolInstances: ToolInstance[] | undefined, workflowId: string | undefined) => {
+  const getInvalidTools = (
+    agents: AgentMetadata[] | undefined,
+    toolInstances: ToolInstance[] | undefined,
+    workflowId: string | undefined,
+  ) => {
     if (!agents || !toolInstances || !workflowId) return [];
-    
+
     const invalidTools: { name: string; status: string }[] = [];
-    
-    agents.filter(agent => agent.workflow_id === workflowId).forEach(agent => {
-      agent.tools_id.forEach(toolId => {
-        const tool = toolInstances.find(t => t.id === toolId);
-        if (tool && !tool.is_valid) {
-          const status = tool.tool_metadata ? 
-            JSON.parse(typeof tool.tool_metadata === 'string' ? tool.tool_metadata : JSON.stringify(tool.tool_metadata)).status 
-            : 'Unknown error';
-          invalidTools.push({ name: tool.name, status });
-        }
+
+    agents
+      .filter((agent) => agent.workflow_id === workflowId)
+      .forEach((agent) => {
+        agent.tools_id.forEach((toolId) => {
+          const tool = toolInstances.find((t) => t.id === toolId);
+          if (tool && !tool.is_valid) {
+            const status = tool.tool_metadata
+              ? JSON.parse(
+                  typeof tool.tool_metadata === 'string'
+                    ? tool.tool_metadata
+                    : JSON.stringify(tool.tool_metadata),
+                ).status
+              : 'Unknown error';
+            invalidTools.push({ name: tool.name, status });
+          }
+        });
       });
-    });
-    
+
     return invalidTools;
   };
 
@@ -491,44 +510,40 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
             renderAlert(
               'No Default LLM Model',
               'Please configure a default LLM model on the LLMs page to use workflows.',
-              'warning'
+              'warning',
             )
           ) : invalidTools.length > 0 ? (
             renderAlert(
               'Invalid Tools Detected',
-              `The following tools are invalid: ${invalidTools.map(t => `${t.name} (${t.status})`).join(', ')}. Please go to Create or Edit Agent Modal to fix or delete these tools.`,
-              'warning'
+              `The following tools are invalid: ${invalidTools.map((t) => `${t.name} (${t.status})`).join(', ')}. Please go to Create or Edit Agent Modal to fix or delete these tools.`,
+              'warning',
             )
           ) : !workflow?.is_ready ? (
             renderAlert(
               'Getting your workflow ready.',
               'This workflow is still being configured. This might take a few minutes.',
-              'loading'
+              'loading',
             )
           ) : !((workflow.crew_ai_workflow_metadata?.agent_id?.length ?? 0) > 0) ? (
             renderAlert(
               'No Agents Found',
               'This workflow does not have any agents. You need at least one agent to test or deploy the workflow.',
-              'warning'
+              'warning',
             )
           ) : !((workflow.crew_ai_workflow_metadata?.task_id?.length ?? 0) > 0) ? (
             renderAlert(
               'No Tasks Found',
               'This workflow does not have any tasks. You need at least one task to test or deploy the workflow.',
-              'warning'
+              'warning',
             )
           ) : hasUnassignedTasks ? (
             renderAlert(
               'Unassigned Tasks',
               'You need to assign tasks to an agent because there is no manager agent.',
-              'warning'
+              'warning',
             )
           ) : !hasValidTools ? (
-            renderAlert(
-              TOOL_PARAMS_ALERT.message,
-              TOOL_PARAMS_ALERT.description,
-              'warning'
-            )
+            renderAlert(TOOL_PARAMS_ALERT.message, TOOL_PARAMS_ALERT.description, 'warning')
           ) : workflow.is_conversational ? (
             <WorkflowAppChatView workflow={workflow} tasks={tasks} />
           ) : (

@@ -6,15 +6,11 @@ from typing import Optional, Tuple
 from concurrent.futures import ThreadPoolExecutor
 from cmlapi import CMLServiceApi
 import os
-from cmlapi.models import CreateV2KeyRequest, CreateModelDeploymentRequest
+from cmlapi.models import CreateModelDeploymentRequest
 import cmlapi
 
 from studio.db.dao import AgentStudioDao
-from studio.proto.agent_studio_pb2 import (
-    CmlApiCheckResponse, 
-    RotateCmlApiResponse,
-    DeployedWorkflow
-)
+from studio.proto.agent_studio_pb2 import CmlApiCheckResponse, RotateCmlApiResponse, DeployedWorkflow
 from studio.api import CmlApiCheckRequest, RotateCmlApiRequest
 from studio.db import model as db_model
 
@@ -28,6 +24,7 @@ def _encode_value(value: str) -> str:
     except Exception as e:
         return ""
 
+
 def _decode_value(encoded_value: str) -> str:
     """Decode base64-encoded value from environment variables"""
     if not encoded_value:
@@ -37,21 +34,23 @@ def _decode_value(encoded_value: str) -> str:
     except Exception as e:
         return None
 
+
 def _get_api_key_env_keys() -> Tuple[str, str]:
     """Get environment variable keys for API key storage"""
     return "AGENT_STUDIO_API_KEY_ID", "AGENT_STUDIO_API_KEY_VALUE"
+
 
 def get_api_key_from_env(cml: CMLServiceApi, logger: logging.Logger = None) -> Tuple[Optional[str], Optional[str]]:
     """Get API key ID and value from project environment variables"""
     if logger is None:
         logger = logging.getLogger(__name__)
-        
+
     try:
         project_id = os.getenv("CDSW_PROJECT_ID")
         if not project_id:
             logger.error("CDSW_PROJECT_ID environment variable not found")
             raise ValueError("CDSW_PROJECT_ID environment variable not found")
-            
+
         logger.info(f"Fetching API key from project {project_id}")
         # Get project details
         project = cml.get_project(project_id)
@@ -64,35 +63,36 @@ def get_api_key_from_env(cml: CMLServiceApi, logger: logging.Logger = None) -> T
         except (json.JSONDecodeError, TypeError) as e:
             logger.warning(f"Failed to parse project environment: {str(e)}")
             environment = {}
-            
+
         # Get encoded keys
         key_id_env, key_value_env = _get_api_key_env_keys()
         encoded_key_id = environment.get(key_id_env)
         encoded_key_value = environment.get(key_value_env)
-        
+
         if not encoded_key_id or not encoded_key_value:
             logger.info("No API key found in environment")
             return None, None
 
         key_id = _decode_value(encoded_key_id)
         key_value = _decode_value(encoded_key_value)
-        
+
         if key_id and key_value:
             logger.info("Successfully retrieved API key from environment")
         else:
             logger.warning("Retrieved API key is invalid")
-            
+
         return key_id, key_value
-        
+
     except Exception as e:
         logger.error(f"Failed to get API key from environment: {str(e)}")
         return None, None
+
 
 def update_api_key_in_env(key_id: str, key_value: str, cml: CMLServiceApi, logger: logging.Logger = None) -> None:
     """Store API key ID and value in project environment variables"""
     if logger is None:
         logger = logging.getLogger(__name__)
-        
+
     if not key_id or not key_value:
         logger.error("Invalid API key provided for storage")
         raise ValueError("API key ID and value must be provided")
@@ -102,7 +102,7 @@ def update_api_key_in_env(key_id: str, key_value: str, cml: CMLServiceApi, logge
         if not project_id:
             logger.error("CDSW_PROJECT_ID environment variable not found")
             raise ValueError("CDSW_PROJECT_ID environment variable not found")
-            
+
         logger.info(f"Updating API key in project {project_id}")
         # Get current project
         project = cml.get_project(project_id)
@@ -115,47 +115,48 @@ def update_api_key_in_env(key_id: str, key_value: str, cml: CMLServiceApi, logge
         except (json.JSONDecodeError, TypeError) as e:
             logger.warning(f"Failed to parse project environment: {str(e)}")
             environment = {}
-            
+
         # Store encoded values
         key_id_env, key_value_env = _get_api_key_env_keys()
         environment[key_id_env] = _encode_value(key_id)
         environment[key_value_env] = _encode_value(key_value)
-        
+
         # Update project with new environment
         update_body = {"environment": json.dumps(environment)}
         cml.update_project(update_body, project_id)
         logger.info("Successfully updated API key in environment")
-        
+
     except Exception as e:
         logger.error(f"Failed to update API key in environment: {str(e)}")
         raise ValueError(f"Failed to update API key in environment: {str(e)}")
+
 
 def generate_api_key(cml: CMLServiceApi, logger: logging.Logger = None) -> Tuple[str, str]:
     """Generate new API v2 key with 1 year expiry and both API and Application audiences"""
     if logger is None:
         logger = logging.getLogger(__name__)
-        
+
     try:
         logger.info("Generating new API v2 key with API and Application audiences")
-        
+
         # Get username from environment
         username = os.getenv("HADOOP_USER_NAME") or os.getenv("USER")
         if not username:
             logger.error("No username found in environment variables")
             raise ValueError("Could not determine username from environment variables")
-            
+
         logger.info(f"Creating API key for user: {username}")
-        
+
         # Create API key with 1 year expiry
         expiry = datetime.now() + timedelta(days=365)
-        
+
         # Create request body as a dict with both audiences
         body = {
             "expiry": expiry.isoformat(),
             "key_type": "API_KEY_TYPE_V2",
-            "audiences": ["API", "Application"]  # Add both audiences
+            "audiences": ["API", "Application"],  # Add both audiences
         }
-        
+
         # Make API call with proper types
         logger.debug(f"Making API call with username: {username} and body: {body}")
         try:
@@ -166,86 +167,93 @@ def generate_api_key(cml: CMLServiceApi, logger: logging.Logger = None) -> Tuple
             logger.info("Falling back to default audience")
             body.pop("audiences", None)  # Remove audiences field
             response = cml.create_v2_key(body=body, username=username)
-            
+
         logger.debug(f"API key creation response type: {type(response)}")
-        
+
         if not response:
             logger.error("Empty response from API")
             raise ValueError("Empty response from API")
-            
+
         # Get response attributes using correct field names
-        api_key_id = getattr(response, 'key_id', None)
-        api_key = getattr(response, 'api_key', None)
-        
+        api_key_id = getattr(response, "key_id", None)
+        api_key = getattr(response, "api_key", None)
+
         if not api_key_id or not api_key:
             logger.error(f"Invalid response format. Response attributes: {dir(response)}")
             logger.error(f"key_id: {api_key_id}, api_key: {'present' if api_key else 'missing'}")
             raise ValueError("Invalid response format from API")
-            
+
         logger.info(f"Successfully generated new API key for user {username}")
         return api_key_id, api_key
-        
+
     except Exception as e:
         logger.error(f"Failed to generate API key: {str(e)}")
         raise RuntimeError(f"Failed to generate API key: {str(e)}")
+
 
 def validate_api_key(key_id: str, key_value: str, cml: CMLServiceApi, logger: logging.Logger = None) -> bool:
     """Validate API key by attempting to list applications"""
     if logger is None:
         logger = logging.getLogger(__name__)
-        
+
     if not key_id or not key_value:
         logger.warning("Invalid API key provided for validation")
         return False
 
     try:
         logger.info("Validating API key")
-        
+
         # Get and format the API URL using CDSW_DOMAIN
         domain = os.getenv("CDSW_DOMAIN")
         if not domain:
             logger.error("CDSW_DOMAIN not found in environment")
             return False
-            
+
         base_url = f"https://{domain}"
-        
+
         # Create new client with the API key
         test_client = cmlapi.default_client(url=base_url, cml_api_key=key_value)
-        
+
         # Try listing projects as a test
         test_client.list_projects()
         logger.info("API key validation successful")
         return True
-        
+
     except Exception as e:
         logger.error(f"API key validation failed: {str(e)}")
         return False
 
-def cml_api_check(request: CmlApiCheckRequest, cml: CMLServiceApi, dao: AgentStudioDao, logger: logging.Logger = None) -> CmlApiCheckResponse:
+
+def cml_api_check(
+    request: CmlApiCheckRequest, cml: CMLServiceApi, dao: AgentStudioDao, logger: logging.Logger = None
+) -> CmlApiCheckResponse:
     """
     Check if the CML API key exists and is valid.
     Returns CmlApiCheckResponse with message (empty string if successful, error message if failed)
     """
     if logger is None:
         logger = logging.getLogger(__name__)
-        
+
     try:
         # Get API key from environment
         key_id, key_value = get_api_key_from_env(cml, logger=logger)
         if not key_id or not key_value:
             logger.warning("No API key found in environment")
             return CmlApiCheckResponse(message="No API key found in environment")
-            
+
         # Validate the key
         is_valid = validate_api_key(key_id, key_value, cml, logger=logger)
         logger.info(f"API key validation {'successful' if is_valid else 'failed'}")
         return CmlApiCheckResponse(message="" if is_valid else "API key validation failed")
-        
+
     except Exception as e:
         logger.error(f"Error checking API key: {str(e)}")
         return CmlApiCheckResponse(message=f"Error checking API key: {str(e)}")
 
-def rotate_cml_api(request: RotateCmlApiRequest, cml: CMLServiceApi, dao: AgentStudioDao, logger: logging.Logger = None) -> RotateCmlApiResponse:
+
+def rotate_cml_api(
+    request: RotateCmlApiRequest, cml: CMLServiceApi, dao: AgentStudioDao, logger: logging.Logger = None
+) -> RotateCmlApiResponse:
     """
     Generate a new API key and update it in the environment.
     Then redeploy all deployed workflows with the new key.
@@ -253,33 +261,36 @@ def rotate_cml_api(request: RotateCmlApiRequest, cml: CMLServiceApi, dao: AgentS
     """
     if logger is None:
         logger = logging.getLogger(__name__)
-        
+
     try:
         logger.info("Generating new API key...")
         # Generate new key
         key_id, key_value = generate_api_key(cml, logger=logger)
-        
+
         logger.info("Updating environment with new API key...")
         # Update environment with new key
         update_api_key_in_env(key_id, key_value, cml, logger=logger)
-        
+
         logger.info("API key rotation successful, starting workflow redeployments...")
 
         # Redeploy all workflows with new key
         redeploy_all_workflows(cml, dao, logger)
-        
+
         return RotateCmlApiResponse(message="")
-        
+
     except Exception as e:
         error_msg = f"Error rotating API key: {str(e)}"
         logger.error(error_msg)
         return RotateCmlApiResponse(message=error_msg)
 
-def get_deployed_workflows(cml: CMLServiceApi, dao: AgentStudioDao, logger: logging.Logger = None) -> list[DeployedWorkflow]:
+
+def get_deployed_workflows(
+    cml: CMLServiceApi, dao: AgentStudioDao, logger: logging.Logger = None
+) -> list[DeployedWorkflow]:
     """Get list of deployed workflows"""
     if logger is None:
         logger = logging.getLogger(__name__)
-    
+
     try:
         # Get list of deployed workflows from database
         with dao.get_session() as session:
@@ -288,12 +299,14 @@ def get_deployed_workflows(cml: CMLServiceApi, dao: AgentStudioDao, logger: logg
                 DeployedWorkflow(
                     deployed_workflow_id=dw.id,
                     workflow_id=dw.workflow_id,
-                    cml_deployed_model_id=dw.cml_deployed_model_id
-                ) for dw in deployed_workflows
+                    cml_deployed_model_id=dw.cml_deployed_model_id,
+                )
+                for dw in deployed_workflows
             ]
     except Exception as e:
         logger.error(f"Error getting deployed workflows: {str(e)}")
         return []
+
 
 def redeploy_single_workflow(workflow_id: str, cml: CMLServiceApi, dao: AgentStudioDao, logger: logging.Logger = None):
     """Redeploy a single workflow"""
@@ -309,8 +322,7 @@ def redeploy_single_workflow(workflow_id: str, cml: CMLServiceApi, dao: AgentStu
 
             # Get latest build and its deployment
             builds = cml.list_model_builds(
-                project_id=os.getenv("CDSW_PROJECT_ID"),
-                model_id=deployed_workflow.cml_deployed_model_id
+                project_id=os.getenv("CDSW_PROJECT_ID"), model_id=deployed_workflow.cml_deployed_model_id
             ).model_builds
 
             if not builds:
@@ -321,7 +333,7 @@ def redeploy_single_workflow(workflow_id: str, cml: CMLServiceApi, dao: AgentStu
             deployments = cml.list_model_deployments(
                 project_id=os.getenv("CDSW_PROJECT_ID"),
                 model_id=deployed_workflow.cml_deployed_model_id,
-                build_id=latest_build.id
+                build_id=latest_build.id,
             ).model_deployments
 
             if not deployments:
@@ -342,7 +354,9 @@ def redeploy_single_workflow(workflow_id: str, cml: CMLServiceApi, dao: AgentStu
             # Get API key using the method from apiv2
             key_id, key_value = get_api_key_from_env(cml, logger)
             if not key_id or not key_value:
-                raise RuntimeError("CML API v2 key not found. You need to configure a CML API v2 key for Agent Studio to deploy workflows.")
+                raise RuntimeError(
+                    "CML API v2 key not found. You need to configure a CML API v2 key for Agent Studio to deploy workflows."
+                )
 
             # Update API key while preserving all other env vars
             env_vars["CDSW_APIV2_KEY"] = key_value
@@ -353,45 +367,36 @@ def redeploy_single_workflow(workflow_id: str, cml: CMLServiceApi, dao: AgentStu
                 memory=current_deployment.memory,
                 nvidia_gpus=0,
                 environment=env_vars,
-                replicas=current_deployment.replicas
+                replicas=current_deployment.replicas,
             )
 
             # Create new deployment with latest build
             cml.create_model_deployment(
-                new_deployment,
-                os.getenv("CDSW_PROJECT_ID"),
-                deployed_workflow.cml_deployed_model_id,
-                latest_build.id
+                new_deployment, os.getenv("CDSW_PROJECT_ID"), deployed_workflow.cml_deployed_model_id, latest_build.id
             )
 
             logger.info(f"Successfully redeployed workflow {workflow_id}")
 
     except Exception as e:
-        logger.error(f"Failed to redeploy workflow {workflow_id}: {str(e)}") 
+        logger.error(f"Failed to redeploy workflow {workflow_id}: {str(e)}")
 
 
 def redeploy_all_workflows(cml: CMLServiceApi, dao: AgentStudioDao, logger: logging.Logger = None):
     """Redeploy all deployed workflows"""
     if logger is None:
         logger = logging.getLogger(__name__)
-        
+
     try:
         # Get list of deployed workflows
         deployed_workflows = get_deployed_workflows(cml, dao, logger)
-        
+
         # Create thread pool for async redeployments
         with ThreadPoolExecutor(max_workers=5) as executor:
             for workflow in deployed_workflows:
                 # Submit each redeployment to thread pool
-                executor.submit(
-                    redeploy_single_workflow,
-                    workflow.deployed_workflow_id,
-                    cml,
-                    dao,
-                    logger
-                )
-        
+                executor.submit(redeploy_single_workflow, workflow.deployed_workflow_id, cml, dao, logger)
+
         logger.info("All workflow redeployments initiated")
-        
+
     except Exception as e:
-        logger.error(f"Error redeploying workflows: {str(e)}") 
+        logger.error(f"Error redeploying workflows: {str(e)}")

@@ -7,7 +7,7 @@ const { Text } = Typography;
 export const renderAlert = (
   message: string,
   description: string,
-  type: 'info' | 'warning' | 'error' | 'loading'
+  type: 'info' | 'warning' | 'error' | 'loading',
 ) => {
   const icon =
     type === 'warning' ? (
@@ -52,4 +52,4 @@ export const renderAlert = (
       closable={false}
     />
   );
-}; 
+};

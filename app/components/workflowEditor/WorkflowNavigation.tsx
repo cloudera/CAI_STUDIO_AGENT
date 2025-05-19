@@ -54,7 +54,7 @@ interface WorkflowNavigationProps {
   workflowId: string;
 }
 
-const WorkflowNavigation: React.FC<WorkflowNavigationProps> = ({workflowId}) => {
+const WorkflowNavigation: React.FC<WorkflowNavigationProps> = ({ workflowId }) => {
   const currentStep = useAppSelector(selectEditorCurrentStep);
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -82,22 +82,22 @@ const WorkflowNavigation: React.FC<WorkflowNavigationProps> = ({workflowId}) => 
   const workflowGenerationConfig = useAppSelector(selectWorkflowGenerationConfig);
   const workflowConfiguration = useAppSelector(selectWorkflowConfiguration);
 
-  const { data: agents } = useListAgentsQuery({workflow_id: workflowId});
-  const { data: toolInstances } = useListToolInstancesQuery({workflow_id: workflowId});
+  const { data: agents } = useListAgentsQuery({ workflow_id: workflowId });
+  const { data: toolInstances } = useListToolInstancesQuery({ workflow_id: workflowId });
 
   const isValid = useMemo(() => {
     const result = hasValidToolConfiguration(
       workflowState.workflowId || '',
       agents,
       toolInstances,
-      workflowConfiguration
+      workflowConfiguration,
     );
     console.log('Validation Debug:', {
       workflowId: workflowState.workflowId,
       agents,
       toolInstances,
       workflowConfiguration,
-      isValid: result
+      isValid: result,
     });
     return result;
   }, [workflowState.workflowId, agents, toolInstances, workflowConfiguration]);
@@ -309,8 +309,10 @@ const WorkflowNavigation: React.FC<WorkflowNavigationProps> = ({workflowId}) => 
             >
               <ArrowLeftOutlined /> Add Tasks
             </Button>
-            <Tooltip 
-              title={!isValid ? "Please fill in all required tool parameters before proceeding" : ""}
+            <Tooltip
+              title={
+                !isValid ? 'Please fill in all required tool parameters before proceeding' : ''
+              }
             >
               <Button
                 type="primary"
@@ -340,7 +342,7 @@ const WorkflowNavigation: React.FC<WorkflowNavigationProps> = ({workflowId}) => 
             >
               <ArrowLeftOutlined /> Configure
             </Button>
-            <Tooltip title={!isValid ? "Required tool parameters are missing" : ""}>
+            <Tooltip title={!isValid ? 'Required tool parameters are missing' : ''}>
               <Button
                 type="primary"
                 style={{ flexGrow: 0, height: '40px' }}
@@ -404,11 +406,18 @@ const WorkflowNavigation: React.FC<WorkflowNavigationProps> = ({workflowId}) => 
             >
               Save as Template
             </Button>
-            <Tooltip title={!isValid ? "Required tool parameters are missing" : ""}>
+            <Tooltip title={!isValid ? 'Required tool parameters are missing' : ''}>
               <Button
                 type="primary"
                 style={{ flexGrow: 0, height: '40px' }}
-                disabled={!isValid || !defaultModel || hasExistingDeployment || !hasAgents || !hasTasks || hasUnassignedTasks}
+                disabled={
+                  !isValid ||
+                  !defaultModel ||
+                  hasExistingDeployment ||
+                  !hasAgents ||
+                  !hasTasks ||
+                  hasUnassignedTasks
+                }
                 onClick={() => setIsDeployModalVisible(true)}
               >
                 Deploy

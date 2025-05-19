@@ -7,6 +7,7 @@ from crewai.tools.base_tool import BaseTool
 from crewai import LLM as CrewAILLM
 from crewai_tools import MCPServerAdapter
 
+
 class Input__LanguageModelConfig(BaseModel):
     provider_model: str
     model_type: Literal["OPENAI", "OPENAI_COMPATIBLE", "AZURE_OPENAI"]
@@ -88,11 +89,13 @@ class CollatedInput(BaseModel):
     tasks: List[Input__Task]
     workflow: Input__Workflow
 
+
 class MCPObjects(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     local_session: MCPServerAdapter
     tools: List[BaseTool]
+
 
 class CrewAIObjects(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)

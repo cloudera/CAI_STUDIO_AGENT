@@ -21,21 +21,9 @@ export default function TaskNode({ data }: NodeProps<TaskNode>) {
 
   return (
     <div className="task-node">
-      <Handle 
-        type="target" 
-        position={Position.Left} 
-        id="left"
-      />
-      <Handle 
-        type="source" 
-        position={Position.Right} 
-        id="right"
-      />
-      <Handle 
-        type="source" 
-        position={Position.Bottom} 
-        id="bottom"
-      />
+      <Handle type="target" position={Position.Left} id="left" />
+      <Handle type="source" position={Position.Right} id="right" />
+      <Handle type="source" position={Position.Bottom} id="bottom" />
       <div
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}

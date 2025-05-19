@@ -2,7 +2,10 @@
 
 import React, { useEffect, useState, Suspense } from 'react';
 import { Layout, Spin, Alert, Divider } from 'antd';
-import { useGetWorkflowTemplateByIdQuery, useGetWorkflowTemplateMutation } from '@/app/workflows/workflowsApi';
+import {
+  useGetWorkflowTemplateByIdQuery,
+  useGetWorkflowTemplateMutation,
+} from '@/app/workflows/workflowsApi';
 import WorkflowTemplateDetails from './WorkflowTemplateDetails';
 import { useAppDispatch } from '../../lib/hooks/hooks';
 import ErrorBoundary from '../ErrorBoundary';
@@ -12,8 +15,14 @@ interface WorkflowTemplateOverviewProps {
   workflowTemplateId: string;
 }
 
-const WorkflowTemplateOverview: React.FC<WorkflowTemplateOverviewProps> = ({ workflowTemplateId }) => {
-  const { data: templateDetails, isLoading: loading, error } = useGetWorkflowTemplateByIdQuery(workflowTemplateId);
+const WorkflowTemplateOverview: React.FC<WorkflowTemplateOverviewProps> = ({
+  workflowTemplateId,
+}) => {
+  const {
+    data: templateDetails,
+    isLoading: loading,
+    error,
+  } = useGetWorkflowTemplateByIdQuery(workflowTemplateId);
 
   if (loading) {
     return (

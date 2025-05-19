@@ -15,15 +15,23 @@ interface WorkflowTemplateDiagramViewProps {
 }
 
 const WorkflowTemplateDiagramView: React.FC<WorkflowTemplateDiagramViewProps> = ({ template }) => {
-  const { data: agentTemplates, isLoading: agentsLoading } = useListAgentTemplatesQuery({workflow_template_id: template.id});
-  const { data: taskTemplates, isLoading: tasksLoading } = useListTaskTemplatesQuery({workflow_template_id: template.id});
-  const { data: toolTemplates, isLoading: toolsLoading } = useListToolTemplatesQuery({workflow_template_id: template.id});
+  const { data: agentTemplates, isLoading: agentsLoading } = useListAgentTemplatesQuery({
+    workflow_template_id: template.id,
+  });
+  const { data: taskTemplates, isLoading: tasksLoading } = useListTaskTemplatesQuery({
+    workflow_template_id: template.id,
+  });
+  const { data: toolTemplates, isLoading: toolsLoading } = useListToolTemplatesQuery({
+    workflow_template_id: template.id,
+  });
 
   const isLoading = agentsLoading || tasksLoading || toolsLoading;
 
   if (isLoading) {
     return (
-      <Layout style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+      <Layout
+        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}
+      >
         <Spin size="large" />
       </Layout>
     );
@@ -31,12 +39,7 @@ const WorkflowTemplateDiagramView: React.FC<WorkflowTemplateDiagramViewProps> = 
 
   if (!agentTemplates || !taskTemplates || !toolTemplates) {
     return (
-      <Alert
-        message="Error"
-        description="Failed to load template data"
-        type="error"
-        showIcon
-      />
+      <Alert message="Error" description="Failed to load template data" type="error" showIcon />
     );
   }
 
@@ -46,9 +49,10 @@ const WorkflowTemplateDiagramView: React.FC<WorkflowTemplateDiagramViewProps> = 
     : null;
 
   // Get agent templates
-  const agentTemplateDetails = template.agent_template_ids
-    ?.map((id) => agentTemplates?.find((a) => a.id === id))
-    .filter(Boolean) || [];
+  const agentTemplateDetails =
+    template.agent_template_ids
+      ?.map((id) => agentTemplates?.find((a) => a.id === id))
+      .filter(Boolean) || [];
 
   return (
     <Layout
