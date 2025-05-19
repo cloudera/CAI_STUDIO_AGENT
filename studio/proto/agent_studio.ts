@@ -306,6 +306,136 @@ export interface ToolInstance {
   is_venv_tool: boolean;
 }
 
+export interface AddMcpTemplateRequest {
+  name: string;
+  type: string;
+  args: string[];
+  env_names: string[];
+  tmp_mcp_image_path: string;
+  workflow_template_id?: string | undefined;
+}
+
+export interface AddMcpTemplateResponse {
+  mcp_template_id: string;
+}
+
+export interface UpdateMcpTemplateRequest {
+  mcp_template_id: string;
+  name: string;
+  type: string;
+  args: string[];
+  env_names: string[];
+  tmp_mcp_image_path: string;
+}
+
+export interface UpdateMcpTemplateResponse {
+  mcp_template_id: string;
+}
+
+export interface RemoveMcpTemplateRequest {
+  mcp_template_id: string;
+}
+
+export interface RemoveMcpTemplateResponse {
+}
+
+export interface MCPTemplate {
+  id: string;
+  name: string;
+  type: string;
+  args: string[];
+  env_names: string[];
+  /** JSON representation of tools */
+  tools: string;
+  image_uri: string;
+  /** Status of the MCP */
+  status: string;
+  workflow_template_id?: string | undefined;
+}
+
+export interface ListMcpTemplatesRequest {
+}
+
+export interface ListMcpTemplatesResponse {
+  mcp_templates: MCPTemplate[];
+}
+
+export interface GetMcpTemplateRequest {
+  mcp_template_id: string;
+}
+
+export interface GetMcpTemplateResponse {
+  mcp_template: MCPTemplate | undefined;
+}
+
+export interface McpInstance {
+  id: string;
+  name: string;
+  type: string;
+  args: string[];
+  env_names: string[];
+  /** JSON representation of tools */
+  tools: string;
+  image_uri: string;
+  /** Status of the MCP */
+  status: string;
+  /** List of names of tools accessible by the agent. Empty list denotes that all tools are accessible. */
+  activated_tools: string[];
+  /** mandatory attach to workflow */
+  workflow_id: string;
+}
+
+export interface ListMcpInstancesRequest {
+  /** Optional workflow id */
+  workflow_id?: string | undefined;
+}
+
+export interface ListMcpInstancesResponse {
+  mcp_instances: McpInstance[];
+}
+
+export interface GetMcpInstanceRequest {
+  mcp_instance_id: string;
+}
+
+export interface GetMcpInstanceResponse {
+  mcp_instance: McpInstance | undefined;
+}
+
+export interface CreateMcpInstanceRequest {
+  /** Mandatory workflow id to attach to the MCP instance */
+  workflow_id: string;
+  /** Optional name of the MCP instance */
+  name: string;
+  /** MCP instances are always created from a MCP template */
+  mcp_template_id: string;
+  /** List of tool names accessible to the agent */
+  activated_tools: string[];
+}
+
+export interface CreateMcpInstanceResponse {
+  mcp_instance_name: string;
+  mcp_instance_id: string;
+}
+
+export interface UpdateMcpInstanceRequest {
+  mcp_instance_id: string;
+  name: string;
+  tmp_mcp_image_path: string;
+  activated_tools: string[];
+}
+
+export interface UpdateMcpInstanceResponse {
+  mcp_instance_id: string;
+}
+
+export interface RemoveMcpInstanceRequest {
+  mcp_instance_id: string;
+}
+
+export interface RemoveMcpInstanceResponse {
+}
+
 /** Agent Messages */
 export interface ListAgentsRequest {
   /** Mandatory workflow id */
@@ -334,6 +464,8 @@ export interface AddAgentRequest {
   llm_provider_model_id: string;
   /** List of tool IDs */
   tools_id: string[];
+  /** List of MCP instance IDs */
+  mcp_instance_ids: string[];
   /** Crew AI agent metadata */
   crew_ai_agent_metadata:
     | CrewAIAgentMetadata
@@ -364,6 +496,8 @@ export interface UpdateAgentRequest {
   llm_provider_model_id: string;
   /** List of tool IDs */
   tools_id: string[];
+  /** List of MCP instance IDs */
+  mcp_instance_ids: string[];
   /** Crew AI agent metadata */
   crew_ai_agent_metadata:
     | CrewAIAgentMetadata
@@ -394,6 +528,8 @@ export interface AgentMetadata {
   llm_provider_model_id: string;
   /** List of tool IDs */
   tools_id: string[];
+  /** List of MCP instance IDs */
+  mcp_instance_ids: string[];
   /** Crew AI agent metadata */
   crew_ai_agent_metadata:
     | CrewAIAgentMetadata
@@ -519,6 +655,15 @@ export interface TestWorkflowToolUserParameters_ParametersEntry {
   value: string;
 }
 
+export interface TestWorkflowMCPInstanceEnvVars {
+  env_vars: { [key: string]: string };
+}
+
+export interface TestWorkflowMCPInstanceEnvVars_EnvVarsEntry {
+  key: string;
+  value: string;
+}
+
 /** Messages for testing workflows */
 export interface TestWorkflowRequest {
   /** ID of the workflow to test */
@@ -531,6 +676,7 @@ export interface TestWorkflowRequest {
    * key is the user param and the value is the value of the param.
    */
   tool_user_parameters: { [key: string]: TestWorkflowToolUserParameters };
+  mcp_instance_env_vars: { [key: string]: TestWorkflowMCPInstanceEnvVars };
   /**
    * Serialized JSON generation config parameters for all LLM calls in this workflow.
    * In the future, users may want to customize temperatures/max_new_tokens for each agent.
@@ -546,6 +692,11 @@ export interface TestWorkflowRequest_InputsEntry {
 export interface TestWorkflowRequest_ToolUserParametersEntry {
   key: string;
   value: TestWorkflowToolUserParameters | undefined;
+}
+
+export interface TestWorkflowRequest_McpInstanceEnvVarsEntry {
+  key: string;
+  value: TestWorkflowMCPInstanceEnvVars | undefined;
 }
 
 export interface TestWorkflowResponse {
@@ -567,6 +718,7 @@ export interface DeployWorkflowRequest {
    * key is the user param and the value is the value of the param.
    */
   tool_user_parameters: { [key: string]: TestWorkflowToolUserParameters };
+  mcp_instance_env_vars: { [key: string]: TestWorkflowMCPInstanceEnvVars };
   /** Should the workflow application be accesible without authentication from CDP ? */
   bypass_authentication: boolean;
   /**
@@ -584,6 +736,11 @@ export interface DeployWorkflowRequest_EnvVariableOverridesEntry {
 export interface DeployWorkflowRequest_ToolUserParametersEntry {
   key: string;
   value: TestWorkflowToolUserParameters | undefined;
+}
+
+export interface DeployWorkflowRequest_McpInstanceEnvVarsEntry {
+  key: string;
+  value: TestWorkflowMCPInstanceEnvVars | undefined;
 }
 
 export interface DeployWorkflowResponse {
@@ -4157,6 +4314,1846 @@ export const ToolInstance: MessageFns<ToolInstance> = {
   },
 };
 
+function createBaseAddMcpTemplateRequest(): AddMcpTemplateRequest {
+  return { name: "", type: "", args: [], env_names: [], tmp_mcp_image_path: "", workflow_template_id: undefined };
+}
+
+export const AddMcpTemplateRequest: MessageFns<AddMcpTemplateRequest> = {
+  encode(message: AddMcpTemplateRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.name !== "") {
+      writer.uint32(10).string(message.name);
+    }
+    if (message.type !== "") {
+      writer.uint32(18).string(message.type);
+    }
+    for (const v of message.args) {
+      writer.uint32(26).string(v!);
+    }
+    for (const v of message.env_names) {
+      writer.uint32(34).string(v!);
+    }
+    if (message.tmp_mcp_image_path !== "") {
+      writer.uint32(42).string(message.tmp_mcp_image_path);
+    }
+    if (message.workflow_template_id !== undefined) {
+      writer.uint32(50).string(message.workflow_template_id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): AddMcpTemplateRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseAddMcpTemplateRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.type = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.args.push(reader.string());
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.env_names.push(reader.string());
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.tmp_mcp_image_path = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.workflow_template_id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): AddMcpTemplateRequest {
+    return {
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      type: isSet(object.type) ? globalThis.String(object.type) : "",
+      args: globalThis.Array.isArray(object?.args) ? object.args.map((e: any) => globalThis.String(e)) : [],
+      env_names: globalThis.Array.isArray(object?.env_names)
+        ? object.env_names.map((e: any) => globalThis.String(e))
+        : [],
+      tmp_mcp_image_path: isSet(object.tmp_mcp_image_path) ? globalThis.String(object.tmp_mcp_image_path) : "",
+      workflow_template_id: isSet(object.workflow_template_id)
+        ? globalThis.String(object.workflow_template_id)
+        : undefined,
+    };
+  },
+
+  toJSON(message: AddMcpTemplateRequest): unknown {
+    const obj: any = {};
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.type !== "") {
+      obj.type = message.type;
+    }
+    if (message.args?.length) {
+      obj.args = message.args;
+    }
+    if (message.env_names?.length) {
+      obj.env_names = message.env_names;
+    }
+    if (message.tmp_mcp_image_path !== "") {
+      obj.tmp_mcp_image_path = message.tmp_mcp_image_path;
+    }
+    if (message.workflow_template_id !== undefined) {
+      obj.workflow_template_id = message.workflow_template_id;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<AddMcpTemplateRequest>): AddMcpTemplateRequest {
+    return AddMcpTemplateRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<AddMcpTemplateRequest>): AddMcpTemplateRequest {
+    const message = createBaseAddMcpTemplateRequest();
+    message.name = object.name ?? "";
+    message.type = object.type ?? "";
+    message.args = object.args?.map((e) => e) || [];
+    message.env_names = object.env_names?.map((e) => e) || [];
+    message.tmp_mcp_image_path = object.tmp_mcp_image_path ?? "";
+    message.workflow_template_id = object.workflow_template_id ?? undefined;
+    return message;
+  },
+};
+
+function createBaseAddMcpTemplateResponse(): AddMcpTemplateResponse {
+  return { mcp_template_id: "" };
+}
+
+export const AddMcpTemplateResponse: MessageFns<AddMcpTemplateResponse> = {
+  encode(message: AddMcpTemplateResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.mcp_template_id !== "") {
+      writer.uint32(10).string(message.mcp_template_id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): AddMcpTemplateResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseAddMcpTemplateResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.mcp_template_id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): AddMcpTemplateResponse {
+    return { mcp_template_id: isSet(object.mcp_template_id) ? globalThis.String(object.mcp_template_id) : "" };
+  },
+
+  toJSON(message: AddMcpTemplateResponse): unknown {
+    const obj: any = {};
+    if (message.mcp_template_id !== "") {
+      obj.mcp_template_id = message.mcp_template_id;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<AddMcpTemplateResponse>): AddMcpTemplateResponse {
+    return AddMcpTemplateResponse.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<AddMcpTemplateResponse>): AddMcpTemplateResponse {
+    const message = createBaseAddMcpTemplateResponse();
+    message.mcp_template_id = object.mcp_template_id ?? "";
+    return message;
+  },
+};
+
+function createBaseUpdateMcpTemplateRequest(): UpdateMcpTemplateRequest {
+  return { mcp_template_id: "", name: "", type: "", args: [], env_names: [], tmp_mcp_image_path: "" };
+}
+
+export const UpdateMcpTemplateRequest: MessageFns<UpdateMcpTemplateRequest> = {
+  encode(message: UpdateMcpTemplateRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.mcp_template_id !== "") {
+      writer.uint32(10).string(message.mcp_template_id);
+    }
+    if (message.name !== "") {
+      writer.uint32(18).string(message.name);
+    }
+    if (message.type !== "") {
+      writer.uint32(26).string(message.type);
+    }
+    for (const v of message.args) {
+      writer.uint32(34).string(v!);
+    }
+    for (const v of message.env_names) {
+      writer.uint32(42).string(v!);
+    }
+    if (message.tmp_mcp_image_path !== "") {
+      writer.uint32(50).string(message.tmp_mcp_image_path);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateMcpTemplateRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateMcpTemplateRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.mcp_template_id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.type = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.args.push(reader.string());
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.env_names.push(reader.string());
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.tmp_mcp_image_path = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateMcpTemplateRequest {
+    return {
+      mcp_template_id: isSet(object.mcp_template_id) ? globalThis.String(object.mcp_template_id) : "",
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      type: isSet(object.type) ? globalThis.String(object.type) : "",
+      args: globalThis.Array.isArray(object?.args) ? object.args.map((e: any) => globalThis.String(e)) : [],
+      env_names: globalThis.Array.isArray(object?.env_names)
+        ? object.env_names.map((e: any) => globalThis.String(e))
+        : [],
+      tmp_mcp_image_path: isSet(object.tmp_mcp_image_path) ? globalThis.String(object.tmp_mcp_image_path) : "",
+    };
+  },
+
+  toJSON(message: UpdateMcpTemplateRequest): unknown {
+    const obj: any = {};
+    if (message.mcp_template_id !== "") {
+      obj.mcp_template_id = message.mcp_template_id;
+    }
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.type !== "") {
+      obj.type = message.type;
+    }
+    if (message.args?.length) {
+      obj.args = message.args;
+    }
+    if (message.env_names?.length) {
+      obj.env_names = message.env_names;
+    }
+    if (message.tmp_mcp_image_path !== "") {
+      obj.tmp_mcp_image_path = message.tmp_mcp_image_path;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<UpdateMcpTemplateRequest>): UpdateMcpTemplateRequest {
+    return UpdateMcpTemplateRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<UpdateMcpTemplateRequest>): UpdateMcpTemplateRequest {
+    const message = createBaseUpdateMcpTemplateRequest();
+    message.mcp_template_id = object.mcp_template_id ?? "";
+    message.name = object.name ?? "";
+    message.type = object.type ?? "";
+    message.args = object.args?.map((e) => e) || [];
+    message.env_names = object.env_names?.map((e) => e) || [];
+    message.tmp_mcp_image_path = object.tmp_mcp_image_path ?? "";
+    return message;
+  },
+};
+
+function createBaseUpdateMcpTemplateResponse(): UpdateMcpTemplateResponse {
+  return { mcp_template_id: "" };
+}
+
+export const UpdateMcpTemplateResponse: MessageFns<UpdateMcpTemplateResponse> = {
+  encode(message: UpdateMcpTemplateResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.mcp_template_id !== "") {
+      writer.uint32(10).string(message.mcp_template_id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateMcpTemplateResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateMcpTemplateResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.mcp_template_id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateMcpTemplateResponse {
+    return { mcp_template_id: isSet(object.mcp_template_id) ? globalThis.String(object.mcp_template_id) : "" };
+  },
+
+  toJSON(message: UpdateMcpTemplateResponse): unknown {
+    const obj: any = {};
+    if (message.mcp_template_id !== "") {
+      obj.mcp_template_id = message.mcp_template_id;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<UpdateMcpTemplateResponse>): UpdateMcpTemplateResponse {
+    return UpdateMcpTemplateResponse.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<UpdateMcpTemplateResponse>): UpdateMcpTemplateResponse {
+    const message = createBaseUpdateMcpTemplateResponse();
+    message.mcp_template_id = object.mcp_template_id ?? "";
+    return message;
+  },
+};
+
+function createBaseRemoveMcpTemplateRequest(): RemoveMcpTemplateRequest {
+  return { mcp_template_id: "" };
+}
+
+export const RemoveMcpTemplateRequest: MessageFns<RemoveMcpTemplateRequest> = {
+  encode(message: RemoveMcpTemplateRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.mcp_template_id !== "") {
+      writer.uint32(10).string(message.mcp_template_id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): RemoveMcpTemplateRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRemoveMcpTemplateRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.mcp_template_id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RemoveMcpTemplateRequest {
+    return { mcp_template_id: isSet(object.mcp_template_id) ? globalThis.String(object.mcp_template_id) : "" };
+  },
+
+  toJSON(message: RemoveMcpTemplateRequest): unknown {
+    const obj: any = {};
+    if (message.mcp_template_id !== "") {
+      obj.mcp_template_id = message.mcp_template_id;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<RemoveMcpTemplateRequest>): RemoveMcpTemplateRequest {
+    return RemoveMcpTemplateRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<RemoveMcpTemplateRequest>): RemoveMcpTemplateRequest {
+    const message = createBaseRemoveMcpTemplateRequest();
+    message.mcp_template_id = object.mcp_template_id ?? "";
+    return message;
+  },
+};
+
+function createBaseRemoveMcpTemplateResponse(): RemoveMcpTemplateResponse {
+  return {};
+}
+
+export const RemoveMcpTemplateResponse: MessageFns<RemoveMcpTemplateResponse> = {
+  encode(_: RemoveMcpTemplateResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): RemoveMcpTemplateResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRemoveMcpTemplateResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(_: any): RemoveMcpTemplateResponse {
+    return {};
+  },
+
+  toJSON(_: RemoveMcpTemplateResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  create(base?: DeepPartial<RemoveMcpTemplateResponse>): RemoveMcpTemplateResponse {
+    return RemoveMcpTemplateResponse.fromPartial(base ?? {});
+  },
+  fromPartial(_: DeepPartial<RemoveMcpTemplateResponse>): RemoveMcpTemplateResponse {
+    const message = createBaseRemoveMcpTemplateResponse();
+    return message;
+  },
+};
+
+function createBaseMCPTemplate(): MCPTemplate {
+  return {
+    id: "",
+    name: "",
+    type: "",
+    args: [],
+    env_names: [],
+    tools: "",
+    image_uri: "",
+    status: "",
+    workflow_template_id: undefined,
+  };
+}
+
+export const MCPTemplate: MessageFns<MCPTemplate> = {
+  encode(message: MCPTemplate, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.name !== "") {
+      writer.uint32(18).string(message.name);
+    }
+    if (message.type !== "") {
+      writer.uint32(26).string(message.type);
+    }
+    for (const v of message.args) {
+      writer.uint32(34).string(v!);
+    }
+    for (const v of message.env_names) {
+      writer.uint32(42).string(v!);
+    }
+    if (message.tools !== "") {
+      writer.uint32(50).string(message.tools);
+    }
+    if (message.image_uri !== "") {
+      writer.uint32(58).string(message.image_uri);
+    }
+    if (message.status !== "") {
+      writer.uint32(66).string(message.status);
+    }
+    if (message.workflow_template_id !== undefined) {
+      writer.uint32(74).string(message.workflow_template_id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): MCPTemplate {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseMCPTemplate();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.type = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.args.push(reader.string());
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.env_names.push(reader.string());
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.tools = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.image_uri = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.status = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.workflow_template_id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): MCPTemplate {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      type: isSet(object.type) ? globalThis.String(object.type) : "",
+      args: globalThis.Array.isArray(object?.args) ? object.args.map((e: any) => globalThis.String(e)) : [],
+      env_names: globalThis.Array.isArray(object?.env_names)
+        ? object.env_names.map((e: any) => globalThis.String(e))
+        : [],
+      tools: isSet(object.tools) ? globalThis.String(object.tools) : "",
+      image_uri: isSet(object.image_uri) ? globalThis.String(object.image_uri) : "",
+      status: isSet(object.status) ? globalThis.String(object.status) : "",
+      workflow_template_id: isSet(object.workflow_template_id)
+        ? globalThis.String(object.workflow_template_id)
+        : undefined,
+    };
+  },
+
+  toJSON(message: MCPTemplate): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.type !== "") {
+      obj.type = message.type;
+    }
+    if (message.args?.length) {
+      obj.args = message.args;
+    }
+    if (message.env_names?.length) {
+      obj.env_names = message.env_names;
+    }
+    if (message.tools !== "") {
+      obj.tools = message.tools;
+    }
+    if (message.image_uri !== "") {
+      obj.image_uri = message.image_uri;
+    }
+    if (message.status !== "") {
+      obj.status = message.status;
+    }
+    if (message.workflow_template_id !== undefined) {
+      obj.workflow_template_id = message.workflow_template_id;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<MCPTemplate>): MCPTemplate {
+    return MCPTemplate.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<MCPTemplate>): MCPTemplate {
+    const message = createBaseMCPTemplate();
+    message.id = object.id ?? "";
+    message.name = object.name ?? "";
+    message.type = object.type ?? "";
+    message.args = object.args?.map((e) => e) || [];
+    message.env_names = object.env_names?.map((e) => e) || [];
+    message.tools = object.tools ?? "";
+    message.image_uri = object.image_uri ?? "";
+    message.status = object.status ?? "";
+    message.workflow_template_id = object.workflow_template_id ?? undefined;
+    return message;
+  },
+};
+
+function createBaseListMcpTemplatesRequest(): ListMcpTemplatesRequest {
+  return {};
+}
+
+export const ListMcpTemplatesRequest: MessageFns<ListMcpTemplatesRequest> = {
+  encode(_: ListMcpTemplatesRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListMcpTemplatesRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListMcpTemplatesRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(_: any): ListMcpTemplatesRequest {
+    return {};
+  },
+
+  toJSON(_: ListMcpTemplatesRequest): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  create(base?: DeepPartial<ListMcpTemplatesRequest>): ListMcpTemplatesRequest {
+    return ListMcpTemplatesRequest.fromPartial(base ?? {});
+  },
+  fromPartial(_: DeepPartial<ListMcpTemplatesRequest>): ListMcpTemplatesRequest {
+    const message = createBaseListMcpTemplatesRequest();
+    return message;
+  },
+};
+
+function createBaseListMcpTemplatesResponse(): ListMcpTemplatesResponse {
+  return { mcp_templates: [] };
+}
+
+export const ListMcpTemplatesResponse: MessageFns<ListMcpTemplatesResponse> = {
+  encode(message: ListMcpTemplatesResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.mcp_templates) {
+      MCPTemplate.encode(v!, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListMcpTemplatesResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListMcpTemplatesResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.mcp_templates.push(MCPTemplate.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListMcpTemplatesResponse {
+    return {
+      mcp_templates: globalThis.Array.isArray(object?.mcp_templates)
+        ? object.mcp_templates.map((e: any) => MCPTemplate.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: ListMcpTemplatesResponse): unknown {
+    const obj: any = {};
+    if (message.mcp_templates?.length) {
+      obj.mcp_templates = message.mcp_templates.map((e) => MCPTemplate.toJSON(e));
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<ListMcpTemplatesResponse>): ListMcpTemplatesResponse {
+    return ListMcpTemplatesResponse.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<ListMcpTemplatesResponse>): ListMcpTemplatesResponse {
+    const message = createBaseListMcpTemplatesResponse();
+    message.mcp_templates = object.mcp_templates?.map((e) => MCPTemplate.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseGetMcpTemplateRequest(): GetMcpTemplateRequest {
+  return { mcp_template_id: "" };
+}
+
+export const GetMcpTemplateRequest: MessageFns<GetMcpTemplateRequest> = {
+  encode(message: GetMcpTemplateRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.mcp_template_id !== "") {
+      writer.uint32(10).string(message.mcp_template_id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetMcpTemplateRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetMcpTemplateRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.mcp_template_id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetMcpTemplateRequest {
+    return { mcp_template_id: isSet(object.mcp_template_id) ? globalThis.String(object.mcp_template_id) : "" };
+  },
+
+  toJSON(message: GetMcpTemplateRequest): unknown {
+    const obj: any = {};
+    if (message.mcp_template_id !== "") {
+      obj.mcp_template_id = message.mcp_template_id;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<GetMcpTemplateRequest>): GetMcpTemplateRequest {
+    return GetMcpTemplateRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<GetMcpTemplateRequest>): GetMcpTemplateRequest {
+    const message = createBaseGetMcpTemplateRequest();
+    message.mcp_template_id = object.mcp_template_id ?? "";
+    return message;
+  },
+};
+
+function createBaseGetMcpTemplateResponse(): GetMcpTemplateResponse {
+  return { mcp_template: undefined };
+}
+
+export const GetMcpTemplateResponse: MessageFns<GetMcpTemplateResponse> = {
+  encode(message: GetMcpTemplateResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.mcp_template !== undefined) {
+      MCPTemplate.encode(message.mcp_template, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetMcpTemplateResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetMcpTemplateResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.mcp_template = MCPTemplate.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetMcpTemplateResponse {
+    return { mcp_template: isSet(object.mcp_template) ? MCPTemplate.fromJSON(object.mcp_template) : undefined };
+  },
+
+  toJSON(message: GetMcpTemplateResponse): unknown {
+    const obj: any = {};
+    if (message.mcp_template !== undefined) {
+      obj.mcp_template = MCPTemplate.toJSON(message.mcp_template);
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<GetMcpTemplateResponse>): GetMcpTemplateResponse {
+    return GetMcpTemplateResponse.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<GetMcpTemplateResponse>): GetMcpTemplateResponse {
+    const message = createBaseGetMcpTemplateResponse();
+    message.mcp_template = (object.mcp_template !== undefined && object.mcp_template !== null)
+      ? MCPTemplate.fromPartial(object.mcp_template)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseMcpInstance(): McpInstance {
+  return {
+    id: "",
+    name: "",
+    type: "",
+    args: [],
+    env_names: [],
+    tools: "",
+    image_uri: "",
+    status: "",
+    activated_tools: [],
+    workflow_id: "",
+  };
+}
+
+export const McpInstance: MessageFns<McpInstance> = {
+  encode(message: McpInstance, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.name !== "") {
+      writer.uint32(18).string(message.name);
+    }
+    if (message.type !== "") {
+      writer.uint32(26).string(message.type);
+    }
+    for (const v of message.args) {
+      writer.uint32(34).string(v!);
+    }
+    for (const v of message.env_names) {
+      writer.uint32(42).string(v!);
+    }
+    if (message.tools !== "") {
+      writer.uint32(50).string(message.tools);
+    }
+    if (message.image_uri !== "") {
+      writer.uint32(58).string(message.image_uri);
+    }
+    if (message.status !== "") {
+      writer.uint32(66).string(message.status);
+    }
+    for (const v of message.activated_tools) {
+      writer.uint32(74).string(v!);
+    }
+    if (message.workflow_id !== "") {
+      writer.uint32(82).string(message.workflow_id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): McpInstance {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseMcpInstance();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.type = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.args.push(reader.string());
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.env_names.push(reader.string());
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.tools = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.image_uri = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.status = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.activated_tools.push(reader.string());
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.workflow_id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): McpInstance {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      type: isSet(object.type) ? globalThis.String(object.type) : "",
+      args: globalThis.Array.isArray(object?.args) ? object.args.map((e: any) => globalThis.String(e)) : [],
+      env_names: globalThis.Array.isArray(object?.env_names)
+        ? object.env_names.map((e: any) => globalThis.String(e))
+        : [],
+      tools: isSet(object.tools) ? globalThis.String(object.tools) : "",
+      image_uri: isSet(object.image_uri) ? globalThis.String(object.image_uri) : "",
+      status: isSet(object.status) ? globalThis.String(object.status) : "",
+      activated_tools: globalThis.Array.isArray(object?.activated_tools)
+        ? object.activated_tools.map((e: any) => globalThis.String(e))
+        : [],
+      workflow_id: isSet(object.workflow_id) ? globalThis.String(object.workflow_id) : "",
+    };
+  },
+
+  toJSON(message: McpInstance): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.type !== "") {
+      obj.type = message.type;
+    }
+    if (message.args?.length) {
+      obj.args = message.args;
+    }
+    if (message.env_names?.length) {
+      obj.env_names = message.env_names;
+    }
+    if (message.tools !== "") {
+      obj.tools = message.tools;
+    }
+    if (message.image_uri !== "") {
+      obj.image_uri = message.image_uri;
+    }
+    if (message.status !== "") {
+      obj.status = message.status;
+    }
+    if (message.activated_tools?.length) {
+      obj.activated_tools = message.activated_tools;
+    }
+    if (message.workflow_id !== "") {
+      obj.workflow_id = message.workflow_id;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<McpInstance>): McpInstance {
+    return McpInstance.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<McpInstance>): McpInstance {
+    const message = createBaseMcpInstance();
+    message.id = object.id ?? "";
+    message.name = object.name ?? "";
+    message.type = object.type ?? "";
+    message.args = object.args?.map((e) => e) || [];
+    message.env_names = object.env_names?.map((e) => e) || [];
+    message.tools = object.tools ?? "";
+    message.image_uri = object.image_uri ?? "";
+    message.status = object.status ?? "";
+    message.activated_tools = object.activated_tools?.map((e) => e) || [];
+    message.workflow_id = object.workflow_id ?? "";
+    return message;
+  },
+};
+
+function createBaseListMcpInstancesRequest(): ListMcpInstancesRequest {
+  return { workflow_id: undefined };
+}
+
+export const ListMcpInstancesRequest: MessageFns<ListMcpInstancesRequest> = {
+  encode(message: ListMcpInstancesRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.workflow_id !== undefined) {
+      writer.uint32(10).string(message.workflow_id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListMcpInstancesRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListMcpInstancesRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.workflow_id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListMcpInstancesRequest {
+    return { workflow_id: isSet(object.workflow_id) ? globalThis.String(object.workflow_id) : undefined };
+  },
+
+  toJSON(message: ListMcpInstancesRequest): unknown {
+    const obj: any = {};
+    if (message.workflow_id !== undefined) {
+      obj.workflow_id = message.workflow_id;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<ListMcpInstancesRequest>): ListMcpInstancesRequest {
+    return ListMcpInstancesRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<ListMcpInstancesRequest>): ListMcpInstancesRequest {
+    const message = createBaseListMcpInstancesRequest();
+    message.workflow_id = object.workflow_id ?? undefined;
+    return message;
+  },
+};
+
+function createBaseListMcpInstancesResponse(): ListMcpInstancesResponse {
+  return { mcp_instances: [] };
+}
+
+export const ListMcpInstancesResponse: MessageFns<ListMcpInstancesResponse> = {
+  encode(message: ListMcpInstancesResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.mcp_instances) {
+      McpInstance.encode(v!, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListMcpInstancesResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListMcpInstancesResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.mcp_instances.push(McpInstance.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListMcpInstancesResponse {
+    return {
+      mcp_instances: globalThis.Array.isArray(object?.mcp_instances)
+        ? object.mcp_instances.map((e: any) => McpInstance.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: ListMcpInstancesResponse): unknown {
+    const obj: any = {};
+    if (message.mcp_instances?.length) {
+      obj.mcp_instances = message.mcp_instances.map((e) => McpInstance.toJSON(e));
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<ListMcpInstancesResponse>): ListMcpInstancesResponse {
+    return ListMcpInstancesResponse.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<ListMcpInstancesResponse>): ListMcpInstancesResponse {
+    const message = createBaseListMcpInstancesResponse();
+    message.mcp_instances = object.mcp_instances?.map((e) => McpInstance.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseGetMcpInstanceRequest(): GetMcpInstanceRequest {
+  return { mcp_instance_id: "" };
+}
+
+export const GetMcpInstanceRequest: MessageFns<GetMcpInstanceRequest> = {
+  encode(message: GetMcpInstanceRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.mcp_instance_id !== "") {
+      writer.uint32(10).string(message.mcp_instance_id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetMcpInstanceRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetMcpInstanceRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.mcp_instance_id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetMcpInstanceRequest {
+    return { mcp_instance_id: isSet(object.mcp_instance_id) ? globalThis.String(object.mcp_instance_id) : "" };
+  },
+
+  toJSON(message: GetMcpInstanceRequest): unknown {
+    const obj: any = {};
+    if (message.mcp_instance_id !== "") {
+      obj.mcp_instance_id = message.mcp_instance_id;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<GetMcpInstanceRequest>): GetMcpInstanceRequest {
+    return GetMcpInstanceRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<GetMcpInstanceRequest>): GetMcpInstanceRequest {
+    const message = createBaseGetMcpInstanceRequest();
+    message.mcp_instance_id = object.mcp_instance_id ?? "";
+    return message;
+  },
+};
+
+function createBaseGetMcpInstanceResponse(): GetMcpInstanceResponse {
+  return { mcp_instance: undefined };
+}
+
+export const GetMcpInstanceResponse: MessageFns<GetMcpInstanceResponse> = {
+  encode(message: GetMcpInstanceResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.mcp_instance !== undefined) {
+      McpInstance.encode(message.mcp_instance, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetMcpInstanceResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetMcpInstanceResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.mcp_instance = McpInstance.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetMcpInstanceResponse {
+    return { mcp_instance: isSet(object.mcp_instance) ? McpInstance.fromJSON(object.mcp_instance) : undefined };
+  },
+
+  toJSON(message: GetMcpInstanceResponse): unknown {
+    const obj: any = {};
+    if (message.mcp_instance !== undefined) {
+      obj.mcp_instance = McpInstance.toJSON(message.mcp_instance);
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<GetMcpInstanceResponse>): GetMcpInstanceResponse {
+    return GetMcpInstanceResponse.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<GetMcpInstanceResponse>): GetMcpInstanceResponse {
+    const message = createBaseGetMcpInstanceResponse();
+    message.mcp_instance = (object.mcp_instance !== undefined && object.mcp_instance !== null)
+      ? McpInstance.fromPartial(object.mcp_instance)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseCreateMcpInstanceRequest(): CreateMcpInstanceRequest {
+  return { workflow_id: "", name: "", mcp_template_id: "", activated_tools: [] };
+}
+
+export const CreateMcpInstanceRequest: MessageFns<CreateMcpInstanceRequest> = {
+  encode(message: CreateMcpInstanceRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.workflow_id !== "") {
+      writer.uint32(10).string(message.workflow_id);
+    }
+    if (message.name !== "") {
+      writer.uint32(18).string(message.name);
+    }
+    if (message.mcp_template_id !== "") {
+      writer.uint32(26).string(message.mcp_template_id);
+    }
+    for (const v of message.activated_tools) {
+      writer.uint32(34).string(v!);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateMcpInstanceRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateMcpInstanceRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.workflow_id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.mcp_template_id = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.activated_tools.push(reader.string());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateMcpInstanceRequest {
+    return {
+      workflow_id: isSet(object.workflow_id) ? globalThis.String(object.workflow_id) : "",
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      mcp_template_id: isSet(object.mcp_template_id) ? globalThis.String(object.mcp_template_id) : "",
+      activated_tools: globalThis.Array.isArray(object?.activated_tools)
+        ? object.activated_tools.map((e: any) => globalThis.String(e))
+        : [],
+    };
+  },
+
+  toJSON(message: CreateMcpInstanceRequest): unknown {
+    const obj: any = {};
+    if (message.workflow_id !== "") {
+      obj.workflow_id = message.workflow_id;
+    }
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.mcp_template_id !== "") {
+      obj.mcp_template_id = message.mcp_template_id;
+    }
+    if (message.activated_tools?.length) {
+      obj.activated_tools = message.activated_tools;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<CreateMcpInstanceRequest>): CreateMcpInstanceRequest {
+    return CreateMcpInstanceRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<CreateMcpInstanceRequest>): CreateMcpInstanceRequest {
+    const message = createBaseCreateMcpInstanceRequest();
+    message.workflow_id = object.workflow_id ?? "";
+    message.name = object.name ?? "";
+    message.mcp_template_id = object.mcp_template_id ?? "";
+    message.activated_tools = object.activated_tools?.map((e) => e) || [];
+    return message;
+  },
+};
+
+function createBaseCreateMcpInstanceResponse(): CreateMcpInstanceResponse {
+  return { mcp_instance_name: "", mcp_instance_id: "" };
+}
+
+export const CreateMcpInstanceResponse: MessageFns<CreateMcpInstanceResponse> = {
+  encode(message: CreateMcpInstanceResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.mcp_instance_name !== "") {
+      writer.uint32(10).string(message.mcp_instance_name);
+    }
+    if (message.mcp_instance_id !== "") {
+      writer.uint32(18).string(message.mcp_instance_id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateMcpInstanceResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateMcpInstanceResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.mcp_instance_name = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.mcp_instance_id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateMcpInstanceResponse {
+    return {
+      mcp_instance_name: isSet(object.mcp_instance_name) ? globalThis.String(object.mcp_instance_name) : "",
+      mcp_instance_id: isSet(object.mcp_instance_id) ? globalThis.String(object.mcp_instance_id) : "",
+    };
+  },
+
+  toJSON(message: CreateMcpInstanceResponse): unknown {
+    const obj: any = {};
+    if (message.mcp_instance_name !== "") {
+      obj.mcp_instance_name = message.mcp_instance_name;
+    }
+    if (message.mcp_instance_id !== "") {
+      obj.mcp_instance_id = message.mcp_instance_id;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<CreateMcpInstanceResponse>): CreateMcpInstanceResponse {
+    return CreateMcpInstanceResponse.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<CreateMcpInstanceResponse>): CreateMcpInstanceResponse {
+    const message = createBaseCreateMcpInstanceResponse();
+    message.mcp_instance_name = object.mcp_instance_name ?? "";
+    message.mcp_instance_id = object.mcp_instance_id ?? "";
+    return message;
+  },
+};
+
+function createBaseUpdateMcpInstanceRequest(): UpdateMcpInstanceRequest {
+  return { mcp_instance_id: "", name: "", tmp_mcp_image_path: "", activated_tools: [] };
+}
+
+export const UpdateMcpInstanceRequest: MessageFns<UpdateMcpInstanceRequest> = {
+  encode(message: UpdateMcpInstanceRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.mcp_instance_id !== "") {
+      writer.uint32(10).string(message.mcp_instance_id);
+    }
+    if (message.name !== "") {
+      writer.uint32(18).string(message.name);
+    }
+    if (message.tmp_mcp_image_path !== "") {
+      writer.uint32(26).string(message.tmp_mcp_image_path);
+    }
+    for (const v of message.activated_tools) {
+      writer.uint32(34).string(v!);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateMcpInstanceRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateMcpInstanceRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.mcp_instance_id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.tmp_mcp_image_path = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.activated_tools.push(reader.string());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateMcpInstanceRequest {
+    return {
+      mcp_instance_id: isSet(object.mcp_instance_id) ? globalThis.String(object.mcp_instance_id) : "",
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      tmp_mcp_image_path: isSet(object.tmp_mcp_image_path) ? globalThis.String(object.tmp_mcp_image_path) : "",
+      activated_tools: globalThis.Array.isArray(object?.activated_tools)
+        ? object.activated_tools.map((e: any) => globalThis.String(e))
+        : [],
+    };
+  },
+
+  toJSON(message: UpdateMcpInstanceRequest): unknown {
+    const obj: any = {};
+    if (message.mcp_instance_id !== "") {
+      obj.mcp_instance_id = message.mcp_instance_id;
+    }
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.tmp_mcp_image_path !== "") {
+      obj.tmp_mcp_image_path = message.tmp_mcp_image_path;
+    }
+    if (message.activated_tools?.length) {
+      obj.activated_tools = message.activated_tools;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<UpdateMcpInstanceRequest>): UpdateMcpInstanceRequest {
+    return UpdateMcpInstanceRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<UpdateMcpInstanceRequest>): UpdateMcpInstanceRequest {
+    const message = createBaseUpdateMcpInstanceRequest();
+    message.mcp_instance_id = object.mcp_instance_id ?? "";
+    message.name = object.name ?? "";
+    message.tmp_mcp_image_path = object.tmp_mcp_image_path ?? "";
+    message.activated_tools = object.activated_tools?.map((e) => e) || [];
+    return message;
+  },
+};
+
+function createBaseUpdateMcpInstanceResponse(): UpdateMcpInstanceResponse {
+  return { mcp_instance_id: "" };
+}
+
+export const UpdateMcpInstanceResponse: MessageFns<UpdateMcpInstanceResponse> = {
+  encode(message: UpdateMcpInstanceResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.mcp_instance_id !== "") {
+      writer.uint32(10).string(message.mcp_instance_id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateMcpInstanceResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateMcpInstanceResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.mcp_instance_id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateMcpInstanceResponse {
+    return { mcp_instance_id: isSet(object.mcp_instance_id) ? globalThis.String(object.mcp_instance_id) : "" };
+  },
+
+  toJSON(message: UpdateMcpInstanceResponse): unknown {
+    const obj: any = {};
+    if (message.mcp_instance_id !== "") {
+      obj.mcp_instance_id = message.mcp_instance_id;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<UpdateMcpInstanceResponse>): UpdateMcpInstanceResponse {
+    return UpdateMcpInstanceResponse.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<UpdateMcpInstanceResponse>): UpdateMcpInstanceResponse {
+    const message = createBaseUpdateMcpInstanceResponse();
+    message.mcp_instance_id = object.mcp_instance_id ?? "";
+    return message;
+  },
+};
+
+function createBaseRemoveMcpInstanceRequest(): RemoveMcpInstanceRequest {
+  return { mcp_instance_id: "" };
+}
+
+export const RemoveMcpInstanceRequest: MessageFns<RemoveMcpInstanceRequest> = {
+  encode(message: RemoveMcpInstanceRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.mcp_instance_id !== "") {
+      writer.uint32(10).string(message.mcp_instance_id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): RemoveMcpInstanceRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRemoveMcpInstanceRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.mcp_instance_id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RemoveMcpInstanceRequest {
+    return { mcp_instance_id: isSet(object.mcp_instance_id) ? globalThis.String(object.mcp_instance_id) : "" };
+  },
+
+  toJSON(message: RemoveMcpInstanceRequest): unknown {
+    const obj: any = {};
+    if (message.mcp_instance_id !== "") {
+      obj.mcp_instance_id = message.mcp_instance_id;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<RemoveMcpInstanceRequest>): RemoveMcpInstanceRequest {
+    return RemoveMcpInstanceRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<RemoveMcpInstanceRequest>): RemoveMcpInstanceRequest {
+    const message = createBaseRemoveMcpInstanceRequest();
+    message.mcp_instance_id = object.mcp_instance_id ?? "";
+    return message;
+  },
+};
+
+function createBaseRemoveMcpInstanceResponse(): RemoveMcpInstanceResponse {
+  return {};
+}
+
+export const RemoveMcpInstanceResponse: MessageFns<RemoveMcpInstanceResponse> = {
+  encode(_: RemoveMcpInstanceResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): RemoveMcpInstanceResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRemoveMcpInstanceResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(_: any): RemoveMcpInstanceResponse {
+    return {};
+  },
+
+  toJSON(_: RemoveMcpInstanceResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  create(base?: DeepPartial<RemoveMcpInstanceResponse>): RemoveMcpInstanceResponse {
+    return RemoveMcpInstanceResponse.fromPartial(base ?? {});
+  },
+  fromPartial(_: DeepPartial<RemoveMcpInstanceResponse>): RemoveMcpInstanceResponse {
+    const message = createBaseRemoveMcpInstanceResponse();
+    return message;
+  },
+};
+
 function createBaseListAgentsRequest(): ListAgentsRequest {
   return { workflow_id: "" };
 }
@@ -4398,6 +6395,7 @@ function createBaseAddAgentRequest(): AddAgentRequest {
     name: "",
     llm_provider_model_id: "",
     tools_id: [],
+    mcp_instance_ids: [],
     crew_ai_agent_metadata: undefined,
     template_id: undefined,
     workflow_id: "",
@@ -4417,20 +6415,23 @@ export const AddAgentRequest: MessageFns<AddAgentRequest> = {
     for (const v of message.tools_id) {
       writer.uint32(26).string(v!);
     }
+    for (const v of message.mcp_instance_ids) {
+      writer.uint32(34).string(v!);
+    }
     if (message.crew_ai_agent_metadata !== undefined) {
-      CrewAIAgentMetadata.encode(message.crew_ai_agent_metadata, writer.uint32(34).fork()).join();
+      CrewAIAgentMetadata.encode(message.crew_ai_agent_metadata, writer.uint32(42).fork()).join();
     }
     if (message.template_id !== undefined) {
-      writer.uint32(42).string(message.template_id);
+      writer.uint32(50).string(message.template_id);
     }
     if (message.workflow_id !== "") {
-      writer.uint32(50).string(message.workflow_id);
+      writer.uint32(58).string(message.workflow_id);
     }
     if (message.tmp_agent_image_path !== "") {
-      writer.uint32(58).string(message.tmp_agent_image_path);
+      writer.uint32(66).string(message.tmp_agent_image_path);
     }
     for (const v of message.tool_template_ids) {
-      writer.uint32(66).string(v!);
+      writer.uint32(74).string(v!);
     }
     return writer;
   },
@@ -4471,7 +6472,7 @@ export const AddAgentRequest: MessageFns<AddAgentRequest> = {
             break;
           }
 
-          message.crew_ai_agent_metadata = CrewAIAgentMetadata.decode(reader, reader.uint32());
+          message.mcp_instance_ids.push(reader.string());
           continue;
         }
         case 5: {
@@ -4479,7 +6480,7 @@ export const AddAgentRequest: MessageFns<AddAgentRequest> = {
             break;
           }
 
-          message.template_id = reader.string();
+          message.crew_ai_agent_metadata = CrewAIAgentMetadata.decode(reader, reader.uint32());
           continue;
         }
         case 6: {
@@ -4487,7 +6488,7 @@ export const AddAgentRequest: MessageFns<AddAgentRequest> = {
             break;
           }
 
-          message.workflow_id = reader.string();
+          message.template_id = reader.string();
           continue;
         }
         case 7: {
@@ -4495,11 +6496,19 @@ export const AddAgentRequest: MessageFns<AddAgentRequest> = {
             break;
           }
 
-          message.tmp_agent_image_path = reader.string();
+          message.workflow_id = reader.string();
           continue;
         }
         case 8: {
           if (tag !== 66) {
+            break;
+          }
+
+          message.tmp_agent_image_path = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
             break;
           }
 
@@ -4520,6 +6529,9 @@ export const AddAgentRequest: MessageFns<AddAgentRequest> = {
       name: isSet(object.name) ? globalThis.String(object.name) : "",
       llm_provider_model_id: isSet(object.llm_provider_model_id) ? globalThis.String(object.llm_provider_model_id) : "",
       tools_id: globalThis.Array.isArray(object?.tools_id) ? object.tools_id.map((e: any) => globalThis.String(e)) : [],
+      mcp_instance_ids: globalThis.Array.isArray(object?.mcp_instance_ids)
+        ? object.mcp_instance_ids.map((e: any) => globalThis.String(e))
+        : [],
       crew_ai_agent_metadata: isSet(object.crew_ai_agent_metadata)
         ? CrewAIAgentMetadata.fromJSON(object.crew_ai_agent_metadata)
         : undefined,
@@ -4542,6 +6554,9 @@ export const AddAgentRequest: MessageFns<AddAgentRequest> = {
     }
     if (message.tools_id?.length) {
       obj.tools_id = message.tools_id;
+    }
+    if (message.mcp_instance_ids?.length) {
+      obj.mcp_instance_ids = message.mcp_instance_ids;
     }
     if (message.crew_ai_agent_metadata !== undefined) {
       obj.crew_ai_agent_metadata = CrewAIAgentMetadata.toJSON(message.crew_ai_agent_metadata);
@@ -4569,6 +6584,7 @@ export const AddAgentRequest: MessageFns<AddAgentRequest> = {
     message.name = object.name ?? "";
     message.llm_provider_model_id = object.llm_provider_model_id ?? "";
     message.tools_id = object.tools_id?.map((e) => e) || [];
+    message.mcp_instance_ids = object.mcp_instance_ids?.map((e) => e) || [];
     message.crew_ai_agent_metadata =
       (object.crew_ai_agent_metadata !== undefined && object.crew_ai_agent_metadata !== null)
         ? CrewAIAgentMetadata.fromPartial(object.crew_ai_agent_metadata)
@@ -4645,6 +6661,7 @@ function createBaseUpdateAgentRequest(): UpdateAgentRequest {
     name: "",
     llm_provider_model_id: "",
     tools_id: [],
+    mcp_instance_ids: [],
     crew_ai_agent_metadata: undefined,
     tmp_agent_image_path: "",
     tool_template_ids: [],
@@ -4665,14 +6682,17 @@ export const UpdateAgentRequest: MessageFns<UpdateAgentRequest> = {
     for (const v of message.tools_id) {
       writer.uint32(34).string(v!);
     }
+    for (const v of message.mcp_instance_ids) {
+      writer.uint32(42).string(v!);
+    }
     if (message.crew_ai_agent_metadata !== undefined) {
-      CrewAIAgentMetadata.encode(message.crew_ai_agent_metadata, writer.uint32(42).fork()).join();
+      CrewAIAgentMetadata.encode(message.crew_ai_agent_metadata, writer.uint32(50).fork()).join();
     }
     if (message.tmp_agent_image_path !== "") {
-      writer.uint32(50).string(message.tmp_agent_image_path);
+      writer.uint32(58).string(message.tmp_agent_image_path);
     }
     for (const v of message.tool_template_ids) {
-      writer.uint32(58).string(v!);
+      writer.uint32(66).string(v!);
     }
     return writer;
   },
@@ -4721,7 +6741,7 @@ export const UpdateAgentRequest: MessageFns<UpdateAgentRequest> = {
             break;
           }
 
-          message.crew_ai_agent_metadata = CrewAIAgentMetadata.decode(reader, reader.uint32());
+          message.mcp_instance_ids.push(reader.string());
           continue;
         }
         case 6: {
@@ -4729,11 +6749,19 @@ export const UpdateAgentRequest: MessageFns<UpdateAgentRequest> = {
             break;
           }
 
-          message.tmp_agent_image_path = reader.string();
+          message.crew_ai_agent_metadata = CrewAIAgentMetadata.decode(reader, reader.uint32());
           continue;
         }
         case 7: {
           if (tag !== 58) {
+            break;
+          }
+
+          message.tmp_agent_image_path = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
             break;
           }
 
@@ -4755,6 +6783,9 @@ export const UpdateAgentRequest: MessageFns<UpdateAgentRequest> = {
       name: isSet(object.name) ? globalThis.String(object.name) : "",
       llm_provider_model_id: isSet(object.llm_provider_model_id) ? globalThis.String(object.llm_provider_model_id) : "",
       tools_id: globalThis.Array.isArray(object?.tools_id) ? object.tools_id.map((e: any) => globalThis.String(e)) : [],
+      mcp_instance_ids: globalThis.Array.isArray(object?.mcp_instance_ids)
+        ? object.mcp_instance_ids.map((e: any) => globalThis.String(e))
+        : [],
       crew_ai_agent_metadata: isSet(object.crew_ai_agent_metadata)
         ? CrewAIAgentMetadata.fromJSON(object.crew_ai_agent_metadata)
         : undefined,
@@ -4779,6 +6810,9 @@ export const UpdateAgentRequest: MessageFns<UpdateAgentRequest> = {
     if (message.tools_id?.length) {
       obj.tools_id = message.tools_id;
     }
+    if (message.mcp_instance_ids?.length) {
+      obj.mcp_instance_ids = message.mcp_instance_ids;
+    }
     if (message.crew_ai_agent_metadata !== undefined) {
       obj.crew_ai_agent_metadata = CrewAIAgentMetadata.toJSON(message.crew_ai_agent_metadata);
     }
@@ -4800,6 +6834,7 @@ export const UpdateAgentRequest: MessageFns<UpdateAgentRequest> = {
     message.name = object.name ?? "";
     message.llm_provider_model_id = object.llm_provider_model_id ?? "";
     message.tools_id = object.tools_id?.map((e) => e) || [];
+    message.mcp_instance_ids = object.mcp_instance_ids?.map((e) => e) || [];
     message.crew_ai_agent_metadata =
       (object.crew_ai_agent_metadata !== undefined && object.crew_ai_agent_metadata !== null)
         ? CrewAIAgentMetadata.fromPartial(object.crew_ai_agent_metadata)
@@ -4960,6 +6995,7 @@ function createBaseAgentMetadata(): AgentMetadata {
     name: "",
     llm_provider_model_id: "",
     tools_id: [],
+    mcp_instance_ids: [],
     crew_ai_agent_metadata: undefined,
     agent_image_uri: "",
     is_valid: false,
@@ -4981,17 +7017,20 @@ export const AgentMetadata: MessageFns<AgentMetadata> = {
     for (const v of message.tools_id) {
       writer.uint32(34).string(v!);
     }
+    for (const v of message.mcp_instance_ids) {
+      writer.uint32(42).string(v!);
+    }
     if (message.crew_ai_agent_metadata !== undefined) {
-      CrewAIAgentMetadata.encode(message.crew_ai_agent_metadata, writer.uint32(42).fork()).join();
+      CrewAIAgentMetadata.encode(message.crew_ai_agent_metadata, writer.uint32(50).fork()).join();
     }
     if (message.agent_image_uri !== "") {
-      writer.uint32(50).string(message.agent_image_uri);
+      writer.uint32(58).string(message.agent_image_uri);
     }
     if (message.is_valid !== false) {
-      writer.uint32(56).bool(message.is_valid);
+      writer.uint32(64).bool(message.is_valid);
     }
     if (message.workflow_id !== "") {
-      writer.uint32(66).string(message.workflow_id);
+      writer.uint32(74).string(message.workflow_id);
     }
     return writer;
   },
@@ -5040,7 +7079,7 @@ export const AgentMetadata: MessageFns<AgentMetadata> = {
             break;
           }
 
-          message.crew_ai_agent_metadata = CrewAIAgentMetadata.decode(reader, reader.uint32());
+          message.mcp_instance_ids.push(reader.string());
           continue;
         }
         case 6: {
@@ -5048,19 +7087,27 @@ export const AgentMetadata: MessageFns<AgentMetadata> = {
             break;
           }
 
-          message.agent_image_uri = reader.string();
+          message.crew_ai_agent_metadata = CrewAIAgentMetadata.decode(reader, reader.uint32());
           continue;
         }
         case 7: {
-          if (tag !== 56) {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.agent_image_uri = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 64) {
             break;
           }
 
           message.is_valid = reader.bool();
           continue;
         }
-        case 8: {
-          if (tag !== 66) {
+        case 9: {
+          if (tag !== 74) {
             break;
           }
 
@@ -5082,6 +7129,9 @@ export const AgentMetadata: MessageFns<AgentMetadata> = {
       name: isSet(object.name) ? globalThis.String(object.name) : "",
       llm_provider_model_id: isSet(object.llm_provider_model_id) ? globalThis.String(object.llm_provider_model_id) : "",
       tools_id: globalThis.Array.isArray(object?.tools_id) ? object.tools_id.map((e: any) => globalThis.String(e)) : [],
+      mcp_instance_ids: globalThis.Array.isArray(object?.mcp_instance_ids)
+        ? object.mcp_instance_ids.map((e: any) => globalThis.String(e))
+        : [],
       crew_ai_agent_metadata: isSet(object.crew_ai_agent_metadata)
         ? CrewAIAgentMetadata.fromJSON(object.crew_ai_agent_metadata)
         : undefined,
@@ -5104,6 +7154,9 @@ export const AgentMetadata: MessageFns<AgentMetadata> = {
     }
     if (message.tools_id?.length) {
       obj.tools_id = message.tools_id;
+    }
+    if (message.mcp_instance_ids?.length) {
+      obj.mcp_instance_ids = message.mcp_instance_ids;
     }
     if (message.crew_ai_agent_metadata !== undefined) {
       obj.crew_ai_agent_metadata = CrewAIAgentMetadata.toJSON(message.crew_ai_agent_metadata);
@@ -5129,6 +7182,7 @@ export const AgentMetadata: MessageFns<AgentMetadata> = {
     message.name = object.name ?? "";
     message.llm_provider_model_id = object.llm_provider_model_id ?? "";
     message.tools_id = object.tools_id?.map((e) => e) || [];
+    message.mcp_instance_ids = object.mcp_instance_ids?.map((e) => e) || [];
     message.crew_ai_agent_metadata =
       (object.crew_ai_agent_metadata !== undefined && object.crew_ai_agent_metadata !== null)
         ? CrewAIAgentMetadata.fromPartial(object.crew_ai_agent_metadata)
@@ -6229,8 +8283,168 @@ export const TestWorkflowToolUserParameters_ParametersEntry: MessageFns<
   },
 };
 
+function createBaseTestWorkflowMCPInstanceEnvVars(): TestWorkflowMCPInstanceEnvVars {
+  return { env_vars: {} };
+}
+
+export const TestWorkflowMCPInstanceEnvVars: MessageFns<TestWorkflowMCPInstanceEnvVars> = {
+  encode(message: TestWorkflowMCPInstanceEnvVars, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    Object.entries(message.env_vars).forEach(([key, value]) => {
+      TestWorkflowMCPInstanceEnvVars_EnvVarsEntry.encode({ key: key as any, value }, writer.uint32(10).fork()).join();
+    });
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): TestWorkflowMCPInstanceEnvVars {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseTestWorkflowMCPInstanceEnvVars();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          const entry1 = TestWorkflowMCPInstanceEnvVars_EnvVarsEntry.decode(reader, reader.uint32());
+          if (entry1.value !== undefined) {
+            message.env_vars[entry1.key] = entry1.value;
+          }
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): TestWorkflowMCPInstanceEnvVars {
+    return {
+      env_vars: isObject(object.env_vars)
+        ? Object.entries(object.env_vars).reduce<{ [key: string]: string }>((acc, [key, value]) => {
+          acc[key] = String(value);
+          return acc;
+        }, {})
+        : {},
+    };
+  },
+
+  toJSON(message: TestWorkflowMCPInstanceEnvVars): unknown {
+    const obj: any = {};
+    if (message.env_vars) {
+      const entries = Object.entries(message.env_vars);
+      if (entries.length > 0) {
+        obj.env_vars = {};
+        entries.forEach(([k, v]) => {
+          obj.env_vars[k] = v;
+        });
+      }
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<TestWorkflowMCPInstanceEnvVars>): TestWorkflowMCPInstanceEnvVars {
+    return TestWorkflowMCPInstanceEnvVars.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<TestWorkflowMCPInstanceEnvVars>): TestWorkflowMCPInstanceEnvVars {
+    const message = createBaseTestWorkflowMCPInstanceEnvVars();
+    message.env_vars = Object.entries(object.env_vars ?? {}).reduce<{ [key: string]: string }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = globalThis.String(value);
+      }
+      return acc;
+    }, {});
+    return message;
+  },
+};
+
+function createBaseTestWorkflowMCPInstanceEnvVars_EnvVarsEntry(): TestWorkflowMCPInstanceEnvVars_EnvVarsEntry {
+  return { key: "", value: "" };
+}
+
+export const TestWorkflowMCPInstanceEnvVars_EnvVarsEntry: MessageFns<TestWorkflowMCPInstanceEnvVars_EnvVarsEntry> = {
+  encode(
+    message: TestWorkflowMCPInstanceEnvVars_EnvVarsEntry,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): TestWorkflowMCPInstanceEnvVars_EnvVarsEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseTestWorkflowMCPInstanceEnvVars_EnvVarsEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): TestWorkflowMCPInstanceEnvVars_EnvVarsEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? globalThis.String(object.value) : "",
+    };
+  },
+
+  toJSON(message: TestWorkflowMCPInstanceEnvVars_EnvVarsEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<TestWorkflowMCPInstanceEnvVars_EnvVarsEntry>): TestWorkflowMCPInstanceEnvVars_EnvVarsEntry {
+    return TestWorkflowMCPInstanceEnvVars_EnvVarsEntry.fromPartial(base ?? {});
+  },
+  fromPartial(
+    object: DeepPartial<TestWorkflowMCPInstanceEnvVars_EnvVarsEntry>,
+  ): TestWorkflowMCPInstanceEnvVars_EnvVarsEntry {
+    const message = createBaseTestWorkflowMCPInstanceEnvVars_EnvVarsEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
 function createBaseTestWorkflowRequest(): TestWorkflowRequest {
-  return { workflow_id: "", inputs: {}, tool_user_parameters: {}, generation_config: "" };
+  return { workflow_id: "", inputs: {}, tool_user_parameters: {}, mcp_instance_env_vars: {}, generation_config: "" };
 }
 
 export const TestWorkflowRequest: MessageFns<TestWorkflowRequest> = {
@@ -6244,8 +8458,11 @@ export const TestWorkflowRequest: MessageFns<TestWorkflowRequest> = {
     Object.entries(message.tool_user_parameters).forEach(([key, value]) => {
       TestWorkflowRequest_ToolUserParametersEntry.encode({ key: key as any, value }, writer.uint32(26).fork()).join();
     });
+    Object.entries(message.mcp_instance_env_vars).forEach(([key, value]) => {
+      TestWorkflowRequest_McpInstanceEnvVarsEntry.encode({ key: key as any, value }, writer.uint32(34).fork()).join();
+    });
     if (message.generation_config !== "") {
-      writer.uint32(34).string(message.generation_config);
+      writer.uint32(42).string(message.generation_config);
     }
     return writer;
   },
@@ -6292,6 +8509,17 @@ export const TestWorkflowRequest: MessageFns<TestWorkflowRequest> = {
             break;
           }
 
+          const entry4 = TestWorkflowRequest_McpInstanceEnvVarsEntry.decode(reader, reader.uint32());
+          if (entry4.value !== undefined) {
+            message.mcp_instance_env_vars[entry4.key] = entry4.value;
+          }
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
           message.generation_config = reader.string();
           continue;
         }
@@ -6317,6 +8545,15 @@ export const TestWorkflowRequest: MessageFns<TestWorkflowRequest> = {
         ? Object.entries(object.tool_user_parameters).reduce<{ [key: string]: TestWorkflowToolUserParameters }>(
           (acc, [key, value]) => {
             acc[key] = TestWorkflowToolUserParameters.fromJSON(value);
+            return acc;
+          },
+          {},
+        )
+        : {},
+      mcp_instance_env_vars: isObject(object.mcp_instance_env_vars)
+        ? Object.entries(object.mcp_instance_env_vars).reduce<{ [key: string]: TestWorkflowMCPInstanceEnvVars }>(
+          (acc, [key, value]) => {
+            acc[key] = TestWorkflowMCPInstanceEnvVars.fromJSON(value);
             return acc;
           },
           {},
@@ -6349,6 +8586,15 @@ export const TestWorkflowRequest: MessageFns<TestWorkflowRequest> = {
         });
       }
     }
+    if (message.mcp_instance_env_vars) {
+      const entries = Object.entries(message.mcp_instance_env_vars);
+      if (entries.length > 0) {
+        obj.mcp_instance_env_vars = {};
+        entries.forEach(([k, v]) => {
+          obj.mcp_instance_env_vars[k] = TestWorkflowMCPInstanceEnvVars.toJSON(v);
+        });
+      }
+    }
     if (message.generation_config !== "") {
       obj.generation_config = message.generation_config;
     }
@@ -6372,6 +8618,14 @@ export const TestWorkflowRequest: MessageFns<TestWorkflowRequest> = {
     >((acc, [key, value]) => {
       if (value !== undefined) {
         acc[key] = TestWorkflowToolUserParameters.fromPartial(value);
+      }
+      return acc;
+    }, {});
+    message.mcp_instance_env_vars = Object.entries(object.mcp_instance_env_vars ?? {}).reduce<
+      { [key: string]: TestWorkflowMCPInstanceEnvVars }
+    >((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = TestWorkflowMCPInstanceEnvVars.fromPartial(value);
       }
       return acc;
     }, {});
@@ -6539,6 +8793,89 @@ export const TestWorkflowRequest_ToolUserParametersEntry: MessageFns<TestWorkflo
   },
 };
 
+function createBaseTestWorkflowRequest_McpInstanceEnvVarsEntry(): TestWorkflowRequest_McpInstanceEnvVarsEntry {
+  return { key: "", value: undefined };
+}
+
+export const TestWorkflowRequest_McpInstanceEnvVarsEntry: MessageFns<TestWorkflowRequest_McpInstanceEnvVarsEntry> = {
+  encode(
+    message: TestWorkflowRequest_McpInstanceEnvVarsEntry,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== undefined) {
+      TestWorkflowMCPInstanceEnvVars.encode(message.value, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): TestWorkflowRequest_McpInstanceEnvVarsEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseTestWorkflowRequest_McpInstanceEnvVarsEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = TestWorkflowMCPInstanceEnvVars.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): TestWorkflowRequest_McpInstanceEnvVarsEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? TestWorkflowMCPInstanceEnvVars.fromJSON(object.value) : undefined,
+    };
+  },
+
+  toJSON(message: TestWorkflowRequest_McpInstanceEnvVarsEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== undefined) {
+      obj.value = TestWorkflowMCPInstanceEnvVars.toJSON(message.value);
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<TestWorkflowRequest_McpInstanceEnvVarsEntry>): TestWorkflowRequest_McpInstanceEnvVarsEntry {
+    return TestWorkflowRequest_McpInstanceEnvVarsEntry.fromPartial(base ?? {});
+  },
+  fromPartial(
+    object: DeepPartial<TestWorkflowRequest_McpInstanceEnvVarsEntry>,
+  ): TestWorkflowRequest_McpInstanceEnvVarsEntry {
+    const message = createBaseTestWorkflowRequest_McpInstanceEnvVarsEntry();
+    message.key = object.key ?? "";
+    message.value = (object.value !== undefined && object.value !== null)
+      ? TestWorkflowMCPInstanceEnvVars.fromPartial(object.value)
+      : undefined;
+    return message;
+  },
+};
+
 function createBaseTestWorkflowResponse(): TestWorkflowResponse {
   return { message: "", trace_id: "" };
 }
@@ -6620,6 +8957,7 @@ function createBaseDeployWorkflowRequest(): DeployWorkflowRequest {
     workflow_id: "",
     env_variable_overrides: {},
     tool_user_parameters: {},
+    mcp_instance_env_vars: {},
     bypass_authentication: false,
     generation_config: "",
   };
@@ -6637,11 +8975,14 @@ export const DeployWorkflowRequest: MessageFns<DeployWorkflowRequest> = {
     Object.entries(message.tool_user_parameters).forEach(([key, value]) => {
       DeployWorkflowRequest_ToolUserParametersEntry.encode({ key: key as any, value }, writer.uint32(26).fork()).join();
     });
+    Object.entries(message.mcp_instance_env_vars).forEach(([key, value]) => {
+      DeployWorkflowRequest_McpInstanceEnvVarsEntry.encode({ key: key as any, value }, writer.uint32(34).fork()).join();
+    });
     if (message.bypass_authentication !== false) {
-      writer.uint32(32).bool(message.bypass_authentication);
+      writer.uint32(40).bool(message.bypass_authentication);
     }
     if (message.generation_config !== "") {
-      writer.uint32(42).string(message.generation_config);
+      writer.uint32(50).string(message.generation_config);
     }
     return writer;
   },
@@ -6684,15 +9025,26 @@ export const DeployWorkflowRequest: MessageFns<DeployWorkflowRequest> = {
           continue;
         }
         case 4: {
-          if (tag !== 32) {
+          if (tag !== 34) {
+            break;
+          }
+
+          const entry4 = DeployWorkflowRequest_McpInstanceEnvVarsEntry.decode(reader, reader.uint32());
+          if (entry4.value !== undefined) {
+            message.mcp_instance_env_vars[entry4.key] = entry4.value;
+          }
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
             break;
           }
 
           message.bypass_authentication = reader.bool();
           continue;
         }
-        case 5: {
-          if (tag !== 42) {
+        case 6: {
+          if (tag !== 50) {
             break;
           }
 
@@ -6721,6 +9073,15 @@ export const DeployWorkflowRequest: MessageFns<DeployWorkflowRequest> = {
         ? Object.entries(object.tool_user_parameters).reduce<{ [key: string]: TestWorkflowToolUserParameters }>(
           (acc, [key, value]) => {
             acc[key] = TestWorkflowToolUserParameters.fromJSON(value);
+            return acc;
+          },
+          {},
+        )
+        : {},
+      mcp_instance_env_vars: isObject(object.mcp_instance_env_vars)
+        ? Object.entries(object.mcp_instance_env_vars).reduce<{ [key: string]: TestWorkflowMCPInstanceEnvVars }>(
+          (acc, [key, value]) => {
+            acc[key] = TestWorkflowMCPInstanceEnvVars.fromJSON(value);
             return acc;
           },
           {},
@@ -6756,6 +9117,15 @@ export const DeployWorkflowRequest: MessageFns<DeployWorkflowRequest> = {
         });
       }
     }
+    if (message.mcp_instance_env_vars) {
+      const entries = Object.entries(message.mcp_instance_env_vars);
+      if (entries.length > 0) {
+        obj.mcp_instance_env_vars = {};
+        entries.forEach(([k, v]) => {
+          obj.mcp_instance_env_vars[k] = TestWorkflowMCPInstanceEnvVars.toJSON(v);
+        });
+      }
+    }
     if (message.bypass_authentication !== false) {
       obj.bypass_authentication = message.bypass_authentication;
     }
@@ -6784,6 +9154,14 @@ export const DeployWorkflowRequest: MessageFns<DeployWorkflowRequest> = {
     >((acc, [key, value]) => {
       if (value !== undefined) {
         acc[key] = TestWorkflowToolUserParameters.fromPartial(value);
+      }
+      return acc;
+    }, {});
+    message.mcp_instance_env_vars = Object.entries(object.mcp_instance_env_vars ?? {}).reduce<
+      { [key: string]: TestWorkflowMCPInstanceEnvVars }
+    >((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = TestWorkflowMCPInstanceEnvVars.fromPartial(value);
       }
       return acc;
     }, {});
@@ -6959,6 +9337,92 @@ export const DeployWorkflowRequest_ToolUserParametersEntry: MessageFns<DeployWor
       message.key = object.key ?? "";
       message.value = (object.value !== undefined && object.value !== null)
         ? TestWorkflowToolUserParameters.fromPartial(object.value)
+        : undefined;
+      return message;
+    },
+  };
+
+function createBaseDeployWorkflowRequest_McpInstanceEnvVarsEntry(): DeployWorkflowRequest_McpInstanceEnvVarsEntry {
+  return { key: "", value: undefined };
+}
+
+export const DeployWorkflowRequest_McpInstanceEnvVarsEntry: MessageFns<DeployWorkflowRequest_McpInstanceEnvVarsEntry> =
+  {
+    encode(
+      message: DeployWorkflowRequest_McpInstanceEnvVarsEntry,
+      writer: BinaryWriter = new BinaryWriter(),
+    ): BinaryWriter {
+      if (message.key !== "") {
+        writer.uint32(10).string(message.key);
+      }
+      if (message.value !== undefined) {
+        TestWorkflowMCPInstanceEnvVars.encode(message.value, writer.uint32(18).fork()).join();
+      }
+      return writer;
+    },
+
+    decode(input: BinaryReader | Uint8Array, length?: number): DeployWorkflowRequest_McpInstanceEnvVarsEntry {
+      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+      let end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseDeployWorkflowRequest_McpInstanceEnvVarsEntry();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
+
+            message.key = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
+
+            message.value = TestWorkflowMCPInstanceEnvVars.decode(reader, reader.uint32());
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    },
+
+    fromJSON(object: any): DeployWorkflowRequest_McpInstanceEnvVarsEntry {
+      return {
+        key: isSet(object.key) ? globalThis.String(object.key) : "",
+        value: isSet(object.value) ? TestWorkflowMCPInstanceEnvVars.fromJSON(object.value) : undefined,
+      };
+    },
+
+    toJSON(message: DeployWorkflowRequest_McpInstanceEnvVarsEntry): unknown {
+      const obj: any = {};
+      if (message.key !== "") {
+        obj.key = message.key;
+      }
+      if (message.value !== undefined) {
+        obj.value = TestWorkflowMCPInstanceEnvVars.toJSON(message.value);
+      }
+      return obj;
+    },
+
+    create(
+      base?: DeepPartial<DeployWorkflowRequest_McpInstanceEnvVarsEntry>,
+    ): DeployWorkflowRequest_McpInstanceEnvVarsEntry {
+      return DeployWorkflowRequest_McpInstanceEnvVarsEntry.fromPartial(base ?? {});
+    },
+    fromPartial(
+      object: DeepPartial<DeployWorkflowRequest_McpInstanceEnvVarsEntry>,
+    ): DeployWorkflowRequest_McpInstanceEnvVarsEntry {
+      const message = createBaseDeployWorkflowRequest_McpInstanceEnvVarsEntry();
+      message.key = object.key ?? "";
+      message.value = (object.value !== undefined && object.value !== null)
+        ? TestWorkflowMCPInstanceEnvVars.fromPartial(object.value)
         : undefined;
       return message;
     },
@@ -13231,6 +15695,105 @@ export const AgentStudioService = {
       Buffer.from(RemoveToolTemplateResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer) => RemoveToolTemplateResponse.decode(value),
   },
+  /** MCP template operations */
+  listMcpTemplates: {
+    path: "/agent_studio.AgentStudio/ListMcpTemplates",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ListMcpTemplatesRequest) => Buffer.from(ListMcpTemplatesRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => ListMcpTemplatesRequest.decode(value),
+    responseSerialize: (value: ListMcpTemplatesResponse) =>
+      Buffer.from(ListMcpTemplatesResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => ListMcpTemplatesResponse.decode(value),
+  },
+  getMcpTemplate: {
+    path: "/agent_studio.AgentStudio/GetMcpTemplate",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetMcpTemplateRequest) => Buffer.from(GetMcpTemplateRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => GetMcpTemplateRequest.decode(value),
+    responseSerialize: (value: GetMcpTemplateResponse) => Buffer.from(GetMcpTemplateResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => GetMcpTemplateResponse.decode(value),
+  },
+  addMcpTemplate: {
+    path: "/agent_studio.AgentStudio/AddMcpTemplate",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: AddMcpTemplateRequest) => Buffer.from(AddMcpTemplateRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => AddMcpTemplateRequest.decode(value),
+    responseSerialize: (value: AddMcpTemplateResponse) => Buffer.from(AddMcpTemplateResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => AddMcpTemplateResponse.decode(value),
+  },
+  updateMcpTemplate: {
+    path: "/agent_studio.AgentStudio/UpdateMcpTemplate",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: UpdateMcpTemplateRequest) => Buffer.from(UpdateMcpTemplateRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => UpdateMcpTemplateRequest.decode(value),
+    responseSerialize: (value: UpdateMcpTemplateResponse) =>
+      Buffer.from(UpdateMcpTemplateResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => UpdateMcpTemplateResponse.decode(value),
+  },
+  removeMcpTemplate: {
+    path: "/agent_studio.AgentStudio/RemoveMcpTemplate",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: RemoveMcpTemplateRequest) => Buffer.from(RemoveMcpTemplateRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => RemoveMcpTemplateRequest.decode(value),
+    responseSerialize: (value: RemoveMcpTemplateResponse) =>
+      Buffer.from(RemoveMcpTemplateResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => RemoveMcpTemplateResponse.decode(value),
+  },
+  /** MCP instance operations */
+  listMcpInstances: {
+    path: "/agent_studio.AgentStudio/ListMcpInstances",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ListMcpInstancesRequest) => Buffer.from(ListMcpInstancesRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => ListMcpInstancesRequest.decode(value),
+    responseSerialize: (value: ListMcpInstancesResponse) =>
+      Buffer.from(ListMcpInstancesResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => ListMcpInstancesResponse.decode(value),
+  },
+  getMcpInstance: {
+    path: "/agent_studio.AgentStudio/GetMcpInstance",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetMcpInstanceRequest) => Buffer.from(GetMcpInstanceRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => GetMcpInstanceRequest.decode(value),
+    responseSerialize: (value: GetMcpInstanceResponse) => Buffer.from(GetMcpInstanceResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => GetMcpInstanceResponse.decode(value),
+  },
+  createMcpInstance: {
+    path: "/agent_studio.AgentStudio/CreateMcpInstance",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateMcpInstanceRequest) => Buffer.from(CreateMcpInstanceRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => CreateMcpInstanceRequest.decode(value),
+    responseSerialize: (value: CreateMcpInstanceResponse) =>
+      Buffer.from(CreateMcpInstanceResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => CreateMcpInstanceResponse.decode(value),
+  },
+  updateMcpInstance: {
+    path: "/agent_studio.AgentStudio/UpdateMcpInstance",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: UpdateMcpInstanceRequest) => Buffer.from(UpdateMcpInstanceRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => UpdateMcpInstanceRequest.decode(value),
+    responseSerialize: (value: UpdateMcpInstanceResponse) =>
+      Buffer.from(UpdateMcpInstanceResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => UpdateMcpInstanceResponse.decode(value),
+  },
+  removeMcpInstance: {
+    path: "/agent_studio.AgentStudio/RemoveMcpInstance",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: RemoveMcpInstanceRequest) => Buffer.from(RemoveMcpInstanceRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => RemoveMcpInstanceRequest.decode(value),
+    responseSerialize: (value: RemoveMcpInstanceResponse) =>
+      Buffer.from(RemoveMcpInstanceResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => RemoveMcpInstanceResponse.decode(value),
+  },
   /** Tool Instance Operations */
   listToolInstances: {
     path: "/agent_studio.AgentStudio/ListToolInstances",
@@ -13748,6 +16311,18 @@ export interface AgentStudioServer extends UntypedServiceImplementation {
   addToolTemplate: handleUnaryCall<AddToolTemplateRequest, AddToolTemplateResponse>;
   updateToolTemplate: handleUnaryCall<UpdateToolTemplateRequest, UpdateToolTemplateResponse>;
   removeToolTemplate: handleUnaryCall<RemoveToolTemplateRequest, RemoveToolTemplateResponse>;
+  /** MCP template operations */
+  listMcpTemplates: handleUnaryCall<ListMcpTemplatesRequest, ListMcpTemplatesResponse>;
+  getMcpTemplate: handleUnaryCall<GetMcpTemplateRequest, GetMcpTemplateResponse>;
+  addMcpTemplate: handleUnaryCall<AddMcpTemplateRequest, AddMcpTemplateResponse>;
+  updateMcpTemplate: handleUnaryCall<UpdateMcpTemplateRequest, UpdateMcpTemplateResponse>;
+  removeMcpTemplate: handleUnaryCall<RemoveMcpTemplateRequest, RemoveMcpTemplateResponse>;
+  /** MCP instance operations */
+  listMcpInstances: handleUnaryCall<ListMcpInstancesRequest, ListMcpInstancesResponse>;
+  getMcpInstance: handleUnaryCall<GetMcpInstanceRequest, GetMcpInstanceResponse>;
+  createMcpInstance: handleUnaryCall<CreateMcpInstanceRequest, CreateMcpInstanceResponse>;
+  updateMcpInstance: handleUnaryCall<UpdateMcpInstanceRequest, UpdateMcpInstanceResponse>;
+  removeMcpInstance: handleUnaryCall<RemoveMcpInstanceRequest, RemoveMcpInstanceResponse>;
   /** Tool Instance Operations */
   listToolInstances: handleUnaryCall<ListToolInstancesRequest, ListToolInstancesResponse>;
   getToolInstance: handleUnaryCall<GetToolInstanceRequest, GetToolInstanceResponse>;
@@ -14007,6 +16582,158 @@ export interface AgentStudioClient extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: RemoveToolTemplateResponse) => void,
+  ): ClientUnaryCall;
+  /** MCP template operations */
+  listMcpTemplates(
+    request: ListMcpTemplatesRequest,
+    callback: (error: ServiceError | null, response: ListMcpTemplatesResponse) => void,
+  ): ClientUnaryCall;
+  listMcpTemplates(
+    request: ListMcpTemplatesRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: ListMcpTemplatesResponse) => void,
+  ): ClientUnaryCall;
+  listMcpTemplates(
+    request: ListMcpTemplatesRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: ListMcpTemplatesResponse) => void,
+  ): ClientUnaryCall;
+  getMcpTemplate(
+    request: GetMcpTemplateRequest,
+    callback: (error: ServiceError | null, response: GetMcpTemplateResponse) => void,
+  ): ClientUnaryCall;
+  getMcpTemplate(
+    request: GetMcpTemplateRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetMcpTemplateResponse) => void,
+  ): ClientUnaryCall;
+  getMcpTemplate(
+    request: GetMcpTemplateRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetMcpTemplateResponse) => void,
+  ): ClientUnaryCall;
+  addMcpTemplate(
+    request: AddMcpTemplateRequest,
+    callback: (error: ServiceError | null, response: AddMcpTemplateResponse) => void,
+  ): ClientUnaryCall;
+  addMcpTemplate(
+    request: AddMcpTemplateRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: AddMcpTemplateResponse) => void,
+  ): ClientUnaryCall;
+  addMcpTemplate(
+    request: AddMcpTemplateRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: AddMcpTemplateResponse) => void,
+  ): ClientUnaryCall;
+  updateMcpTemplate(
+    request: UpdateMcpTemplateRequest,
+    callback: (error: ServiceError | null, response: UpdateMcpTemplateResponse) => void,
+  ): ClientUnaryCall;
+  updateMcpTemplate(
+    request: UpdateMcpTemplateRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: UpdateMcpTemplateResponse) => void,
+  ): ClientUnaryCall;
+  updateMcpTemplate(
+    request: UpdateMcpTemplateRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: UpdateMcpTemplateResponse) => void,
+  ): ClientUnaryCall;
+  removeMcpTemplate(
+    request: RemoveMcpTemplateRequest,
+    callback: (error: ServiceError | null, response: RemoveMcpTemplateResponse) => void,
+  ): ClientUnaryCall;
+  removeMcpTemplate(
+    request: RemoveMcpTemplateRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: RemoveMcpTemplateResponse) => void,
+  ): ClientUnaryCall;
+  removeMcpTemplate(
+    request: RemoveMcpTemplateRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: RemoveMcpTemplateResponse) => void,
+  ): ClientUnaryCall;
+  /** MCP instance operations */
+  listMcpInstances(
+    request: ListMcpInstancesRequest,
+    callback: (error: ServiceError | null, response: ListMcpInstancesResponse) => void,
+  ): ClientUnaryCall;
+  listMcpInstances(
+    request: ListMcpInstancesRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: ListMcpInstancesResponse) => void,
+  ): ClientUnaryCall;
+  listMcpInstances(
+    request: ListMcpInstancesRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: ListMcpInstancesResponse) => void,
+  ): ClientUnaryCall;
+  getMcpInstance(
+    request: GetMcpInstanceRequest,
+    callback: (error: ServiceError | null, response: GetMcpInstanceResponse) => void,
+  ): ClientUnaryCall;
+  getMcpInstance(
+    request: GetMcpInstanceRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetMcpInstanceResponse) => void,
+  ): ClientUnaryCall;
+  getMcpInstance(
+    request: GetMcpInstanceRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetMcpInstanceResponse) => void,
+  ): ClientUnaryCall;
+  createMcpInstance(
+    request: CreateMcpInstanceRequest,
+    callback: (error: ServiceError | null, response: CreateMcpInstanceResponse) => void,
+  ): ClientUnaryCall;
+  createMcpInstance(
+    request: CreateMcpInstanceRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CreateMcpInstanceResponse) => void,
+  ): ClientUnaryCall;
+  createMcpInstance(
+    request: CreateMcpInstanceRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CreateMcpInstanceResponse) => void,
+  ): ClientUnaryCall;
+  updateMcpInstance(
+    request: UpdateMcpInstanceRequest,
+    callback: (error: ServiceError | null, response: UpdateMcpInstanceResponse) => void,
+  ): ClientUnaryCall;
+  updateMcpInstance(
+    request: UpdateMcpInstanceRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: UpdateMcpInstanceResponse) => void,
+  ): ClientUnaryCall;
+  updateMcpInstance(
+    request: UpdateMcpInstanceRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: UpdateMcpInstanceResponse) => void,
+  ): ClientUnaryCall;
+  removeMcpInstance(
+    request: RemoveMcpInstanceRequest,
+    callback: (error: ServiceError | null, response: RemoveMcpInstanceResponse) => void,
+  ): ClientUnaryCall;
+  removeMcpInstance(
+    request: RemoveMcpInstanceRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: RemoveMcpInstanceResponse) => void,
+  ): ClientUnaryCall;
+  removeMcpInstance(
+    request: RemoveMcpInstanceRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: RemoveMcpInstanceResponse) => void,
   ): ClientUnaryCall;
   /** Tool Instance Operations */
   listToolInstances(

@@ -1,8 +1,6 @@
 from uuid import uuid4
 from typing import List
 from cmlapi import CMLServiceApi
-import os
-import json
 import logging
 
 from studio.db.dao import AgentStudioDao
@@ -19,13 +17,10 @@ sys.path.append("studio/workflow_engine/src/")
 from engine.crewai.llms import get_crewai_llm_object_direct
 from engine.types import Input__LanguageModel, Input__LanguageModelConfig
 
-from .utils import (
-    get_model_api_key_from_env, 
-    update_model_api_key_in_env,
-    remove_model_api_key_from_env
-)
+from .utils import get_model_api_key_from_env, update_model_api_key_in_env, remove_model_api_key_from_env
 
 logger = logging.getLogger(__name__)
+
 
 def list_models(
     request: ListModelsRequest, cml: CMLServiceApi = None, dao: AgentStudioDao = None
@@ -46,7 +41,7 @@ def get_model(request: GetModelRequest, cml: CMLServiceApi = None, dao: AgentStu
         model = session.query(db_model.Model).filter_by(model_id=request.model_id).one_or_none()
         if not model:
             raise ValueError(f"Model with ID '{request.model_id}' not found.")
-        
+
         return GetModelResponse(model_details=model.to_protobuf(Model))
 
 
@@ -54,13 +49,13 @@ def add_model(request: AddModelRequest, cml: CMLServiceApi = None, dao: AgentStu
     """
     Add a new model based on the request parameters.
     If no models exist, set the added model as the default.
-    
+
     Raises:
         ValueError: If model name already exists or if API key storage fails
     """
     # Generate model ID upfront so we can store the API key
     model_id = str(uuid4())
-    
+
     # Store API key in project environment if provided
     if request.api_key:
         try:
@@ -76,7 +71,9 @@ def add_model(request: AddModelRequest, cml: CMLServiceApi = None, dao: AgentStu
                 try:
                     remove_model_api_key_from_env(model_id, cml)
                 except Exception as e:
-                    logger.warning(f"Failed to clean up API key for model {model_id} after duplicate name error: {str(e)}")
+                    logger.warning(
+                        f"Failed to clean up API key for model {model_id} after duplicate name error: {str(e)}"
+                    )
             raise ValueError(f"Model with name '{request.model_name}' already exists.")
 
         # Check if there are existing models in the database
@@ -110,28 +107,28 @@ def remove_model(
         m_ = session.query(db_model.Model).filter_by(model_id=request.model_id).one_or_none()
         if not m_:
             raise ValueError(f"Model with ID '{request.model_id}' not found.")
-            
+
         # Check if this is the default model
         if m_.is_studio_default:
             raise ValueError(
                 "Cannot delete the default LLM Model. Please set a different model as default first, "
                 "or create a new default LLM Model before deleting this one."
             )
-            
+
         # Update all agents using this model to have empty llm_provider_model_id
-        session.query(db_model.Agent).filter_by(
-            llm_provider_model_id=request.model_id
-        ).update({"llm_provider_model_id": ""})
-        
+        session.query(db_model.Agent).filter_by(llm_provider_model_id=request.model_id).update(
+            {"llm_provider_model_id": ""}
+        )
+
         # Delete the model
         session.delete(m_)
-        
+
         try:
             # Remove API key from project environment
             remove_model_api_key_from_env(request.model_id, cml)
         except Exception as e:
             logger.warning(f"Failed to remove API key for model {request.model_id} during deletion: {str(e)}")
-            
+
         session.commit()
 
     return RemoveModelResponse()

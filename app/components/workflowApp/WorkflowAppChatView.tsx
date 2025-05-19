@@ -95,6 +95,7 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow, tas
             context: JSON.stringify(context),
           },
           tool_user_parameters: workflowConfiguration?.toolConfigurations || {},
+          mcp_instance_env_vars: {},
           generation_config: JSON.stringify(workflowGenerationConfig),
         }).unwrap();
         traceId = response.trace_id;

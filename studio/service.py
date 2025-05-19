@@ -56,6 +56,20 @@ from studio.tools.tool_template import (
     update_tool_template,
     remove_tool_template,
 )
+from studio.as_mcp.mcp_templates import (
+    add_mcp_template,
+    update_mcp_template,
+    list_mcp_templates,
+    get_mcp_template,
+    remove_mcp_template,
+)
+from studio.as_mcp.mcp_instances import (
+    create_mcp_instance,
+    update_mcp_instance,
+    list_mcp_instances,
+    get_mcp_instance,
+    remove_mcp_instance,
+)
 from studio.models.models import (
     list_models,
     get_model,
@@ -76,7 +90,7 @@ from cmlapi import CMLServiceApi
 
 from studio.proto.agent_studio_pb2_grpc import AgentStudioServicer
 
-from studio.db.dao import AgentStudioDao
+from studio.db.dao import get_dao, AgentStudioDao
 
 import logging
 
@@ -114,7 +128,7 @@ class AgentStudioApp(AgentStudioServicer):
             self.logger.info("Initializing Agent Studio App")
             # First get default client
             self.cml = cmlapi.default_client()
-            self.dao = dao or AgentStudioDao()
+            self.dao = dao or get_dao()
             
             # Check API key status and rotate if needed
             check_response = cml_api_check(CmlApiCheckRequest(), self.cml, self.dao, logger=self.logger)
@@ -219,6 +233,68 @@ class AgentStudioApp(AgentStudioServicer):
         Remove an existing tool template.
         """
         return remove_tool_template(request, self.cml, dao=self.dao)
+
+    # MCP Template-related gRPC methods
+    def ListMcpTemplates(self, request, context):
+        """
+        List all MCP templates.
+        """
+        return list_mcp_templates(request, self.cml, dao=self.dao)
+
+    def GetMcpTemplate(self, request, context):
+        """
+        Get details of a specific MCP template.
+        """
+        return get_mcp_template(request, self.cml, dao=self.dao)
+
+    def AddMcpTemplate(self, request, context):
+        """
+        Add a new MCP template.
+        """
+        return add_mcp_template(request, self.cml, dao=self.dao)
+
+    def UpdateMcpTemplate(self, request, context):
+        """
+        Update an existing MCP template.
+        """
+        return update_mcp_template(request, self.cml, dao=self.dao)
+
+    def RemoveMcpTemplate(self, request, context):
+        """
+        Remove an existing MCP template.
+        """
+        return remove_mcp_template(request, self.cml, dao=self.dao)
+
+    # MCP Instance-related gRPC methods
+    def ListMcpInstances(self, request, context):
+        """
+        List all MCP instances.
+        """
+        return list_mcp_instances(request, self.cml, dao=self.dao)
+
+    def GetMcpInstance(self, request, context):
+        """
+        Get a MCP instance by id
+        """
+        return get_mcp_instance(request, self.cml, dao=self.dao)
+
+    def CreateMcpInstance(self, request, context):
+        """
+        Create a new MCP instance
+        """
+        return create_mcp_instance(request, self.cml, dao=self.dao)
+
+    def UpdateMcpInstance(self, request, context):
+        """
+        Update an existing MCP instance
+        """
+        return update_mcp_instance(request, self.cml, dao=self.dao)
+
+    def RemoveMcpInstance(self, request, context):
+        """
+        Remove an existing MCP instance
+        """
+        return remove_mcp_instance(request, self.cml, dao=self.dao)
 
     # Tool Instance-related gRPC methods
     def ListToolInstances(self, request, context):

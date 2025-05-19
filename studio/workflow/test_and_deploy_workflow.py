@@ -3,7 +3,7 @@ import os
 import shutil
 from uuid import uuid4
 import cmlapi
-from typing import Union, List, Optional, Tuple
+from typing import Union, List, Optional
 from sqlalchemy.exc import SQLAlchemyError
 import requests
 from google.protobuf.json_format import MessageToDict
@@ -20,10 +20,7 @@ from studio.cross_cutting.utils import get_studio_subdirectory
 import studio.consts as consts
 from studio.workflow.utils import is_custom_model_root_dir_feature_enabled
 from studio.workflow.runners import get_workflow_runners
-from studio.tools.utils import (
-    read_tool_instance_code,
-    extract_user_params_from_code
-)
+from studio.tools.utils import read_tool_instance_code, extract_user_params_from_code
 from studio.cross_cutting.apiv2 import get_api_key_from_env, validate_api_key
 
 # Import engine code manually. Eventually when this code becomes
@@ -60,7 +57,7 @@ def _create_collated_input(
         agent_ids = set(workflow.crew_ai_agents) or set()
         if workflow.crew_ai_manager_agent:
             agent_ids.add(workflow.crew_ai_manager_agent)
-        tool_instance_ids = set()
+        tool_instance_ids, mcp_instance_ids = set(), set()
         language_model_ids = set([default_llm.model_id])
         if workflow.crew_ai_llm_provider_model_id:
             language_model_ids.add(workflow.crew_ai_llm_provider_model_id)
@@ -102,6 +99,7 @@ def _create_collated_input(
                     # crew_ai_temperature=agent_db_model.crew_ai_temperature,  # NOTE: temperature from schema is unused
                     crew_ai_max_iter=agent_db_model.crew_ai_max_iter,
                     tool_instance_ids=list(agent_db_model.tool_ids) if agent_db_model.tool_ids else [],
+                    mcp_instance_ids=list(agent_db_model.mcp_instance_ids) if agent_db_model.mcp_instance_ids else [],
                     agent_image_uri=(
                         os.path.relpath(agent_db_model.agent_image_path, consts.DYNAMIC_ASSETS_LOCATION)
                         if agent_db_model.agent_image_path
@@ -112,6 +110,7 @@ def _create_collated_input(
             if agent_db_model.llm_provider_model_id:
                 language_model_ids.add(agent_db_model.llm_provider_model_id)
             tool_instance_ids.update(list(agent_db_model.tool_ids))
+            mcp_instance_ids.update(list(agent_db_model.mcp_instance_ids))
 
         tool_instance_db_models = (
             session.query(db_model.ToolInstance).filter(db_model.ToolInstance.id.in_(tool_instance_ids)).all()
@@ -121,14 +120,14 @@ def _create_collated_input(
             tool_instance_db_model = next((t for t in tool_instance_db_models if t.id == t_id), None)
             if not tool_instance_db_model:
                 raise ValueError(f"Tool Instance with ID '{t_id}' not found.")
-            
+
             status_message = ""
-            try: 
+            try:
                 tool_code, _ = read_tool_instance_code(tool_instance_db_model)
                 user_params_dict = extract_user_params_from_code(tool_code)
             except Exception as e:
                 status_message = f"Could not extract user param metadata from code: {str(e)}"
-                    
+
             tool_instance_inputs.append(
                 input_types.Input__ToolInstance(
                     id=tool_instance_db_model.id,
@@ -136,17 +135,40 @@ def _create_collated_input(
                     python_code_file_name=tool_instance_db_model.python_code_file_name,
                     python_requirements_file_name=tool_instance_db_model.python_requirements_file_name,
                     source_folder_path=tool_instance_db_model.source_folder_path,
-                    tool_metadata=json.dumps({
-                        "user_params": list(user_params_dict.keys()),
-                        "user_params_metadata": user_params_dict,
-                        "status": status_message
-                    }),
+                    tool_metadata=json.dumps(
+                        {
+                            "user_params": list(user_params_dict.keys()),
+                            "user_params_metadata": user_params_dict,
+                            "status": status_message,
+                        }
+                    ),
                     tool_image_uri=(
                         os.path.relpath(tool_instance_db_model.tool_image_path, consts.DYNAMIC_ASSETS_LOCATION)
                         if tool_instance_db_model.tool_image_path
                         else None
                     ),
                     is_venv_tool=tool_instance_db_model.is_venv_tool,
+                )
+            )
+
+        mcp_instance_db_models = (
+            session.query(db_model.MCPInstance).filter(db_model.MCPInstance.id.in_(mcp_instance_ids)).all()
+        )
+        mcp_instance_inputs: List[input_types.Input__MCPInstance] = []
+        for m_id in mcp_instance_ids:
+            mcp_instance_db_model = next((m for m in mcp_instance_db_models if m.id == m_id), None)
+            if not mcp_instance_db_model:
+                raise ValueError(f"MCP Instance with ID '{m_id}' not found.")
+
+            mcp_instance_inputs.append(
+                input_types.Input__MCPInstance(
+                    id=str(mcp_instance_db_model.id),
+                    name=str(mcp_instance_db_model.name),
+                    type=str(mcp_instance_db_model.type),
+                    args=list(mcp_instance_db_model.args) if mcp_instance_db_model.args else [],
+                    env_names=list(mcp_instance_db_model.env_names) if mcp_instance_db_model.env_names else [],
+                    tools=list(mcp_instance_db_model.activated_tools) if mcp_instance_db_model.activated_tools else [],
+                    mcp_image_uri="",  # MCP icons not supported yet
                 )
             )
 
@@ -158,7 +180,7 @@ def _create_collated_input(
             language_model_db_model = next((lm for lm in language_model_db_models if lm.model_id == lm_id), None)
             if not language_model_db_model:
                 raise ValueError(f"Language Model with ID '{lm_id}' not found.")
-            
+
             try:
                 # Get API key from environment with error handling
                 api_key = get_model_api_key_from_env(language_model_db_model.model_id, cml)
@@ -182,9 +204,7 @@ def _create_collated_input(
                     )
                 )
             except Exception as e:
-                raise ValueError(
-                    f"Failed to configure model {language_model_db_model.model_name}: {str(e)}"
-                )
+                raise ValueError(f"Failed to configure model {language_model_db_model.model_name}: {str(e)}")
 
         deployed_workflow_instance_id = cc_utils.get_random_compact_string()
 
@@ -213,6 +233,7 @@ def _create_collated_input(
             default_language_model_id=default_llm.model_id,
             language_models=language_model_inputs,
             tool_instances=tool_instance_inputs,
+            mcp_instances=mcp_instance_inputs,
             agents=agent_inputs,
             tasks=task_inputs,
             workflow=workflow_input,
@@ -232,6 +253,10 @@ def test_workflow(
             tool_id: {k: v for k, v in user_param_kv.parameters.items()}
             for tool_id, user_param_kv in request.tool_user_parameters.items()
         }
+        mcp_instance_env_vars_kv = {
+            mcp_instance_id: {k: v for k, v in env_vars.env_vars.items()}
+            for mcp_instance_id, env_vars in request.mcp_instance_env_vars.items()
+        }
         events_trace_id = str(uuid4())
 
         workflow_runners = get_workflow_runners()
@@ -248,6 +273,7 @@ def test_workflow(
                 "workflow_name": f"Test Workflow - {collated_input.workflow.name}",
                 "collated_input": collated_input.model_dump(),
                 "tool_user_params": tool_user_params_kv,
+                "mcp_instance_env_vars": mcp_instance_env_vars_kv,
                 "inputs": dict(request.inputs),
                 "events_trace_id": events_trace_id,
             },
@@ -361,7 +387,7 @@ def get_deployed_workflow_config(deployable_workflow_dir: str) -> dict:
             "model_root_dir": os.path.join(get_studio_subdirectory(), deployable_workflow_dir),
             "model_file_path": "src/engine/entry/workbench.py",
             "deployed_workflow_model_config_location": "/home/cdsw/workflow/config.json",
-            "model_execution_dir": "/home/cdsw"
+            "model_execution_dir": "/home/cdsw",
         }
     else:
         return {
@@ -372,23 +398,25 @@ def get_deployed_workflow_config(deployable_workflow_dir: str) -> dict:
             "deployed_workflow_model_config_location": os.path.join(
                 "/home/cdsw", get_studio_subdirectory(), deployable_workflow_dir, "workflow", "config.json"
             ),
-            "model_execution_dir": os.path.join("/home/cdsw", get_studio_subdirectory(), deployable_workflow_dir)
+            "model_execution_dir": os.path.join("/home/cdsw", get_studio_subdirectory(), deployable_workflow_dir),
         }
 
 
-def deploy_workflow(
-    request: DeployWorkflowRequest, cml: CMLServiceApi, dao: AgentStudioDao
-) -> DeployWorkflowResponse:
+def deploy_workflow(request: DeployWorkflowRequest, cml: CMLServiceApi, dao: AgentStudioDao) -> DeployWorkflowResponse:
     """Deploy a workflow."""
     try:
         # Get API key from project environment
         key_id, key_value = get_api_key_from_env(cml)
         if not key_id or not key_value:
-            raise RuntimeError("CML API v2 key not found. You need to configure a CML API v2 key for Agent Studio to deploy workflows.")
-            
+            raise RuntimeError(
+                "CML API v2 key not found. You need to configure a CML API v2 key for Agent Studio to deploy workflows."
+            )
+
         # Validate the API key
         if not validate_api_key(key_id, key_value, cml):
-            raise RuntimeError("CML API v2 key validation has failed. You need to rotate the CML API v2 key for Agent Studio to deploy your workflow.")
+            raise RuntimeError(
+                "CML API v2 key validation has failed. You need to rotate the CML API v2 key for Agent Studio to deploy your workflow."
+            )
 
         cml_model_id, model_build_id = None, None
         workflow_frontend_application: Optional[cmlapi.Application] = None
@@ -438,6 +466,13 @@ def deploy_workflow(
             for tool_id, parameters in request.tool_user_parameters.items():
                 env_vars_for_cml_model.update(
                     {f"TOOL_{tool_id.replace('-', '_')}_USER_PARAMS_{k}": v for k, v in parameters.parameters.items()}
+                )
+            for mcp_instance_id, env_vars in request.mcp_instance_env_vars.items():
+                env_vars_for_cml_model.update(
+                    {
+                        f"MCP_INSTANCE_{mcp_instance_id.replace('-', '_')}_ENV_VAR_{k}": v
+                        for k, v in env_vars.env_vars.items()
+                    }
                 )
             for lm in collated_input.language_models:
                 env_var_key_name = f"MODEL_{lm.model_id.replace('-', '_')}_CONFIG"
@@ -489,7 +524,9 @@ def deploy_workflow(
                 {
                     "AGENT_STUDIO_OPS_ENDPOINT": get_ops_endpoint(),
                     "AGENT_STUDIO_WORKFLOW_ARTIFACT_TYPE": "config_file",
-                    "AGENT_STUDIO_WORKFLOW_ARTIFACT": deployed_workflow_config["deployed_workflow_model_config_location"],
+                    "AGENT_STUDIO_WORKFLOW_ARTIFACT": deployed_workflow_config[
+                        "deployed_workflow_model_config_location"
+                    ],
                     "AGENT_STUDIO_WORKFLOW_NAME": deployed_workflow_instance_name,
                     "AGENT_STUDIO_MODEL_EXECUTION_DIR": deployed_workflow_config["model_execution_dir"],
                     "CDSW_APIV2_KEY": key_value,  # Pass the validated API key

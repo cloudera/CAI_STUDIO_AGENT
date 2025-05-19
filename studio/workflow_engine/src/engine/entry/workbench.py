@@ -79,7 +79,7 @@ tracer = tracer_provider.get_tracer("opentelemetry.agentstudio.workflow.model")
 
 
 # Register our handlers. This can occur globally
-# because regardless of the actual workflow definition 
+# because regardless of the actual workflow definition
 # we run, the event handlers can remain the same (since
 # trace ID is written as a contextvar on each async task)
 register_global_handlers()
@@ -107,6 +107,17 @@ def api_wrapper(args: Union[dict, str]) -> str:
                     param_name = key[len(prefix) :]
                     user_param_kv[param_name] = value
             tool_user_params[t_id] = user_param_kv
+
+        mcp_instance_env_vars: Dict[str, Dict[str, str]] = {}
+        for mcp_instance in collated_input_copy.mcp_instances:
+            m_id = mcp_instance.id
+            prefix = f"MCP_INSTANCE_{m_id.replace('-', '_')}_ENV_VAR_"
+            env_var_kv = {}
+            for key, value in os.environ.items():
+                if key.startswith(prefix):
+                    param_name = key[len(prefix) :]
+                    env_var_kv[param_name] = value
+            mcp_instance_env_vars[m_id] = env_var_kv
 
         # Retrieve the language model config from the environment variables and validate it, and put it back in the collated input.
         for lm in collated_input_copy.language_models:
@@ -136,7 +147,7 @@ def api_wrapper(args: Union[dict, str]) -> str:
 
             # Start the workflow in the background using the parent context
             asyncio.create_task(
-                run_workflow_async(collated_input_copy, tool_user_params, inputs, parent_context, trace_id)
+                run_workflow_async(collated_input_copy, tool_user_params, mcp_instance_env_vars, inputs, parent_context, trace_id)
             )
 
         return {"trace_id": str(trace_id)}

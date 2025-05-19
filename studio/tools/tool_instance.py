@@ -239,11 +239,13 @@ def _get_tool_instance_impl(request: GetToolInstanceRequest, session: DbSession)
             python_code=tool_code,
             python_requirements=tool_requirements,
             source_folder_path=tool_instance_dir,
-            tool_metadata=json.dumps({
-                "user_params": list(user_params_dict.keys()),
-                "user_params_metadata": user_params_dict,
-                "status": status_message
-            }),
+            tool_metadata=json.dumps(
+                {
+                    "user_params": list(user_params_dict.keys()),
+                    "user_params_metadata": user_params_dict,
+                    "status": status_message,
+                }
+            ),
             is_valid=is_valid,
             tool_image_uri=tool_image_uri,
             tool_description=tool_description,
@@ -323,11 +325,13 @@ def _list_tool_instances_impl(request: ListToolInstancesRequest, session: DbSess
                 python_code=tool_code,
                 python_requirements=tool_requirements,
                 source_folder_path=tool_instance.source_folder_path,
-                tool_metadata=json.dumps({
-                    "user_params": list(user_params_dict.keys()),
-                    "user_params_metadata": user_params_dict,
-                    "status": status_message
-                }),
+                tool_metadata=json.dumps(
+                    {
+                        "user_params": list(user_params_dict.keys()),
+                        "user_params_metadata": user_params_dict,
+                        "status": status_message,
+                    }
+                ),
                 is_valid=is_valid,
                 tool_image_uri=tool_image_uri,
                 tool_description=tool_description,

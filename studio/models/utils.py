@@ -10,6 +10,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def get_studio_default_model_id(
     dao=None,
     preexisting_db_session=None,
@@ -33,11 +34,13 @@ def get_studio_default_model_id(
         session.close()
     return True, model.model_id
 
+
 def _encode_value(value: str) -> str:
     """Encode value for storage in environment variables using base64"""
     if not value or not isinstance(value, str):
         return ""
     return base64.b64encode(value.encode()).decode()
+
 
 def _decode_value(encoded_value: str) -> str:
     """Decode base64-encoded value from environment variables"""
@@ -49,10 +52,12 @@ def _decode_value(encoded_value: str) -> str:
         logger.warning("Failed to decode value from environment")
         return None
 
+
 def _get_env_key(model_id: str) -> str:
     """Generate environment variable key for model API key"""
     encoded_id = _encode_value(model_id)
     return f"MODEL_API_KEY_{encoded_id}"
+
 
 def get_model_api_key_from_env(model_id: str, cml: CMLServiceApi) -> str:
     """Get model API key from project environment variables"""
@@ -60,21 +65,22 @@ def get_model_api_key_from_env(model_id: str, cml: CMLServiceApi) -> str:
         project_id = os.getenv("CDSW_PROJECT_ID")
         if not project_id:
             raise ValueError("CDSW_PROJECT_ID environment variable not found")
-            
+
         # Get project details
         project = cml.get_project(project_id)
         try:
             environment = json.loads(project.environment) if project.environment else {}
         except (json.JSONDecodeError, TypeError):
             environment = {}
-            
+
         # Use encoded model ID for environment variable
         env_key = _get_env_key(model_id)
         encoded_key = environment.get(env_key)
         return _decode_value(encoded_key)
-        
+
     except Exception as e:
         raise ValueError(f"Failed to get API key for model {model_id}: {str(e)}")
+
 
 def update_model_api_key_in_env(model_id: str, api_key: str, cml: CMLServiceApi) -> None:
     """Update/Store model API key in project environment variables"""
@@ -82,24 +88,25 @@ def update_model_api_key_in_env(model_id: str, api_key: str, cml: CMLServiceApi)
         project_id = os.getenv("CDSW_PROJECT_ID")
         if not project_id:
             raise ValueError("CDSW_PROJECT_ID environment variable not found")
-            
+
         # Get current project
         project = cml.get_project(project_id)
         try:
             environment = json.loads(project.environment) if project.environment else {}
         except (json.JSONDecodeError, TypeError):
             environment = {}
-            
+
         # Use encoded model ID and API key
         env_key = _get_env_key(model_id)
         environment[env_key] = _encode_value(api_key)
-        
+
         # Update project with new environment
         update_body = {"environment": json.dumps(environment)}
         cml.update_project(update_body, project_id)
-        
+
     except Exception as e:
         raise ValueError(f"Failed to update API key for model {model_id}: {str(e)}")
+
 
 def remove_model_api_key_from_env(model_id: str, cml: CMLServiceApi) -> None:
     """Remove model API key from project environment variables"""
@@ -107,7 +114,7 @@ def remove_model_api_key_from_env(model_id: str, cml: CMLServiceApi) -> None:
         project_id = os.getenv("CDSW_PROJECT_ID")
         if not project_id:
             raise ValueError("CDSW_PROJECT_ID environment variable not found")
-            
+
         # Get current project
         project = cml.get_project(project_id)
         try:
@@ -120,6 +127,6 @@ def remove_model_api_key_from_env(model_id: str, cml: CMLServiceApi) -> None:
                 cml.update_project(update_body, project_id)
         except (json.JSONDecodeError, TypeError):
             pass  # Ignore if environment parsing fails
-            
+
     except Exception as e:
         raise ValueError(f"Failed to remove API key for model {model_id}: {str(e)}")

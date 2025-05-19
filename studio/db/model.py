@@ -124,6 +124,32 @@ class ToolTemplate(Base, MappedProtobuf, MappedDict):
     is_venv_tool = Column(Boolean, default=False)
 
 
+class MCPTemplate(Base, MappedProtobuf, MappedDict):
+    __tablename__ = "mcp_templates"
+
+    id = Column(String, primary_key=True, nullable=False)
+    name = Column(String, nullable=False)
+    type = Column(String, nullable=False)
+    args = Column(JSON, nullable=False)
+    env_names = Column(JSON, nullable=False)
+    tools = Column(JSON, nullable=True)
+    status = Column(String, nullable=False, default=consts.MCPStatus.VALIDATING)
+    mcp_image_path = Column(Text, nullable=False)
+
+class MCPInstance(Base, MappedProtobuf, MappedDict):
+    __tablename__ = "mcp_instances"
+
+    id = Column(String, primary_key=True, nullable=False)
+    workflow_id = Column(String, ForeignKey("workflows.id"), nullable=False)
+    name = Column(String, nullable=False)
+    type = Column(String, nullable=False)
+    args = Column(JSON, nullable=False)
+    env_names = Column(JSON, nullable=False)
+    tools = Column(JSON, nullable=True)
+    activated_tools = Column(JSON, nullable=False) # List of tool names accessible to the agent
+    status = Column(String, nullable=False, default=consts.MCPStatus.VALIDATING)
+    mcp_image_path = Column(Text, nullable=False)
+
 class Agent(Base, MappedProtobuf, MappedDict):
     __tablename__ = "agents"
 
@@ -155,6 +181,10 @@ class Agent(Base, MappedProtobuf, MappedDict):
     # JSON Column for  Tool Instance IDs
     # List of Tool Instance IDs stored as JSON
     tool_ids = Column(JSON, nullable=True)
+
+    # JSON Column for  MCP Instance IDs
+    # List of MCP Instance IDs stored as JSON
+    mcp_instance_ids = Column(JSON, nullable=True)
 
     # Image path for the agent
     agent_image_path = Column(Text, nullable=True)
@@ -322,6 +352,7 @@ TABLE_TO_MODEL_REGISTRY = {
     "models": Model,
     "tool_templates": ToolTemplate,
     "tool_instances": ToolInstance,
+    "mcp_templates": MCPTemplate,
     "agents": Agent,
     "tasks": Task,
     # "external_agent_instances": ExternalAgentInstance,

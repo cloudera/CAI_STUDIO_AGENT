@@ -16,6 +16,19 @@ class SupportedModelTypes(str, Enum):
     AZURE_OPENAI = "AZURE_OPENAI"
 
 
+class SupportedMCPTypes(str, Enum):
+    PYTHON = "PYTHON"
+    # TODO: Add other MCP types in future
+    # NODE = "NODE"
+    # DOCKER = "DOCKER"
+
+
+class MCPStatus(str, Enum):
+    VALID = "VALID"
+    VALIDATING = "VALIDATING"
+    VALIDATION_FAILED = "VALIDATION_FAILED"
+
+
 AGENT_STUDIO_SERVICE_APPLICATION_NAME = "Agent Studio"
 AGENT_STUDIO_OPS_APPLICATION_NAME = "Agent Studio - Agent Ops & Metrics"
 AGENT_STUDIO_UPGRADE_JOB_NAME = "Agent Studio - Upgrade"

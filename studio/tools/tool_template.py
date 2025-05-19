@@ -166,11 +166,13 @@ def get_tool_template(
                 tool_description = "Unable to read tool description"
 
             # Create tool_metadata as a JSON string
-            tool_metadata = json.dumps({
-                "user_params": list(user_params_dict.keys()),
-                "user_params_metadata": user_params_dict,
-                "status": status_message
-            })
+            tool_metadata = json.dumps(
+                {
+                    "user_params": list(user_params_dict.keys()),
+                    "user_params_metadata": user_params_dict,
+                    "status": status_message,
+                }
+            )
 
             return GetToolTemplateResponse(
                 template=ToolTemplate(
@@ -227,9 +229,9 @@ def add_tool_template(
                 .filter(
                     db_model.ToolTemplate.name == request.tool_template_name,
                     (
-                        (db_model.ToolTemplate.workflow_template_id == request.workflow_template_id) |
-                        (db_model.ToolTemplate.workflow_template_id.is_(None))
-                    )
+                        (db_model.ToolTemplate.workflow_template_id == request.workflow_template_id)
+                        | (db_model.ToolTemplate.workflow_template_id.is_(None))
+                    ),
                 )
                 .first()
             )

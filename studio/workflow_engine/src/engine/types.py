@@ -5,7 +5,7 @@ from crewai import Agent, Crew, Task, Process
 from crewai.tools import BaseTool
 from crewai.tools.base_tool import BaseTool
 from crewai import LLM as CrewAILLM
-
+from crewai_tools import MCPServerAdapter
 
 class Input__LanguageModelConfig(BaseModel):
     provider_model: str
@@ -32,6 +32,16 @@ class Input__ToolInstance(BaseModel):
     is_venv_tool: Optional[bool] = False
 
 
+class Input__MCPInstance(BaseModel):
+    id: str
+    name: str
+    type: str
+    args: List[str]
+    env_names: List[str]
+    tools: Optional[List[str]] = None
+    mcp_image_uri: Optional[str] = None
+
+
 class Input__Task(BaseModel):
     id: str
     description: Optional[str] = ""
@@ -52,6 +62,7 @@ class Input__Agent(BaseModel):
     crew_ai_temperature: Optional[float] = None
     crew_ai_max_iter: Optional[int] = None
     tool_instance_ids: List[str]
+    mcp_instance_ids: List[str]
     agent_image_uri: Optional[str] = None
 
 
@@ -72,16 +83,23 @@ class CollatedInput(BaseModel):
     default_language_model_id: str
     language_models: List[Input__LanguageModel]
     tool_instances: List[Input__ToolInstance]
+    mcp_instances: List[Input__MCPInstance]
     agents: List[Input__Agent]
     tasks: List[Input__Task]
     workflow: Input__Workflow
 
+class MCPObjects(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    local_session: MCPServerAdapter
+    tools: List[BaseTool]
 
 class CrewAIObjects(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     language_models: Dict[str, CrewAILLM]
     tools: Dict[str, BaseTool]
+    mcps: Dict[str, MCPObjects]
     agents: Dict[str, Agent]
     tasks: Dict[str, Task]
     crews: Dict[str, Crew]

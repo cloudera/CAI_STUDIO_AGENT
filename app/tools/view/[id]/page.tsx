@@ -298,10 +298,10 @@ const ToolViewPage: React.FC = () => {
               fontSize: '14px',
               display: 'flex',
               alignItems: 'center',
-              gap: '4px', // Spacing between text and arrow
+              gap: '4px',
             }}
           >
-            Actions <DownOutlined /> {/* Rotate the icon to face downwards */}
+            Actions <DownOutlined />
           </Button>
         </Dropdown>
       </Layout>

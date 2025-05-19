@@ -435,6 +435,262 @@ class ToolInstance(_message.Message):
         is_venv_tool: bool = ...,
     ) -> None: ...
 
+class AddMcpTemplateRequest(_message.Message):
+    __slots__ = ("name", "type", "args", "env_names", "tmp_mcp_image_path", "workflow_template_id")
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    TYPE_FIELD_NUMBER: _ClassVar[int]
+    ARGS_FIELD_NUMBER: _ClassVar[int]
+    ENV_NAMES_FIELD_NUMBER: _ClassVar[int]
+    TMP_MCP_IMAGE_PATH_FIELD_NUMBER: _ClassVar[int]
+    WORKFLOW_TEMPLATE_ID_FIELD_NUMBER: _ClassVar[int]
+    name: str
+    type: str
+    args: _containers.RepeatedScalarFieldContainer[str]
+    env_names: _containers.RepeatedScalarFieldContainer[str]
+    tmp_mcp_image_path: str
+    workflow_template_id: str
+    def __init__(
+        self,
+        name: _Optional[str] = ...,
+        type: _Optional[str] = ...,
+        args: _Optional[_Iterable[str]] = ...,
+        env_names: _Optional[_Iterable[str]] = ...,
+        tmp_mcp_image_path: _Optional[str] = ...,
+        workflow_template_id: _Optional[str] = ...,
+    ) -> None: ...
+
+class AddMcpTemplateResponse(_message.Message):
+    __slots__ = ("mcp_template_id",)
+    MCP_TEMPLATE_ID_FIELD_NUMBER: _ClassVar[int]
+    mcp_template_id: str
+    def __init__(self, mcp_template_id: _Optional[str] = ...) -> None: ...
+
+class UpdateMcpTemplateRequest(_message.Message):
+    __slots__ = ("mcp_template_id", "name", "type", "args", "env_names", "tmp_mcp_image_path")
+    MCP_TEMPLATE_ID_FIELD_NUMBER: _ClassVar[int]
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    TYPE_FIELD_NUMBER: _ClassVar[int]
+    ARGS_FIELD_NUMBER: _ClassVar[int]
+    ENV_NAMES_FIELD_NUMBER: _ClassVar[int]
+    TMP_MCP_IMAGE_PATH_FIELD_NUMBER: _ClassVar[int]
+    mcp_template_id: str
+    name: str
+    type: str
+    args: _containers.RepeatedScalarFieldContainer[str]
+    env_names: _containers.RepeatedScalarFieldContainer[str]
+    tmp_mcp_image_path: str
+    def __init__(
+        self,
+        mcp_template_id: _Optional[str] = ...,
+        name: _Optional[str] = ...,
+        type: _Optional[str] = ...,
+        args: _Optional[_Iterable[str]] = ...,
+        env_names: _Optional[_Iterable[str]] = ...,
+        tmp_mcp_image_path: _Optional[str] = ...,
+    ) -> None: ...
+
+class UpdateMcpTemplateResponse(_message.Message):
+    __slots__ = ("mcp_template_id",)
+    MCP_TEMPLATE_ID_FIELD_NUMBER: _ClassVar[int]
+    mcp_template_id: str
+    def __init__(self, mcp_template_id: _Optional[str] = ...) -> None: ...
+
+class RemoveMcpTemplateRequest(_message.Message):
+    __slots__ = ("mcp_template_id",)
+    MCP_TEMPLATE_ID_FIELD_NUMBER: _ClassVar[int]
+    mcp_template_id: str
+    def __init__(self, mcp_template_id: _Optional[str] = ...) -> None: ...
+
+class RemoveMcpTemplateResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class MCPTemplate(_message.Message):
+    __slots__ = ("id", "name", "type", "args", "env_names", "tools", "image_uri", "status", "workflow_template_id")
+    ID_FIELD_NUMBER: _ClassVar[int]
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    TYPE_FIELD_NUMBER: _ClassVar[int]
+    ARGS_FIELD_NUMBER: _ClassVar[int]
+    ENV_NAMES_FIELD_NUMBER: _ClassVar[int]
+    TOOLS_FIELD_NUMBER: _ClassVar[int]
+    IMAGE_URI_FIELD_NUMBER: _ClassVar[int]
+    STATUS_FIELD_NUMBER: _ClassVar[int]
+    WORKFLOW_TEMPLATE_ID_FIELD_NUMBER: _ClassVar[int]
+    id: str
+    name: str
+    type: str
+    args: _containers.RepeatedScalarFieldContainer[str]
+    env_names: _containers.RepeatedScalarFieldContainer[str]
+    tools: str
+    image_uri: str
+    status: str
+    workflow_template_id: str
+    def __init__(
+        self,
+        id: _Optional[str] = ...,
+        name: _Optional[str] = ...,
+        type: _Optional[str] = ...,
+        args: _Optional[_Iterable[str]] = ...,
+        env_names: _Optional[_Iterable[str]] = ...,
+        tools: _Optional[str] = ...,
+        image_uri: _Optional[str] = ...,
+        status: _Optional[str] = ...,
+        workflow_template_id: _Optional[str] = ...,
+    ) -> None: ...
+
+class ListMcpTemplatesRequest(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class ListMcpTemplatesResponse(_message.Message):
+    __slots__ = ("mcp_templates",)
+    MCP_TEMPLATES_FIELD_NUMBER: _ClassVar[int]
+    mcp_templates: _containers.RepeatedCompositeFieldContainer[MCPTemplate]
+    def __init__(self, mcp_templates: _Optional[_Iterable[_Union[MCPTemplate, _Mapping]]] = ...) -> None: ...
+
+class GetMcpTemplateRequest(_message.Message):
+    __slots__ = ("mcp_template_id",)
+    MCP_TEMPLATE_ID_FIELD_NUMBER: _ClassVar[int]
+    mcp_template_id: str
+    def __init__(self, mcp_template_id: _Optional[str] = ...) -> None: ...
+
+class GetMcpTemplateResponse(_message.Message):
+    __slots__ = ("mcp_template",)
+    MCP_TEMPLATE_FIELD_NUMBER: _ClassVar[int]
+    mcp_template: MCPTemplate
+    def __init__(self, mcp_template: _Optional[_Union[MCPTemplate, _Mapping]] = ...) -> None: ...
+
+class McpInstance(_message.Message):
+    __slots__ = (
+        "id",
+        "name",
+        "type",
+        "args",
+        "env_names",
+        "tools",
+        "image_uri",
+        "status",
+        "activated_tools",
+        "workflow_id",
+    )
+    ID_FIELD_NUMBER: _ClassVar[int]
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    TYPE_FIELD_NUMBER: _ClassVar[int]
+    ARGS_FIELD_NUMBER: _ClassVar[int]
+    ENV_NAMES_FIELD_NUMBER: _ClassVar[int]
+    TOOLS_FIELD_NUMBER: _ClassVar[int]
+    IMAGE_URI_FIELD_NUMBER: _ClassVar[int]
+    STATUS_FIELD_NUMBER: _ClassVar[int]
+    ACTIVATED_TOOLS_FIELD_NUMBER: _ClassVar[int]
+    WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
+    id: str
+    name: str
+    type: str
+    args: _containers.RepeatedScalarFieldContainer[str]
+    env_names: _containers.RepeatedScalarFieldContainer[str]
+    tools: str
+    image_uri: str
+    status: str
+    activated_tools: _containers.RepeatedScalarFieldContainer[str]
+    workflow_id: str
+    def __init__(
+        self,
+        id: _Optional[str] = ...,
+        name: _Optional[str] = ...,
+        type: _Optional[str] = ...,
+        args: _Optional[_Iterable[str]] = ...,
+        env_names: _Optional[_Iterable[str]] = ...,
+        tools: _Optional[str] = ...,
+        image_uri: _Optional[str] = ...,
+        status: _Optional[str] = ...,
+        activated_tools: _Optional[_Iterable[str]] = ...,
+        workflow_id: _Optional[str] = ...,
+    ) -> None: ...
+
+class ListMcpInstancesRequest(_message.Message):
+    __slots__ = ("workflow_id",)
+    WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
+    workflow_id: str
+    def __init__(self, workflow_id: _Optional[str] = ...) -> None: ...
+
+class ListMcpInstancesResponse(_message.Message):
+    __slots__ = ("mcp_instances",)
+    MCP_INSTANCES_FIELD_NUMBER: _ClassVar[int]
+    mcp_instances: _containers.RepeatedCompositeFieldContainer[McpInstance]
+    def __init__(self, mcp_instances: _Optional[_Iterable[_Union[McpInstance, _Mapping]]] = ...) -> None: ...
+
+class GetMcpInstanceRequest(_message.Message):
+    __slots__ = ("mcp_instance_id",)
+    MCP_INSTANCE_ID_FIELD_NUMBER: _ClassVar[int]
+    mcp_instance_id: str
+    def __init__(self, mcp_instance_id: _Optional[str] = ...) -> None: ...
+
+class GetMcpInstanceResponse(_message.Message):
+    __slots__ = ("mcp_instance",)
+    MCP_INSTANCE_FIELD_NUMBER: _ClassVar[int]
+    mcp_instance: McpInstance
+    def __init__(self, mcp_instance: _Optional[_Union[McpInstance, _Mapping]] = ...) -> None: ...
+
+class CreateMcpInstanceRequest(_message.Message):
+    __slots__ = ("workflow_id", "name", "mcp_template_id", "activated_tools")
+    WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    MCP_TEMPLATE_ID_FIELD_NUMBER: _ClassVar[int]
+    ACTIVATED_TOOLS_FIELD_NUMBER: _ClassVar[int]
+    workflow_id: str
+    name: str
+    mcp_template_id: str
+    activated_tools: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(
+        self,
+        workflow_id: _Optional[str] = ...,
+        name: _Optional[str] = ...,
+        mcp_template_id: _Optional[str] = ...,
+        activated_tools: _Optional[_Iterable[str]] = ...,
+    ) -> None: ...
+
+class CreateMcpInstanceResponse(_message.Message):
+    __slots__ = ("mcp_instance_name", "mcp_instance_id")
+    MCP_INSTANCE_NAME_FIELD_NUMBER: _ClassVar[int]
+    MCP_INSTANCE_ID_FIELD_NUMBER: _ClassVar[int]
+    mcp_instance_name: str
+    mcp_instance_id: str
+    def __init__(self, mcp_instance_name: _Optional[str] = ..., mcp_instance_id: _Optional[str] = ...) -> None: ...
+
+class UpdateMcpInstanceRequest(_message.Message):
+    __slots__ = ("mcp_instance_id", "name", "tmp_mcp_image_path", "activated_tools")
+    MCP_INSTANCE_ID_FIELD_NUMBER: _ClassVar[int]
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    TMP_MCP_IMAGE_PATH_FIELD_NUMBER: _ClassVar[int]
+    ACTIVATED_TOOLS_FIELD_NUMBER: _ClassVar[int]
+    mcp_instance_id: str
+    name: str
+    tmp_mcp_image_path: str
+    activated_tools: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(
+        self,
+        mcp_instance_id: _Optional[str] = ...,
+        name: _Optional[str] = ...,
+        tmp_mcp_image_path: _Optional[str] = ...,
+        activated_tools: _Optional[_Iterable[str]] = ...,
+    ) -> None: ...
+
+class UpdateMcpInstanceResponse(_message.Message):
+    __slots__ = ("mcp_instance_id",)
+    MCP_INSTANCE_ID_FIELD_NUMBER: _ClassVar[int]
+    mcp_instance_id: str
+    def __init__(self, mcp_instance_id: _Optional[str] = ...) -> None: ...
+
+class RemoveMcpInstanceRequest(_message.Message):
+    __slots__ = ("mcp_instance_id",)
+    MCP_INSTANCE_ID_FIELD_NUMBER: _ClassVar[int]
+    mcp_instance_id: str
+    def __init__(self, mcp_instance_id: _Optional[str] = ...) -> None: ...
+
+class RemoveMcpInstanceResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
 class ListAgentsRequest(_message.Message):
     __slots__ = ("workflow_id",)
     WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
@@ -464,6 +720,7 @@ class AddAgentRequest(_message.Message):
         "name",
         "llm_provider_model_id",
         "tools_id",
+        "mcp_instance_ids",
         "crew_ai_agent_metadata",
         "template_id",
         "workflow_id",
@@ -473,6 +730,7 @@ class AddAgentRequest(_message.Message):
     NAME_FIELD_NUMBER: _ClassVar[int]
     LLM_PROVIDER_MODEL_ID_FIELD_NUMBER: _ClassVar[int]
     TOOLS_ID_FIELD_NUMBER: _ClassVar[int]
+    MCP_INSTANCE_IDS_FIELD_NUMBER: _ClassVar[int]
     CREW_AI_AGENT_METADATA_FIELD_NUMBER: _ClassVar[int]
     TEMPLATE_ID_FIELD_NUMBER: _ClassVar[int]
     WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
@@ -481,6 +739,7 @@ class AddAgentRequest(_message.Message):
     name: str
     llm_provider_model_id: str
     tools_id: _containers.RepeatedScalarFieldContainer[str]
+    mcp_instance_ids: _containers.RepeatedScalarFieldContainer[str]
     crew_ai_agent_metadata: CrewAIAgentMetadata
     template_id: str
     workflow_id: str
@@ -491,6 +750,7 @@ class AddAgentRequest(_message.Message):
         name: _Optional[str] = ...,
         llm_provider_model_id: _Optional[str] = ...,
         tools_id: _Optional[_Iterable[str]] = ...,
+        mcp_instance_ids: _Optional[_Iterable[str]] = ...,
         crew_ai_agent_metadata: _Optional[_Union[CrewAIAgentMetadata, _Mapping]] = ...,
         template_id: _Optional[str] = ...,
         workflow_id: _Optional[str] = ...,
@@ -510,6 +770,7 @@ class UpdateAgentRequest(_message.Message):
         "name",
         "llm_provider_model_id",
         "tools_id",
+        "mcp_instance_ids",
         "crew_ai_agent_metadata",
         "tmp_agent_image_path",
         "tool_template_ids",
@@ -518,6 +779,7 @@ class UpdateAgentRequest(_message.Message):
     NAME_FIELD_NUMBER: _ClassVar[int]
     LLM_PROVIDER_MODEL_ID_FIELD_NUMBER: _ClassVar[int]
     TOOLS_ID_FIELD_NUMBER: _ClassVar[int]
+    MCP_INSTANCE_IDS_FIELD_NUMBER: _ClassVar[int]
     CREW_AI_AGENT_METADATA_FIELD_NUMBER: _ClassVar[int]
     TMP_AGENT_IMAGE_PATH_FIELD_NUMBER: _ClassVar[int]
     TOOL_TEMPLATE_IDS_FIELD_NUMBER: _ClassVar[int]
@@ -525,6 +787,7 @@ class UpdateAgentRequest(_message.Message):
     name: str
     llm_provider_model_id: str
     tools_id: _containers.RepeatedScalarFieldContainer[str]
+    mcp_instance_ids: _containers.RepeatedScalarFieldContainer[str]
     crew_ai_agent_metadata: CrewAIAgentMetadata
     tmp_agent_image_path: str
     tool_template_ids: _containers.RepeatedScalarFieldContainer[str]
@@ -534,6 +797,7 @@ class UpdateAgentRequest(_message.Message):
         name: _Optional[str] = ...,
         llm_provider_model_id: _Optional[str] = ...,
         tools_id: _Optional[_Iterable[str]] = ...,
+        mcp_instance_ids: _Optional[_Iterable[str]] = ...,
         crew_ai_agent_metadata: _Optional[_Union[CrewAIAgentMetadata, _Mapping]] = ...,
         tmp_agent_image_path: _Optional[str] = ...,
         tool_template_ids: _Optional[_Iterable[str]] = ...,
@@ -559,6 +823,7 @@ class AgentMetadata(_message.Message):
         "name",
         "llm_provider_model_id",
         "tools_id",
+        "mcp_instance_ids",
         "crew_ai_agent_metadata",
         "agent_image_uri",
         "is_valid",
@@ -568,6 +833,7 @@ class AgentMetadata(_message.Message):
     NAME_FIELD_NUMBER: _ClassVar[int]
     LLM_PROVIDER_MODEL_ID_FIELD_NUMBER: _ClassVar[int]
     TOOLS_ID_FIELD_NUMBER: _ClassVar[int]
+    MCP_INSTANCE_IDS_FIELD_NUMBER: _ClassVar[int]
     CREW_AI_AGENT_METADATA_FIELD_NUMBER: _ClassVar[int]
     AGENT_IMAGE_URI_FIELD_NUMBER: _ClassVar[int]
     IS_VALID_FIELD_NUMBER: _ClassVar[int]
@@ -576,6 +842,7 @@ class AgentMetadata(_message.Message):
     name: str
     llm_provider_model_id: str
     tools_id: _containers.RepeatedScalarFieldContainer[str]
+    mcp_instance_ids: _containers.RepeatedScalarFieldContainer[str]
     crew_ai_agent_metadata: CrewAIAgentMetadata
     agent_image_uri: str
     is_valid: bool
@@ -586,6 +853,7 @@ class AgentMetadata(_message.Message):
         name: _Optional[str] = ...,
         llm_provider_model_id: _Optional[str] = ...,
         tools_id: _Optional[_Iterable[str]] = ...,
+        mcp_instance_ids: _Optional[_Iterable[str]] = ...,
         crew_ai_agent_metadata: _Optional[_Union[CrewAIAgentMetadata, _Mapping]] = ...,
         agent_image_uri: _Optional[str] = ...,
         is_valid: bool = ...,
@@ -728,8 +996,22 @@ class TestWorkflowToolUserParameters(_message.Message):
     parameters: _containers.ScalarMap[str, str]
     def __init__(self, parameters: _Optional[_Mapping[str, str]] = ...) -> None: ...
 
+class TestWorkflowMCPInstanceEnvVars(_message.Message):
+    __slots__ = ("env_vars",)
+    class EnvVarsEntry(_message.Message):
+        __slots__ = ("key", "value")
+        KEY_FIELD_NUMBER: _ClassVar[int]
+        VALUE_FIELD_NUMBER: _ClassVar[int]
+        key: str
+        value: str
+        def __init__(self, key: _Optional[str] = ..., value: _Optional[str] = ...) -> None: ...
+
+    ENV_VARS_FIELD_NUMBER: _ClassVar[int]
+    env_vars: _containers.ScalarMap[str, str]
+    def __init__(self, env_vars: _Optional[_Mapping[str, str]] = ...) -> None: ...
+
 class TestWorkflowRequest(_message.Message):
-    __slots__ = ("workflow_id", "inputs", "tool_user_parameters", "generation_config")
+    __slots__ = ("workflow_id", "inputs", "tool_user_parameters", "mcp_instance_env_vars", "generation_config")
     class InputsEntry(_message.Message):
         __slots__ = ("key", "value")
         KEY_FIELD_NUMBER: _ClassVar[int]
@@ -748,19 +1030,32 @@ class TestWorkflowRequest(_message.Message):
             self, key: _Optional[str] = ..., value: _Optional[_Union[TestWorkflowToolUserParameters, _Mapping]] = ...
         ) -> None: ...
 
+    class McpInstanceEnvVarsEntry(_message.Message):
+        __slots__ = ("key", "value")
+        KEY_FIELD_NUMBER: _ClassVar[int]
+        VALUE_FIELD_NUMBER: _ClassVar[int]
+        key: str
+        value: TestWorkflowMCPInstanceEnvVars
+        def __init__(
+            self, key: _Optional[str] = ..., value: _Optional[_Union[TestWorkflowMCPInstanceEnvVars, _Mapping]] = ...
+        ) -> None: ...
+
     WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
     INPUTS_FIELD_NUMBER: _ClassVar[int]
     TOOL_USER_PARAMETERS_FIELD_NUMBER: _ClassVar[int]
+    MCP_INSTANCE_ENV_VARS_FIELD_NUMBER: _ClassVar[int]
     GENERATION_CONFIG_FIELD_NUMBER: _ClassVar[int]
     workflow_id: str
     inputs: _containers.ScalarMap[str, str]
     tool_user_parameters: _containers.MessageMap[str, TestWorkflowToolUserParameters]
+    mcp_instance_env_vars: _containers.MessageMap[str, TestWorkflowMCPInstanceEnvVars]
     generation_config: str
     def __init__(
         self,
         workflow_id: _Optional[str] = ...,
         inputs: _Optional[_Mapping[str, str]] = ...,
         tool_user_parameters: _Optional[_Mapping[str, TestWorkflowToolUserParameters]] = ...,
+        mcp_instance_env_vars: _Optional[_Mapping[str, TestWorkflowMCPInstanceEnvVars]] = ...,
         generation_config: _Optional[str] = ...,
     ) -> None: ...
 
@@ -777,6 +1072,7 @@ class DeployWorkflowRequest(_message.Message):
         "workflow_id",
         "env_variable_overrides",
         "tool_user_parameters",
+        "mcp_instance_env_vars",
         "bypass_authentication",
         "generation_config",
     )
@@ -798,14 +1094,26 @@ class DeployWorkflowRequest(_message.Message):
             self, key: _Optional[str] = ..., value: _Optional[_Union[TestWorkflowToolUserParameters, _Mapping]] = ...
         ) -> None: ...
 
+    class McpInstanceEnvVarsEntry(_message.Message):
+        __slots__ = ("key", "value")
+        KEY_FIELD_NUMBER: _ClassVar[int]
+        VALUE_FIELD_NUMBER: _ClassVar[int]
+        key: str
+        value: TestWorkflowMCPInstanceEnvVars
+        def __init__(
+            self, key: _Optional[str] = ..., value: _Optional[_Union[TestWorkflowMCPInstanceEnvVars, _Mapping]] = ...
+        ) -> None: ...
+
     WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
     ENV_VARIABLE_OVERRIDES_FIELD_NUMBER: _ClassVar[int]
     TOOL_USER_PARAMETERS_FIELD_NUMBER: _ClassVar[int]
+    MCP_INSTANCE_ENV_VARS_FIELD_NUMBER: _ClassVar[int]
     BYPASS_AUTHENTICATION_FIELD_NUMBER: _ClassVar[int]
     GENERATION_CONFIG_FIELD_NUMBER: _ClassVar[int]
     workflow_id: str
     env_variable_overrides: _containers.ScalarMap[str, str]
     tool_user_parameters: _containers.MessageMap[str, TestWorkflowToolUserParameters]
+    mcp_instance_env_vars: _containers.MessageMap[str, TestWorkflowMCPInstanceEnvVars]
     bypass_authentication: bool
     generation_config: str
     def __init__(
@@ -813,6 +1121,7 @@ class DeployWorkflowRequest(_message.Message):
         workflow_id: _Optional[str] = ...,
         env_variable_overrides: _Optional[_Mapping[str, str]] = ...,
         tool_user_parameters: _Optional[_Mapping[str, TestWorkflowToolUserParameters]] = ...,
+        mcp_instance_env_vars: _Optional[_Mapping[str, TestWorkflowMCPInstanceEnvVars]] = ...,
         bypass_authentication: bool = ...,
         generation_config: _Optional[str] = ...,
     ) -> None: ...

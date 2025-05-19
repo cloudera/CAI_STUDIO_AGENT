@@ -1,16 +1,13 @@
-import React, { useState } from 'react';
-import { Button, Layout, List, Typography, Popconfirm, Input, Divider, Space, Tooltip } from 'antd';
-import { EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
-import { useRouter } from 'next/navigation'; // Use Next.js router
-import { ToolTemplate } from '@/studio/proto/agent_studio';
-import { useImageAssetsData } from '@/app/lib/hooks/useAssetData';
+import React from 'react';
+import { Layout, List, Typography, Popconfirm, Button, Divider, Tooltip } from 'antd';
+import { DeleteOutlined, CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import { MCPTemplate } from '@/studio/proto/agent_studio';
+import { useRouter } from 'next/navigation';
 
 const { Text } = Typography;
-const { Search } = Input;
 
-interface ToolsListProps {
-  tools: ToolTemplate[];
-  editExistingTemplate: (toolId: string) => void;
+interface MCPTemplateListProps {
+  mcpTemplates: MCPTemplate[];
   deleteExistingTemplate: (templateId: string) => void;
 }
 
@@ -18,20 +15,21 @@ const truncateText = (text: string, maxLength: number) => {
   return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
 };
 
-const ToolTemplateList: React.FC<ToolsListProps> = ({
-  tools,
-  editExistingTemplate,
-  deleteExistingTemplate,
-}) => {
-  const [searchTerm, setSearchTerm] = useState<string>('');
+const getStatusIcon = (status: string) => {
+  switch (status) {
+    case 'VALID':
+      return <CheckCircleOutlined style={{ color: '#52c41a' }} />;
+    case 'VALIDATING':
+      return <ClockCircleOutlined style={{ color: '#faad14' }} />;
+    case 'VALIDATION_FAILED':
+      return <CloseCircleOutlined style={{ color: '#f5222d' }} />;
+    default:
+      return <ClockCircleOutlined style={{ color: '#faad14' }} />;
+  }
+};
+
+const MCPTemplateList: React.FC<MCPTemplateListProps> = ({ mcpTemplates, deleteExistingTemplate }) => {
   const router = useRouter();
-
-  const { imageData } = useImageAssetsData(tools.map((tool) => tool.tool_image_uri));
-
-  // Filter tools based on the search term
-  const filteredTools = tools.filter((tool) =>
-    tool.name.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
 
   return (
     <Layout
@@ -44,21 +42,9 @@ const ToolTemplateList: React.FC<ToolsListProps> = ({
         background: 'transparent',
       }}
     >
-      {/* Search Bar */}
-      <Space direction="vertical" style={{ width: '100%', marginBottom: 16 }}>
-        <Search
-          placeholder="Search tools by name"
-          allowClear
-          enterButton={<SearchOutlined />}
-          onSearch={(value) => setSearchTerm(value)}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </Space>
-
-      {/* Tool List */}
       <List
         grid={{ gutter: 16 }}
-        dataSource={filteredTools}
+        dataSource={mcpTemplates}
         renderItem={(item) => (
           <List.Item>
             <Layout
@@ -76,7 +62,7 @@ const ToolTemplateList: React.FC<ToolsListProps> = ({
                 transition: 'transform 0.2s, box-shadow 0.2s',
                 boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
               }}
-              onClick={() => router.push(`/tools/view/${item.id}`)} // Navigate to tool details page
+              onClick={() => router.push(`/mcp/view/${item.id}`)} // Navigate to MCP View page
               onMouseEnter={(e: React.MouseEvent<HTMLElement>) => {
                 e.currentTarget.style.transform = 'scale(1.03)';
                 e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
@@ -97,33 +83,22 @@ const ToolTemplateList: React.FC<ToolsListProps> = ({
                   paddingRight: '24px',
                 }}
               >
-                {/* Image */}
-                {item.tool_image_uri && imageData[item.tool_image_uri] && (
-                  <div
-                    style={{
-                      width: '24px',
-                      height: '24px',
-                      borderRadius: '50%',
-                      background: '#f1f1f1', // Grey background
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginRight: '16px',
-                    }}
-                  >
-                    {/* Icon - Only render if URI exists and image data is available */}
-                    <img
-                      src={imageData[item.tool_image_uri]}
-                      alt={item.name}
-                      style={{
-                        width: '16px',
-                        height: '16px',
-                        objectFit: 'cover',
-                        borderRadius: '2px', // Optional, based on design preference
-                      }}
-                    />
-                  </div>
-                )}
+                {/* Status Icon */}
+                <div
+                  style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    background: '#f1f1f1',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: '16px',
+                  }}
+                >
+                  {getStatusIcon(item.status)}
+                </div>
+                
                 {/* Text */}
                 <div style={{ flex: 1, maxWidth: '220px' }}>
                   <Tooltip title={item.name}>
@@ -140,7 +115,7 @@ const ToolTemplateList: React.FC<ToolsListProps> = ({
                       {truncateText(item.name, 50)}
                     </Text>
                   </Tooltip>
-                  <Tooltip title={item.tool_description || 'N/A'}>
+                  <Tooltip title={item.type || 'N/A'}>
                     <Text
                       style={{
                         paddingTop: '4px',
@@ -153,7 +128,7 @@ const ToolTemplateList: React.FC<ToolsListProps> = ({
                         textOverflow: 'ellipsis',
                       }}
                     >
-                      {truncateText(item.tool_description || 'N/A', 100)}
+                      {truncateText(item.type || 'N/A', 100)}
                     </Text>
                   </Tooltip>
                 </div>
@@ -165,32 +140,13 @@ const ToolTemplateList: React.FC<ToolsListProps> = ({
                   flexDirection: 'row',
                   flexGrow: 0,
                   background: 'transparent',
-                  justifyContent: 'space-around',
+                  justifyContent: 'center',
                   alignItems: 'center',
                 }}
               >
-                {/* Edit Button */}
-                <Tooltip
-                  title={item.pre_built ? 'Prepackaged tools cannot be edited' : 'Edit Tool'}
-                >
-                  <Button
-                    style={{ border: 'none' }}
-                    icon={<EditOutlined style={{ opacity: 0.45 }} />}
-                    disabled={item.pre_built}
-                    onClick={(e) => {
-                      e.stopPropagation(); // Prevent card click event
-                      editExistingTemplate(item.id);
-                    }}
-                  />
-                </Tooltip>
-                <Divider style={{ flexGrow: 0, margin: '12px 0px' }} type="vertical" />
                 {/* Delete Button */}
-                <Tooltip
-                  title={item.pre_built ? 'Prepackaged tools cannot be deleted' : 'Delete Tool'}
-                >
+                <Tooltip title="Delete MCP Server">
                   <div>
-                    {' '}
-                    {/* Wrap in div so tooltip works when button disabled */}
                     <Popconfirm
                       title={`Delete ${item.name}?`}
                       description={`Are you sure you'd like to delete ${item.name}?`}
@@ -198,16 +154,15 @@ const ToolTemplateList: React.FC<ToolsListProps> = ({
                       okText="Confirm"
                       cancelText="Cancel"
                       onConfirm={(e) => {
-                        e?.stopPropagation(); // Prevent card click event
+                        e?.stopPropagation();
                         deleteExistingTemplate(item.id);
                       }}
-                      onCancel={(e) => e?.stopPropagation()} // Prevent card click event
+                      onCancel={(e) => e?.stopPropagation()}
                     >
                       <Button
                         style={{ border: 'none' }}
                         icon={<DeleteOutlined style={{ opacity: 0.45 }} />}
-                        disabled={item.pre_built}
-                        onClick={(e) => e.stopPropagation()} // Prevent card click event
+                        onClick={(e) => e.stopPropagation()}
                       />
                     </Popconfirm>
                   </div>
@@ -221,4 +176,4 @@ const ToolTemplateList: React.FC<ToolsListProps> = ({
   );
 };
 
-export default ToolTemplateList;
+export default MCPTemplateList;

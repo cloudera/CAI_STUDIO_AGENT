@@ -1,3 +1,4 @@
+from typing import Optional
 
 from studio.db.model import Base
 
@@ -40,7 +41,7 @@ class AgentStudioDao():
     simplicity and not build the base class yet.
     """
 
-    def __init__(self, engine_url: str = None, echo: bool = False, engine_args: dict = {}):
+    def __init__(self, engine_url: Optional[str] = None, echo: bool = False, engine_args: dict = {}):
         if engine_url is None:
             engine_url = f"sqlite+pysqlite:///{get_sqlite_db_location()}"
 
@@ -72,3 +73,13 @@ class AgentStudioDao():
             raise e
         finally:
             session.close()
+
+def get_dao():
+    return AgentStudioDao(
+        engine_args={
+            "pool_size": 5,
+            "max_overflow": 10,
+            "pool_timeout": 30,
+            "pool_recycle": 1800,
+        }
+    )

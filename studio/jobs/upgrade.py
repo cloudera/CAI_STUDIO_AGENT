@@ -110,7 +110,6 @@ def upgrade_studio(cml: CMLServiceApi = None) -> UpgradeStudioResponse:
     except subprocess.CalledProcessError as e:
         print(f"Error running 'uv run alembic upgrade head': {e}")
 
-
     # Also perform any project default upgrades necessary. Note this will explicitly
     # check to see if an existing project default has already been added to make sure
     # that we are not duplicating project defaults.

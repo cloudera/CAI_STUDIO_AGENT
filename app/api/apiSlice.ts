@@ -12,7 +12,9 @@ export const TagTypes = [
   'TaskTemplate',
   'ToolTemplate',
   'DeployedWorkflow',
-  'WorkflowApp'
+  'WorkflowApp',
+  'MCPTemplate',
+  'MCPInstance'
 ]
 
 export const apiSlice = createApi({

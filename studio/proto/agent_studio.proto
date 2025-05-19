@@ -35,6 +35,20 @@ service AgentStudio {
   rpc UpdateToolTemplate (UpdateToolTemplateRequest) returns (UpdateToolTemplateResponse) {}
   rpc RemoveToolTemplate (RemoveToolTemplateRequest) returns (RemoveToolTemplateResponse) {}
 
+  // MCP template operations
+  rpc ListMcpTemplates (ListMcpTemplatesRequest) returns (ListMcpTemplatesResponse) {}
+  rpc GetMcpTemplate (GetMcpTemplateRequest) returns (GetMcpTemplateResponse) {}
+  rpc AddMcpTemplate (AddMcpTemplateRequest) returns (AddMcpTemplateResponse) {}
+  rpc UpdateMcpTemplate (UpdateMcpTemplateRequest) returns (UpdateMcpTemplateResponse) {}
+  rpc RemoveMcpTemplate (RemoveMcpTemplateRequest) returns (RemoveMcpTemplateResponse) {}
+
+  // MCP instance operations
+  rpc ListMcpInstances (ListMcpInstancesRequest) returns (ListMcpInstancesResponse) {}
+  rpc GetMcpInstance (GetMcpInstanceRequest) returns (GetMcpInstanceResponse) {}
+  rpc CreateMcpInstance (CreateMcpInstanceRequest) returns (CreateMcpInstanceResponse) {}
+  rpc UpdateMcpInstance (UpdateMcpInstanceRequest) returns (UpdateMcpInstanceResponse) {}
+  rpc RemoveMcpInstance (RemoveMcpInstanceRequest) returns (RemoveMcpInstanceResponse) {}
+
   // Tool Instance Operations
   rpc ListToolInstances (ListToolInstancesRequest) returns (ListToolInstancesResponse) {}
   rpc GetToolInstance (GetToolInstanceRequest) returns (GetToolInstanceResponse) {}
@@ -369,6 +383,129 @@ message ToolInstance {
   bool is_venv_tool = 11; // Expanded "venv" tool feature.
 }
 
+message AddMcpTemplateRequest {
+  string name = 1;
+  string type = 2;
+  repeated string args = 3;
+  repeated string env_names = 4;
+  string tmp_mcp_image_path = 5;
+  optional string workflow_template_id = 6;
+}
+
+message AddMcpTemplateResponse {
+  string mcp_template_id = 1;
+}
+
+message UpdateMcpTemplateRequest {
+  string mcp_template_id = 1;
+  string name = 2;
+  string type = 3;
+  repeated string args = 4;
+  repeated string env_names = 5;
+  string tmp_mcp_image_path = 6;
+}
+
+message UpdateMcpTemplateResponse {
+  string mcp_template_id = 1;
+}
+
+message RemoveMcpTemplateRequest {
+  string mcp_template_id = 1;
+}
+
+message RemoveMcpTemplateResponse {
+}
+
+message MCPTemplate {
+  string id = 1;
+  string name = 2;
+  string type = 3;
+  repeated string args = 4;
+  repeated string env_names = 5;
+  string tools = 6; // JSON representation of tools
+  string image_uri = 7;
+  string status = 8; // Status of the MCP
+  optional string workflow_template_id = 9;
+}
+
+message ListMcpTemplatesRequest {}
+
+message ListMcpTemplatesResponse {
+  repeated MCPTemplate mcp_templates = 1;
+}
+
+message GetMcpTemplateRequest {
+  string mcp_template_id = 1;
+}
+
+message GetMcpTemplateResponse {
+  MCPTemplate mcp_template = 1;
+}
+
+message McpInstance {
+  string id = 1;
+  string name = 2;
+  string type = 3;
+  repeated string args = 4;
+  repeated string env_names = 5;
+  string tools = 6; // JSON representation of tools
+  string image_uri = 7;
+  string status = 8; // Status of the MCP
+  repeated string activated_tools = 9; // List of names of tools accessible by the agent. Empty list denotes that all tools are accessible.
+  string workflow_id = 10; // mandatory attach to workflow
+}
+
+message ListMcpInstancesRequest {
+  // Optional workflow id
+  optional string workflow_id = 1;
+}
+
+message ListMcpInstancesResponse {
+  repeated McpInstance mcp_instances = 1;
+}
+
+message GetMcpInstanceRequest {
+  string mcp_instance_id = 1;
+}
+
+message GetMcpInstanceResponse {
+  McpInstance mcp_instance = 1;
+}
+
+message CreateMcpInstanceRequest {
+  // Mandatory workflow id to attach to the MCP instance
+  string workflow_id = 1;
+  // Optional name of the MCP instance
+  string name = 2;
+  // MCP instances are always created from a MCP template
+  string mcp_template_id = 3;
+  // List of tool names accessible to the agent
+  repeated string activated_tools = 4;
+}
+
+message CreateMcpInstanceResponse {
+  string mcp_instance_name = 1;
+  string mcp_instance_id = 2;
+}
+
+message UpdateMcpInstanceRequest {
+  string mcp_instance_id = 1;
+  string name = 2;
+  string tmp_mcp_image_path = 3;
+  repeated string activated_tools = 4;
+}
+
+message UpdateMcpInstanceResponse {
+  string mcp_instance_id = 1;
+}
+
+message RemoveMcpInstanceRequest {
+  string mcp_instance_id = 1;
+}
+
+message RemoveMcpInstanceResponse {
+}
+
 // Agent Messages
 message ListAgentsRequest {
   // Mandatory workflow id
@@ -391,13 +528,14 @@ message AddAgentRequest {
   string name = 1;               // Name of the agent
   string llm_provider_model_id = 2;  // LLM Provider and Model
   repeated string tools_id = 3;     // List of tool IDs
-  CrewAIAgentMetadata crew_ai_agent_metadata = 4; // Crew AI agent metadata 
-  optional string template_id = 5; // OPTIONAL build from template
-  string workflow_id = 6; // mandatory attach to workflow
-  string tmp_agent_image_path = 7; // Image of the agent
+  repeated string mcp_instance_ids = 4; // List of MCP instance IDs
+  CrewAIAgentMetadata crew_ai_agent_metadata = 5; // Crew AI agent metadata 
+  optional string template_id = 6; // OPTIONAL build from template
+  string workflow_id = 7; // mandatory attach to workflow
+  string tmp_agent_image_path = 8; // Image of the agent
 
   // Create tool instances from tool template ids
-  repeated string tool_template_ids = 8;
+  repeated string tool_template_ids = 9;
 }
 
 message AddAgentResponse {
@@ -409,11 +547,12 @@ message UpdateAgentRequest {
   string name = 2;               // Name of the agent
   string llm_provider_model_id = 3;  // LLM Provider and Model
   repeated string tools_id = 4;     // List of tool IDs
-  CrewAIAgentMetadata crew_ai_agent_metadata = 5; // Crew AI agent metadata 
-  string tmp_agent_image_path = 6; // Image of the agent
+  repeated string mcp_instance_ids = 5; // List of MCP instance IDs
+  CrewAIAgentMetadata crew_ai_agent_metadata = 6; // Crew AI agent metadata 
+  string tmp_agent_image_path = 7; // Image of the agent
 
   // Create tool instances from tool template ids
-  repeated string tool_template_ids = 7;
+  repeated string tool_template_ids = 8;
 }
 
 message UpdateAgentResponse {}
@@ -429,10 +568,11 @@ message AgentMetadata {
   string name = 2;               // Name of the agent
   string llm_provider_model_id = 3;  // LLM Provider and Model
   repeated string tools_id = 4;     // List of tool IDs
-  CrewAIAgentMetadata crew_ai_agent_metadata = 5; // Crew AI agent metadata 
-  string agent_image_uri = 6; // Image of the agent
-  bool is_valid = 7;     // Is the activated tool valid based on whether the linked tool & model is still active in the studio.
-  string workflow_id = 8; // mandatory owner workflow
+  repeated string mcp_instance_ids = 5; // List of MCP instance IDs
+  CrewAIAgentMetadata crew_ai_agent_metadata = 6; // Crew AI agent metadata 
+  string agent_image_uri = 7; // Image of the agent
+  bool is_valid = 8;     // Is the activated tool valid based on whether the linked tool & model is still active in the studio.
+  string workflow_id = 9; // mandatory owner workflow
 }
 
 message CrewAIAgentMetadata {
@@ -517,6 +657,10 @@ message TestWorkflowToolUserParameters {
   map<string, string> parameters = 1;
 }
 
+message TestWorkflowMCPInstanceEnvVars {
+  map<string, string> env_vars = 1;
+}
+
 // Messages for testing workflows
 message TestWorkflowRequest {
   // ID of the workflow to test
@@ -527,9 +671,11 @@ message TestWorkflowRequest {
   // where each key is the tool ID, and the value is another map where the 
   // key is the user param and the value is the value of the param.
   map<string, TestWorkflowToolUserParameters> tool_user_parameters = 3;
+
+  map<string, TestWorkflowMCPInstanceEnvVars> mcp_instance_env_vars = 4;
   // Serialized JSON generation config parameters for all LLM calls in this workflow.
   // In the future, users may want to customize temperatures/max_new_tokens for each agent.
-  string generation_config = 4;
+  string generation_config = 5;
 }
 
 message TestWorkflowResponse {
@@ -549,11 +695,13 @@ message DeployWorkflowRequest {
   // where each key is the tool ID, and the value is another map where the 
   // key is the user param and the value is the value of the param.
   map<string, TestWorkflowToolUserParameters> tool_user_parameters = 3;
+
+  map<string, TestWorkflowMCPInstanceEnvVars> mcp_instance_env_vars = 4;
   // Should the workflow application be accesible without authentication from CDP ?
-  bool bypass_authentication = 4;
+  bool bypass_authentication = 5;
   // Serialized JSON generation config parameters for all LLM calls in this workflow.
   // In the future, users may want to customize temperatures/max_new_tokens for each agent.
-  string generation_config = 5;
+  string generation_config = 6;
 }
 
 message DeployWorkflowResponse {

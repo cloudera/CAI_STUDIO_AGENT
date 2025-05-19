@@ -2,7 +2,6 @@
 """Client and server classes corresponding to protobuf-defined services."""
 
 import grpc
-import warnings
 
 from studio.proto import agent_studio_pb2 as studio_dot_proto_dot_agent__studio__pb2
 
@@ -118,6 +117,66 @@ class AgentStudioStub(object):
             "/agent_studio.AgentStudio/RemoveToolTemplate",
             request_serializer=studio_dot_proto_dot_agent__studio__pb2.RemoveToolTemplateRequest.SerializeToString,
             response_deserializer=studio_dot_proto_dot_agent__studio__pb2.RemoveToolTemplateResponse.FromString,
+            _registered_method=True,
+        )
+        self.ListMcpTemplates = channel.unary_unary(
+            "/agent_studio.AgentStudio/ListMcpTemplates",
+            request_serializer=studio_dot_proto_dot_agent__studio__pb2.ListMcpTemplatesRequest.SerializeToString,
+            response_deserializer=studio_dot_proto_dot_agent__studio__pb2.ListMcpTemplatesResponse.FromString,
+            _registered_method=True,
+        )
+        self.GetMcpTemplate = channel.unary_unary(
+            "/agent_studio.AgentStudio/GetMcpTemplate",
+            request_serializer=studio_dot_proto_dot_agent__studio__pb2.GetMcpTemplateRequest.SerializeToString,
+            response_deserializer=studio_dot_proto_dot_agent__studio__pb2.GetMcpTemplateResponse.FromString,
+            _registered_method=True,
+        )
+        self.AddMcpTemplate = channel.unary_unary(
+            "/agent_studio.AgentStudio/AddMcpTemplate",
+            request_serializer=studio_dot_proto_dot_agent__studio__pb2.AddMcpTemplateRequest.SerializeToString,
+            response_deserializer=studio_dot_proto_dot_agent__studio__pb2.AddMcpTemplateResponse.FromString,
+            _registered_method=True,
+        )
+        self.UpdateMcpTemplate = channel.unary_unary(
+            "/agent_studio.AgentStudio/UpdateMcpTemplate",
+            request_serializer=studio_dot_proto_dot_agent__studio__pb2.UpdateMcpTemplateRequest.SerializeToString,
+            response_deserializer=studio_dot_proto_dot_agent__studio__pb2.UpdateMcpTemplateResponse.FromString,
+            _registered_method=True,
+        )
+        self.RemoveMcpTemplate = channel.unary_unary(
+            "/agent_studio.AgentStudio/RemoveMcpTemplate",
+            request_serializer=studio_dot_proto_dot_agent__studio__pb2.RemoveMcpTemplateRequest.SerializeToString,
+            response_deserializer=studio_dot_proto_dot_agent__studio__pb2.RemoveMcpTemplateResponse.FromString,
+            _registered_method=True,
+        )
+        self.ListMcpInstances = channel.unary_unary(
+            "/agent_studio.AgentStudio/ListMcpInstances",
+            request_serializer=studio_dot_proto_dot_agent__studio__pb2.ListMcpInstancesRequest.SerializeToString,
+            response_deserializer=studio_dot_proto_dot_agent__studio__pb2.ListMcpInstancesResponse.FromString,
+            _registered_method=True,
+        )
+        self.GetMcpInstance = channel.unary_unary(
+            "/agent_studio.AgentStudio/GetMcpInstance",
+            request_serializer=studio_dot_proto_dot_agent__studio__pb2.GetMcpInstanceRequest.SerializeToString,
+            response_deserializer=studio_dot_proto_dot_agent__studio__pb2.GetMcpInstanceResponse.FromString,
+            _registered_method=True,
+        )
+        self.CreateMcpInstance = channel.unary_unary(
+            "/agent_studio.AgentStudio/CreateMcpInstance",
+            request_serializer=studio_dot_proto_dot_agent__studio__pb2.CreateMcpInstanceRequest.SerializeToString,
+            response_deserializer=studio_dot_proto_dot_agent__studio__pb2.CreateMcpInstanceResponse.FromString,
+            _registered_method=True,
+        )
+        self.UpdateMcpInstance = channel.unary_unary(
+            "/agent_studio.AgentStudio/UpdateMcpInstance",
+            request_serializer=studio_dot_proto_dot_agent__studio__pb2.UpdateMcpInstanceRequest.SerializeToString,
+            response_deserializer=studio_dot_proto_dot_agent__studio__pb2.UpdateMcpInstanceResponse.FromString,
+            _registered_method=True,
+        )
+        self.RemoveMcpInstance = channel.unary_unary(
+            "/agent_studio.AgentStudio/RemoveMcpInstance",
+            request_serializer=studio_dot_proto_dot_agent__studio__pb2.RemoveMcpInstanceRequest.SerializeToString,
+            response_deserializer=studio_dot_proto_dot_agent__studio__pb2.RemoveMcpInstanceResponse.FromString,
             _registered_method=True,
         )
         self.ListToolInstances = channel.unary_unary(
@@ -509,6 +568,66 @@ class AgentStudioServicer(object):
         context.set_details("Method not implemented!")
         raise NotImplementedError("Method not implemented!")
 
+    def ListMcpTemplates(self, request, context):
+        """MCP template operations"""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
+    def GetMcpTemplate(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
+    def AddMcpTemplate(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
+    def UpdateMcpTemplate(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
+    def RemoveMcpTemplate(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
+    def ListMcpInstances(self, request, context):
+        """MCP instance operations"""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
+    def GetMcpInstance(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
+    def CreateMcpInstance(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
+    def UpdateMcpInstance(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
+    def RemoveMcpInstance(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
     def ListToolInstances(self, request, context):
         """Tool Instance Operations"""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -876,6 +995,56 @@ def add_AgentStudioServicer_to_server(servicer, server):
             servicer.RemoveToolTemplate,
             request_deserializer=studio_dot_proto_dot_agent__studio__pb2.RemoveToolTemplateRequest.FromString,
             response_serializer=studio_dot_proto_dot_agent__studio__pb2.RemoveToolTemplateResponse.SerializeToString,
+        ),
+        "ListMcpTemplates": grpc.unary_unary_rpc_method_handler(
+            servicer.ListMcpTemplates,
+            request_deserializer=studio_dot_proto_dot_agent__studio__pb2.ListMcpTemplatesRequest.FromString,
+            response_serializer=studio_dot_proto_dot_agent__studio__pb2.ListMcpTemplatesResponse.SerializeToString,
+        ),
+        "GetMcpTemplate": grpc.unary_unary_rpc_method_handler(
+            servicer.GetMcpTemplate,
+            request_deserializer=studio_dot_proto_dot_agent__studio__pb2.GetMcpTemplateRequest.FromString,
+            response_serializer=studio_dot_proto_dot_agent__studio__pb2.GetMcpTemplateResponse.SerializeToString,
+        ),
+        "AddMcpTemplate": grpc.unary_unary_rpc_method_handler(
+            servicer.AddMcpTemplate,
+            request_deserializer=studio_dot_proto_dot_agent__studio__pb2.AddMcpTemplateRequest.FromString,
+            response_serializer=studio_dot_proto_dot_agent__studio__pb2.AddMcpTemplateResponse.SerializeToString,
+        ),
+        "UpdateMcpTemplate": grpc.unary_unary_rpc_method_handler(
+            servicer.UpdateMcpTemplate,
+            request_deserializer=studio_dot_proto_dot_agent__studio__pb2.UpdateMcpTemplateRequest.FromString,
+            response_serializer=studio_dot_proto_dot_agent__studio__pb2.UpdateMcpTemplateResponse.SerializeToString,
+        ),
+        "RemoveMcpTemplate": grpc.unary_unary_rpc_method_handler(
+            servicer.RemoveMcpTemplate,
+            request_deserializer=studio_dot_proto_dot_agent__studio__pb2.RemoveMcpTemplateRequest.FromString,
+            response_serializer=studio_dot_proto_dot_agent__studio__pb2.RemoveMcpTemplateResponse.SerializeToString,
+        ),
+        "ListMcpInstances": grpc.unary_unary_rpc_method_handler(
+            servicer.ListMcpInstances,
+            request_deserializer=studio_dot_proto_dot_agent__studio__pb2.ListMcpInstancesRequest.FromString,
+            response_serializer=studio_dot_proto_dot_agent__studio__pb2.ListMcpInstancesResponse.SerializeToString,
+        ),
+        "GetMcpInstance": grpc.unary_unary_rpc_method_handler(
+            servicer.GetMcpInstance,
+            request_deserializer=studio_dot_proto_dot_agent__studio__pb2.GetMcpInstanceRequest.FromString,
+            response_serializer=studio_dot_proto_dot_agent__studio__pb2.GetMcpInstanceResponse.SerializeToString,
+        ),
+        "CreateMcpInstance": grpc.unary_unary_rpc_method_handler(
+            servicer.CreateMcpInstance,
+            request_deserializer=studio_dot_proto_dot_agent__studio__pb2.CreateMcpInstanceRequest.FromString,
+            response_serializer=studio_dot_proto_dot_agent__studio__pb2.CreateMcpInstanceResponse.SerializeToString,
+        ),
+        "UpdateMcpInstance": grpc.unary_unary_rpc_method_handler(
+            servicer.UpdateMcpInstance,
+            request_deserializer=studio_dot_proto_dot_agent__studio__pb2.UpdateMcpInstanceRequest.FromString,
+            response_serializer=studio_dot_proto_dot_agent__studio__pb2.UpdateMcpInstanceResponse.SerializeToString,
+        ),
+        "RemoveMcpInstance": grpc.unary_unary_rpc_method_handler(
+            servicer.RemoveMcpInstance,
+            request_deserializer=studio_dot_proto_dot_agent__studio__pb2.RemoveMcpInstanceRequest.FromString,
+            response_serializer=studio_dot_proto_dot_agent__studio__pb2.RemoveMcpInstanceResponse.SerializeToString,
         ),
         "ListToolInstances": grpc.unary_unary_rpc_method_handler(
             servicer.ListToolInstances,
@@ -1522,6 +1691,306 @@ class AgentStudio(object):
             "/agent_studio.AgentStudio/RemoveToolTemplate",
             studio_dot_proto_dot_agent__studio__pb2.RemoveToolTemplateRequest.SerializeToString,
             studio_dot_proto_dot_agent__studio__pb2.RemoveToolTemplateResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def ListMcpTemplates(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/agent_studio.AgentStudio/ListMcpTemplates",
+            studio_dot_proto_dot_agent__studio__pb2.ListMcpTemplatesRequest.SerializeToString,
+            studio_dot_proto_dot_agent__studio__pb2.ListMcpTemplatesResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def GetMcpTemplate(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/agent_studio.AgentStudio/GetMcpTemplate",
+            studio_dot_proto_dot_agent__studio__pb2.GetMcpTemplateRequest.SerializeToString,
+            studio_dot_proto_dot_agent__studio__pb2.GetMcpTemplateResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def AddMcpTemplate(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/agent_studio.AgentStudio/AddMcpTemplate",
+            studio_dot_proto_dot_agent__studio__pb2.AddMcpTemplateRequest.SerializeToString,
+            studio_dot_proto_dot_agent__studio__pb2.AddMcpTemplateResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def UpdateMcpTemplate(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/agent_studio.AgentStudio/UpdateMcpTemplate",
+            studio_dot_proto_dot_agent__studio__pb2.UpdateMcpTemplateRequest.SerializeToString,
+            studio_dot_proto_dot_agent__studio__pb2.UpdateMcpTemplateResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def RemoveMcpTemplate(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/agent_studio.AgentStudio/RemoveMcpTemplate",
+            studio_dot_proto_dot_agent__studio__pb2.RemoveMcpTemplateRequest.SerializeToString,
+            studio_dot_proto_dot_agent__studio__pb2.RemoveMcpTemplateResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def ListMcpInstances(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/agent_studio.AgentStudio/ListMcpInstances",
+            studio_dot_proto_dot_agent__studio__pb2.ListMcpInstancesRequest.SerializeToString,
+            studio_dot_proto_dot_agent__studio__pb2.ListMcpInstancesResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def GetMcpInstance(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/agent_studio.AgentStudio/GetMcpInstance",
+            studio_dot_proto_dot_agent__studio__pb2.GetMcpInstanceRequest.SerializeToString,
+            studio_dot_proto_dot_agent__studio__pb2.GetMcpInstanceResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def CreateMcpInstance(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/agent_studio.AgentStudio/CreateMcpInstance",
+            studio_dot_proto_dot_agent__studio__pb2.CreateMcpInstanceRequest.SerializeToString,
+            studio_dot_proto_dot_agent__studio__pb2.CreateMcpInstanceResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def UpdateMcpInstance(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/agent_studio.AgentStudio/UpdateMcpInstance",
+            studio_dot_proto_dot_agent__studio__pb2.UpdateMcpInstanceRequest.SerializeToString,
+            studio_dot_proto_dot_agent__studio__pb2.UpdateMcpInstanceResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def RemoveMcpInstance(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/agent_studio.AgentStudio/RemoveMcpInstance",
+            studio_dot_proto_dot_agent__studio__pb2.RemoveMcpInstanceRequest.SerializeToString,
+            studio_dot_proto_dot_agent__studio__pb2.RemoveMcpInstanceResponse.FromString,
             options,
             channel_credentials,
             insecure,

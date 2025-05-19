@@ -1,6 +1,6 @@
 import ast
 import os
-from typing import List, Optional, Dict
+from typing import Optional, Dict
 
 from studio.db.model import ToolInstance
 
@@ -29,7 +29,7 @@ def extract_user_params_from_code(code: str) -> Dict[str, Dict[str, bool]]:
     """
     Extract the user parameters from the wrapper function in the Python code.
     Handles Pydantic BaseModel style parameter definitions.
-    
+
     Returns:
         Dict with format: {
             "param_name": {
@@ -45,7 +45,7 @@ def extract_user_params_from_code(code: str) -> Dict[str, Dict[str, bool]]:
             if isinstance(node, ast.ClassDef) and node.name == "UserParameters":
                 user_parameter_class_node = node
                 break
-        
+
         if user_parameter_class_node is None:
             return {}
 
@@ -54,20 +54,20 @@ def extract_user_params_from_code(code: str) -> Dict[str, Dict[str, bool]]:
         for field in user_parameter_class_node.body:
             if isinstance(field, ast.AnnAssign):
                 param_name = field.target.id
-                
+
                 # Check if type is Optional by looking for Optional[] syntax
                 is_optional = False
                 if isinstance(field.annotation, ast.Subscript):
                     if isinstance(field.annotation.value, ast.Name):
-                        if field.annotation.value.id == 'Optional':
+                        if field.annotation.value.id == "Optional":
                             is_optional = True
-                
+
                 # Also check if there's a default value
                 has_default = field.value is not None
-                
+
                 # Parameter is required if it's not Optional and has no default
                 is_required = not (is_optional or has_default)
-                
+
                 user_params[param_name] = {"required": is_required}
 
         return user_params

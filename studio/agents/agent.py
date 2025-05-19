@@ -9,6 +9,7 @@ from studio.db import model as db_model, DbSession
 from studio.api import *
 from studio.tools.tool_instance import get_tool_instance
 from studio.tools.tool_template import get_tool_template
+from studio.as_mcp.mcp_instances import get_mcp_instance
 from cmlapi import CMLServiceApi
 from studio.workflow.utils import invalidate_workflow
 from studio.proto.utils import is_field_set
@@ -39,6 +40,28 @@ def list_agents(
                     is not None
                 )
 
+                # Validate tools associated with the agent
+                tools_valid = True
+                for tool_id in agent.tool_ids or []:
+                    try:
+                        tool_request = GetToolInstanceRequest(tool_instance_id=tool_id)
+                        tool_response = get_tool_instance(tool_request, cml, dao=None, preexisting_db_session=session)
+                        tool_template_id = tool_response.tool_instance.tool_template_id
+                        tool_template = get_tool_template(
+                            GetToolTemplateRequest(tool_template_id=tool_template_id), cml, dao
+                        ).template
+                        if not tool_template.is_valid:
+                            tools_valid = False
+                            break
+                    except Exception:
+                        tools_valid = False
+                        break
+
+                # Validate MCP instances associated with the agent
+                mcp_instances_valid = True  # TODO: add MCP instance validation logic
+
+                is_valid = is_valid and tools_valid and mcp_instances_valid
+
                 agent_image_uri = ""
                 if agent.agent_image_path:
                     agent_image_uri = os.path.relpath(agent.agent_image_path, consts.DYNAMIC_ASSETS_LOCATION)
@@ -50,6 +73,7 @@ def list_agents(
                         name=agent.name,
                         llm_provider_model_id=agent.llm_provider_model_id,
                         tools_id=agent.tool_ids or [],
+                        mcp_instance_ids=agent.mcp_instance_ids or [],
                         crew_ai_agent_metadata=CrewAIAgentMetadata(
                             role=agent.crew_ai_role,
                             backstory=agent.crew_ai_backstory,
@@ -105,7 +129,10 @@ def get_agent(request: GetAgentRequest, cml: CMLServiceApi = None, dao: AgentStu
                     tools_valid = False
                     break
 
-            is_valid = is_valid and tools_valid
+            # Validate MCP instances associated with the agent
+            mcp_instances_valid = True  # TODO: add MCP instance validation logic
+
+            is_valid = is_valid and tools_valid and mcp_instances_valid
 
             agent_image_uri = ""
             if agent.agent_image_path:
@@ -117,6 +144,7 @@ def get_agent(request: GetAgentRequest, cml: CMLServiceApi = None, dao: AgentStu
                 name=agent.name,
                 llm_provider_model_id=agent.llm_provider_model_id,
                 tools_id=agent.tool_ids or [],
+                mcp_instance_ids=agent.mcp_instance_ids or [],
                 crew_ai_agent_metadata=CrewAIAgentMetadata(
                     role=agent.crew_ai_role,
                     backstory=agent.crew_ai_backstory,
@@ -178,6 +206,7 @@ def _add_agent_from_template(
         name=request.name or agent_template.name,
         llm_provider_model_id=request.llm_provider_model_id,
         tool_ids=tool_instance_ids,
+        mcp_instance_ids=list(),  # TODO: add MCP instance IDs when they are incorporated into the agent template
         crew_ai_role=agent_template.role,
         crew_ai_backstory=agent_template.backstory,
         crew_ai_goal=agent_template.goal,
@@ -243,6 +272,21 @@ def _add_agent_impl(request: AddAgentRequest, cml: CMLServiceApi, session: DbSes
                     print(f"Warning: Unable to validate tool ID '{tool_id}': {str(e)}. Skipping this tool.")
                     continue
 
+        mcp_instance_ids = []
+        if request.mcp_instance_ids:
+            for m_id in list(request.mcp_instance_ids):
+                try:
+                    mcp_response = get_mcp_instance(
+                        GetMcpInstanceRequest(mcp_instance_id=m_id), cml, dao=None, preexisting_db_session=session
+                    )
+                    mcp_instance_ids.append(m_id)
+                except Exception as e:
+                    # log the error but continue processing other MCP instances
+                    print(
+                        f"Warning: Unable to validate MCP instance ID '{m_id}': {str(e)}. Skipping this MCP instance."
+                    )
+                    continue
+
         # Handle agent image
         agent_image_path = ""
         if request.tmp_agent_image_path:
@@ -264,6 +308,7 @@ def _add_agent_impl(request: AddAgentRequest, cml: CMLServiceApi, session: DbSes
             name=request.name,
             llm_provider_model_id=llm_provider_model_id,
             tool_ids=tool_instance_ids,
+            mcp_instance_ids=mcp_instance_ids,
             crew_ai_role=request.crew_ai_agent_metadata.role,
             crew_ai_backstory=request.crew_ai_agent_metadata.backstory,
             crew_ai_goal=request.crew_ai_agent_metadata.goal,
@@ -363,6 +408,21 @@ def _update_agent_impl(request: UpdateAgentRequest, cml: CMLServiceApi, session:
                     print(f"Warning: Unable to validate tool ID '{tool_id}': {str(e)}. Skipping this tool.")
                     continue
             agent.tool_ids = validated_tool_ids
+
+        if request.mcp_instance_ids is not None:
+            validated_mcp_instance_ids = []
+            for m_id in list(request.mcp_instance_ids):
+                try:
+                    mcp_response = get_mcp_instance(
+                        GetMcpInstanceRequest(mcp_instance_id=m_id), cml, dao=None, preexisting_db_session=session
+                    )
+                    validated_mcp_instance_ids.append(m_id)
+                except Exception as e:
+                    print(
+                        f"Warning: Unable to validate MCP instance ID '{m_id}': {str(e)}. Skipping this MCP instance."
+                    )
+                    continue
+            agent.mcp_instance_ids = validated_mcp_instance_ids
 
         # Handle agent image update
         if request.tmp_agent_image_path:

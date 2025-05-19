@@ -178,6 +178,7 @@ const WorkflowNavigation: React.FC<WorkflowNavigationProps> = ({workflowId}) => 
         workflow_id: workflowState.workflowId!,
         env_variable_overrides: {},
         tool_user_parameters: workflowConfiguration?.toolConfigurations || {},
+        mcp_instance_env_vars: {},
         generation_config: JSON.stringify(workflowGenerationConfig),
         bypass_authentication: bypassAuthenticationForDeployedApplication,
       }).unwrap();

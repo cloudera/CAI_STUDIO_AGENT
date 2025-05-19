@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from typing import Dict
 import asyncio
 import os
 import sys
@@ -7,7 +8,7 @@ import traceback
 import requests
 from datetime import datetime
 from opentelemetry.context import get_current
-import subprocess 
+import subprocess
 
 # Ensure UV is available within the runner's env
 try:
@@ -42,13 +43,14 @@ running_workflow = None
 class KickoffPayload(BaseModel):
     workflow_name: str
     collated_input: dict
-    tool_user_params: dict
+    tool_user_params: Dict[str, Dict[str, str]]
+    mcp_instance_env_vars: Dict[str, Dict[str, str]]
     inputs: dict
     events_trace_id: str
 
 
 # Register our handlers. This can occur globally
-# because regardless of the actual workflow definition 
+# because regardless of the actual workflow definition
 # we run, the event handlers can remain the same (since
 # trace ID is written as a contextvar on each async task)
 register_global_handlers()
@@ -83,6 +85,7 @@ def run_workflow_task(payload: KickoffPayload) -> None:
         run_workflow(
             collated_input_obj,
             payload.tool_user_params,
+            payload.mcp_instance_env_vars,
             payload.inputs,
             parent_context,
             payload.events_trace_id,

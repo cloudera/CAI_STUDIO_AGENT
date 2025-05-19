@@ -52,6 +52,11 @@ const StudioTopNav: React.FC = () => {
   };
 
   const getSelectedKey = () => {
+    // Special case for MCP View page
+    if (pathname.startsWith('/mcp')) {
+      return '/tools';
+    }
+
     // Sort by key length in descending order to prioritize longer matches
     const matchedItem = [...menuItems]
       .sort((a, b) => b.key.length - a.key.length)

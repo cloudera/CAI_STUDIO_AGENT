@@ -668,11 +668,12 @@ dependencies = [
     { name = "arize-phoenix" },
     { name = "arize-phoenix-otel" },
     { name = "crewai" },
-    { name = "crewai-tools" },
+    { name = "crewai-tools", extra = ["mcp"] },
     { name = "gql" },
     { name = "grpcio" },
     { name = "grpcio-tools" },
     { name = "kombu" },
+    { name = "mcp" },
     { name = "openinference-instrumentation-crewai" },
     { name = "openinference-instrumentation-litellm" },
     { name = "opentelemetry-api" },
@@ -698,12 +699,14 @@ requires-dist = [
     { name = "alembic", specifier = "==1.15.2" },
     { name = "arize-phoenix", specifier = "==8.20.0" },
     { name = "arize-phoenix-otel", specifier = "==0.9.0" },
-    { name = "crewai", specifier = "==0.108.0" },
-    { name = "crewai-tools", specifier = "==0.38.1" },
+    { name = "crewai", specifier = "==0.119.0" },
+    { name = "crewai-tools", specifier = "==0.45.0" },
+    { name = "crewai-tools", extras = ["mcp"], specifier = "==0.45.0" },
     { name = "gql", specifier = "==3.5.0" },
     { name = "grpcio", specifier = "==1.71.0" },
     { name = "grpcio-tools", specifier = "==1.71.0" },
     { name = "kombu", specifier = "==5.5.2" },
+    { name = "mcp", specifier = "==1.9.0" },
     { name = "openinference-instrumentation-crewai", specifier = "==0.1.7" },
     { name = "openinference-instrumentation-litellm", specifier = "==0.1.14" },
     { name = "opentelemetry-api", specifier = "==1.31.1" },
@@ -831,7 +834,7 @@ toml = [
 
 [[package]]
 name = "crewai"
-version = "0.108.0"
+version = "0.119.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "appdirs" },
@@ -858,14 +861,14 @@ dependencies = [
     { name = "tomli-w" },
     { name = "uv" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/0d/3f/26e81b5c14c0591bd73e3bed4c91d7263c07b74a4b4d97baaac17761d9a6/crewai-0.108.0.tar.gz", hash = "sha256:cd7b18f1b1164716bd29fe7562890f101d67d2551258e9ead3c8f4e4027bbe30", size = 25858553 }
+sdist = { url = "https://files.pythonhosted.org/packages/41/cc/e05b7c1e4c58d47811673aac6f249eb2648b89e8ffdae3e4a9a2f4641ad2/crewai-0.119.0.tar.gz", hash = "sha256:1cba70ad29399d057bb8d75f167cfaa564de561e409c9d0b2dff72e7d127d92c", size = 72059811 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/32/21/461fb300afd721ff585484d12cc783f8edde5561b527ae5e632386a339fb/crewai-0.108.0-py3-none-any.whl", hash = "sha256:9d3d45efe3cb763f9c0399f3eda743c9f0a8d57101d93161b9c3d70aa4bb71d0", size = 265271 },
+    { url = "https://files.pythonhosted.org/packages/11/0a/eb1af6368b3f8b28805cfbac7acf2815438c3f0a0f0149c5a2edc62c666d/crewai-0.119.0-py3-none-any.whl", hash = "sha256:c6d3a447e97a30924df2151f7219e1721506415e062fa2d6d13e3c3550cfa94e", size = 308724 },
 ]
 
 [[package]]
 name = "crewai-tools"
-version = "0.38.1"
+version = "0.45.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "chromadb" },
@@ -880,9 +883,15 @@ dependencies = [
     { name = "pytube" },
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/85/3f/d3b5697b4c6756cec65316c9ea9ccd9054f7b73670d1580befd3632ba031/crewai_tools-0.38.1.tar.gz", hash = "sha256:6abe75b3b339d53a9cf4e2d80124d863ff62a82b36753c30bec64318881876b2", size = 737620 }
+sdist = { url = "https://files.pythonhosted.org/packages/e9/3a/7070dcacef56702c5d83ad1a87021b1666ff1850ff80b3aa7540892406e7/crewai_tools-0.45.0.tar.gz", hash = "sha256:1b2e4eff3f928ce5fac308d6e648719a0e4718a1228ae98980aa0d74fc16bfc7", size = 909723 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2b/2b/a6c9007647ffbb6a3c204b3ef26806030d6b041e3e012d4cec43c21335d6/crewai_tools-0.38.1-py3-none-any.whl", hash = "sha256:d9d3a88060f1f30c8f4ea044f6dd564a50d0a22b8a018a6fcec202b36246b9d8", size = 561414 },
+    { url = "https://files.pythonhosted.org/packages/6e/72/db45626973027c992df75cbc7ef391f18393d631be3bceb6388c1b9f01e1/crewai_tools-0.45.0-py3-none-any.whl", hash = "sha256:9dd34e4792c075ee7a72134aedaab268e78d0e350114fd7fe2426e691c5f52a3", size = 602659 },
+]
+
+[package.optional-dependencies]
+mcp = [
+    { name = "mcp" },
+    { name = "mcpadapt" },
 ]
 
 [[package]]
@@ -2266,7 +2275,7 @@ wheels = [
 
 [[package]]
 name = "litellm"
-version = "1.60.2"
+version = "1.68.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -2281,9 +2290,9 @@ dependencies = [
     { name = "tiktoken" },
     { name = "tokenizers" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/94/8f/704cdb0fdbdd49dc5062a39ae5f1a8f308ae0ffd746df6e0137fc1776b8a/litellm-1.60.2.tar.gz", hash = "sha256:a8170584fcfd6f5175201d869e61ccd8a40ffe3264fc5e53c5b805ddf8a6e05a", size = 6447447 }
+sdist = { url = "https://files.pythonhosted.org/packages/ba/22/138545b646303ca3f4841b69613c697b9d696322a1386083bb70bcbba60b/litellm-1.68.0.tar.gz", hash = "sha256:9fb24643db84dfda339b64bafca505a2eef857477afbc6e98fb56512c24dbbfa", size = 7314051 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8a/ba/0eaec9aee9f99fdf46ef1c0bddcfe7f5720b182f84f6ed27f13145d5ded2/litellm-1.60.2-py3-none-any.whl", hash = "sha256:1cb08cda04bf8c5ef3e690171a779979e4b16a5e3a24cd8dc1f198e7f198d5c4", size = 6746809 },
+    { url = "https://files.pythonhosted.org/packages/10/af/1e344bc8aee41445272e677d802b774b1f8b34bdc3bb5697ba30f0fb5d52/litellm-1.68.0-py3-none-any.whl", hash = "sha256:3bca38848b1a5236b11aa6b70afa4393b60880198c939e582273f51a542d4759", size = 7684460 },
 ]
 
 [[package]]
@@ -2390,6 +2399,41 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/99/5b/a36a337438a14116b16480db471ad061c36c3694df7c2084a0da7ba538b7/matplotlib_inline-0.1.7.tar.gz", hash = "sha256:8423b23ec666be3d16e16b60bdd8ac4e86e840ebd1dd11a30b9f117f2fa0ab90", size = 8159 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8f/8e/9ad090d3553c280a8060fbf6e24dc1c0c29704ee7d1c372f0c174aa59285/matplotlib_inline-0.1.7-py3-none-any.whl", hash = "sha256:df192d39a4ff8f21b1895d72e6a13f5fcc5099f00fa84384e0ea28c2cc0653ca", size = 9899 },
+]
+
+[[package]]
+name = "mcp"
+version = "1.9.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "anyio" },
+    { name = "httpx" },
+    { name = "httpx-sse" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "python-multipart" },
+    { name = "sse-starlette" },
+    { name = "starlette" },
+    { name = "uvicorn", marker = "sys_platform != 'emscripten'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/bc/8d/0f4468582e9e97b0a24604b585c651dfd2144300ecffd1c06a680f5c8861/mcp-1.9.0.tar.gz", hash = "sha256:905d8d208baf7e3e71d70c82803b89112e321581bcd2530f9de0fe4103d28749", size = 281432 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a5/d5/22e36c95c83c80eb47c83f231095419cf57cf5cca5416f1c960032074c78/mcp-1.9.0-py3-none-any.whl", hash = "sha256:9dfb89c8c56f742da10a5910a1f64b0d2ac2c3ed2bd572ddb1cfab7f35957178", size = 125082 },
+]
+
+[[package]]
+name = "mcpadapt"
+version = "0.1.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "jsonref" },
+    { name = "mcp" },
+    { name = "pydantic" },
+    { name = "python-dotenv" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/75/e9/20f8ec9b6bc686538fcd591d11a17f42aa6bd833fbbac84d59543a51792a/mcpadapt-0.1.5.tar.gz", hash = "sha256:4411d46a7d50ffd30b6a95c15ee1dc047c39ef13f5d003d1b10b08435a931768", size = 3536686 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e2/04/be7d681f28179ee26318c9ae4fa182eee3f92c740c8baef267c112bfea34/mcpadapt-0.1.5-py3-none-any.whl", hash = "sha256:2954c99d5aed70938ce4777c9aa4a9043f0de8aa33ec3a6fbf67a9823c2287d3", size = 16467 },
 ]
 
 [[package]]
@@ -4456,6 +4500,19 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/96/d6/d508db91631034e4b9a83bd24295077c12701b86bd6390309db6ec47194d/sqlean.py-3.47.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:cd5617e36374e8e5a1ce251246d5cf681f41fccaf8a146b21d9ee485d59349e7", size = 2993849 },
     { url = "https://files.pythonhosted.org/packages/4c/8a/f8be68ca9b9dfcef191ba5e1388df3f3640af2e73ccb0d21db6a876258e9/sqlean.py-3.47.0-cp313-cp313-win_amd64.whl", hash = "sha256:b538b1548e3edaa009d218f9923830d6b793e5a2ee608b872efa354951fd98de", size = 808204 },
     { url = "https://files.pythonhosted.org/packages/e3/36/75f71870cef59c48e39fb2901a5bdb8ff24d6eac2eda1e9840dd1dd9ba8f/sqlean.py-3.47.0-cp313-cp313-win_arm64.whl", hash = "sha256:5a8ad8f8c0b68075c38b0d1a757e3d9f21c67920cac8ee0e5f8f09f349aeaaa3", size = 734345 },
+]
+
+[[package]]
+name = "sse-starlette"
+version = "2.3.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "anyio" },
+    { name = "starlette" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/10/5f/28f45b1ff14bee871bacafd0a97213f7ec70e389939a80c60c0fb72a9fc9/sse_starlette-2.3.5.tar.gz", hash = "sha256:228357b6e42dcc73a427990e2b4a03c023e2495ecee82e14f07ba15077e334b2", size = 17511 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c8/48/3e49cf0f64961656402c0023edbc51844fe17afe53ab50e958a6dbbbd499/sse_starlette-2.3.5-py3-none-any.whl", hash = "sha256:251708539a335570f10eaaa21d1848a10c42ee6dc3a9cf37ef42266cdb1c52a8", size = 10233 },
 ]
 
 [[package]]
