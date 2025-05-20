@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
 }
 
 async function handleRequest(request: NextRequest, method: string): Promise<NextResponse> {
-  const addr = `${process.env.AGENT_STUDIO_SERVICE_IP}:${process.env.AGENT_STUDIO_SERVICE_PORT}`;
+  const addr = `127.0.0.1:${process.env.AGENT_STUDIO_SERVICE_PORT}`;
   const client = new AgentStudioClient(addr, credentials.createInsecure());
 
   const slug = request.nextUrl.pathname.split('/api/grpc/')[1];
