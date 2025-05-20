@@ -990,18 +990,19 @@ message AgentTemplateMetadata {
   string name = 2;               // Name of the agent
   string description = 3;
   repeated string tool_template_ids = 4;     // List of tool template IDs
-  string role = 5;                // Role of the agent
-  string backstory = 6;           // Backstory of the agent
-  string goal = 7;                // Goal of the agent
-  bool allow_delegation = 8;      // Allow delegation flag
-  bool verbose = 9;               // Verbose mode flag
-  bool cache = 10;                 // Cache flag
-  float temperature = 11;         // Temperature setting
-  int32 max_iter = 12;            // Maximum iterations
-  string agent_image_uri = 13; // Image of the agent
+  repeated string mcp_template_ids = 5;     // List of MCP template IDs
+  string role = 6;                // Role of the agent
+  string backstory = 7;           // Backstory of the agent
+  string goal = 8;                // Goal of the agent
+  bool allow_delegation = 9;      // Allow delegation flag
+  bool verbose = 10;               // Verbose mode flag
+  bool cache = 11;                 // Cache flag
+  float temperature = 12;         // Temperature setting
+  int32 max_iter = 13;            // Maximum iterations
+  string agent_image_uri = 14; // Image of the agent
   // Optional assignment to a workflow template
-  optional string workflow_template_id = 14;
-  bool pre_packaged = 15;
+  optional string workflow_template_id = 15;
+  bool pre_packaged = 16;
 }
 
 

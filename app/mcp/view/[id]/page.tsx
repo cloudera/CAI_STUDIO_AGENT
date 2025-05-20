@@ -32,10 +32,15 @@ const DeleteMcpTemplateModal: React.FC<{
 
 const McpTemplateViewPage: React.FC = () => {
   const router = useRouter();
-  const notificationApi = useGlobalNotification(); // Using global notification
+  const notificationApi = useGlobalNotification();
   const params = useParams();
   const [removeMcpTemplate] = useRemoveMcpTemplateMutation();
   const mcpTemplateId = Array.isArray(params?.id) ? params.id[0] : params?.id;
+
+  const { data: mcpTemplate, isLoading: isMcpTemplateLoading } = useGetMcpTemplateQuery({
+    mcp_template_id: mcpTemplateId || '',
+  });
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   if (!mcpTemplateId) {
     return (
@@ -47,12 +52,6 @@ const McpTemplateViewPage: React.FC = () => {
       />
     );
   }
-
-  const { data: mcpTemplate, isLoading: isMcpTemplateLoading } = useGetMcpTemplateQuery({
-    mcp_template_id: mcpTemplateId,
-  });
-
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const handleDelete = async () => {
     try {

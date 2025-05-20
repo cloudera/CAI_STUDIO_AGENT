@@ -15,10 +15,13 @@ from studio.db import model as db_model
 from studio.agents.agent_templates import remove_agent_template
 from studio.task.task_templates import remove_task_template, add_task_template
 from studio.tools.tool_template import remove_tool_template
+from studio.as_mcp.mcp_templates import remove_mcp_template
 from studio.proto.utils import is_field_set
 import studio.db.utils as db_utils
 import studio.consts as consts
 import studio.cross_cutting.utils as cc_utils
+from studio.cross_cutting.global_thread_pool import get_thread_pool
+from studio.as_mcp.utils import _update_mcp_tools
 
 from crewai import Process
 
@@ -170,8 +173,30 @@ def add_workflow_template_from_workflow(
                 tool_template_ids.append(tool_template_id)
                 session.add(tool_template)
 
+            # Add MCP templates
+            mcp_template_ids = []
+            for mcp_instance_id in list(agent.mcp_instance_ids or []):
+                mcp_instance: db_model.MCPInstance = (
+                    session.query(db_model.MCPInstance).filter_by(id=mcp_instance_id).one()
+                )
+                mcp_template_id = str(uuid4())
+                mcp_template: db_model.MCPTemplate = db_model.MCPTemplate(
+                    id=mcp_template_id,
+                    workflow_template_id=workflow_template_id,
+                    name=mcp_instance.name,
+                    type=mcp_instance.type,
+                    args=mcp_instance.args,
+                    env_names=mcp_instance.env_names,
+                    status=mcp_instance.status,
+                    mcp_image_path="",
+                )
+                mcp_template_ids.append(mcp_template_id)
+                session.add(mcp_template)
+                get_thread_pool().submit(_update_mcp_tools, mcp_instance_id, db_model.MCPTemplate)
+
             # Add all new tool templates to the agent template
             agent_template.tool_template_ids = tool_template_ids
+            agent_template.mcp_template_ids = mcp_template_ids
 
             # Append agent template id
             session.add(agent_template)
@@ -265,6 +290,11 @@ def remove_workflow_template(
         )
         for tool_template in tool_templates:
             remove_tool_template(RemoveToolTemplateRequest(tool_template_id=tool_template.id), cml, dao)
+        mcp_templates: list[db_model.MCPTemplate] = (
+            session.query(db_model.MCPTemplate).filter_by(workflow_template_id=request.id).all()
+        )
+        for mcp_template in mcp_templates:
+            remove_mcp_template(RemoveMcpTemplateRequest(mcp_template_id=mcp_template.id), cml, dao)
 
         # Finally, remove the workflow template
         session.delete(workflow_template)
@@ -292,11 +322,17 @@ def export_workflow_template(
                 session.query(db_model.AgentTemplate).filter(db_model.AgentTemplate.id.in_(agent_template_ids)).all()
             )
             tool_template_ids: List[str] = []
+            mcp_template_ids: List[str] = []
             for agent_template in agent_templates:
                 if agent_template.tool_template_ids:
                     tool_template_ids.extend(agent_template.tool_template_ids)
+                if agent_template.mcp_template_ids:
+                    mcp_template_ids.extend(agent_template.mcp_template_ids)
             tool_templates: list[db_model.ToolTemplate] = (
                 session.query(db_model.ToolTemplate).filter(db_model.ToolTemplate.id.in_(tool_template_ids)).all()
+            )
+            mcp_templates: list[db_model.MCPTemplate] = (
+                session.query(db_model.MCPTemplate).filter(db_model.MCPTemplate.id.in_(mcp_template_ids)).all()
             )
             task_templates: list[db_model.TaskTemplate] = (
                 session.query(db_model.TaskTemplate).filter(db_model.TaskTemplate.id.in_(task_template_ids)).all()
@@ -312,6 +348,12 @@ def export_workflow_template(
                 tool_template.id = uuid_change_map[tool_template.id]
                 tool_template.pre_built = False
                 tool_template.workflow_template_id = workflow_template.id
+            for mcp_template in mcp_templates:
+                uuid_change_map[mcp_template.id] = str(uuid4())
+                mcp_template.id = uuid_change_map[mcp_template.id]
+                mcp_template.workflow_template_id = workflow_template.id
+                mcp_template.tools = None  # Set this to null, it will be populated dring import.
+                mcp_template.status = ""
             for agent_template in agent_templates:
                 uuid_change_map[agent_template.id] = str(uuid4())
                 agent_template.id = uuid_change_map[agent_template.id]
@@ -319,6 +361,8 @@ def export_workflow_template(
                 agent_template.workflow_template_id = workflow_template.id
                 if agent_template.tool_template_ids:
                     agent_template.tool_template_ids = [uuid_change_map[id] for id in agent_template.tool_template_ids]
+                if agent_template.mcp_template_ids:
+                    agent_template.mcp_template_ids = [uuid_change_map[id] for id in agent_template.mcp_template_ids]
             for task_template in task_templates:
                 uuid_change_map[task_template.id] = str(uuid4())
                 task_template.id = uuid_change_map[task_template.id]
@@ -345,6 +389,7 @@ def export_workflow_template(
                 "workflow_template": workflow_template.to_dict(),
                 "agent_templates": [agent_template.to_dict() for agent_template in agent_templates],
                 "tool_templates": [tool_template.to_dict() for tool_template in tool_templates],
+                "mcp_templates": [mcp_template.to_dict() for mcp_template in mcp_templates],
                 "task_templates": [task_template.to_dict() for task_template in task_templates],
             }
 
@@ -436,6 +481,13 @@ def import_workflow_template(
                 os.rename(os.path.join(temp_dir, _t["tool_image_path"]), os.path.join(temp_dir, new_image_path))
                 _t["tool_image_path"] = new_image_path
 
+        mcp_templates: List[Dict] = template_dict.get("mcp_templates", [])
+        for _m in mcp_templates:
+            changed_uuids[_m["id"]] = str(uuid4())
+            new_mcp_template_id = changed_uuids[_m["id"]]
+            _m["id"] = new_mcp_template_id
+            _m["workflow_template_id"] = new_workflow_template_id
+
         agent_templates: List[Dict] = template_dict["agent_templates"]
         for _a in agent_templates:
             changed_uuids[_a["id"]] = str(uuid4())
@@ -449,6 +501,8 @@ def import_workflow_template(
                 _a["agent_image_path"] = new_image_path
             if _a.get("tool_template_ids"):
                 _a["tool_template_ids"] = [changed_uuids[t_id] for t_id in _a["tool_template_ids"]]
+            if _a.get("mcp_template_ids"):
+                _a["mcp_template_ids"] = [changed_uuids[m_id] for m_id in _a["mcp_template_ids"]]
 
         task_templates: List[Dict] = template_dict["task_templates"]
         for _t in task_templates:
@@ -483,5 +537,9 @@ def import_workflow_template(
         template_dict["workflow_templates"] = [template_dict.pop("workflow_template")]
 
         db_utils.import_from_dict(template_dict, dao)
+
+        # Run jobs to update MCP metadata:
+        for mcp_template in mcp_templates:
+            get_thread_pool().submit(_update_mcp_tools, mcp_template["id"], db_model.MCPTemplate)
 
         return ImportWorkflowTemplateResponse(id=new_workflow_template_id)

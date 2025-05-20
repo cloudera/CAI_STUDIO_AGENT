@@ -1062,6 +1062,8 @@ export interface AgentTemplateMetadata {
   description: string;
   /** List of tool template IDs */
   tool_template_ids: string[];
+  /** List of MCP template IDs */
+  mcp_template_ids: string[];
   /** Role of the agent */
   role: string;
   /** Backstory of the agent */
@@ -13025,6 +13027,7 @@ function createBaseAgentTemplateMetadata(): AgentTemplateMetadata {
     name: "",
     description: "",
     tool_template_ids: [],
+    mcp_template_ids: [],
     role: "",
     backstory: "",
     goal: "",
@@ -13053,38 +13056,41 @@ export const AgentTemplateMetadata: MessageFns<AgentTemplateMetadata> = {
     for (const v of message.tool_template_ids) {
       writer.uint32(34).string(v!);
     }
+    for (const v of message.mcp_template_ids) {
+      writer.uint32(42).string(v!);
+    }
     if (message.role !== "") {
-      writer.uint32(42).string(message.role);
+      writer.uint32(50).string(message.role);
     }
     if (message.backstory !== "") {
-      writer.uint32(50).string(message.backstory);
+      writer.uint32(58).string(message.backstory);
     }
     if (message.goal !== "") {
-      writer.uint32(58).string(message.goal);
+      writer.uint32(66).string(message.goal);
     }
     if (message.allow_delegation !== false) {
-      writer.uint32(64).bool(message.allow_delegation);
+      writer.uint32(72).bool(message.allow_delegation);
     }
     if (message.verbose !== false) {
-      writer.uint32(72).bool(message.verbose);
+      writer.uint32(80).bool(message.verbose);
     }
     if (message.cache !== false) {
-      writer.uint32(80).bool(message.cache);
+      writer.uint32(88).bool(message.cache);
     }
     if (message.temperature !== 0) {
-      writer.uint32(93).float(message.temperature);
+      writer.uint32(101).float(message.temperature);
     }
     if (message.max_iter !== 0) {
-      writer.uint32(96).int32(message.max_iter);
+      writer.uint32(104).int32(message.max_iter);
     }
     if (message.agent_image_uri !== "") {
-      writer.uint32(106).string(message.agent_image_uri);
+      writer.uint32(114).string(message.agent_image_uri);
     }
     if (message.workflow_template_id !== undefined) {
-      writer.uint32(114).string(message.workflow_template_id);
+      writer.uint32(122).string(message.workflow_template_id);
     }
     if (message.pre_packaged !== false) {
-      writer.uint32(120).bool(message.pre_packaged);
+      writer.uint32(128).bool(message.pre_packaged);
     }
     return writer;
   },
@@ -13133,7 +13139,7 @@ export const AgentTemplateMetadata: MessageFns<AgentTemplateMetadata> = {
             break;
           }
 
-          message.role = reader.string();
+          message.mcp_template_ids.push(reader.string());
           continue;
         }
         case 6: {
@@ -13141,7 +13147,7 @@ export const AgentTemplateMetadata: MessageFns<AgentTemplateMetadata> = {
             break;
           }
 
-          message.backstory = reader.string();
+          message.role = reader.string();
           continue;
         }
         case 7: {
@@ -13149,15 +13155,15 @@ export const AgentTemplateMetadata: MessageFns<AgentTemplateMetadata> = {
             break;
           }
 
-          message.goal = reader.string();
+          message.backstory = reader.string();
           continue;
         }
         case 8: {
-          if (tag !== 64) {
+          if (tag !== 66) {
             break;
           }
 
-          message.allow_delegation = reader.bool();
+          message.goal = reader.string();
           continue;
         }
         case 9: {
@@ -13165,7 +13171,7 @@ export const AgentTemplateMetadata: MessageFns<AgentTemplateMetadata> = {
             break;
           }
 
-          message.verbose = reader.bool();
+          message.allow_delegation = reader.bool();
           continue;
         }
         case 10: {
@@ -13173,31 +13179,31 @@ export const AgentTemplateMetadata: MessageFns<AgentTemplateMetadata> = {
             break;
           }
 
-          message.cache = reader.bool();
+          message.verbose = reader.bool();
           continue;
         }
         case 11: {
-          if (tag !== 93) {
+          if (tag !== 88) {
+            break;
+          }
+
+          message.cache = reader.bool();
+          continue;
+        }
+        case 12: {
+          if (tag !== 101) {
             break;
           }
 
           message.temperature = reader.float();
           continue;
         }
-        case 12: {
-          if (tag !== 96) {
+        case 13: {
+          if (tag !== 104) {
             break;
           }
 
           message.max_iter = reader.int32();
-          continue;
-        }
-        case 13: {
-          if (tag !== 106) {
-            break;
-          }
-
-          message.agent_image_uri = reader.string();
           continue;
         }
         case 14: {
@@ -13205,11 +13211,19 @@ export const AgentTemplateMetadata: MessageFns<AgentTemplateMetadata> = {
             break;
           }
 
-          message.workflow_template_id = reader.string();
+          message.agent_image_uri = reader.string();
           continue;
         }
         case 15: {
-          if (tag !== 120) {
+          if (tag !== 122) {
+            break;
+          }
+
+          message.workflow_template_id = reader.string();
+          continue;
+        }
+        case 16: {
+          if (tag !== 128) {
             break;
           }
 
@@ -13232,6 +13246,9 @@ export const AgentTemplateMetadata: MessageFns<AgentTemplateMetadata> = {
       description: isSet(object.description) ? globalThis.String(object.description) : "",
       tool_template_ids: globalThis.Array.isArray(object?.tool_template_ids)
         ? object.tool_template_ids.map((e: any) => globalThis.String(e))
+        : [],
+      mcp_template_ids: globalThis.Array.isArray(object?.mcp_template_ids)
+        ? object.mcp_template_ids.map((e: any) => globalThis.String(e))
         : [],
       role: isSet(object.role) ? globalThis.String(object.role) : "",
       backstory: isSet(object.backstory) ? globalThis.String(object.backstory) : "",
@@ -13262,6 +13279,9 @@ export const AgentTemplateMetadata: MessageFns<AgentTemplateMetadata> = {
     }
     if (message.tool_template_ids?.length) {
       obj.tool_template_ids = message.tool_template_ids;
+    }
+    if (message.mcp_template_ids?.length) {
+      obj.mcp_template_ids = message.mcp_template_ids;
     }
     if (message.role !== "") {
       obj.role = message.role;
@@ -13308,6 +13328,7 @@ export const AgentTemplateMetadata: MessageFns<AgentTemplateMetadata> = {
     message.name = object.name ?? "";
     message.description = object.description ?? "";
     message.tool_template_ids = object.tool_template_ids?.map((e) => e) || [];
+    message.mcp_template_ids = object.mcp_template_ids?.map((e) => e) || [];
     message.role = object.role ?? "";
     message.backstory = object.backstory ?? "";
     message.goal = object.goal ?? "";

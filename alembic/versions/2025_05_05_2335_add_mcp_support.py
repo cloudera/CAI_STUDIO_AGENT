@@ -1,7 +1,7 @@
 """add mcp support
 
 Revision ID: bc6831e63a9e
-Revises: 3fa293c89b1b
+Revises: 717c78801bd0
 Create Date: 2025-05-05 23:35:39.690321
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = 'bc6831e63a9e'
-down_revision: Union[str, None] = '3fa293c89b1b'
+down_revision: Union[str, None] = '717c78801bd0'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -45,7 +45,10 @@ def upgrade() -> None:
         sa.Column('mcp_image_path', sa.Text(), nullable=False),
         if_not_exists=True,
     )
-    op.add_column('agents', sa.Column('mcp_instance_ids', sa.JSON(), nullable=True))
+    try:
+        op.add_column('agents', sa.Column('mcp_instance_ids', sa.JSON(), nullable=True))
+    except Exception as e:
+        print("Column probably already exists: ", e)
 
 def downgrade() -> None:
     op.drop_table('mcp_templates')

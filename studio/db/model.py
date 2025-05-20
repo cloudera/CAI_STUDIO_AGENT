@@ -127,6 +127,10 @@ class ToolTemplate(Base, MappedProtobuf, MappedDict):
 class MCPTemplate(Base, MappedProtobuf, MappedDict):
     __tablename__ = "mcp_templates"
 
+    # Optional to hide agent template to a specific workflow
+    workflow_template_id = Column(String, ForeignKey(
+        "workflow_templates.id"), nullable=True)
+
     id = Column(String, primary_key=True, nullable=False)
     name = Column(String, nullable=False)
     type = Column(String, nullable=False)
@@ -308,6 +312,10 @@ class AgentTemplate(Base, MappedProtobuf, MappedDict):
     # List of Tool Template IDs stored as JSON
     tool_template_ids = Column(JSON, nullable=True)
 
+    # JSON Column for  MCP Template IDs
+    # List of MCP Template IDs stored as JSON
+    mcp_template_ids = Column(JSON, nullable=True)
+
     # Is the template shipped as part of the studio
     pre_packaged = Column(Boolean, default=False)
 
@@ -353,11 +361,9 @@ TABLE_TO_MODEL_REGISTRY = {
     "tool_templates": ToolTemplate,
     "tool_instances": ToolInstance,
     "mcp_templates": MCPTemplate,
+    "mcp_instances": MCPInstance,
     "agents": Agent,
     "tasks": Task,
-    # "external_agent_instances": ExternalAgentInstance,
-    # "external_agent_family": ExternalAgentFamily,
-    # "activated_external_agent_family_instance": ActivatedExternalAgentFamilyInstance,
     "workflows": Workflow,
     "workflow_templates": WorkflowTemplate,
     "agent_templates": AgentTemplate,

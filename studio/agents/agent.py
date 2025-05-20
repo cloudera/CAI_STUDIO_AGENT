@@ -9,7 +9,7 @@ from studio.db import model as db_model, DbSession
 from studio.api import *
 from studio.tools.tool_instance import get_tool_instance
 from studio.tools.tool_template import get_tool_template
-from studio.as_mcp.mcp_instances import get_mcp_instance
+from studio.as_mcp.mcp_instances import get_mcp_instance, create_mcp_instance
 from cmlapi import CMLServiceApi
 from studio.workflow.utils import invalidate_workflow
 from studio.proto.utils import is_field_set
@@ -194,6 +194,17 @@ def _add_agent_from_template(
         )
         tool_instance_ids.append(response.tool_instance_id)
 
+    mcp_instance_ids: list[str] = []
+    for mcp_template_id in list(agent_template.mcp_template_ids or []):
+        mcp_template: db_model.MCPTemplate = db_session.query(db_model.MCPTemplate).filter_by(id=mcp_template_id).one()
+        response: CreateMcpInstanceResponse = create_mcp_instance(
+            CreateMcpInstanceRequest(workflow_id=request.workflow_id, name="", mcp_template_id=mcp_template.id),
+            cml=cml,
+            dao=None,
+            preexisting_db_session=db_session,
+        )
+        mcp_instance_ids.append(response.mcp_instance_id)
+
     # copy image
     new_agent_image_path = ""
     if agent_template.agent_image_path:
@@ -207,7 +218,7 @@ def _add_agent_from_template(
         name=request.name or agent_template.name,
         llm_provider_model_id=request.llm_provider_model_id,
         tool_ids=tool_instance_ids,
-        mcp_instance_ids=list(),  # TODO: add MCP instance IDs when they are incorporated into the agent template
+        mcp_instance_ids=mcp_instance_ids,
         crew_ai_role=agent_template.role,
         crew_ai_backstory=agent_template.backstory,
         crew_ai_goal=agent_template.goal,

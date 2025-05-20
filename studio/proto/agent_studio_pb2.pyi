@@ -1655,6 +1655,7 @@ class AgentTemplateMetadata(_message.Message):
         "name",
         "description",
         "tool_template_ids",
+        "mcp_template_ids",
         "role",
         "backstory",
         "goal",
@@ -1671,6 +1672,7 @@ class AgentTemplateMetadata(_message.Message):
     NAME_FIELD_NUMBER: _ClassVar[int]
     DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
     TOOL_TEMPLATE_IDS_FIELD_NUMBER: _ClassVar[int]
+    MCP_TEMPLATE_IDS_FIELD_NUMBER: _ClassVar[int]
     ROLE_FIELD_NUMBER: _ClassVar[int]
     BACKSTORY_FIELD_NUMBER: _ClassVar[int]
     GOAL_FIELD_NUMBER: _ClassVar[int]
@@ -1686,6 +1688,7 @@ class AgentTemplateMetadata(_message.Message):
     name: str
     description: str
     tool_template_ids: _containers.RepeatedScalarFieldContainer[str]
+    mcp_template_ids: _containers.RepeatedScalarFieldContainer[str]
     role: str
     backstory: str
     goal: str
@@ -1703,6 +1706,7 @@ class AgentTemplateMetadata(_message.Message):
         name: _Optional[str] = ...,
         description: _Optional[str] = ...,
         tool_template_ids: _Optional[_Iterable[str]] = ...,
+        mcp_template_ids: _Optional[_Iterable[str]] = ...,
         role: _Optional[str] = ...,
         backstory: _Optional[str] = ...,
         goal: _Optional[str] = ...,
