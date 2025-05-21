@@ -19,10 +19,17 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.add_column('agent_templates', sa.Column('mcp_template_ids', sa.JSON(), nullable=True))
-    op.add_column('mcp_templates', sa.Column('workflow_template_id', sa.String(), nullable=True))
-
+    try:
+        op.add_column('agent_templates', sa.Column('mcp_template_ids', sa.JSON(), nullable=True))
+        op.add_column('mcp_templates', sa.Column('workflow_template_id', sa.String(), nullable=True))
+    except Exception as e:
+        print("Column probably already exists: ", e)
+    
 
 def downgrade() -> None:
-    op.drop_column('agent_templates', 'mcp_template_ids')
-    op.drop_column('mcp_templates', 'workflow_template_id')
+    try:
+        op.drop_column('agent_templates', 'mcp_template_ids')
+        op.drop_column('mcp_templates', 'workflow_template_id')
+    except Exception as e:
+        print("Column probably already deleted: ", e)
+    
