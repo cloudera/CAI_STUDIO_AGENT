@@ -21,6 +21,13 @@ runtimes:
 
 tasks:
   - type: run_session
+    name: Pre installation check
+    script: startup_scripts/pre_install_check.py
+    short_summary: Check the environment before the Agent studio installation.
+    kernel: python3
+    cpu: 1
+    memory: 4
+  - type: run_session
     name: Ensure uv Package Manager
     script: startup_scripts/ensure-uv-package-manager.py
     short_summary: Check for the presence of uv package manager and install it if it is not present.
