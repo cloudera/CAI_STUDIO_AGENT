@@ -23,7 +23,7 @@ tasks:
   - type: run_session
     name: Pre installation check
     script: startup_scripts/pre_install_check.py
-    short_summary: Check the environment before the Agent studio installation.
+    short_summary: Check the environment before Agent Studio installation.
     kernel: python3
     cpu: 1
     memory: 4
