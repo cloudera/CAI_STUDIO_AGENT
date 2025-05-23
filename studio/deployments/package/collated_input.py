@@ -1,27 +1,12 @@
 import json
-import os
-from typing import Union, List, Optional
-from google.protobuf.json_format import MessageToDict
+from typing import List
 import json
-import cmlapi
-from cmlapi import CMLServiceApi
 
-from studio.db.dao import AgentStudioDao
-from studio.api import *
 from studio.db import model as db_model
-from studio.models.utils import get_studio_default_model_id, get_model_api_key_from_env
-import studio.cross_cutting.utils as cc_utils
-from studio.proto.utils import is_field_set
+from studio.models.utils import get_studio_default_model_id
 import studio.consts as consts
 from studio.tools.utils import read_tool_instance_code, extract_user_params_from_code
 
-from studio.deployments.types import (
-    DeploymentArtifact,
-    DeploymentPayload,
-    WorkflowTargetRequest,
-    WorkflowTargetType,
-    DeploymentConfig
-)
 from studio.db.model import Workflow
 from sqlalchemy.orm.session import Session
 
@@ -35,18 +20,14 @@ sys.path.append("studio/workflow_engine/src")
 import engine.types as input_types
 
 
-
-def create_collated_input(
-    workflow: Workflow, 
-    session: Session
-) -> input_types.CollatedInput:
+def create_collated_input(workflow: Workflow, session: Session) -> input_types.CollatedInput:
     """
     Create a serializable collated input type that can be written to a JSON
     file to be used for packaging up workflows, or alternatively be passed as
     part of a payload to a workflow engine test runner. NOTE: LLM API keys are
     also extracted from the CML environment here.
     """
-    
+
     # For now, we only allow one a singular generation config
     # shared across all LLMs. This can be updated in the future
     # if we need it to be. To control generation config for a deployment,

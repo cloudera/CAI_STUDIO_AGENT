@@ -9,36 +9,36 @@ from crewai_tools import MCPServerAdapter
 
 
 class WorkflowArtifactType(str, Enum):
-    COLLATED_INPUT = 'collated_input'
+    COLLATED_INPUT = "collated_input"
 
 
 class DeploymentConfig(BaseModel):
     """
     Generic deployment configuration information.
     """
-    
+
     generation_config: Dict = {}
     """
     Optional default generational config to use for LLM
     completions. If not specified for an Agent/LLM, an Agent Studio set of
     defaults are used for LLM completions.
     """
-    
+
     tool_config: Dict = {}
     """
     """
-    
+
     mcp_config: Dict = {}
     """
     MCP config dict where the key is the MCP instance ID
     and 
     """
-    
+
     llm_config: Dict = {}
     """
     LLM configs containing API keys, URL bases, etc.
     """
-    
+
     environment: Dict = {}
     """
     All other environment variable overrides to pass to the deployment target environment.

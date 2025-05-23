@@ -15,7 +15,7 @@ import sys
 sys.path.append("studio/workflow_engine/src/")
 
 from engine.crewai.llms import get_crewai_llm
-from engine.types import Input__LanguageModel, Input__LanguageModelConfig
+from engine.types import Input__LanguageModel
 
 from .utils import get_model_api_key_from_env, update_model_api_key_in_env, remove_model_api_key_from_env
 
@@ -187,8 +187,8 @@ def model_test(request: TestModelRequest, cml: CMLServiceApi = None, dao: AgentS
                 "provider_model": model.provider_model,
                 "model_type": model.model_type,
                 "api_base": model.api_base or None,
-                "api_key": api_key
-            }
+                "api_key": api_key,
+            },
         )
 
         try:

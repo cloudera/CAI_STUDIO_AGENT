@@ -1,14 +1,7 @@
-import shutil 
-import os
-from uuid import uuid4
-import tarfile 
-import yaml
+import tarfile
 from typing import Any
 
-from engine.artifact import (
-    get_artifact_yaml_member
-)
-
+from engine.artifact import get_artifact_yaml_member
 
 
 def get_artifact_agents(location: str) -> Any:

@@ -1,6 +1,1 @@
-
-from .utils import (
-    validate_deployment_payload,
-    validate_workflow_target,
-    validate_deployment_target
-)
+from .utils import validate_deployment_payload, validate_workflow_target, validate_deployment_target

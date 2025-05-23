@@ -3,7 +3,7 @@ import os
 import shutil
 from uuid import uuid4
 import cmlapi
-from typing import Union, List, Optional
+from typing import List, Optional
 from sqlalchemy.exc import SQLAlchemyError
 import requests
 from google.protobuf.json_format import MessageToDict
@@ -22,7 +22,7 @@ from studio.deployments.package.collated_input import create_collated_input
 from studio.deployments.applications import (
     get_application_for_deployed_workflow,
     cleanup_deployed_workflow_application,
-    get_application_name_for_deployed_workflow
+    get_application_name_for_deployed_workflow,
 )
 from studio.deployments.utils import initialize_deployment_for_workflow
 
@@ -30,6 +30,7 @@ from studio.deployments.utils import initialize_deployment_for_workflow
 # a separate git repo, or a custom runtime image, this path call
 # will go away and workflow engine features will be available already.
 import sys
+
 sys.path.append("studio/workflow_engine/src")
 import engine.types as input_types
 
@@ -40,9 +41,9 @@ def test_workflow(
     """
     Test a workflow by creating agent instances, tasks, and a Crew AI execution.
     """
-    try: 
+    try:
         # Currently generation configs are set per-workflow and as part of
-        # the test/deploy request itself. TODO: pull out this generation config to be 
+        # the test/deploy request itself. TODO: pull out this generation config to be
         # per agent, and in workflow engine create a new CrewAILLM object for
         # each of the agents rather than sharing them.
         request_dict = MessageToDict(request, preserving_proto_field_name=True)
@@ -52,10 +53,7 @@ def test_workflow(
         llm_config = {}
         with dao.get_session() as session:
             workflow: db_model.Workflow = session.query(db_model.Workflow).filter_by(id=request.workflow_id).one()
-            collated_input: input_types.CollatedInput = create_collated_input(
-                workflow,
-                session
-            )
+            collated_input: input_types.CollatedInput = create_collated_input(workflow, session)
 
             # Model config is already created as part of creating collated input.
             llm_config = get_llm_config_for_workflow(workflow, session, cml)
@@ -86,7 +84,7 @@ def test_workflow(
         resp = requests.post(
             url=f"{workflow_runner['endpoint']}/kickoff",
             json={
-                "workflow_directory": os.path.abspath(os.curdir), # for testing, everything is in studio-data/
+                "workflow_directory": os.path.abspath(os.curdir),  # for testing, everything is in studio-data/
                 "workflow_name": f"Test Workflow - {collated_input.workflow.name}",
                 "collated_input": collated_input.model_dump(),
                 "tool_config": tool_user_params_kv,
@@ -108,13 +106,13 @@ def test_workflow(
         raise RuntimeError(f"Database error while testing workflow: {e}")
     except Exception as e:
         raise RuntimeError(f"Unexpected error while testing workflow: {e}")
-    
+
     return
 
 
 def deploy_workflow(request: DeployWorkflowRequest, cml: CMLServiceApi, dao: AgentStudioDao) -> DeployWorkflowResponse:
     """Deploy a workflow."""
-    try: 
+    try:
         request_dict = MessageToDict(request, preserving_proto_field_name=True)
         generation_config = json.loads(request_dict["generation_config"])
 
@@ -122,7 +120,7 @@ def deploy_workflow(request: DeployWorkflowRequest, cml: CMLServiceApi, dao: Age
         with dao.get_session() as session:
             workflow: db_model.Workflow = session.query(db_model.Workflow).filter_by(id=request.workflow_id).one()
             llm_config = get_llm_config_for_workflow(workflow, session, cml)
-            
+
         tool_config = {
             tool_id: {k: v for k, v in user_param_kv.parameters.items()}
             for tool_id, user_param_kv in request.tool_user_parameters.items()
@@ -132,7 +130,7 @@ def deploy_workflow(request: DeployWorkflowRequest, cml: CMLServiceApi, dao: Age
             for mcp_instance_id, env_vars in request.mcp_instance_env_vars.items()
         }
         environment_overrides = dict(request.env_variable_overrides) if request.env_variable_overrides else {}
-        
+
         deployment_config: DeploymentConfig = DeploymentConfig(
             generation_config=generation_config,
             tool_config=tool_config,
@@ -140,7 +138,7 @@ def deploy_workflow(request: DeployWorkflowRequest, cml: CMLServiceApi, dao: Age
             llm_config=llm_config,
             environment=environment_overrides,
         )
-        
+
         # Initialize the deployment so we have a deployment and an ID created
         # before the gRPC call completes.
         deployed_workflow_id = None
@@ -149,42 +147,33 @@ def deploy_workflow(request: DeployWorkflowRequest, cml: CMLServiceApi, dao: Age
             workflow: db_model.Workflow = session.query(db_model.Workflow).filter_by(id=request.workflow_id).one()
             initialization_payload: DeploymentPayload = DeploymentPayload(
                 workflow_target=WorkflowTargetRequest(
-                    type=WorkflowTargetType.WORKFLOW,
-                    workflow_id=request.workflow_id
+                    type=WorkflowTargetType.WORKFLOW, workflow_id=request.workflow_id
                 ),
-                deployment_target=DeploymentTargetRequest(
-                    type=DeploymentTargetType.WORKBENCH_MODEL
-                )
+                deployment_target=DeploymentTargetRequest(type=DeploymentTargetType.WORKBENCH_MODEL),
             )
             deployment: db_model.DeployedWorkflowInstance = initialize_deployment_for_workflow(
-                initialization_payload, session, cml)
+                initialization_payload, session, cml
+            )
             deployed_workflow_id = deployment.id
             deployed_workflow_instance_name = deployment.name
-        
+
         deployment_payload: DeploymentPayload = DeploymentPayload(
-            workflow_target=WorkflowTargetRequest(
-                type=WorkflowTargetType.WORKFLOW,
-                workflow_id=request.workflow_id   
-            ),
+            workflow_target=WorkflowTargetRequest(type=WorkflowTargetType.WORKFLOW, workflow_id=request.workflow_id),
             deployment_target=DeploymentTargetRequest(
-                type=DeploymentTargetType.WORKBENCH_MODEL,
-                deployment_instance_id=deployed_workflow_id
+                type=DeploymentTargetType.WORKBENCH_MODEL, deployment_instance_id=deployed_workflow_id
             ),
-            deployment_config=deployment_config
+            deployment_config=deployment_config,
         )
 
         job: cmlapi.Job = cc_utils.get_job_by_name(cml, consts.AGENT_STUDIO_DEPLOY_JOB_NAME)
         arguments = f"--deployment_payload '{json.dumps(deployment_payload.model_dump())}'"
-        cml.create_job_run({
-            "arguments": arguments
-        }, project_id=os.getenv("CDSW_PROJECT_ID"), job_id=job.id)
-        
+        cml.create_job_run({"arguments": arguments}, project_id=os.getenv("CDSW_PROJECT_ID"), job_id=job.id)
+
         return DeployWorkflowResponse(
             deployed_workflow_name=deployed_workflow_instance_name,
             deployed_workflow_id=deployed_workflow_id,
-            cml_deployed_model_id=None
+            cml_deployed_model_id=None,
         )
-        
 
     except Exception as e:
         raise RuntimeError(f"Failed to deploy workflow: {str(e)}")
@@ -209,7 +198,9 @@ def undeploy_workflow(
                 raise ValueError(f"Deployed Workflow with ID '{request.deployed_workflow_id}' not found.")
             deployed_workflow_instance_name = deployed_workflow_instance.name
             deployment_metadata = json.loads(deployed_workflow_instance.deployment_metadata)
-            cml_model_id = deployed_workflow_instance.cml_deployed_model_id or deployment_metadata.get("cml_model_id") or None
+            cml_model_id = (
+                deployed_workflow_instance.cml_deployed_model_id or deployment_metadata.get("cml_model_id") or None
+            )
             if cml_model_id:
                 cc_utils.stop_all_cml_model_deployments(cml, cml_model_id)
                 cc_utils.delete_cml_model(cml, cml_model_id)
@@ -359,13 +350,13 @@ def list_deployed_workflows(
                 except Exception as e:
                     print(f"Failed to get model deep link for workflow {deployed_workflow.id}: {str(e)}")
                     model_deep_link = ""
-                    
+
                 # TODO: migrate all statuses and application URLs to use deployment_metadata
                 if deployed_workflow.status in [
                     DeploymentStatus.INITIALIZED,
                     DeploymentStatus.PACKAGING,
                     DeploymentStatus.PACKAGED,
-                    DeploymentStatus.DEPLOYING
+                    DeploymentStatus.DEPLOYING,
                 ]:
                     application_status = "start"
 

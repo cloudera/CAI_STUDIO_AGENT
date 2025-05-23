@@ -1,3 +1,1 @@
-from .workbench import (
-    deploy_artifact_to_workbench
-)
+from .workbench import deploy_artifact_to_workbench

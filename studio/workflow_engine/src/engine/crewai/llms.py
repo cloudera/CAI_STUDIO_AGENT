@@ -6,9 +6,7 @@ from engine.types import Input__LanguageModel, Input__LanguageModelConfig
 from engine.crewai.wrappers import AgentStudioCrewAILLM
 
 
-def get_crewai_llm(
-    language_model: Input__LanguageModel, llm_config_dict: Dict[str, str]
-) -> CrewAILLM:
+def get_crewai_llm(language_model: Input__LanguageModel, llm_config_dict: Dict[str, str]) -> CrewAILLM:
     # Either pull model config right from the collated input, or from the input model config dict
     llm_config: Input__LanguageModelConfig = Input__LanguageModelConfig(**llm_config_dict)
     if llm_config.model_type == "OPENAI":

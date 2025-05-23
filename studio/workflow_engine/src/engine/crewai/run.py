@@ -28,8 +28,8 @@ def run_workflow(
         set_trace_id(events_trace_id)
         crewai_objects = create_crewai_objects(
             workflow_directory,
-            collated_input, 
-            tool_config, 
+            collated_input,
+            tool_config,
             mcp_config,
             llm_config,
         )

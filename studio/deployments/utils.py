@@ -1,25 +1,14 @@
-import shutil 
+import shutil
 import os
 from uuid import uuid4
-import tarfile 
-import yaml
 import json
 from typing import Union
 
 import cmlapi
 from cmlapi import CMLServiceApi
 
-from studio.deployments.types import (
-    DeploymentStatus,
-    WorkflowTargetType,
-    DeploymentTargetType,
-    DeploymentPayload,
-    WorkflowTargetRequest
-)
-from studio.cross_cutting.utils import (
-    get_random_compact_string,
-    get_job_by_name
-)
+from studio.deployments.types import DeploymentStatus, WorkflowTargetType, DeploymentPayload
+from studio.cross_cutting.utils import get_random_compact_string, get_job_by_name
 from studio.consts import AGENT_STUDIO_DEPLOY_JOB_NAME
 from sqlalchemy.orm.session import Session
 from studio.db.model import DeployedWorkflowInstance, Workflow
@@ -28,12 +17,10 @@ from studio.db.model import DeployedWorkflowInstance, Workflow
 # a separate git repo, or a custom runtime image, this path call
 # will go away and workflow engine features will be available already.
 import sys
+
 sys.path.append("studio/workflow_engine/src")
 
-from engine.artifact import get_artifact_workflow
 
-
-    
 def copy_workflow_engine(target_dir: str) -> None:
     """
     Copy over our workflow engine code into our deployed workflow directory
@@ -45,7 +32,7 @@ def copy_workflow_engine(target_dir: str) -> None:
     away depending on the deployment target type, so perhaps this should be part of the deployment
     target step.
     """
-    
+
     def workflow_engine_ignore(src, names):
         return {".venv", ".ruff_cache", "__pycache__"}
 
@@ -55,7 +42,6 @@ def copy_workflow_engine(target_dir: str) -> None:
         dirs_exist_ok=True,
         ignore=workflow_engine_ignore,
     )
-    
 
 
 def set_deployment_metadata(deployment: DeployedWorkflowInstance, metadata: dict) -> None:
@@ -69,17 +55,21 @@ def update_deployment_metadata(deployment: DeployedWorkflowInstance, updated_met
     deployment.deployment_metadata = json.dumps(metadata)
     return
 
-def create_new_deployed_workflow_instance(payload: DeploymentPayload, workflow: Workflow, cml: CMLServiceApi) -> DeployedWorkflowInstance:
+
+def create_new_deployed_workflow_instance(
+    payload: DeploymentPayload, workflow: Workflow, cml: CMLServiceApi
+) -> DeployedWorkflowInstance:
     return DeployedWorkflowInstance(
         id=str(uuid4()),
         name=f"{workflow.name}_{get_random_compact_string()}",
         type=payload.deployment_target.type,
         workflow=workflow,
     )
-    
 
 
-def initialize_deployment_for_workflow(payload: DeploymentPayload, session: Session, cml: CMLServiceApi) -> DeployedWorkflowInstance:
+def initialize_deployment_for_workflow(
+    payload: DeploymentPayload, session: Session, cml: CMLServiceApi
+) -> DeployedWorkflowInstance:
     """
     Initializes a deployment for a workflow.
     """
@@ -93,12 +83,16 @@ def initialize_deployment_for_workflow(payload: DeploymentPayload, session: Sess
     elif payload.workflow_target.workflow_name:
         workflow: Workflow = session.query(Workflow).filter_by(name=payload.workflow_target.workflow_name).one()
     else:
-        raise ValueError(f'For deploying agent studio workflows, either "payload.workflow_target.workflow_id" or "payload.workflow_target.workflow_name" must be specified.')    
+        raise ValueError(
+            f'For deploying agent studio workflows, either "payload.workflow_target.workflow_id" or "payload.workflow_target.workflow_name" must be specified.'
+        )
 
     # Grab any existing workflow deployments for this model
     existing_deployments: list[DeployedWorkflowInstance] = workflow.deployed_workflow_instances
-    existing_deployments_of_type = list(filter(lambda x: x.type == payload.deployment_target.type, existing_deployments))
-    
+    existing_deployments_of_type = list(
+        filter(lambda x: x.type == payload.deployment_target.type, existing_deployments)
+    )
+
     # Determine if we should be creating a new deployment or an existing deployment. We can do this by determining
     # whether the workflow itself has already been deployed to a deployment target of the same type of the request.
     # if there are no deploymnet targets of this target type, that means we can create an entirely new deployment
@@ -106,9 +100,15 @@ def initialize_deployment_for_workflow(payload: DeploymentPayload, session: Sess
     # deployment type will be used as the deployment target (TODO: add in upstream validations that in this case that there
     # is only one deployment of this deployment type)
     if payload.deployment_target and payload.deployment_target.deployment_instance_id:
-        deployment: DeployedWorkflowInstance = session.query(DeployedWorkflowInstance).filter_by(id=payload.deployment_target.deployment_instance_id).one()
+        deployment: DeployedWorkflowInstance = (
+            session.query(DeployedWorkflowInstance).filter_by(id=payload.deployment_target.deployment_instance_id).one()
+        )
     elif payload.deployment_target and payload.deployment_target.deployment_instance_name:
-        deployment: DeployedWorkflowInstance = session.query(DeployedWorkflowInstance).filter_by(name=payload.deployment_target.deployment_instance_name).one()
+        deployment: DeployedWorkflowInstance = (
+            session.query(DeployedWorkflowInstance)
+            .filter_by(name=payload.deployment_target.deployment_instance_name)
+            .one()
+        )
     elif payload.deployment_target and payload.deployment_target.auto_redeploy_to_type and existing_deployments_of_type:
         assert len(existing_deployments_of_type) == 1
         deployment = existing_deployments_of_type[0]
@@ -117,7 +117,7 @@ def initialize_deployment_for_workflow(payload: DeploymentPayload, session: Sess
         session.add(deployment)
 
     deployment.status = DeploymentStatus.INITIALIZED
-    deployment.deployment_metadata = '{}'
+    deployment.deployment_metadata = "{}"
     deployment.is_stale = False
     session.commit()
 
@@ -132,10 +132,11 @@ def initialize_deployment(payload: DeploymentPayload, session: Session, cml: CML
     if payload.workflow_target.type == WorkflowTargetType.WORKFLOW:
         deployment = initialize_deployment_for_workflow(payload, session, cml)
     else:
-        raise ValueError(f'Deployments for workflow artifact type "{payload.workflow_target.type}" are not yet supported.')
+        raise ValueError(
+            f'Deployments for workflow artifact type "{payload.workflow_target.type}" are not yet supported.'
+        )
 
     return deployment
-
 
 
 def get_deployment_job(cml: CMLServiceApi) -> cmlapi.Job:
@@ -156,5 +157,5 @@ def get_deployment_job(cml: CMLServiceApi) -> cmlapi.Job:
             },
             project_id=os.getenv("CDSW_PROJECT_ID"),
         )
-    
+
     return job

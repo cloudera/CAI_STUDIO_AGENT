@@ -185,15 +185,21 @@ def run_code_in_thread(code):
     return result
 
 
-def get_tool_instance_proxy(tool_instance: Input__ToolInstance, user_params_kv: Dict[str, str], workflow_directory: str) -> BaseTool:
+def get_tool_instance_proxy(
+    tool_instance: Input__ToolInstance, user_params_kv: Dict[str, str], workflow_directory: str
+) -> BaseTool:
     """
     Get the tool instance proxy callable for the tool instance.
     """
 
-    if not is_venv_prepared_for_tool(workflow_directory, tool_instance.source_folder_path, tool_instance.python_requirements_file_name):
+    if not is_venv_prepared_for_tool(
+        workflow_directory, tool_instance.source_folder_path, tool_instance.python_requirements_file_name
+    ):
         raise ValueError(f"Virtual environment not prepared for tool '{tool_instance.name}'.")
 
-    tool_file_path = os.path.join(workflow_directory, tool_instance.source_folder_path, tool_instance.python_code_file_name)
+    tool_file_path = os.path.join(
+        workflow_directory, tool_instance.source_folder_path, tool_instance.python_code_file_name
+    )
     with open(tool_file_path, "r") as tool_file:
         tool_code = tool_file.read()
     tool_class_name = extract_tool_class_name(tool_code)
@@ -365,8 +371,8 @@ def get_venv_tool_output_key(code: str) -> Optional[str]:
     return None
 
 
-def get_venv_tool_python_executable(tool_instance: input_types.Input__ToolInstance) -> str:
-    return os.path.join(tool_instance.source_folder_path, ".venv", "bin", "python")
+def get_venv_tool_python_executable(workflow_directory: str, tool_instance: input_types.Input__ToolInstance) -> str:
+    return os.path.join(workflow_directory, tool_instance.source_folder_path, ".venv", "bin", "python")
 
 
 def get_venv_tool_tool_parameters_type(code: str) -> Type[BaseModel]:
@@ -444,7 +450,9 @@ def get_venv_tool_tool_parameters_type(code: str) -> Type[BaseModel]:
     return dynamic_cls
 
 
-def get_venv_tool(tool_instance: input_types.Input__ToolInstance, user_params_kv: Dict[str, str], workflow_directory: str) -> BaseTool:
+def get_venv_tool(
+    tool_instance: input_types.Input__ToolInstance, user_params_kv: Dict[str, str], workflow_directory: str
+) -> BaseTool:
     relative_module_dir = os.path.abspath(os.path.join(workflow_directory, tool_instance.source_folder_path))
     with open(os.path.join(relative_module_dir, tool_instance.python_code_file_name), "r") as code_file:
         tool_code = code_file.read()
@@ -453,11 +461,14 @@ def get_venv_tool(tool_instance: input_types.Input__ToolInstance, user_params_kv
     class AgentStudioCrewAIVenvTool(BaseTool):
         agent_studio_id: str = tool_instance.id
         output_key: Optional[str] = get_venv_tool_output_key(tool_code)
-        python_executable: str = get_venv_tool_python_executable(tool_instance)
-        python_file: str = os.path.join(tool_instance.source_folder_path, tool_instance.python_code_file_name)
+        python_executable: str = get_venv_tool_python_executable(workflow_directory, tool_instance)
+        python_file: str = os.path.join(
+            workflow_directory, tool_instance.source_folder_path, tool_instance.python_code_file_name
+        )
         name: str = tool_instance.name
         description: str = ast.get_docstring(ast.parse(tool_code))
         args_schema: Type[BaseModel] = get_venv_tool_tool_parameters_type(tool_code)
+        venv_dir: str = os.path.join(workflow_directory, tool_instance.source_folder_path, ".venv")
 
         def _run(self, *args, **kwargs):
             try:
@@ -474,6 +485,7 @@ def get_venv_tool(tool_instance: input_types.Input__ToolInstance, user_params_kv
                     capture_output=True,
                     text=True,
                     check=False,
+                    env={"VIRTUAL_ENV": self.venv_dir},
                 )
             except Exception as e:
                 return f"Tool call failed: {e}"
@@ -515,9 +527,7 @@ def is_venv_tool(tool_code: str) -> bool:
 
 
 def get_crewai_tool(
-    tool_instance: input_types.Input__ToolInstance, 
-    user_params_kv: Dict[str, str], 
-    workflow_directory: str
+    tool_instance: input_types.Input__ToolInstance, user_params_kv: Dict[str, str], workflow_directory: str
 ) -> BaseTool:
     """
     Agent Studio currently supports two different tool template types - one which is a "V2" venv tool (multiple

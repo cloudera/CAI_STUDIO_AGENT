@@ -5,10 +5,8 @@ import requests
 import json
 from cmlapi import CMLServiceApi
 
-from studio.api import *
 from studio.db import model as db_model
 import studio.cross_cutting.utils as cc_utils
-from studio.deployments.types import *
 
 # Import engine code manually. Eventually when this code becomes
 # a separate git repo, or a custom runtime image, this path call
@@ -16,9 +14,6 @@ from studio.deployments.types import *
 import sys
 
 sys.path.append("studio/workflow_engine/src")
-
-from engine.ops import get_ops_endpoint
-import engine.types as input_types
 
 
 def cleanup_deployed_workflow_application(cml: CMLServiceApi, application: cmlapi.Application):
@@ -57,9 +52,7 @@ def get_application_for_deployed_workflow(
 
 
 def create_application_for_deployed_workflow(
-    deployment: db_model.DeployedWorkflowInstance, 
-    bypass_authentication: bool, 
-    cml: CMLServiceApi
+    deployment: db_model.DeployedWorkflowInstance, bypass_authentication: bool, cml: CMLServiceApi
 ) -> cmlapi.Application:
     """
     Deploy a dedicated CML application for this deployed workflow which can be used to test the workflow.
@@ -76,7 +69,9 @@ def create_application_for_deployed_workflow(
     env_vars_for_app = {
         "AGENT_STUDIO_RENDER_MODE": "workflow",
         "AGENT_STUDIO_DEPLOYED_WORKFLOW_ID": deployment.id,
-        "AGENT_STUDIO_DEPLOYED_MODEL_ID": deployment.cml_deployed_model_id or deployment_metadata.get("cml_model_id") or "",
+        "AGENT_STUDIO_DEPLOYED_MODEL_ID": deployment.cml_deployed_model_id
+        or deployment_metadata.get("cml_model_id")
+        or "",
     }
 
     # Right now, creating an application through CML APIv2 will manually copy over the project

@@ -1,6 +1,5 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import Dict
 import asyncio
 import os
 import sys
@@ -8,8 +7,7 @@ import traceback
 import requests
 from datetime import datetime
 from opentelemetry.context import get_current
-import subprocess 
-from typing import Optional, Literal
+import subprocess
 
 # Ensure UV is available within the runner's env
 try:

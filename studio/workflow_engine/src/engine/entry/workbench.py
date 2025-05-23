@@ -3,7 +3,6 @@
 import os
 import sys
 import subprocess
-import tarfile
 
 # Restore the original stdio file objects so the
 # jupyter kernel doesn't swallow our print statements
@@ -42,22 +41,16 @@ sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
 import asyncio
 from opentelemetry.context import get_current
 from datetime import datetime
-from typing import Dict, Optional, Union
-from pydantic import ValidationError
+from typing import Dict, Union
 import json
 import base64
 
 import engine.types as input_types
-from engine import consts
 from engine.crewai.run import run_workflow_async
 from engine.crewai.tracing import instrument_crewai_workflow, reset_crewai_instrumentation
 from engine.crewai.tools import prepare_virtual_env_for_tool
 from engine.crewai.events import register_global_handlers
-from engine.artifact import (
-    extract_artifact_to_location, 
-    get_collated_input,
-    get_artifact_workflow_name
-)
+from engine.artifact import extract_artifact_to_location, get_collated_input, get_artifact_workflow_name
 
 import cml.models_v1 as cml_models
 
@@ -68,8 +61,8 @@ def _install_python_requirements(collated_input: input_types.CollatedInput):
     for tool_instance in collated_input.tool_instances:
         print(f"PREPARING VIRTUAL ENV FOR {tool_instance.name}")
         prepare_virtual_env_for_tool(
-            os.path.join(WORKFLOW_DIRECTORY, tool_instance.source_folder_path), 
-            tool_instance.python_requirements_file_name
+            os.path.join(WORKFLOW_DIRECTORY, tool_instance.source_folder_path),
+            tool_instance.python_requirements_file_name,
         )
 
 
@@ -84,6 +77,7 @@ else:
 
 # Extract the workflow name
 workflow_name = get_artifact_workflow_name(artifact_dir=WORKFLOW_DIRECTORY)
+
 
 def base64_decode(encoded_str: str):
     decoded_bytes = base64.b64decode(encoded_str)
@@ -136,13 +130,13 @@ def api_wrapper(args: Union[dict, str]) -> str:
             asyncio.create_task(
                 run_workflow_async(
                     WORKFLOW_DIRECTORY,
-                    collated_input_copy, 
-                    deployment_config.tool_config, 
+                    collated_input_copy,
+                    deployment_config.tool_config,
                     deployment_config.mcp_config,
-                    deployment_config.llm_config, 
-                    inputs, 
-                    parent_context, 
-                    trace_id
+                    deployment_config.llm_config,
+                    inputs,
+                    parent_context,
+                    trace_id,
                 )
             )
 
