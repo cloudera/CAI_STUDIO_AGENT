@@ -35,18 +35,11 @@ import engine.types as input_types
 
 
 def test_workflow(
-    request: TestWorkflowRequest, 
-    cml: CMLServiceApi = None, 
-    dao: AgentStudioDao = None
+    request: TestWorkflowRequest, cml: CMLServiceApi = None, dao: AgentStudioDao = None
 ) -> TestWorkflowResponse:
     """
-    Workflow test requests are sent to our running workflow engine "runners". We do this
-    by creating a collated input object (which is fully serializable) and passing it directly
-    as part of the payload request. The equivalent result is essentially a packaged workflow
-    artifact of type collated_input where the base directory of the collated input file
-    is the root of the Agent Studio instance.
+    Test a workflow by creating agent instances, tasks, and a Crew AI execution.
     """
-
     try: 
         # Currently generation configs are set per-workflow and as part of
         # the test/deploy request itself. TODO: pull out this generation config to be 
@@ -72,11 +65,11 @@ def test_workflow(
         for lm in collated_input.language_models:
             lm.generation_config.update(generation_config)
 
-        tool_config = {
+        tool_user_params_kv = {
             tool_id: {k: v for k, v in user_param_kv.parameters.items()}
             for tool_id, user_param_kv in request.tool_user_parameters.items()
         }
-        mcp_config = {
+        mcp_instance_env_vars_kv = {
             mcp_instance_id: {k: v for k, v in env_vars.env_vars.items()}
             for mcp_instance_id, env_vars in request.mcp_instance_env_vars.items()
         }
@@ -96,8 +89,8 @@ def test_workflow(
                 "workflow_directory": os.path.abspath(os.curdir), # for testing, everything is in studio-data/
                 "workflow_name": f"Test Workflow - {collated_input.workflow.name}",
                 "collated_input": collated_input.model_dump(),
-                "tool_config": tool_config,
-                "mcp_config": mcp_config,
+                "tool_config": tool_user_params_kv,
+                "mcp_config": mcp_instance_env_vars_kv,
                 "llm_config": llm_config,
                 "inputs": dict(request.inputs),
                 "events_trace_id": events_trace_id,
@@ -110,7 +103,7 @@ def test_workflow(
         )
 
     except ValueError as e:
-        raise RuntimeError(f"Workflow Test Error: {e}")
+        raise RuntimeError(f"Validation error: {e}")
     except SQLAlchemyError as e:
         raise RuntimeError(f"Database error while testing workflow: {e}")
     except Exception as e:
@@ -119,19 +112,8 @@ def test_workflow(
     return
 
 
-def deploy_workflow(
-    request: DeployWorkflowRequest, 
-    cml: CMLServiceApi, 
-    dao: AgentStudioDao
-) -> DeployWorkflowResponse:
-    """
-    Initialize workflow deployment using agent studio's deploy workflow job. Because
-    we want the workflow to display as deploying immediately in the UI after we've
-    triggered a deployment (we don't want to wait for the job to spin up), we opt for
-    initializing the deployment ahead of time and passing the deployment ID as part of 
-    the payload.
-    """
-
+def deploy_workflow(request: DeployWorkflowRequest, cml: CMLServiceApi, dao: AgentStudioDao) -> DeployWorkflowResponse:
+    """Deploy a workflow."""
     try: 
         request_dict = MessageToDict(request, preserving_proto_field_name=True)
         generation_config = json.loads(request_dict["generation_config"])
@@ -161,7 +143,8 @@ def deploy_workflow(
         
         # Initialize the deployment so we have a deployment and an ID created
         # before the gRPC call completes.
-        deployment_id = None
+        deployed_workflow_id = None
+        deployed_workflow_instance_name = None
         with dao.get_session() as session:
             workflow: db_model.Workflow = session.query(db_model.Workflow).filter_by(id=request.workflow_id).one()
             initialization_payload: DeploymentPayload = DeploymentPayload(
@@ -175,7 +158,8 @@ def deploy_workflow(
             )
             deployment: db_model.DeployedWorkflowInstance = initialize_deployment_for_workflow(
                 initialization_payload, session, cml)
-            deployment_id = deployment.id
+            deployed_workflow_id = deployment.id
+            deployed_workflow_instance_name = deployment.name
         
         deployment_payload: DeploymentPayload = DeploymentPayload(
             workflow_target=WorkflowTargetRequest(
@@ -184,7 +168,7 @@ def deploy_workflow(
             ),
             deployment_target=DeploymentTargetRequest(
                 type=DeploymentTargetType.WORKBENCH_MODEL,
-                deployment_instance_id=deployment_id
+                deployment_instance_id=deployed_workflow_id
             ),
             deployment_config=deployment_config
         )
@@ -196,7 +180,9 @@ def deploy_workflow(
         }, project_id=os.getenv("CDSW_PROJECT_ID"), job_id=job.id)
         
         return DeployWorkflowResponse(
-            deployed_workflow_id=deployment_id
+            deployed_workflow_name=deployed_workflow_instance_name,
+            deployed_workflow_id=deployed_workflow_id,
+            cml_deployed_model_id=None
         )
         
 
