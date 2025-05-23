@@ -5,7 +5,7 @@ from crewai import Crew, Agent
 from crewai.tools import BaseTool
 
 import engine.types as input_types
-from engine.crewai.llms import get_crewai_llm_object_direct
+from engine.crewai.llms import get_crewai_llm
 from engine.crewai.tools import get_crewai_tool
 from engine.crewai.mcp import get_mcp_tools
 from engine.crewai.agents import get_crewai_agent
@@ -13,21 +13,23 @@ from engine.crewai.wrappers import *
 
 
 def create_crewai_objects(
+    workflow_directory: str,
     collated_input: input_types.CollatedInput,
-    tool_user_params: Dict[str, Dict[str, str]],
-    mcp_instance_env_vars: Dict[str, Dict[str, str]],
+    tool_config: Dict[str, Dict[str, str]],
+    mcp_config: Dict[str, Dict[str, str]],
+    llm_config: Dict[str, Dict[str, str]],
 ) -> input_types.CrewAIObjects:
     language_models: Dict[str, AgentStudioCrewAILLM] = {}
-    for language_model in collated_input.language_models:
-        language_models[language_model.model_id] = get_crewai_llm_object_direct(language_model)
+    for l_ in collated_input.language_models:
+        language_models[l_.model_id] = get_crewai_llm(l_, llm_config.get(l_.model_id, {}))
 
     tools: Dict[str, BaseTool] = {}
     for t_ in collated_input.tool_instances:
-        tools[t_.id] = get_crewai_tool(t_, tool_user_params.get(t_.id, {}))
+        tools[t_.id] = get_crewai_tool(t_, tool_config.get(t_.id, {}), workflow_directory)
 
     mcps: Dict[str, input_types.MCPObjects] = {}
     for m_ in collated_input.mcp_instances:
-        mcps[m_.id] = get_mcp_tools(m_, mcp_instance_env_vars.get(m_.id, {}))
+        mcps[m_.id] = get_mcp_tools(m_, mcp_config.get(m_.id, {}), workflow_directory)
 
     agents: Dict[str, AgentStudioCrewAIAgent] = {}
     for agent in collated_input.agents:

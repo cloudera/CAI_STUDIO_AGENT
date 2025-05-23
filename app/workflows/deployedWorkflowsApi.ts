@@ -19,7 +19,7 @@ export const deployedWorkflowsApi = apiSlice.injectEndpoints({
       transformResponse: (response: ListDeployedWorkflowsResponse) => {
         return response.deployed_workflows;
       },
-      providesTags: ['DeployedWorkflow'],
+      providesTags: [{ type: 'DeployedWorkflow', id: 'LIST' }],
     }),
     undeployWorkflow: builder.mutation<void, UndeployWorkflowRequest>({
       query: (request) => ({
@@ -27,7 +27,7 @@ export const deployedWorkflowsApi = apiSlice.injectEndpoints({
         method: 'POST',
         body: request,
       }),
-      invalidatesTags: ['DeployedWorkflow'],
+      invalidatesTags: [{ type: 'DeployedWorkflow', id: 'LIST' }],
     }),
   }),
 });

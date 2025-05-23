@@ -1,6 +1,6 @@
 import ast
 import os
-from typing import Optional, Dict
+from typing import List, Optional, Dict
 
 from studio.db.model import ToolInstance
 

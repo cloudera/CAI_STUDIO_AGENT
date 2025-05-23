@@ -32,6 +32,7 @@ class MCPStatus(str, Enum):
 AGENT_STUDIO_SERVICE_APPLICATION_NAME = "Agent Studio"
 AGENT_STUDIO_OPS_APPLICATION_NAME = "Agent Studio - Agent Ops & Metrics"
 AGENT_STUDIO_UPGRADE_JOB_NAME = "Agent Studio - Upgrade"
+AGENT_STUDIO_DEPLOY_JOB_NAME = "Agent Studio - Deploy"
 
 ALL_STUDIO_DATA_LOCATION = "studio-data"
 TOOL_TEMPLATE_CATALOG_LOCATION = f"{ALL_STUDIO_DATA_LOCATION}/tool_templates"
@@ -49,7 +50,7 @@ WORKFLOW_MODEL_FILE_PATH = f"./studio/workflow/deploy_workflow_model_v2.py"
 
 DEFAULT_GENERATION_CONFIG = {
     "do_sample": True,
-    "temperature": 0.7,
+    "temperature": 0.1,
     "max_new_tokens": 4096,
     "top_p": 1,
     "top_k": 50,

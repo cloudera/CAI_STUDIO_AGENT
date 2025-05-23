@@ -12,7 +12,7 @@ from studio.agents.agent import get_agent
 # will go away and workflow engine features will be available already.
 import sys
 
-sys.path.append("studio/worfklow_engine/src")
+sys.path.append("studio/workflow_engine/src")
 
 from engine.crewai.tracing import instrument_crewai_workflow, reset_crewai_instrumentation
 

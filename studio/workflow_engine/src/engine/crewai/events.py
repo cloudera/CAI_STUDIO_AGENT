@@ -60,7 +60,7 @@ EVENT_PROCESSORS = {
     ToolUsageErrorEvent: lambda x: {
         "tool_name": x.tool_name,
         "tool_class": x.tool_class,
-        "error": x.error,
+        "error": str(x.error),
         "tool_args": x.tool_args,
         "run_attempts": x.run_attempts,
         "delegations": x.delegations,

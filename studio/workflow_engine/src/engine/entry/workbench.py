@@ -1,6 +1,9 @@
+# TODO: expand workbench models past just collated inputs
+
 import os
 import sys
 import subprocess
+import tarfile
 
 # Restore the original stdio file objects so the
 # jupyter kernel doesn't swallow our print statements
@@ -8,11 +11,15 @@ sys.stdout = sys.__stdout__
 sys.stderr = sys.__stderr__
 
 # Extract workflow parameters from the environment
-WORKFLOW_ARTIFACT_TYPE = os.environ.get("AGENT_STUDIO_WORKFLOW_ARTIFACT_TYPE", "config_file")
-WORFKLOW_ARTIFACT = os.environ.get("AGENT_STUDIO_WORKFLOW_ARTIFACT", "/home/cdsw/workflow/config.json")
+WORKFLOW_ARTIFACT_TYPE = os.environ.get("AGENT_STUDIO_WORKFLOW_ARTIFACT_TYPE", "archive")
+WORFKLOW_ARTIFACT = os.environ.get("AGENT_STUDIO_WORKFLOW_ARTIFACT", "/home/cdsw/workflow/artifact.tar.gz")
+WORKFLOW_DEPLOYMENT_CONFIG = os.environ.get("AGENT_STUDIO_WORKFLOW_DEPLOYMENT_CONFIG", "{}")
 MODEL_EXECUTION_DIR = os.environ.get("AGENT_STUDIO_MODEL_EXECUTION_DIR", "/home/cdsw")
-WORKFLOW_NAME = os.getenv("AGENT_STUDIO_WORKFLOW_NAME")
 CDSW_DOMAIN = os.getenv("CDSW_DOMAIN")
+
+# Specify where our workflows will be extracted to
+WORKFLOW_DIRECTORY = os.path.abspath("workflow")
+sys.path.append(WORKFLOW_DIRECTORY)
 
 # Install the cmlapi. This is a required dependency for cross-cutting util modules
 # and ops modules that are used in a workflow.
@@ -46,6 +53,11 @@ from engine.crewai.run import run_workflow_async
 from engine.crewai.tracing import instrument_crewai_workflow, reset_crewai_instrumentation
 from engine.crewai.tools import prepare_virtual_env_for_tool
 from engine.crewai.events import register_global_handlers
+from engine.artifact import (
+    extract_artifact_to_location, 
+    get_collated_input,
+    get_artifact_workflow_name
+)
 
 import cml.models_v1 as cml_models
 
@@ -55,16 +67,23 @@ import cml.models_v1 as cml_models
 def _install_python_requirements(collated_input: input_types.CollatedInput):
     for tool_instance in collated_input.tool_instances:
         print(f"PREPARING VIRTUAL ENV FOR {tool_instance.name}")
-        prepare_virtual_env_for_tool(tool_instance.source_folder_path, tool_instance.python_requirements_file_name)
+        prepare_virtual_env_for_tool(
+            os.path.join(WORKFLOW_DIRECTORY, tool_instance.source_folder_path), 
+            tool_instance.python_requirements_file_name
+        )
 
 
-if WORKFLOW_ARTIFACT_TYPE == "config_file":
-    collated_input_dict = json.load(open(WORFKLOW_ARTIFACT, "r"))
-    collated_input = input_types.CollatedInput.model_validate(collated_input_dict)
+# Extract (or download) our artifact to MODEL_EXECUTION_DIR/workflow/*
+# TODO: remove dependence on collated_input workflow type
+if WORKFLOW_ARTIFACT_TYPE == "archive":
+    extract_artifact_to_location(WORFKLOW_ARTIFACT, WORKFLOW_DIRECTORY)
+    collated_input = get_collated_input(os.path.join(WORKFLOW_DIRECTORY))
     _install_python_requirements(collated_input)
 else:
-    raise ValueError("currently only AGENT_STUDIO_WORKFLOW_ARTIFACT_TYPE=config_file is supported.")
+    raise ValueError("currently only AGENT_STUDIO_WORKFLOW_ARTIFACT_TYPE=archive is supported.")
 
+# Extract the workflow name
+workflow_name = get_artifact_workflow_name(artifact_dir=WORKFLOW_DIRECTORY)
 
 def base64_decode(encoded_str: str):
     decoded_bytes = base64.b64decode(encoded_str)
@@ -74,7 +93,7 @@ def base64_decode(encoded_str: str):
 # Instrument our workflow given a specific workflow name and
 # set up the instrumentation. Also register our handlers.
 reset_crewai_instrumentation()
-tracer_provider = instrument_crewai_workflow(f"{WORKFLOW_NAME}")
+tracer_provider = instrument_crewai_workflow(f"{workflow_name}")
 tracer = tracer_provider.get_tracer("opentelemetry.agentstudio.workflow.model")
 
 
@@ -85,6 +104,7 @@ tracer = tracer_provider.get_tracer("opentelemetry.agentstudio.workflow.model")
 register_global_handlers()
 
 
+# TODO: remove dependence on collated_input workflow type
 @cml_models.cml_model
 def api_wrapper(args: Union[dict, str]) -> str:
     dict_args = args
@@ -97,39 +117,10 @@ def api_wrapper(args: Union[dict, str]) -> str:
         )
         collated_input_copy = collated_input.model_copy(deep=True)
 
-        tool_user_params: Dict[str, Dict[str, str]] = {}
-        for tool_instance in collated_input_copy.tool_instances:
-            t_id = tool_instance.id
-            prefix = f"TOOL_{t_id.replace('-', '_')}_USER_PARAMS_"
-            user_param_kv = {}
-            for key, value in os.environ.items():
-                if key.startswith(prefix):
-                    param_name = key[len(prefix) :]
-                    user_param_kv[param_name] = value
-            tool_user_params[t_id] = user_param_kv
-
-        mcp_instance_env_vars: Dict[str, Dict[str, str]] = {}
-        for mcp_instance in collated_input_copy.mcp_instances:
-            m_id = mcp_instance.id
-            prefix = f"MCP_INSTANCE_{m_id.replace('-', '_')}_ENV_VAR_"
-            env_var_kv = {}
-            for key, value in os.environ.items():
-                if key.startswith(prefix):
-                    param_name = key[len(prefix) :]
-                    env_var_kv[param_name] = value
-            mcp_instance_env_vars[m_id] = env_var_kv
-
-        # Retrieve the language model config from the environment variables and validate it, and put it back in the collated input.
-        for lm in collated_input_copy.language_models:
-            env_var_key_name = f"MODEL_{lm.model_id.replace('-', '_')}_CONFIG"
-            lm_config: Optional[input_types.Input__LanguageModelConfig] = None
-            try:
-                lm_config_str = os.getenv(env_var_key_name)
-                if lm_config_str:
-                    lm_config = input_types.Input__LanguageModelConfig.model_validate(json.loads(lm_config_str))
-            except (ValidationError, json.JSONDecodeError) as e:
-                raise ValueError(f"Error validating language model config for {lm.model_name}: {e}")
-            lm.config = lm_config
+        # Extract our deployment config (API keys, env vars, etc.)
+        deployment_config: input_types.DeploymentConfig = input_types.DeploymentConfig.model_validate(
+            json.loads(WORKFLOW_DEPLOYMENT_CONFIG)
+        )
 
         current_time = datetime.now()
         formatted_time = current_time.strftime("%b %d, %H:%M:%S.%f")[:-3]
@@ -138,17 +129,20 @@ def api_wrapper(args: Union[dict, str]) -> str:
             decimal_trace_id = parent_span.get_span_context().trace_id
             trace_id = f"{decimal_trace_id:032x}"
 
-            # End the parent span early
-            parent_span.add_event("Parent span ending early for visibility")
-            parent_span.end()
-
             # Capture the current OpenTelemetry context
             parent_context = get_current()
 
             # Start the workflow in the background using the parent context
             asyncio.create_task(
                 run_workflow_async(
-                    collated_input_copy, tool_user_params, mcp_instance_env_vars, inputs, parent_context, trace_id
+                    WORKFLOW_DIRECTORY,
+                    collated_input_copy, 
+                    deployment_config.tool_config, 
+                    deployment_config.mcp_config,
+                    deployment_config.llm_config, 
+                    inputs, 
+                    parent_context, 
+                    trace_id
                 )
             )
 
@@ -170,7 +164,7 @@ def api_wrapper(args: Union[dict, str]) -> str:
                 unavailable_assets.append(asset_uri)
                 continue
             # Ensure that the asset exists
-            asset_path = os.path.join(consts.DYNAMIC_ASSETS_LOCATION, asset_uri)
+            asset_path = os.path.join(WORKFLOW_DIRECTORY, asset_uri)
             if not os.path.exists(asset_path):
                 unavailable_assets.append(asset_uri)
                 continue

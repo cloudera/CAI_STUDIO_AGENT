@@ -93,6 +93,7 @@ export const workflowsApi = apiSlice.injectEndpoints({
       invalidatesTags: (result, error, request) => [
         { type: 'Workflow', id: request.workflow_id },
         { type: 'Workflow', id: 'LIST' },
+        { type: 'DeployedWorkflow', id: 'LIST' },
       ],
     }),
     testWorkflow: builder.mutation<TestWorkflowResponse, TestWorkflowRequest>({

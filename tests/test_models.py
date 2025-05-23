@@ -206,7 +206,7 @@ def test_model_test_missing_api_key():
             model_test(req, cml=mock_cml, dao=test_dao)
         assert "API key is required but not found" in str(exc_info.value)
 
-# @patch('engine.crewai.llms.get_crewai_llm_object_direct')
+# @patch('engine.crewai.llms.get_crewai_llm')
 # def test_model_test_without_optional_params(mock_get_llm):
 #     # Create a mock LLM object with a call method
 #     mock_llm = MagicMock()
@@ -238,7 +238,7 @@ def test_model_test_missing_api_key():
 #         response = model_test(req, cml=mock_cml, dao=test_dao)
 #         assert response.response == "Test response"
 
-#         # Verify get_crewai_llm_object_direct was called with correct parameters
+#         # Verify get_crewai_llm was called with correct parameters
 #         mock_get_llm.assert_called_once_with(
 #             Input__LanguageModel(
 #                 model_id="test_id",

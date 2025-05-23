@@ -26,10 +26,6 @@ def get_ops_endpoint() -> str:
     # Check for required environment variables
     domain = os.getenv("CDSW_DOMAIN")
     api_key = os.getenv("CDSW_APIV2_KEY")
-
-    print(f"CDSW_DOMAIN: {'found' if domain else 'not found'}")
-    print(f"CDSW_APIV2_KEY: {'found' if api_key else 'not found'}")
-
     if not domain:
         print("ERROR: CDSW_DOMAIN environment variable not found")
         raise ValueError("CDSW_DOMAIN environment variable not found")
@@ -39,20 +35,13 @@ def get_ops_endpoint() -> str:
 
     try:
         base_url = f"https://{domain}"
-        print(f"Creating CML client with base_url: {base_url}")
         cml = cmlapi.default_client(url=base_url, cml_api_key=api_key)
-
-        print(f"Looking for application: {AGENT_STUDIO_OPS_APPLICATION_NAME}")
-        print(f"Project ID from env: {os.getenv('CDSW_PROJECT_ID')}")
         application = get_application_by_name(cml, AGENT_STUDIO_OPS_APPLICATION_NAME)
-        print(f"Found application with subdomain: {application.subdomain if application else 'None'}")
-
         if not application:
             print(f"ERROR: Application {AGENT_STUDIO_OPS_APPLICATION_NAME} not found")
             raise ValueError(f"Application {AGENT_STUDIO_OPS_APPLICATION_NAME} not found")
 
         ops_endpoint = f"https://{application.subdomain}.{domain}"
-        print(f"Found ops endpoint: {ops_endpoint}")
         return ops_endpoint
     except Exception as e:
         print(f"ERROR: Failed to get ops endpoint: {str(e)}")

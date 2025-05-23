@@ -221,11 +221,11 @@ class Workflow(Base, MappedProtobuf, MappedDict):
     crew_ai_llm_provider_model_id = Column(
         String, nullable=True)  # Manager LLM Model Provider ID
     # Is Workflow Conversational
-    is_conversational = Column(Boolean, default=False)
+    is_conversational = Column(Boolean, nullable=True)
     # Whether or not the model is in draft mode.
     is_draft = Column(Boolean, nullable=True)
     # directory location of the workflow
-    directory = Column(String, nullable=False)
+    directory = Column(String, nullable=True)
 
     # Relationships
     deployed_workflow_instances = relationship(
@@ -239,16 +239,24 @@ class DeployedWorkflowInstance(Base, MappedProtobuf, MappedDict):
     id = Column(String, primary_key=True, nullable=False)
     # Name of the deployed workflow instance
     name = Column(String, nullable=False)
+    # Deployment target type of the deployed workflow instance.
+    # for heritage reasons, if null, assumes workbench model type.
+    type = Column(String, nullable=True)
+    # Status of the deployment.
+    status = Column(String, nullable=True)
     workflow_id = Column(String, ForeignKey(
         "workflows.id"), nullable=False)  # Workflow ID
     cml_deployed_model_id = Column(
-        String, nullable=True)  # CML Deployed Model ID
+        String, nullable=True)  # CML Deployed Model ID. TODO: deprecate in favor of metadata
     # Staleness tracker comparing to the published workflow.
     is_stale = Column(Boolean, nullable=True)
 
     # Relationships
     workflow = relationship(
         "Workflow", back_populates="deployed_workflow_instances")
+    
+    # Metadata about the deployment itself
+    deployment_metadata = Column(JSON, nullable=True)
 
 
 class WorkflowTemplate(Base, MappedProtobuf, MappedDict):
