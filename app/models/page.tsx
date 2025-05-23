@@ -265,7 +265,7 @@ const ModelsPageContent = () => {
         model_id: selectedModel.model_id,
         completion_role: 'user',
         completion_content: message,
-        temperature: 0.7,
+        temperature: 0.1,
         max_tokens: 50,
         timeout: 3,
       }).unwrap();
