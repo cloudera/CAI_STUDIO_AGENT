@@ -702,6 +702,10 @@ message DeployWorkflowRequest {
   // Serialized JSON generation config parameters for all LLM calls in this workflow.
   // In the future, users may want to customize temperatures/max_new_tokens for each agent.
   string generation_config = 6;
+  // Optional full deployment payload. This is useful for CI/CD pipelines that need
+  // to fully deploy a payload without using the UI. The schema of this field is 
+  // easier to use than our existing protobuf surface.
+  optional string deployment_payload = 7;
 }
 
 message DeployWorkflowResponse {
@@ -757,6 +761,8 @@ message DeployedWorkflow {
   string application_deep_link = 9;
   // Deep link to the CML model
   string model_deep_link = 10;
+  // Deployment payload metadata
+  optional string deployment_metadata = 11;
 }
 
 // Workflow metadata

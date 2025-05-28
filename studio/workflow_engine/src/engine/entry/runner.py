@@ -1,6 +1,5 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import Dict
 import asyncio
 import os
 import sys
@@ -41,10 +40,12 @@ running_workflow = None
 
 # Pydantic model for the incoming JSON payload.
 class KickoffPayload(BaseModel):
+    workflow_directory: str
     workflow_name: str
     collated_input: dict
-    tool_user_params: Dict[str, Dict[str, str]]
-    mcp_instance_env_vars: Dict[str, Dict[str, str]]
+    tool_config: dict
+    mcp_config: dict
+    llm_config: dict
     inputs: dict
     events_trace_id: str
 
@@ -83,9 +84,11 @@ def run_workflow_task(payload: KickoffPayload) -> None:
         # Validate and convert the collated input into its object.
         collated_input_obj = input_types.CollatedInput.model_validate(payload.collated_input)
         run_workflow(
+            payload.workflow_directory,
             collated_input_obj,
-            payload.tool_user_params,
-            payload.mcp_instance_env_vars,
+            payload.tool_config,
+            payload.mcp_config,
+            payload.llm_config,
             payload.inputs,
             parent_context,
             payload.events_trace_id,

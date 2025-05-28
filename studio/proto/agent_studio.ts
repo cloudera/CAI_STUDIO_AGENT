@@ -726,6 +726,12 @@ export interface DeployWorkflowRequest {
    * In the future, users may want to customize temperatures/max_new_tokens for each agent.
    */
   generation_config: string;
+  /**
+   * Optional full deployment payload. This is useful for CI/CD pipelines that need
+   * to fully deploy a payload without using the UI. The schema of this field is
+   * easier to use than our existing protobuf surface.
+   */
+  deployment_payload?: string | undefined;
 }
 
 export interface DeployWorkflowRequest_EnvVariableOverridesEntry {
@@ -799,6 +805,8 @@ export interface DeployedWorkflow {
   application_deep_link: string;
   /** Deep link to the CML model */
   model_deep_link: string;
+  /** Deployment payload metadata */
+  deployment_metadata?: string | undefined;
 }
 
 /** Workflow metadata */
@@ -8962,6 +8970,7 @@ function createBaseDeployWorkflowRequest(): DeployWorkflowRequest {
     mcp_instance_env_vars: {},
     bypass_authentication: false,
     generation_config: "",
+    deployment_payload: undefined,
   };
 }
 
@@ -8985,6 +8994,9 @@ export const DeployWorkflowRequest: MessageFns<DeployWorkflowRequest> = {
     }
     if (message.generation_config !== "") {
       writer.uint32(50).string(message.generation_config);
+    }
+    if (message.deployment_payload !== undefined) {
+      writer.uint32(58).string(message.deployment_payload);
     }
     return writer;
   },
@@ -9053,6 +9065,14 @@ export const DeployWorkflowRequest: MessageFns<DeployWorkflowRequest> = {
           message.generation_config = reader.string();
           continue;
         }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.deployment_payload = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -9093,6 +9113,7 @@ export const DeployWorkflowRequest: MessageFns<DeployWorkflowRequest> = {
         ? globalThis.Boolean(object.bypass_authentication)
         : false,
       generation_config: isSet(object.generation_config) ? globalThis.String(object.generation_config) : "",
+      deployment_payload: isSet(object.deployment_payload) ? globalThis.String(object.deployment_payload) : undefined,
     };
   },
 
@@ -9134,6 +9155,9 @@ export const DeployWorkflowRequest: MessageFns<DeployWorkflowRequest> = {
     if (message.generation_config !== "") {
       obj.generation_config = message.generation_config;
     }
+    if (message.deployment_payload !== undefined) {
+      obj.deployment_payload = message.deployment_payload;
+    }
     return obj;
   },
 
@@ -9169,6 +9193,7 @@ export const DeployWorkflowRequest: MessageFns<DeployWorkflowRequest> = {
     }, {});
     message.bypass_authentication = object.bypass_authentication ?? false;
     message.generation_config = object.generation_config ?? "";
+    message.deployment_payload = object.deployment_payload ?? undefined;
     return message;
   },
 };
@@ -9845,6 +9870,7 @@ function createBaseDeployedWorkflow(): DeployedWorkflow {
     application_status: "",
     application_deep_link: "",
     model_deep_link: "",
+    deployment_metadata: undefined,
   };
 }
 
@@ -9879,6 +9905,9 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
     }
     if (message.model_deep_link !== "") {
       writer.uint32(82).string(message.model_deep_link);
+    }
+    if (message.deployment_metadata !== undefined) {
+      writer.uint32(90).string(message.deployment_metadata);
     }
     return writer;
   },
@@ -9970,6 +9999,14 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
           message.model_deep_link = reader.string();
           continue;
         }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.deployment_metadata = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -9993,6 +10030,9 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
       application_status: isSet(object.application_status) ? globalThis.String(object.application_status) : "",
       application_deep_link: isSet(object.application_deep_link) ? globalThis.String(object.application_deep_link) : "",
       model_deep_link: isSet(object.model_deep_link) ? globalThis.String(object.model_deep_link) : "",
+      deployment_metadata: isSet(object.deployment_metadata)
+        ? globalThis.String(object.deployment_metadata)
+        : undefined,
     };
   },
 
@@ -10028,6 +10068,9 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
     if (message.model_deep_link !== "") {
       obj.model_deep_link = message.model_deep_link;
     }
+    if (message.deployment_metadata !== undefined) {
+      obj.deployment_metadata = message.deployment_metadata;
+    }
     return obj;
   },
 
@@ -10046,6 +10089,7 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
     message.application_status = object.application_status ?? "";
     message.application_deep_link = object.application_deep_link ?? "";
     message.model_deep_link = object.model_deep_link ?? "";
+    message.deployment_metadata = object.deployment_metadata ?? undefined;
     return message;
   },
 };

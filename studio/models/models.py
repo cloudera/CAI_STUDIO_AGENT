@@ -14,8 +14,8 @@ import sys
 
 sys.path.append("studio/workflow_engine/src/")
 
-from engine.crewai.llms import get_crewai_llm_object_direct
-from engine.types import Input__LanguageModel, Input__LanguageModelConfig
+from engine.crewai.llms import get_crewai_llm
+from engine.types import Input__LanguageModel
 
 from .utils import get_model_api_key_from_env, update_model_api_key_in_env, remove_model_api_key_from_env
 
@@ -174,22 +174,21 @@ def model_test(request: TestModelRequest, cml: CMLServiceApi = None, dao: AgentS
                 f"API key is required but not found for model {model.model_name} "
                 f"({model.model_id}). Please configure the API key in project environment variables."
             )
-
-        llm = get_crewai_llm_object_direct(
+        llm = get_crewai_llm(
             Input__LanguageModel(
                 model_id=model.model_id,
                 model_name=model.model_name,
-                config=Input__LanguageModelConfig(
-                    provider_model=model.provider_model,
-                    model_type=model.model_type,
-                    api_base=model.api_base or None,
-                    api_key=api_key,  # API key is required
-                ),
                 generation_config={
                     "temperature": request.temperature or None,
                     "max_new_tokens": request.max_tokens or None,
                 },
-            )
+            ),
+            llm_config_dict={
+                "provider_model": model.provider_model,
+                "model_type": model.model_type,
+                "api_base": model.api_base or None,
+                "api_key": api_key,
+            },
         )
 
         try:

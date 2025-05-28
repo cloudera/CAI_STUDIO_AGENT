@@ -1075,6 +1075,7 @@ class DeployWorkflowRequest(_message.Message):
         "mcp_instance_env_vars",
         "bypass_authentication",
         "generation_config",
+        "deployment_payload",
     )
     class EnvVariableOverridesEntry(_message.Message):
         __slots__ = ("key", "value")
@@ -1110,12 +1111,14 @@ class DeployWorkflowRequest(_message.Message):
     MCP_INSTANCE_ENV_VARS_FIELD_NUMBER: _ClassVar[int]
     BYPASS_AUTHENTICATION_FIELD_NUMBER: _ClassVar[int]
     GENERATION_CONFIG_FIELD_NUMBER: _ClassVar[int]
+    DEPLOYMENT_PAYLOAD_FIELD_NUMBER: _ClassVar[int]
     workflow_id: str
     env_variable_overrides: _containers.ScalarMap[str, str]
     tool_user_parameters: _containers.MessageMap[str, TestWorkflowToolUserParameters]
     mcp_instance_env_vars: _containers.MessageMap[str, TestWorkflowMCPInstanceEnvVars]
     bypass_authentication: bool
     generation_config: str
+    deployment_payload: str
     def __init__(
         self,
         workflow_id: _Optional[str] = ...,
@@ -1124,6 +1127,7 @@ class DeployWorkflowRequest(_message.Message):
         mcp_instance_env_vars: _Optional[_Mapping[str, TestWorkflowMCPInstanceEnvVars]] = ...,
         bypass_authentication: bool = ...,
         generation_config: _Optional[str] = ...,
+        deployment_payload: _Optional[str] = ...,
     ) -> None: ...
 
 class DeployWorkflowResponse(_message.Message):
@@ -1183,6 +1187,7 @@ class DeployedWorkflow(_message.Message):
         "application_status",
         "application_deep_link",
         "model_deep_link",
+        "deployment_metadata",
     )
     DEPLOYED_WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
     WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
@@ -1194,6 +1199,7 @@ class DeployedWorkflow(_message.Message):
     APPLICATION_STATUS_FIELD_NUMBER: _ClassVar[int]
     APPLICATION_DEEP_LINK_FIELD_NUMBER: _ClassVar[int]
     MODEL_DEEP_LINK_FIELD_NUMBER: _ClassVar[int]
+    DEPLOYMENT_METADATA_FIELD_NUMBER: _ClassVar[int]
     deployed_workflow_id: str
     workflow_id: str
     workflow_name: str
@@ -1204,6 +1210,7 @@ class DeployedWorkflow(_message.Message):
     application_status: str
     application_deep_link: str
     model_deep_link: str
+    deployment_metadata: str
     def __init__(
         self,
         deployed_workflow_id: _Optional[str] = ...,
@@ -1216,6 +1223,7 @@ class DeployedWorkflow(_message.Message):
         application_status: _Optional[str] = ...,
         application_deep_link: _Optional[str] = ...,
         model_deep_link: _Optional[str] = ...,
+        deployment_metadata: _Optional[str] = ...,
     ) -> None: ...
 
 class Workflow(_message.Message):

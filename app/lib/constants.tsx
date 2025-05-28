@@ -11,7 +11,7 @@ import { Button } from 'antd';
  */
 export const DEFAULT_GENERATION_CONFIG = {
   max_new_tokens: 4096,
-  temperature: 0.7,
+  temperature: 0.1,
 };
 
 export const TOOL_PARAMS_ALERT = {

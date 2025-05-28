@@ -22,7 +22,7 @@ from crewai import Process
 # will go away and workflow engine features will be available already.
 import sys
 
-sys.path.append("studio/worfklow_engine/src")
+sys.path.append("studio/workflow_engine/src")
 from engine.crewai.tools import is_venv_prepared_for_tool
 
 

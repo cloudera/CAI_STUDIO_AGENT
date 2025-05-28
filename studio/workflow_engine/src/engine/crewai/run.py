@@ -10,9 +10,11 @@ from engine.crewai.crew import create_crewai_objects
 
 
 def run_workflow(
+    workflow_directory: str,
     collated_input: Any,
-    tool_user_params: Dict[str, Dict[str, str]],
-    mcp_instance_env_vars: Dict[str, Dict[str, str]],
+    tool_config: Dict[str, Dict[str, str]],
+    mcp_config: Dict[str, Dict[str, str]],
+    llm_config: Dict[str, Dict[str, str]],
     inputs: Dict[str, Any],
     parent_context: Context,
     events_trace_id: str,
@@ -24,7 +26,13 @@ def run_workflow(
     token = attach(parent_context)
     try:
         set_trace_id(events_trace_id)
-        crewai_objects = create_crewai_objects(collated_input, tool_user_params, mcp_instance_env_vars)
+        crewai_objects = create_crewai_objects(
+            workflow_directory,
+            collated_input,
+            tool_config,
+            mcp_config,
+            llm_config,
+        )
         crew = crewai_objects.crews[collated_input.workflow.id]
         crew.kickoff(inputs=dict(inputs))
     finally:
@@ -37,9 +45,11 @@ def run_workflow(
 
 
 async def run_workflow_async(
+    workflow_directory: str,
     collated_input: Any,
-    tool_user_params: Dict[str, Dict[str, str]],
-    mcp_instance_env_vars: Dict[str, Dict[str, str]],
+    tool_config: Dict[str, Dict[str, str]],
+    mcp_config: Dict[str, Dict[str, str]],
+    llm_config: Dict[str, Dict[str, str]],
     inputs: Dict[str, Any],
     parent_context: Any,  # Use the parent context
     events_trace_id,
@@ -54,9 +64,11 @@ async def run_workflow_async(
     await loop.run_in_executor(
         None,
         run_workflow,
+        workflow_directory,
         collated_input,
-        tool_user_params,
-        mcp_instance_env_vars,
+        tool_config,
+        mcp_config,
+        llm_config,
         inputs,
         parent_context,
         events_trace_id,

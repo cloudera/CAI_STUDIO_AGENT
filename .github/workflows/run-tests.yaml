@@ -22,10 +22,10 @@ jobs:
           pip3 install uv
           uv venv
           source .venv/bin/activate
-          uv pip install -r requirements.uv.txt
-          uv pip compile requirements.uv.txt
+          uv sync --all-extras && uv pip install -e .
+          uv pip install tests/resources/cmlapi.tar.gz
 
       - name: Run tests with coverage
         run: |
           source .venv/bin/activate
-          sh bin/run-tests.sh
+          . bin/run-tests.sh

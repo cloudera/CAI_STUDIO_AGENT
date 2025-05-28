@@ -15,7 +15,9 @@ _mcp_type_to_command = {
 }
 
 
-def get_mcp_tools(mcp_instance: Input__MCPInstance, env_vars: Dict[str, str]) -> input_types.MCPObjects:
+def get_mcp_tools(
+    mcp_instance: Input__MCPInstance, env_vars: Dict[str, str], workflow_directory: str
+) -> input_types.MCPObjects:
     server_params = StdioServerParameters(
         command=_mcp_type_to_command[mcp_instance.type],
         args=mcp_instance.args,

@@ -169,12 +169,11 @@ def test_list_tool_instances(mock_thread_pool, mock_join, mock_open):
     mock_join.side_effect = lambda *args: "/".join(args)
     mock_open.return_value.__enter__.return_value.read.return_value = "test code"
 
-    req = ListToolInstancesRequest()
+    req = ListToolInstancesRequest(workflow_id="workflow1")
     res = list_tool_instances(req, cml=None, dao=test_dao)
     
-    assert len(res.tool_instances) == 2
+    assert len(res.tool_instances) == 1
     assert res.tool_instances[0].name == "Instance 1"
-    assert res.tool_instances[1].name == "Instance 2"
 
 @patch('builtins.open', new_callable=MagicMock)
 @patch('os.path.join')

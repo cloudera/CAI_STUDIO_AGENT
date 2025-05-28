@@ -143,7 +143,7 @@ const AgentTemplateForm = ({ agentTemplateId }: { agentTemplateId?: string }) =>
         allow_delegation: false,
         verbose: false,
         cache: false,
-        temperature: 0.7,
+        temperature: 0.1,
         max_iter: 10,
         tmp_agent_image_path: '',
       };

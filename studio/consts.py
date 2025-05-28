@@ -49,7 +49,7 @@ WORKFLOW_MODEL_FILE_PATH = f"./studio/workflow/deploy_workflow_model_v2.py"
 
 DEFAULT_GENERATION_CONFIG = {
     "do_sample": True,
-    "temperature": 0.7,
+    "temperature": 0.1,
     "max_new_tokens": 4096,
     "top_p": 1,
     "top_k": 50,

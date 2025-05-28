@@ -4,8 +4,62 @@ from typing import List
 import os
 import requests
 
+from cmlapi import CMLServiceApi
+
 from studio.cross_cutting import utils as cc_utils
 from studio import consts
+from studio.db.model import Workflow, Model, Agent
+from sqlalchemy.orm.session import Session
+
+from studio.models.utils import get_model_api_key_from_env
+
+
+def get_llm_config_for_workflow(workflow: Workflow, session: Session, cml: CMLServiceApi) -> dict:
+    """
+    Creates a model config object for a workbench deployment
+    given the current model configs stored in Agent Studio for
+    a given workflow.
+    """
+
+    model_config = {}
+
+    default_llm = session.query(Model).filter_by(is_studio_default=True).one()
+    language_model_ids = set([default_llm.model_id])
+
+    agent_ids = set(workflow.crew_ai_agents) or set()
+    if workflow.crew_ai_llm_provider_model_id:
+        language_model_ids.add(workflow.crew_ai_llm_provider_model_id)
+
+    agents: list[Agent] = session.query(Agent).filter(Agent.id.in_(agent_ids)).all()
+    for agent_id in agent_ids:
+        agent: Agent = next((a for a in agents if a.id == agent_id), None)
+        if not agent:
+            raise ValueError(f"Agent with ID '{agent_id}' not found.")
+        if agent.llm_provider_model_id:
+            language_model_ids.add(agent.llm_provider_model_id)
+
+    language_model_db_models = session.query(Model).filter(Model.model_id.in_(language_model_ids)).all()
+    for lm_id in language_model_ids:
+        language_model_db_model = next((lm for lm in language_model_db_models if lm.model_id == lm_id), None)
+        if not language_model_db_model:
+            raise ValueError(f"Language Model with ID '{lm_id}' not found.")
+
+        # Get API key from environment with error handling
+        api_key = get_model_api_key_from_env(language_model_db_model.model_id, cml)
+        if not api_key:
+            raise ValueError(
+                f"API key is required but not found for model {language_model_db_model.model_name} "
+                f"({language_model_db_model.model_id}). Please configure the API key in project environment variables."
+            )
+
+        model_config[lm_id] = {
+            "provider_model": language_model_db_model.provider_model,
+            "model_type": language_model_db_model.model_type,
+            "api_base": language_model_db_model.api_base or None,
+            "api_key": api_key,
+        }
+
+    return model_config
 
 
 #  Compare two different versions of Cloudera AI Workbench. Workbench

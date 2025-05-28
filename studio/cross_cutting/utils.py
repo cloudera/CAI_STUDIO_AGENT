@@ -41,8 +41,7 @@ def get_cml_project_number_and_id() -> Tuple[
 
 def deploy_cml_model(
     cml: cmlapi.CMLServiceApi,
-    model_name: str,
-    model_description: str,
+    model_id: str,
     model_build_comment: str,
     model_file_path: str,
     function_name: str,
@@ -55,21 +54,6 @@ def deploy_cml_model(
     """
     # Check for required environment variables
     _, project_id = get_cml_project_number_and_id()
-    try:
-        # Create the model
-        create_model_body = cmlapi.CreateModelRequest(
-            project_id=project_id,
-            name=model_name,
-            description=model_description,
-            disable_authentication=True,
-        )
-        create_resp = cml.create_model(create_model_body, project_id=project_id)
-    except cmlapi.rest.ApiException as e:
-        raise RuntimeError(f"Failed to create model: {e.body}") from e
-    except Exception as e:
-        raise RuntimeError(f"Unexpected error during model creation: {str(e)}") from e
-
-    model_id = create_resp.id
 
     try:
         # Create the model build
@@ -283,8 +267,7 @@ def get_application_by_name(cml: cmlapi.CMLServiceApi, name: str, only_running: 
 
 def get_job_by_name(cml: cmlapi.CMLServiceApi, name: str) -> Union[cmlapi.Job, None]:
     jobs: list[cmlapi.Job] = cml.list_jobs(
-        project_id=os.getenv("CDSW_PROJECT_ID"),
-        page_size=5000,
+        project_id=os.getenv("CDSW_PROJECT_ID"), search_filter='{"name": "' + name + '"}', page_size=1000
     ).jobs
 
     jobs = [job for job in jobs if ((job.name == name) or (name + " v") in job.name)]

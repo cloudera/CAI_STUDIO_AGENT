@@ -30,7 +30,7 @@ class DummyCMLServiceApi:
     def __init__(self, jobs):
         self.jobs = jobs
 
-    def list_jobs(self, project_id, page_size):
+    def list_jobs(self, project_id, search_filter: str = None, page_size: int = None):
         # The project_id and page_size parameters are ignored for testing purposes.
         return DummyListJobsResponse(self.jobs)
     
@@ -102,8 +102,8 @@ def test_deploy_cml_model_happy_path(mock_proj_number):
     
     # Create model build request without model_root_dir
     out = deploy_cml_model(
-        cml, "test_model", "test_desc", "test_comment",
-        "test_file.py", "test_func", "test_runtime", None, None
+        cml, "model_id", "test_comment",
+        "test_file.py", "test_func", "test_runtime", None, "root/dir"
     )
     
     # Create expected request using cmlapi.CreateModelBuildRequest
@@ -116,9 +116,7 @@ def test_deploy_cml_model_happy_path(mock_proj_number):
         runtime_identifier="test_runtime",
         auto_deployment_config=None,
         auto_deploy_model=True,
-        kernel=None,
-        registered_model_version_id=None,
-        runtime_addon_identifiers=None
+        model_root_dir="root/dir",
     )
     
     cml.create_model_build.assert_called_with(expected_body, project_id="proj_id", model_id="model_id")
@@ -130,17 +128,17 @@ def test_deploy_cml_model_no_root_dir(mock_proj_number):
     cml = MagicMock(spec=CMLServiceApi)
     cml.create_model.return_value = IDResponse(id="model_id")
     out = deploy_cml_model(
-        cml, None, None, None,
-        None, None, None, None, None
+        cml, "model_id", "test_comment",
+        "test_file.py", "test_func", "test_runtime", None, None
     )
     cml.create_model_build.assert_called_with(
         cmlapi.CreateModelBuildRequest(
             project_id="proj_id",
             model_id="model_id",
-            comment=None,
-            file_path=None,
-            function_name=None,
-            runtime_identifier=None,
+            comment="test_comment",
+            file_path="test_file.py",
+            function_name="test_func",
+            runtime_identifier="test_runtime",
             auto_deployment_config=None,
             auto_deploy_model=True,
         ),  project_id='proj_id', model_id='model_id'
