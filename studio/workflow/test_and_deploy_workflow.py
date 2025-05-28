@@ -220,7 +220,7 @@ def undeploy_workflow(
             if not deployed_workflow_instance:
                 raise ValueError(f"Deployed Workflow with ID '{request.deployed_workflow_id}' not found.")
             deployed_workflow_instance_name = deployed_workflow_instance.name
-            deployment_metadata = json.loads(deployed_workflow_instance.deployment_metadata)
+            deployment_metadata = json.loads(deployed_workflow_instance.deployment_metadata or "{}")
             cml_model_id = (
                 deployed_workflow_instance.cml_deployed_model_id or deployment_metadata.get("cml_model_id") or None
             )
@@ -399,7 +399,7 @@ def list_deployed_workflows(
                             application_status=application_status,
                             application_deep_link=application_deep_link,
                             model_deep_link=model_deep_link,
-                            deployment_metadata=deployed_workflow.deployment_metadata,
+                            deployment_metadata=deployed_workflow.deployment_metadata or "{}",
                         )
                     )
                 except Exception as e:
