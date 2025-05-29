@@ -118,7 +118,7 @@ def deploy(payload: DeploymentPayload, session: Session, cml: CMLServiceApi) -> 
     return
 
 
-if __name__ == "__main__":
+def main():
     arg_string = os.environ.get("JOB_ARGUMENTS", "")
     parser = argparse.ArgumentParser()
     parser.add_argument("--deployment_payload", help="Payload of the deployment", required=True)
@@ -132,3 +132,7 @@ if __name__ == "__main__":
 
     with dao.get_session() as session:
         deploy(deployment_payload, session, cml)
+
+
+if __name__ == "__main__":
+    main()

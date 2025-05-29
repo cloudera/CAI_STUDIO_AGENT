@@ -5,9 +5,7 @@ from cmlapi import CMLServiceApi
 
 from studio.db.model import Workflow
 from studio.deployments.utils import get_deployment_job_for_workflow
-from studio.deployments.types import DeploymentPayload, WorkflowTargetType
-from studio.deployments.validation.workflows import validate_payload_for_workflow
-from studio.deployments.validation.artifact import validate_payload_for_workflow_artifact
+from studio.deployments.types import DeploymentPayload
 from sqlalchemy.orm.session import Session
 
 
@@ -49,14 +47,9 @@ def validate_no_deployment_job_in_progress(payload: DeploymentPayload, session: 
 
 
 def validate_workflow_target(payload: DeploymentPayload, session: Session, cml: CMLServiceApi) -> None:
+    # Ensure no other deployment job is running for this workflow
     validate_no_deployment_job_in_progress(payload, session, cml)
 
-    if payload.workflow_target.type == WorkflowTargetType.WORKFLOW:
-        validate_payload_for_workflow(payload, session, cml)
-    elif payload.workflow_target.type == WorkflowTargetType.WORKFLOW_ARTIFACT:
-        validate_payload_for_workflow_artifact(payload, session, cml)
-    else:
-        raise ValueError(f'Deployment artifact of type "{payload.target.type}" is not supported.')
     return
 
 

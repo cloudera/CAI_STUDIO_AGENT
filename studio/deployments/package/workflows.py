@@ -23,6 +23,19 @@ sys.path.append("studio/workflow_engine/src")
 import engine.types as input_types
 
 
+def studio_data_workflow_ignore_factory(workflow_directory_name: str):
+    def ignore(src, names):
+        base = os.path.basename(src)
+        if base == "studio-data":
+            return {"deployable_workflows", "tool_templates", "temp_files"}
+        elif base == "workflows":
+            return {name for name in names if name != workflow_directory_name}
+        else:
+            return {".venv", ".next", "node_modules", ".nvm", ".requirements_hash.txt"}
+
+    return ignore
+
+
 def package_workflow_for_deployment(
     payload: DeploymentPayload, deployment: DeployedWorkflowInstance, session: Session, cml: CMLServiceApi
 ) -> DeploymentArtifact:
@@ -44,15 +57,8 @@ def package_workflow_for_deployment(
     workflow: Workflow = deployment.workflow
 
     # Ignore logic for copying over our studio-data/ directory
-    def studio_data_workflow_ignore(src, names):
-        if os.path.basename(src) == "studio-data":
-            return {"deployable_workflows", "tool_templates", "temp_files"}
-        elif os.path.basename(src) == "workflows":
-            return {name for name in names if name != os.path.basename(workflow.directory)}
-        else:
-            return {".venv", ".next", "node_modules", ".nvm", ".requirements_hash.txt"}
-
-    shutil.copytree("studio-data", os.path.join(packaging_directory, "studio-data"), ignore=studio_data_workflow_ignore)
+    ignore_fn = studio_data_workflow_ignore_factory(os.path.basename(workflow.directory))
+    shutil.copytree("studio-data", os.path.join(packaging_directory, "studio-data"), ignore=ignore_fn)
 
     # Create the collated input.
     collated_input: input_types.CollatedInput = create_collated_input(workflow, session)
