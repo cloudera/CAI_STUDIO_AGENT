@@ -16,6 +16,7 @@ sys.path.append("studio/workflow_engine/src/")
 
 from engine.crewai.llms import get_crewai_llm
 from engine.types import Input__LanguageModel
+from engine.consts import SupportedModelTypes
 
 from .utils import get_model_api_key_from_env, update_model_api_key_in_env, remove_model_api_key_from_env
 
@@ -55,6 +56,9 @@ def add_model(request: AddModelRequest, cml: CMLServiceApi = None, dao: AgentStu
     """
     # Generate model ID upfront so we can store the API key
     model_id = str(uuid4())
+
+    if request.model_type not in [m_.value for m_ in SupportedModelTypes]:
+        raise ValueError(f"Invalid model type: {request.model_type}. Supported model types are: {SupportedModelTypes}")
 
     # Store API key in project environment if provided
     if request.api_key:

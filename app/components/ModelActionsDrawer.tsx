@@ -140,7 +140,7 @@ const ModelActionsDrawer: React.FC<ModelActionsDrawerProps> = ({
             label={
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 Model Provider
-                <Tooltip title="Choose the model provider, such as OpenAI, OpenAI Compatible, or Azure OpenAI.">
+                <Tooltip title="Choose the model provider, such as OpenAI, OpenAI Compatible, Azure OpenAI, Google Gemini, or Anthropic.">
                   <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
                 </Tooltip>
               </div>
@@ -187,6 +187,26 @@ const ModelActionsDrawer: React.FC<ModelActionsDrawerProps> = ({
                   Azure OpenAI
                 </div>
               </Option>
+              <Option value="GEMINI">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <img
+                    src="/llm_providers/gemini.svg"
+                    alt="Google Gemini"
+                    style={{ width: '16px', height: '16px' }}
+                  />
+                  Google Gemini
+                </div>
+              </Option>
+              <Option value="ANTHROPIC">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <img
+                    src="/llm_providers/anthropic.svg"
+                    alt="Anthropic"
+                    style={{ width: '16px', height: '16px' }}
+                  />
+                  Anthropic
+                </div>
+              </Option>
             </Select>
           </Form.Item>
 
@@ -215,8 +235,7 @@ const ModelActionsDrawer: React.FC<ModelActionsDrawerProps> = ({
 
           {/* Model Identifier */}
           <Form.Item shouldUpdate>
-            {(changedModel?.model_type === 'OPENAI' ||
-              changedModel?.model_type === 'OPENAI_COMPATIBLE') && (
+            {changedModel?.model_type != 'AZURE_OPENAI' && (
               <Form.Item
                 label={
                   <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -239,13 +258,18 @@ const ModelActionsDrawer: React.FC<ModelActionsDrawerProps> = ({
                       );
                     }}
                   >
+                    <Option value="gpt-4.1">gpt-4.1</Option>
+                    <Option value="gpt-4.1-mini">gpt-4.1-mini</Option>
+                    <Option value="gpt-4.1-nano">gpt-4.1-nano</Option>
                     <Option value="gpt-4o">gpt-4o</Option>
                     <Option value="gpt-4o-mini">gpt-4o-mini</Option>
                     <Option value="gpt-4">gpt-4</Option>
+                    <Option value="o4-mini">o4-mini</Option>
+                    <Option value="o3-mini">o3-mini</Option>
                     <Option value="o1-mini">o1-mini</Option>
-                    <Option value="gpt-3.5-turbo">gpt-3.5-turbo</Option>
                   </Select>
-                ) : (
+                ) : changedModel?.model_type === 'OPENAI_COMPATIBLE' ||
+                  changedModel?.model_type === 'AZURE_OPENAI' ? (
                   <Input
                     placeholder="Enter the model identifier at the provider"
                     onChange={(e) => {
@@ -254,7 +278,39 @@ const ModelActionsDrawer: React.FC<ModelActionsDrawerProps> = ({
                       );
                     }}
                   />
-                )}
+                ) : changedModel?.model_type === 'GEMINI' ? (
+                  <Select
+                    placeholder="Select the model identifier"
+                    onChange={(value) => {
+                      setChangedModel(
+                        changedModel ? { ...changedModel, provider_model: value } : null,
+                      );
+                    }}
+                  >
+                    <Option value="gemini-2.0-flash">gemini-2.0-flash</Option>
+                    <Option value="gemini-2.5-flash-preview-05-20">
+                      gemini-2.5-flash-preview-05-20
+                    </Option>
+                    <Option value="gemini-2.5-pro-preview-05-06">
+                      gemini-2.5-pro-preview-05-06
+                    </Option>
+                  </Select>
+                ) : changedModel?.model_type === 'ANTHROPIC' ? (
+                  <Select
+                    placeholder="Select the model identifier"
+                    onChange={(value) => {
+                      setChangedModel(
+                        changedModel ? { ...changedModel, provider_model: value } : null,
+                      );
+                    }}
+                  >
+                    <Option value="claude-opus-4-0">claude-opus-4-0</Option>
+                    <Option value="claude-sonnet-4-0">claude-sonnet-4-0</Option>
+                    <Option value="claude-3-7-sonnet-latest">claude-3-7-sonnet-latest</Option>
+                    <Option value="claude-3-5-sonnet-latest">claude-3-5-sonnet-latest</Option>
+                    <Option value="claude-3-5-haiku-latest">claude-3-5-haiku-latest</Option>
+                  </Select>
+                ) : null}
               </Form.Item>
             )}
 

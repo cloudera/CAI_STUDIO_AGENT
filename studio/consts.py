@@ -10,12 +10,6 @@ DEFAULT_AS_WORKFLOW_RUNNER_STARTING_PORT = "51000"
 DEFAULT_PROJECT_DEFAULTS_LOCATION = "data/project_defaults.json"
 
 
-class SupportedModelTypes(str, Enum):
-    OPENAI = "OPENAI"
-    OPENAI_COMPATIBLE = "OPENAI_COMPATIBLE"
-    AZURE_OPENAI = "AZURE_OPENAI"
-
-
 class SupportedMCPTypes(str, Enum):
     PYTHON = "PYTHON"
     # TODO: Add other MCP types in future

@@ -72,11 +72,15 @@ const ModelList: React.FC<ModelListProps> = ({
           OPENAI: 'OpenAI',
           AZURE_OPENAI: 'Azure OpenAI',
           OPENAI_COMPATIBLE: 'OpenAI Compatible',
+          GEMINI: 'Google Gemini',
+          ANTHROPIC: 'Anthropic',
         };
         const iconMap: Record<string, string> = {
           OPENAI: '/llm_providers/openai.svg',
           AZURE_OPENAI: '/llm_providers/azure-openai.svg',
           OPENAI_COMPATIBLE: '/llm_providers/generic-llm.svg',
+          GEMINI: '/llm_providers/gemini.svg',
+          ANTHROPIC: '/llm_providers/anthropic.svg',
         };
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

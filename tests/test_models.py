@@ -20,7 +20,7 @@ def test_list_models():
             model_id="m1",
             model_name="model1",
             provider_model="provider1",
-            model_type="type1",
+            model_type="OPENAI",
             api_base="http://api.base1"
         ))
         session.commit()
@@ -43,7 +43,7 @@ def test_add_model():
             req = AddModelRequest(
                 model_name="new_model",
                 provider_model="provider1",
-                model_type="type1",
+                model_type="OPENAI",
                 api_base="http://api.base",
                 api_key="api_key"
             )
@@ -73,7 +73,7 @@ def test_add_model_duplicate_name():
             model_id="m1",
             model_name="duplicate_name",
             provider_model="provider1",
-            model_type="type1"
+            model_type="OPENAI"
         ))
         session.commit()
 
@@ -81,7 +81,7 @@ def test_add_model_duplicate_name():
     req = AddModelRequest(
         model_name="duplicate_name",
         provider_model="provider2",
-        model_type="type2"
+        model_type="ANTHROPIC"
     )
 
     with pytest.raises(ValueError) as exc_info:
@@ -96,7 +96,7 @@ def test_remove_model():
             model_id="m1",
             model_name="model1",
             provider_model="provider1",
-            model_type="type1",
+            model_type="OPENAI",
             api_base="http://api.base1"
         ))
         session.commit()
@@ -118,7 +118,7 @@ def test_update_model():
             model_id="m1",
             model_name="old_model",
             provider_model="old_provider",
-            model_type="type1",
+            model_type="OPENAI",
             api_base="http://old.base"
         ))
         session.commit()
@@ -303,7 +303,7 @@ def test_get_studio_default_model():
             model_id="m1",
             model_name="default_model",
             provider_model="provider1",
-            model_type="type1",
+            model_type="OPENAI",
             is_studio_default=True
         ))
         session.commit()

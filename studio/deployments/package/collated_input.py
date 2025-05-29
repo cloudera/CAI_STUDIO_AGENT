@@ -191,6 +191,9 @@ def create_collated_input(workflow: Workflow, session: Session) -> input_types.C
     agent_inputs, tool_ids, mcp_ids, language_model_ids = get_agents_for_workflow(
         workflow, agent_ids_from_tasks, session
     )
+    # Add default language model to the language model inputs anyway because agents might not have a language model.
+    language_model_ids.add(str(default_llm.model_id))
+
     tool_instance_inputs = get_tool_instances_for_agents(tool_ids, session)
     mcp_instance_inputs = get_mcp_instances_for_agents(mcp_ids, session)
     language_model_inputs = get_language_models(language_model_ids, session)

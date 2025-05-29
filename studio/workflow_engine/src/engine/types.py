@@ -6,6 +6,7 @@ from crewai.tools import BaseTool
 from crewai.tools.base_tool import BaseTool
 from crewai import LLM as CrewAILLM
 from crewai_tools import MCPServerAdapter
+from engine.consts import SupportedModelTypes
 
 
 class WorkflowArtifactType(str, Enum):
@@ -47,7 +48,7 @@ class DeploymentConfig(BaseModel):
 
 class Input__LanguageModelConfig(BaseModel):
     provider_model: str
-    model_type: Literal["OPENAI", "OPENAI_COMPATIBLE", "AZURE_OPENAI"]
+    model_type: SupportedModelTypes
     api_base: Optional[str] = None
     api_key: Optional[str] = None
 

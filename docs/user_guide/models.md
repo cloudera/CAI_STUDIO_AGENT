@@ -11,6 +11,8 @@ The "LLMs" tab in the Studio allows you to configure the AI models you want to u
 To register a new model, click on the "Register New Model" button. We support the following model providers out of the box(with more providers coming soon):
  - OpenAI
  - Azure OpenAI
+ - Google Gemini
+ - Anthropic
  - OpenAI compatible providers (any model endpoint that adheres to the [OpenAI API specifications](https://platform.openai.com/docs/api-reference/chat))
    - You can use this to connect to models hosted within your enterprise boundaries or on [Cloudera AI Inference Service](https://docs.cloudera.com/machine-learning/cloud/ai-inference/topics/ml-caii-use-caii.html).
 

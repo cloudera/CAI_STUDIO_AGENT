@@ -22,7 +22,7 @@ def test_add_model_api_key_failure():
                 AddModelRequest(
                     model_name="test_model",
                     provider_model="test_provider",
-                    model_type="test_type",
+                    model_type="OPENAI",
                     api_key="test_key"
                 ),
                 cml=mock_cml,
@@ -58,7 +58,7 @@ def test_add_model_duplicate_name_cleanup():
                 AddModelRequest(
                     model_name="test_model",
                     provider_model="test_provider",
-                    model_type="test_type",
+                    model_type="OPENAI",
                     api_key="test_key"
                 ),
                 cml=mock_cml,
