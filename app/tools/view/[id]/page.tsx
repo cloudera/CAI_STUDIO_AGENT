@@ -249,7 +249,7 @@ const ToolViewPage: React.FC = () => {
           { title: isEditMode ? 'Edit Tool' : 'View Tool' },
         ]}
       />
-      <Layout
+      <div
         style={{
           display: 'flex',
           flexDirection: 'row',
@@ -258,7 +258,7 @@ const ToolViewPage: React.FC = () => {
           borderBottom: '1px solid #f0f0f0',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {toolImageData && (
             <div
               style={{
@@ -304,7 +304,7 @@ const ToolViewPage: React.FC = () => {
             Actions <DownOutlined />
           </Button>
         </Dropdown>
-      </Layout>
+      </div>
       <Layout style={{ marginTop: '20px' }}>
         <ToolViewOrEdit
           mode={isEditMode ? 'edit' : 'view'}

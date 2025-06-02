@@ -10,7 +10,6 @@ import {
   Tooltip,
   Button,
   Tag,
-  Table,
   Popconfirm,
   Avatar,
   Divider,
@@ -18,12 +17,9 @@ import {
 } from 'antd';
 import {
   UserOutlined,
-  FolderOpenOutlined,
   DeleteOutlined,
-  InfoCircleOutlined,
   UsergroupAddOutlined,
   FileDoneOutlined,
-  WarningOutlined,
   ExportOutlined,
   DeploymentUnitOutlined,
   AppstoreOutlined,
@@ -49,6 +45,7 @@ import { TOOL_PARAMS_ALERT } from '../../lib/constants';
 import { hasValidToolConfiguration } from '../workflowEditor/WorkflowEditorConfigureInputs';
 import { renderAlert } from '../../lib/alertUtils';
 import { usePathname } from 'next/navigation';
+import { useListMcpInstancesQuery } from '@/app/mcp/mcpInstancesApi';
 
 const { Title, Text } = Typography;
 
@@ -111,6 +108,12 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
   } = useListToolInstancesQuery({ workflow_id: workflowId });
 
   const {
+    data: mcpInstances = [],
+    isLoading: mcpInstancesLoading,
+    error: mcpInstancesError,
+  } = useListMcpInstancesQuery({ workflow_id: workflowId });
+
+  const {
     data: tasks = [],
     isLoading: tasksLoading,
     error: tasksError,
@@ -118,6 +121,7 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
 
   const { imageData } = useImageAssetsData([
     ...(Object.values(toolInstances).map((instance) => instance.tool_image_uri) ?? []),
+    ...(Object.values(mcpInstances).map((instance) => instance.image_uri) ?? []),
     ...(Object.values(allAgents).map((agent) => agent.agent_image_uri) ?? []),
   ]);
 
@@ -141,7 +145,7 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
 
   const invalidTools = getInvalidTools(allAgents, toolInstances, workflow.workflow_id);
 
-  if (agentsLoading || toolInstancesLoading) {
+  if (agentsLoading || toolInstancesLoading || mcpInstancesLoading) {
     return (
       <Layout
         style={{
@@ -156,7 +160,7 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
     );
   }
 
-  if (agentsError || tasksError || toolInstancesError) {
+  if (agentsError || tasksError || toolInstancesError || mcpInstancesError) {
     return (
       <Layout
         style={{
@@ -289,7 +293,7 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
             {agent.crew_ai_agent_metadata?.backstory || 'N/A'}
           </span>
         </Text>
-        {agent.tools_id?.length > 0 && (
+        {(agent.tools_id?.length > 0 || agent.mcp_instance_ids?.length > 0) && (
           <Space
             style={{
               marginTop: '12px',
@@ -300,41 +304,54 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
               gap: '10px',
             }}
           >
-            {agent.tools_id.map((toolId: string) => {
-              const toolInstance = toolInstances.find((t) => t.id === toolId);
-              const imageUri = toolInstance?.tool_image_uri;
-              const toolName = toolInstance?.name || toolId;
-              const imageSrc =
-                imageUri && imageData[imageUri] ? imageData[imageUri] : '/fallback-image.png';
-              return (
-                <Tooltip title={toolName} key={toolId} placement="top">
-                  <div
-                    style={{
-                      width: '24px',
-                      height: '24px',
-                      borderRadius: '50%',
-                      background: '#f1f1f1',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <Image
-                      src={imageSrc}
-                      alt={toolName}
-                      width={16}
-                      height={16}
-                      preview={false}
+            {(agent.tools_id || [])
+              .concat(agent.mcp_instance_ids || [])
+              .map((resourceId: string) => {
+                const toolInstance = toolInstances.find((t) => t.id === resourceId);
+                const mcpInstance = mcpInstances.find((m) => m.id === resourceId);
+                const resourceType: 'tool' | 'mcp' = toolInstance ? 'tool' : 'mcp';
+                const imageUri =
+                  resourceType === 'tool' ? toolInstance?.tool_image_uri : mcpInstance?.image_uri;
+                const resourceName =
+                  resourceType === 'tool'
+                    ? toolInstance?.name || resourceId
+                    : mcpInstance?.name || resourceId;
+                const imageSrc =
+                  imageUri && imageData[imageUri]
+                    ? imageData[imageUri]
+                    : resourceType === 'tool'
+                      ? '/fallback-image.png'
+                      : '/mcp-icon.svg';
+
+                return (
+                  <Tooltip title={resourceName} key={resourceId} placement="top">
+                    <div
                       style={{
-                        borderRadius: '2px',
-                        objectFit: 'cover',
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '50%',
+                        background: '#f1f1f1',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
                       }}
-                    />
-                  </div>
-                </Tooltip>
-              );
-            })}
+                    >
+                      <Image
+                        src={imageSrc}
+                        alt={resourceName}
+                        width={16}
+                        height={16}
+                        preview={false}
+                        style={{
+                          borderRadius: '2px',
+                          objectFit: 'cover',
+                        }}
+                      />
+                    </div>
+                  </Tooltip>
+                );
+              })}
           </Space>
         )}
       </Layout>

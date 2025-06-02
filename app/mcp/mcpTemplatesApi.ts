@@ -13,6 +13,17 @@ import { apiSlice } from '../api/apiSlice';
 
 export const mcpTemplatesApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
+    listGlobalMcpTemplates: builder.query<MCPTemplate[], ListMcpTemplatesRequest>({
+      query: (request) => ({
+        url: '/grpc/listMcpTemplates',
+        method: 'POST',
+        body: request,
+      }),
+      transformResponse: (response: ListMcpTemplatesResponse) => {
+        return response.mcp_templates.filter((template) => !template.workflow_template_id);
+      },
+      providesTags: [{ type: 'MCPTemplate', id: 'LIST' }],
+    }),
     listMcpTemplates: builder.query<MCPTemplate[], ListMcpTemplatesRequest>({
       query: (request) => ({
         url: '/grpc/listMcpTemplates',
@@ -57,6 +68,7 @@ export const mcpTemplatesApi = apiSlice.injectEndpoints({
 });
 
 export const {
+  useListGlobalMcpTemplatesQuery,
   useListMcpTemplatesQuery,
   useGetMcpTemplateQuery,
   useAddMcpTemplateMutation,

@@ -4,7 +4,7 @@ import { RootState } from '../lib/store';
 import {
   WorkflowConfiguration,
   WorkflowGenerationConfig,
-  WorkflowToolConfiguration,
+  WorkflowResourceConfiguration,
 } from '../lib/types';
 import { DEFAULT_GENERATION_CONFIG } from '../lib/constants';
 
@@ -36,7 +36,8 @@ export interface CreateAgentState {
   backstory?: string;
   goal?: string;
   tools?: string[]; // For tool instances
-  toolTemplateIds?: string[]; // New field for tool templates
+  toolTemplateIds?: string[];
+  mcpInstances?: string[];
   agentId?: string;
 }
 
@@ -48,7 +49,8 @@ export interface AgentViewState {
 }
 
 export interface WorkflowConfigurationState {
-  toolConfigurations: Record<string, WorkflowToolConfiguration>;
+  toolConfigurations: Record<string, WorkflowResourceConfiguration>;
+  mcpInstanceConfigurations: Record<string, WorkflowResourceConfiguration>;
   generationConfig: WorkflowGenerationConfig;
 }
 
@@ -72,6 +74,7 @@ const initialState: EditorState = {
   },
   workflowConfiguration: {
     toolConfigurations: {},
+    mcpInstanceConfigurations: {},
     generationConfig: {},
   },
 };
@@ -79,6 +82,7 @@ const initialState: EditorState = {
 export interface UpdateWorkflowParameters {
   workflowId: string;
   toolInstanceId: string;
+  mcpInstanceId: string;
   parameterName: string;
   value: string;
 }
@@ -207,6 +211,7 @@ export const editorSlice = createSlice({
 
       state.workflowConfiguration ??= {
         toolConfigurations: {},
+        mcpInstanceConfigurations: {},
         generationConfig: {
           ...DEFAULT_GENERATION_CONFIG,
         },
@@ -218,6 +223,29 @@ export const editorSlice = createSlice({
 
       state.workflowConfiguration.toolConfigurations[toolInstanceId].parameters[parameterName] =
         value;
+    },
+
+    updatedWorkflowMcpInstanceParameter: (
+      state,
+      action: PayloadAction<UpdateWorkflowParameters>,
+    ) => {
+      const { mcpInstanceId, parameterName, value } = action.payload;
+
+      state.workflowConfiguration ??= {
+        toolConfigurations: {},
+        mcpInstanceConfigurations: {},
+        generationConfig: {
+          ...DEFAULT_GENERATION_CONFIG,
+        },
+      };
+
+      state.workflowConfiguration.mcpInstanceConfigurations[mcpInstanceId] ??= {
+        parameters: {},
+      };
+
+      state.workflowConfiguration.mcpInstanceConfigurations[mcpInstanceId].parameters[
+        parameterName
+      ] = value;
     },
 
     updatedWorkflowConfiguration: (state, action: PayloadAction<WorkflowConfiguration>) => {
@@ -262,6 +290,7 @@ export const {
   addedEditorToolTemplateToAgent,
   updatedWorkflowConfiguration,
   updatedWorkflowToolParameter,
+  updatedWorkflowMcpInstanceParameter,
   updatedWorkflowGenerationConfig,
   removedEditorToolTemplateFromAgent,
   removedEditorWorkflowTask,
@@ -302,6 +331,8 @@ export const selectEditorAgentViewCreateAgentTools = (state: RootState) =>
   state.editor.agentView.createAgent.tools;
 export const selectEditorAgentViewCreateAgentToolTemplates = (state: RootState) =>
   state.editor.agentView.createAgent.toolTemplateIds;
+export const selectEditorAgentViewCreateAgentMcpInstances = (state: RootState) =>
+  state.editor.agentView.createAgent.mcpInstances;
 export const selectEditorAgentViewCreateAgentState = (state: RootState): CreateAgentState =>
   state.editor.agentView.createAgent;
 export const selectWorkflowConfiguration = (state: RootState): WorkflowConfiguration =>

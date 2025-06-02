@@ -59,6 +59,7 @@ export const readWorkflowConfigurationFromLocalStorage = (workflowId: string) =>
         ...DEFAULT_GENERATION_CONFIG,
       },
       toolConfigurations: {},
+      mcpInstanceConfigurations: {},
     };
   }
 
@@ -83,6 +84,7 @@ export const writeWorkflowConfigurationToLocalStorage = (
     storageState.workflowConfigurations[workflowId] = {
       generationConfig: {},
       toolConfigurations: {},
+      mcpInstanceConfigurations: {},
     };
   }
 
@@ -90,6 +92,7 @@ export const writeWorkflowConfigurationToLocalStorage = (
     ...storageState.workflowConfigurations[workflowId],
     generationConfig: configuration.generationConfig,
     toolConfigurations: configuration.toolConfigurations,
+    mcpInstanceConfigurations: configuration.mcpInstanceConfigurations,
   };
 
   localStorage.setItem('state', JSON.stringify(storageState));

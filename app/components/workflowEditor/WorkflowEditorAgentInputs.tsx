@@ -1,10 +1,8 @@
 import { useAppDispatch, useAppSelector } from '../../lib/hooks/hooks';
 import {
   selectEditorWorkflowAgentIds,
-  selectEditorWorkflowId,
   selectEditorWorkflowIsConversational,
   selectEditorWorkflowManagerAgentId,
-  selectEditorWorkflowName,
   selectEditorWorkflowDescription,
   selectEditorWorkflowTaskIds,
   updatedEditorAgentViewOpen,
@@ -13,7 +11,6 @@ import {
   updatedEditorWorkflowAgentIds,
   updatedEditorWorkflowIsConversational,
   updatedEditorWorkflowManagerAgentId,
-  updatedEditorWorkflowName,
   updatedEditorWorkflowDescription,
   updatedEditorWorkflowTaskIds,
   selectEditorWorkflow,
@@ -48,7 +45,7 @@ import {
   UndoOutlined,
 } from '@ant-design/icons';
 import { useListAgentsQuery, useRemoveAgentMutation } from '../../agents/agentApi';
-import { AgentMetadata, ToolInstance } from '@/studio/proto/agent_studio';
+import { McpInstance, ToolInstance } from '@/studio/proto/agent_studio';
 import {
   useAddTaskMutation,
   useListTasksQuery,
@@ -56,17 +53,14 @@ import {
   useUpdateTaskMutation,
 } from '../../tasks/tasksApi';
 import SelectOrAddAgentModal from './SelectOrAddAgentModal';
-import { useGetDefaultModelQuery } from '../../models/modelsApi';
-import {
-  useGetToolInstanceMutation,
-  useListToolInstancesQuery,
-} from '@/app/tools/toolInstancesApi';
+import { useListToolInstancesQuery } from '@/app/tools/toolInstancesApi';
 import { useState, useEffect } from 'react';
 import { useImageAssetsData } from '@/app/lib/hooks/useAssetData';
 import { useGlobalNotification } from '../Notifications';
 import { useAddWorkflowMutation, useUpdateWorkflowMutation } from '../../workflows/workflowsApi';
 import { createUpdateRequestFromEditor, createAddRequestFromEditor } from '../../lib/workflow';
 import SelectOrAddManagerAgentModal from './SelectOrAddManagerAgentModal';
+import { useListMcpInstancesQuery } from '@/app/mcp/mcpInstancesApi';
 
 const WorkflowDescriptionComponent: React.FC = () => {
   const workflowDescription = useAppSelector(selectEditorWorkflowDescription);
@@ -112,31 +106,42 @@ interface WorkflowAgentsComponentProps {
 const WorkflowAgentsComponent: React.FC<WorkflowAgentsComponentProps> = ({ workflowId }) => {
   const { data: agents } = useListAgentsQuery({ workflow_id: workflowId });
   const { data: toolInstances } = useListToolInstancesQuery({ workflow_id: workflowId });
+  const { data: mcpInstances } = useListMcpInstancesQuery({ workflow_id: workflowId });
   const workflowAgentIds = useAppSelector(selectEditorWorkflowAgentIds);
   const dispatch = useAppDispatch();
   const [toolInstancesMap, setToolInstancesMap] = useState<Record<string, any>>({});
+  const [mcpInstancesMap, setMcpInstancesMap] = useState<Record<string, any>>({});
   const [removeAgent] = useRemoveAgentMutation();
   const notificationApi = useGlobalNotification();
   const [updateWorkflow] = useUpdateWorkflowMutation();
   const [addWorkflow] = useAddWorkflowMutation();
   const workflowState = useAppSelector(selectEditorWorkflow);
 
-  const { imageData } = useImageAssetsData(
-    Object.values(toolInstancesMap).map((instance) => instance.tool_image_uri),
-  );
+  const toolImageUris = Object.values(toolInstancesMap)
+    .map((instance) => instance.tool_image_uri)
+    .filter((uri): uri is string => typeof uri === 'string' && uri.length > 0);
+  const mcpImageUris = Object.values(mcpInstancesMap)
+    .map((instance) => instance.image_uri)
+    .filter((uri): uri is string => typeof uri === 'string' && uri.length > 0);
+  const { imageData } = useImageAssetsData(toolImageUris.concat(mcpImageUris));
 
   // Add effect to refetch images when tool instances change
   // TODO: this should be middleware at the RTK level
   useEffect(() => {
-    if (!toolInstances) {
+    if (!toolInstances || !mcpInstances) {
       return;
     }
     const tiMap = toolInstances.reduce<Record<string, ToolInstance>>(
       (acc, ti) => ({ ...acc, [ti.id]: ti }),
       {},
     );
+    const miMap = mcpInstances.reduce<Record<string, McpInstance>>(
+      (acc, mi) => ({ ...acc, [mi.id]: mi }),
+      {},
+    );
     setToolInstancesMap(tiMap);
-  }, [toolInstances]);
+    setMcpInstancesMap(miMap);
+  }, [toolInstances, mcpInstances]);
 
   const handleDeleteAgent = async (agentId: string, agentName: string) => {
     try {
@@ -342,17 +347,24 @@ const WorkflowAgentsComponent: React.FC<WorkflowAgentsComponentProps> = ({ workf
                           gap: '10px',
                         }}
                       >
-                        {agent.tools_id.map((toolId) => {
-                          const toolInstance = toolInstancesMap[toolId];
-                          const imageUri = toolInstance?.tool_image_uri;
+                        {agent.tools_id.concat(agent.mcp_instance_ids).map((resourceId) => {
+                          const toolInstance = toolInstancesMap[resourceId];
+                          const mcpInstance = mcpInstancesMap[resourceId];
+                          const resourceType: 'tool' | 'mcp' = toolInstance ? 'tool' : 'mcp';
+                          const imageUri =
+                            resourceType === 'tool'
+                              ? toolInstance?.tool_image_uri
+                              : mcpInstance?.image_uri;
                           const imageSrc =
                             imageUri && imageData[imageUri]
                               ? imageData[imageUri]
-                              : '/fallback-image.png';
+                              : resourceType === 'tool'
+                                ? '/fallback-image.png'
+                                : '/mcp-icon.svg';
                           return (
                             <Tooltip
-                              title={toolInstance?.name || toolId}
-                              key={toolId}
+                              title={toolInstance?.name || mcpInstance?.name}
+                              key={resourceId}
                               placement="top"
                             >
                               <div
@@ -369,7 +381,7 @@ const WorkflowAgentsComponent: React.FC<WorkflowAgentsComponentProps> = ({ workf
                               >
                                 <Image
                                   src={imageSrc}
-                                  alt={toolInstance?.name || toolId}
+                                  alt={toolInstance?.name || mcpInstance?.name}
                                   width={16}
                                   height={16}
                                   preview={false}

@@ -21,7 +21,7 @@ import {
   useAddMcpTemplateMutation,
 } from '../mcp/mcpTemplatesApi';
 import MCPTemplateList from '../components/MCPTemplateList';
-
+import { useGetWorkflowDataQuery } from '../workflows/workflowAppApi';
 const { Text } = Typography;
 const { TabPane } = Tabs;
 
@@ -349,13 +349,13 @@ const MCPTabContent = () => {
 };
 
 const ToolsPage = () => {
-  const enableMCP = false;
+  const { data: wflowData, isLoading } = useGetWorkflowDataQuery();
   return (
     <>
       <Layout style={{ flex: 1, padding: '16px 24px 22px', flexDirection: 'column' }}>
         <CommonBreadCrumb items={[{ title: 'Tools Catalog' }]} />
-        {!enableMCP && <ToolsTabContent />}
-        {enableMCP && (
+        {!wflowData?.studioAsMcpClient && <ToolsTabContent />}
+        {wflowData?.studioAsMcpClient && (
           <Tabs defaultActiveKey="tools" style={{ marginTop: '0px' }}>
             <TabPane tab="Agent Studio Tools" key="tools">
               <ToolsTabContent />

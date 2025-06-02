@@ -13,6 +13,7 @@ export interface OpsData {
 
 export interface WorkflowData {
   renderMode: 'studio' | 'workflow';
+  studioAsMcpClient: boolean;
   deployedWorkflowId: string;
   deployedWorkflow: DeployedWorkflow;
   workflowModelUrl: string;
@@ -27,7 +28,7 @@ export interface WorkflowData {
  * Tool configuration for a specific tool in a specific workflow,
  * stored in the local storage.
  */
-export interface WorkflowToolConfiguration {
+export interface WorkflowResourceConfiguration {
   // Key-value pair of parameter values where the
   // key is is the parameter name, and the value
   // is the parameter's value.
@@ -49,7 +50,12 @@ export interface WorkflowGenerationConfig {
 export interface WorkflowConfiguration {
   // Key-value pair of tool parameters where the key
   // is toolId, and the value is the tool configuration.
-  toolConfigurations: Record<string, WorkflowToolConfiguration>;
+  toolConfigurations: Record<string, WorkflowResourceConfiguration>;
+
+  // Key-value pair of MCP instance env names where the key
+  // is the MCP instance id, and the value is the MCP instance
+  // env key-value pairs.
+  mcpInstanceConfigurations: Record<string, WorkflowResourceConfiguration>;
 
   // Shared generation config for all LLM calls in a workflow.
   generationConfig?: WorkflowGenerationConfig;

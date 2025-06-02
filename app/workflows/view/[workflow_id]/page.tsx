@@ -41,7 +41,6 @@ const WorkflowPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const [getWorkflow] = useGetWorkflowMutation();
   const [removeWorkflow] = useRemoveWorkflowMutation();
-  const [deployWorkflow] = useDeployWorkflowMutation();
   const notificationApi = useGlobalNotification();
   const [workflowName, setWorkflowName] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);

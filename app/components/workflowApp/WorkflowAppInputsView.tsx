@@ -98,7 +98,11 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
           workflow_id: workflow.workflow_id,
           inputs: finalInputs, // Use finalInputs instead of inputs
           tool_user_parameters: workflowConfiguration?.toolConfigurations || {},
-          mcp_instance_env_vars: {},
+          mcp_instance_env_vars: Object.fromEntries(
+            Object.entries(workflowConfiguration?.mcpInstanceConfigurations || {}).map(
+              ([key, config]) => [key, { env_vars: config.parameters }],
+            ),
+          ),
           generation_config: JSON.stringify(workflowGenerationConfig),
         }).unwrap();
         traceId = response.trace_id;

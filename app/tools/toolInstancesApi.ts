@@ -7,7 +7,6 @@ import {
   CreateToolInstanceRequest,
   CreateToolInstanceResponse,
   RemoveToolInstanceRequest,
-  RemoveToolInstanceResponse,
   UpdateToolInstanceRequest,
   UpdateToolInstanceResponse,
 } from '@/studio/proto/agent_studio';

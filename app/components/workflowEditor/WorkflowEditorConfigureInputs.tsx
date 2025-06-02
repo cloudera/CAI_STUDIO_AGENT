@@ -13,7 +13,7 @@ import {
   InputNumber,
 } from 'antd';
 import { useListToolInstancesQuery } from '../../tools/toolInstancesApi';
-import { ToolInstance, AgentMetadata } from '@/studio/proto/agent_studio';
+import { ToolInstance, AgentMetadata, McpInstance } from '@/studio/proto/agent_studio';
 import { useListAgentsQuery } from '../../agents/agentApi';
 import { useAppDispatch, useAppSelector } from '../../lib/hooks/hooks';
 import {
@@ -23,6 +23,7 @@ import {
   updatedWorkflowConfiguration,
   updatedWorkflowGenerationConfig,
   updatedWorkflowToolParameter,
+  updatedWorkflowMcpInstanceParameter,
 } from '../../workflows/editorSlice';
 import {
   readWorkflowConfigurationFromLocalStorage,
@@ -34,6 +35,8 @@ import { DEFAULT_GENERATION_CONFIG } from '../../lib/constants';
 import React from 'react';
 import { TOOL_PARAMS_ALERT } from '../../lib/constants';
 import { renderAlert } from '../../lib/alertUtils';
+import { useListMcpInstancesQuery } from '@/app/mcp/mcpInstancesApi';
+import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
 
 const { Title, Text } = Typography;
 const { Password } = Input;
@@ -41,6 +44,12 @@ const { Password } = Input;
 export interface ToolConfigurationComponentProps {
   agentName: string;
   toolInstance: ToolInstance;
+  workflowId: string;
+}
+
+export interface McpConfigurationComponentProps {
+  agentName: string;
+  mcpInstance: McpInstance;
   workflowId: string;
 }
 
@@ -81,6 +90,33 @@ export const setWorkflowToolParameterInLocalStorage = (
     workflowConfiguration.toolConfigurations[toolId].parameters[parameterName] = value;
 
     // Write updated state back to localStorage
+    writeWorkflowConfigurationToLocalStorage(workflowId, workflowConfiguration);
+  } catch (error) {
+    console.error('Error setting configuration parameter:', error);
+  }
+};
+
+export const setWorkflowMcpInstanceParameterInLocalStorage = (
+  workflowId: string,
+  mcpInstanceId: string,
+  envName: string,
+  value: string,
+): void => {
+  try {
+    const workflowConfiguration = readWorkflowConfigurationFromLocalStorage(workflowId);
+
+    if (!workflowConfiguration.mcpInstanceConfigurations) {
+      workflowConfiguration.mcpInstanceConfigurations = {};
+    }
+
+    if (!workflowConfiguration.mcpInstanceConfigurations[mcpInstanceId]) {
+      workflowConfiguration.mcpInstanceConfigurations[mcpInstanceId] = {
+        parameters: {},
+      };
+    }
+
+    workflowConfiguration.mcpInstanceConfigurations[mcpInstanceId].parameters[envName] = value;
+
     writeWorkflowConfigurationToLocalStorage(workflowId, workflowConfiguration);
   } catch (error) {
     console.error('Error setting configuration parameter:', error);
@@ -184,6 +220,9 @@ const ToolConfigurationComponent: React.FC<ToolConfigurationComponentProps> = ({
               gap: 12,
             }}
           >
+            <Tag style={{ background: '#c3d4fa', margin: 0 }}>
+              <Text style={{ fontSize: 9, fontWeight: 400 }}>tool</Text>
+            </Tag>
             <Text style={{ fontSize: 13, fontWeight: 600 }}>{toolInstance.name}</Text>
             <Tag style={{ background: '#add8e6', margin: 0 }}>
               <Layout
@@ -239,6 +278,7 @@ const ToolConfigurationComponent: React.FC<ToolConfigurationComponentProps> = ({
                       updatedWorkflowToolParameter({
                         workflowId: workflowId,
                         toolInstanceId: toolInstance.id,
+                        mcpInstanceId: '',
                         parameterName: param,
                         value: e.target.value,
                       }),
@@ -265,6 +305,107 @@ const ToolConfigurationComponent: React.FC<ToolConfigurationComponentProps> = ({
   );
 };
 
+const McpConfigurationComponent: React.FC<McpConfigurationComponentProps> = ({
+  agentName,
+  mcpInstance,
+  workflowId,
+}) => {
+  const dispatch = useAppDispatch();
+  const workflowConfiguration = useAppSelector(selectWorkflowConfiguration);
+
+  const mcpConfiguration = workflowConfiguration.mcpInstanceConfigurations?.[mcpInstance.id] || {
+    parameters: {},
+  };
+
+  // If no environment variables to configure, don't render anything
+  if (!mcpInstance.env_names || mcpInstance.env_names.length === 0) {
+    return <></>;
+  }
+
+  return (
+    <>
+      <Card
+        title={
+          <Layout
+            style={{
+              background: 'transparent',
+              flexGrow: 0,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+            }}
+          >
+            <Tag style={{ background: '#c3fac3', margin: 0 }}>
+              <Text style={{ fontSize: 9, fontWeight: 400 }}>MCP</Text>
+            </Tag>
+            <Text style={{ fontSize: 13, fontWeight: 600 }}>{mcpInstance.name}</Text>
+            <Tag style={{ background: '#ffd700', margin: 0 }}>
+              <Layout
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 4,
+                  background: 'transparent',
+                  padding: 4,
+                }}
+              >
+                <UserOutlined />
+                <Text style={{ fontSize: 11, fontWeight: 400 }}>Agent: {agentName}</Text>
+              </Layout>
+            </Tag>
+          </Layout>
+        }
+        style={{
+          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+        }}
+      >
+        <Layout
+          style={{
+            background: 'transparent',
+            flexGrow: 0,
+            flexDirection: 'column',
+            gap: 8,
+          }}
+        >
+          {mcpInstance.env_names.map((envName, index) => (
+            <Layout
+              key={index}
+              style={{
+                flexDirection: 'column',
+                flexGrow: 0,
+                background: 'transparent',
+              }}
+            >
+              <Text style={{ fontSize: 13, fontWeight: 400 }}>{envName}</Text>
+              <Password
+                placeholder={envName}
+                value={mcpConfiguration.parameters[envName] || ''}
+                onChange={(e) => {
+                  dispatch(
+                    updatedWorkflowMcpInstanceParameter({
+                      workflowId: workflowId,
+                      toolInstanceId: '',
+                      mcpInstanceId: mcpInstance.id,
+                      parameterName: envName,
+                      value: e.target.value,
+                    }),
+                  );
+                  setWorkflowMcpInstanceParameterInLocalStorage(
+                    workflowId,
+                    mcpInstance.id,
+                    envName,
+                    e.target.value,
+                  );
+                }}
+              />
+            </Layout>
+          ))}
+        </Layout>
+      </Card>
+    </>
+  );
+};
+
 interface WorkflowEditorConfigureInputsProps {
   workflowId: string;
 }
@@ -274,6 +415,8 @@ const WorkflowEditorConfigureInputs: React.FC<WorkflowEditorConfigureInputsProps
 }) => {
   const { data: agents } = useListAgentsQuery({ workflow_id: workflowId });
   const { data: toolInstances } = useListToolInstancesQuery({ workflow_id: workflowId });
+  const { data: mcpInstances } = useListMcpInstancesQuery({ workflow_id: workflowId });
+  const { data: wflowData } = useGetWorkflowDataQuery();
   const workflowConfiguration = useAppSelector(selectWorkflowConfiguration);
   const workflowGenerationConfig = useAppSelector(selectWorkflowGenerationConfig);
   const dispatch = useAppDispatch();
@@ -317,6 +460,16 @@ const WorkflowEditorConfigureInputs: React.FC<WorkflowEditorConfigureInputsProps
         toolInstanceIds.includes(toolInstance.id),
       );
       return workflowTools?.some((tool) => JSON.parse(tool.tool_metadata)?.user_params?.length > 0);
+    });
+
+  const hasConfigurableMcpInstances = agents
+    ?.filter((agent) => agent.workflow_id === workflowId)
+    .some((agent) => {
+      const mcpInstanceIds = agent.mcp_instance_ids;
+      const workflowMcpInstances = mcpInstances?.filter((mcpInstance) =>
+        mcpInstanceIds.includes(mcpInstance.id),
+      );
+      return workflowMcpInstances?.some((mcpInstance) => mcpInstance.env_names.length > 0);
     });
 
   const invalidTools = getInvalidTools(agents, toolInstances, workflowId);
@@ -512,9 +665,9 @@ const WorkflowEditorConfigureInputs: React.FC<WorkflowEditorConfigureInputsProps
               }}
             >
               <Title level={4} style={{ marginBottom: '16px', fontSize: 13, fontWeight: 600 }}>
-                Tools
+                {wflowData?.studioAsMcpClient ? 'Tools and MCPs' : 'Tools'}
               </Title>
-              {!hasConfigurableTools && (
+              {!hasConfigurableTools && !hasConfigurableMcpInstances && (
                 <Alert
                   style={{
                     marginBottom: '16px',
@@ -543,8 +696,8 @@ const WorkflowEditorConfigureInputs: React.FC<WorkflowEditorConfigureInputsProps
                         </Text>
                       </Layout>
                       <Text style={{ fontSize: 13, fontWeight: 400, background: 'transparent' }}>
-                        This workflow has no tools that require configuration. You can proceed to
-                        test and deploy the workflow.
+                        This workflow has no tools or MCPs that require configuration. You can
+                        proceed to test and deploy the workflow.
                       </Text>
                     </Layout>
                   }
@@ -566,6 +719,10 @@ const WorkflowEditorConfigureInputs: React.FC<WorkflowEditorConfigureInputsProps
                     const worklfowTools = toolInstances?.filter((toolInstance) =>
                       toolInstanceIds.includes(toolInstance.id),
                     );
+                    const mcpInstanceIds = agent.mcp_instance_ids;
+                    const workflowMcpInstances = mcpInstances?.filter((mcpInstance) =>
+                      mcpInstanceIds.includes(mcpInstance.id),
+                    );
                     return (
                       <React.Fragment key={agent.id}>
                         {worklfowTools?.map((toolInstance) => (
@@ -573,6 +730,14 @@ const WorkflowEditorConfigureInputs: React.FC<WorkflowEditorConfigureInputsProps
                             key={toolInstance.id}
                             agentName={agent.name}
                             toolInstance={toolInstance}
+                            workflowId={workflowId!}
+                          />
+                        ))}
+                        {workflowMcpInstances?.map((mcpInstance) => (
+                          <McpConfigurationComponent
+                            key={mcpInstance.id}
+                            agentName={agent.name}
+                            mcpInstance={mcpInstance}
                             workflowId={workflowId!}
                           />
                         ))}

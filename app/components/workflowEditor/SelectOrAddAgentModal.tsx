@@ -31,6 +31,7 @@ import {
   ExclamationCircleOutlined,
   UndoOutlined,
   CloseCircleOutlined,
+  ClockCircleOutlined,
 } from '@ant-design/icons';
 import {
   useListGlobalAgentTemplatesQuery,
@@ -55,10 +56,18 @@ import {
   updatedEditorWorkflowAgentIds,
   updatedEditorAgentViewAgent,
 } from '../../workflows/editorSlice';
-import { AgentTemplateMetadata, Model, ToolInstance } from '@/studio/proto/agent_studio';
+import {
+  AgentTemplateMetadata,
+  McpInstance,
+  Model,
+  ToolInstance,
+  UpdateAgentRequest,
+  UpdateAgentResponse,
+} from '@/studio/proto/agent_studio';
 import { useListGlobalToolTemplatesQuery } from '@/app/tools/toolTemplatesApi';
 import { useImageAssetsData } from '@/app/lib/hooks/useAssetData';
 import WorkflowAddToolModal from './WorkflowAddToolModal';
+import WorkflowAddMcpModal from './WorkflowAddMcpModal';
 import { useSelector } from 'react-redux';
 import { useAddWorkflowMutation, useUpdateWorkflowMutation } from '../../workflows/workflowsApi';
 import { createAddRequestFromEditor, createUpdateRequestFromEditor } from '../../lib/workflow';
@@ -69,12 +78,10 @@ import {
   useRemoveToolInstanceMutation,
 } from '@/app/tools/toolInstancesApi';
 import { CrewAIAgentMetadata } from '@/studio/proto/agent_studio';
-import {
-  useGetDefaultModelQuery,
-  useGetModelMutation,
-  useListModelsQuery,
-} from '../../models/modelsApi';
+import { useGetDefaultModelQuery, useListModelsQuery } from '../../models/modelsApi';
 import { useTestModelMutation } from '../../models/modelsApi';
+import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
+import { useListMcpInstancesQuery, useRemoveMcpInstanceMutation } from '@/app/mcp/mcpInstancesApi';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -440,9 +447,10 @@ interface SelectAgentComponentProps {
   setSelectedAgentTemplate: React.Dispatch<React.SetStateAction<AgentTemplateMetadata | null>>;
   agents?: AgentMetadata[];
   workflowAgentIds?: string[];
-  toolInstances: Record<string, any>;
+  toolInstances: Record<string, ToolInstance>;
+  mcpInstances: Record<string, McpInstance>;
   imageData: Record<string, string>;
-  updateAgent: any;
+  updateAgent: (params: UpdateAgentRequest) => Promise<UpdateAgentResponse>;
   createAgentState: any;
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
@@ -457,12 +465,14 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
   agents,
   workflowAgentIds,
   toolInstances,
+  mcpInstances,
   imageData,
   updateAgent,
   createAgentState,
   isLoading,
   setIsLoading,
 }) => {
+  const { data: wflowData } = useGetWorkflowDataQuery();
   const { data: defaultModel } = useGetDefaultModelQuery();
   const { data: toolTemplates = [] } = useListGlobalToolTemplatesQuery({});
   const { imageData: toolIconsData } = useImageAssetsData(
@@ -470,11 +480,15 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
   );
   const dispatch = useAppDispatch();
   const [isAddToolModalVisible, setAddToolModalVisible] = useState(false);
+  const [isAddMcpModalVisible, setAddMcpModalVisible] = useState(false);
+  const [clickedToolInstanceId, setClickedToolInstanceId] = useState<string | undefined>(undefined);
+  const [clickedMcpInstance, setClickedMcpInstance] = useState<McpInstance | undefined>(undefined);
   const [isGenerateAgentPropertiesModalVisible, setIsGenerateAgentPropertiesModalVisible] =
     useState(false);
   const notificationApi = useGlobalNotification();
   const [isCreateMode, setIsCreateMode] = useState(false);
   const [deleteToolInstance] = useRemoveToolInstanceMutation();
+  const [deleteMcpInstance] = useRemoveMcpInstanceMutation();
   const combinedToolTemplates = [
     ...new Set(useSelector(selectEditorAgentViewCreateAgentToolTemplates) || []),
   ];
@@ -549,6 +563,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
         backstory: '',
         goal: '',
         tools: [],
+        mcpInstances: [],
       }),
     );
     form.resetFields();
@@ -556,6 +571,80 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
     // Immediately set the default model if available
     if (defaultModel?.model_id) {
       form.setFieldValue('llm_provider_model_id', defaultModel.model_id);
+    }
+  };
+
+  const handleDeleteMcp = async (mcpId: string, mcpName: string) => {
+    if (selectedAgentTemplate) return;
+
+    try {
+      setIsLoading(true);
+
+      notificationApi.info({
+        message: 'Initiating MCP Removal',
+        description: `Starting to dissociate ${mcpName} from the agent...`,
+        placement: 'topRight',
+      });
+
+      await deleteMcpInstance({ mcp_instance_id: mcpId }).unwrap();
+
+      notificationApi.success({
+        message: 'MCP Deletion In Progress',
+        description: `${mcpName} will be removed in a few seconds after cleanup of remaining artifacts.`,
+        placement: 'topRight',
+        duration: 5,
+      });
+
+      if (selectedAssignedAgent) {
+        const updatedMcpIds = (selectedAssignedAgent.mcp_instance_ids || []).filter(
+          (id) => id !== mcpId,
+        );
+
+        await updateAgent({
+          agent_id: selectedAssignedAgent.id,
+          name: form.getFieldValue('name'),
+          crew_ai_agent_metadata: {
+            role: form.getFieldValue('role'),
+            backstory: form.getFieldValue('backstory'),
+            goal: form.getFieldValue('goal'),
+            allow_delegation: false,
+            verbose: false,
+            cache: false,
+            temperature: 0.1,
+            max_iter: 0,
+          },
+          tools_id: selectedAssignedAgent.tools_id || [],
+          mcp_instance_ids: updatedMcpIds,
+          tool_template_ids: [],
+          llm_provider_model_id: form.getFieldValue('llm_provider_model_id'),
+          tmp_agent_image_path: '',
+        }).then((result) => result);
+
+        dispatch(
+          updatedEditorAgentViewAgent({
+            ...selectedAssignedAgent,
+            mcp_instance_ids: updatedMcpIds,
+          }),
+        );
+      } else if (createAgentState) {
+        const updatedMcpIds = (createAgentState.mcps || []).filter((id: string) => id !== mcpId);
+        dispatch(
+          updatedEditorAgentViewCreateAgentState({
+            ...createAgentState,
+            mcps: updatedMcpIds,
+          }),
+        );
+      }
+    } catch (error: any) {
+      console.error('Error deleting MCP:', error);
+      const errorMessage = error.data?.error || 'Failed to delete MCP. Please try again.';
+      notificationApi.error({
+        message: 'MCP Deletion Failed',
+        description: errorMessage,
+        placement: 'topRight',
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -599,7 +688,9 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
           tools_id: updatedToolIds,
           tool_template_ids: [],
           llm_provider_model_id: '',
-        }).unwrap();
+          mcp_instance_ids: selectedAssignedAgent.mcp_instance_ids || [],
+          tmp_agent_image_path: '',
+        }).then((result) => result);
 
         dispatch(
           updatedEditorAgentViewAgent({
@@ -663,8 +754,175 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
         backstory: agent.crew_ai_agent_metadata?.backstory || '',
         goal: agent.crew_ai_agent_metadata?.goal || '',
         tools: agent.tools_id || [],
+        mcpInstances: agent.mcp_instance_ids || [],
         agentId: agent.id,
       }),
+    );
+  };
+
+  const renderMcpList = () => {
+    // Don't handle for Agent Templates
+    const mcpInstanceIds = selectedAssignedAgent
+      ? selectedAssignedAgent.mcp_instance_ids || []
+      : createAgentState?.mcpInstances || [];
+
+    const items: McpInstance[] = mcpInstanceIds
+      .map((id: string) => mcpInstances[id])
+      .filter(Boolean);
+
+    return (
+      <List
+        grid={{ gutter: 16, column: 2 }}
+        dataSource={items}
+        renderItem={(mcp) => (
+          <List.Item>
+            <div
+              style={{
+                borderRadius: '4px',
+                border: 'solid 1px #f0f0f0',
+                backgroundColor: '#fff',
+                width: '100%',
+                padding: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                cursor: 'pointer',
+                transition: 'transform 0.2s, box-shadow 0.2s, background-color 0.2s',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+              }}
+              onClick={() => {
+                setClickedMcpInstance(mcp);
+                setAddMcpModalVisible(true);
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.03)';
+                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+                e.currentTarget.style.backgroundColor = '#f6ffed';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+                e.currentTarget.style.backgroundColor = '#fff';
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  width: '100%',
+                  justifyContent: 'space-between',
+                  marginBottom: '8px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
+                  <div
+                    style={{
+                      width: '24px',
+                      height: '24px',
+                      minWidth: '24px',
+                      borderRadius: '50%',
+                      background: '#f1f1f1',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginRight: '8px',
+                    }}
+                  >
+                    <Image
+                      src={
+                        mcp.image_uri
+                          ? imageData[mcp.image_uri] || '/mcp-icon.svg'
+                          : '/mcp-icon.svg'
+                      }
+                      alt={mcp.name}
+                      width={16}
+                      height={16}
+                      preview={false}
+                      style={{
+                        borderRadius: '2px',
+                        objectFit: 'cover',
+                      }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
+                    <Text
+                      style={{
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        maxWidth: '90%',
+                        display: 'inline-block',
+                      }}
+                      title={mcp.name}
+                    >
+                      {mcp.name}
+                    </Text>
+                    <Tooltip
+                      title={
+                        mcp.status === 'VALID'
+                          ? 'MCP has been validated'
+                          : mcp.status === 'VALIDATING'
+                            ? 'MCP is being validated'
+                            : mcp.status === 'VALIDATION_FAILED'
+                              ? 'MCP validation failed'
+                              : 'MCP status unknown'
+                      }
+                    >
+                      {mcp.status === 'VALID' ? (
+                        <CheckCircleOutlined
+                          style={{
+                            color: '#52c41a',
+                            fontSize: '15px',
+                            fontWeight: 1000,
+                            marginLeft: '12px',
+                          }}
+                        />
+                      ) : mcp.status === 'VALIDATING' ? (
+                        <ClockCircleOutlined
+                          style={{
+                            color: '#faad14',
+                            fontSize: '15px',
+                            fontWeight: 1000,
+                            marginLeft: '12px',
+                          }}
+                        />
+                      ) : mcp.status === 'VALIDATION_FAILED' ? (
+                        <CloseCircleOutlined
+                          style={{
+                            color: '#f5222d',
+                            fontSize: '15px',
+                            fontWeight: 1000,
+                            marginLeft: '12px',
+                          }}
+                        />
+                      ) : null}
+                    </Tooltip>
+                  </div>
+                </div>
+                <div style={{ marginLeft: 'auto', flexShrink: 0 }}>
+                  <Popconfirm
+                    title="Dissociate MCP"
+                    description="Are you sure you want to dissociate this MCP from the agent?"
+                    onConfirm={(e) => {
+                      e?.stopPropagation();
+                      handleDeleteMcp(mcp.id, mcp.name);
+                    }}
+                    onCancel={(e) => e?.stopPropagation()}
+                  >
+                    <Button
+                      type="link"
+                      icon={<DeleteOutlined style={{ color: '#ff4d4f' }} />}
+                      onClick={(e) => e.stopPropagation()}
+                      disabled={isFormDisabled}
+                    />
+                  </Popconfirm>
+                </div>
+              </div>
+            </div>
+          </List.Item>
+        )}
+      />
     );
   };
 
@@ -694,8 +952,22 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                   display: 'flex',
                   flexDirection: 'column',
                   cursor: 'pointer',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  transition: 'transform 0.2s, box-shadow 0.2s, background-color 0.2s',
                   boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                }}
+                onClick={() => {
+                  setClickedToolInstanceId(id);
+                  setAddToolModalVisible(true);
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.03)';
+                  e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+                  e.currentTarget.style.backgroundColor = '#f6ffed';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+                  e.currentTarget.style.backgroundColor = '#fff';
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
@@ -782,8 +1054,22 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                   display: 'flex',
                   flexDirection: 'column',
                   cursor: 'pointer',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  transition: 'transform 0.2s, box-shadow 0.2s, background-color 0.2s',
                   boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                }}
+                onClick={() => {
+                  setClickedToolInstanceId(tool.id);
+                  setAddToolModalVisible(true);
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.03)';
+                  e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+                  e.currentTarget.style.backgroundColor = '#f6ffed';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+                  e.currentTarget.style.backgroundColor = '#fff';
                 }}
               >
                 <div
@@ -809,19 +1095,21 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                         marginRight: '8px',
                       }}
                     >
-                      {tool.tool_image_uri && (
-                        <Image
-                          src={imageData[tool.tool_image_uri] || '/fallback-image.png'}
-                          alt={tool.name}
-                          width={16}
-                          height={16}
-                          preview={false}
-                          style={{
-                            borderRadius: '2px',
-                            objectFit: 'cover',
-                          }}
-                        />
-                      )}
+                      <Image
+                        src={
+                          tool.tool_image_uri
+                            ? imageData[tool.tool_image_uri] || '/fallback-image.png'
+                            : '/fallback-image.png'
+                        }
+                        alt={tool.name}
+                        width={16}
+                        height={16}
+                        preview={false}
+                        style={{
+                          borderRadius: '2px',
+                          objectFit: 'cover',
+                        }}
+                      />
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
                       <Text
@@ -1012,13 +1300,22 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                   gap: '10px',
                 }}
               >
-                {(agent.tools_id || []).map((toolId) => {
-                  const toolInstance = toolInstances[toolId];
-                  const imageUri = toolInstance?.tool_image_uri;
+                {(agent.tools_id || []).concat(agent.mcp_instance_ids || []).map((resourceId) => {
+                  const toolInstance = toolInstances[resourceId];
+                  const mcpInstance = mcpInstances[resourceId];
+                  const resourceType: 'tool' | 'mcp' = toolInstance ? 'tool' : 'mcp';
+                  const imageUri =
+                    resourceType === 'tool' ? toolInstance?.tool_image_uri : mcpInstance?.image_uri;
+                  const resourceName =
+                    resourceType === 'tool' ? toolInstance?.name : mcpInstance?.name;
                   const imageSrc =
-                    imageUri && imageData[imageUri] ? imageData[imageUri] : '/fallback-image.png';
+                    imageUri && imageData[imageUri]
+                      ? imageData[imageUri]
+                      : resourceType === 'tool'
+                        ? '/fallback-image.png'
+                        : '/mcp-icon.svg';
                   return (
-                    <Tooltip title={toolInstance?.name || toolId} key={toolId} placement="top">
+                    <Tooltip title={resourceName} key={resourceId} placement="top">
                       <div
                         style={{
                           width: '24px',
@@ -1036,7 +1333,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                       >
                         <Image
                           src={imageSrc}
-                          alt={toolInstance?.name || toolId}
+                          alt={resourceName || resourceId}
                           width={16}
                           height={16}
                           preview={false}
@@ -1109,13 +1406,43 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
           <Button
             type="dashed"
             icon={<PlusOutlined />}
-            onClick={() => setAddToolModalVisible(true)}
+            onClick={() => {
+              setClickedToolInstanceId(undefined);
+              setAddToolModalVisible(true);
+            }}
             style={{ width: '100%', marginBottom: '16px' }}
             disabled={isFormDisabled}
           >
             Create or Edit Tools
           </Button>
           {renderToolList()}
+          {wflowData?.studioAsMcpClient && (
+            <>
+              <Divider
+                style={{
+                  margin: 0,
+                  backgroundColor: '#f0f0f0',
+                  marginTop: '16px',
+                  marginBottom: '16px',
+                }}
+              />
+              <Typography.Title level={5} style={{ marginBottom: '14px' }}>
+                Add Optional MCP Servers
+              </Typography.Title>
+              <Button
+                type="dashed"
+                icon={<PlusOutlined />}
+                onClick={() => {
+                  setClickedMcpInstance(undefined);
+                  setAddMcpModalVisible(true);
+                }}
+                style={{ width: '100%', marginBottom: '16px' }}
+              >
+                Add MCP Server to Agent
+              </Button>
+              {renderMcpList()}
+            </>
+          )}
         </>
       );
     } else {
@@ -1127,12 +1454,42 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
           <Button
             type="dashed"
             icon={<PlusOutlined />}
-            onClick={() => setAddToolModalVisible(true)}
+            onClick={() => {
+              setClickedToolInstanceId(undefined);
+              setAddToolModalVisible(true);
+            }}
             style={{ width: '100%', marginBottom: '16px' }}
           >
             Create or Edit Tools
           </Button>
           {renderToolList()}
+          {wflowData?.studioAsMcpClient && (
+            <>
+              <Divider
+                style={{
+                  margin: 0,
+                  backgroundColor: '#f0f0f0',
+                  marginTop: '16px',
+                  marginBottom: '16px',
+                }}
+              />
+              <Typography.Title level={5} style={{ marginBottom: '14px' }}>
+                Add Optional MCP Servers
+              </Typography.Title>
+              <Button
+                type="dashed"
+                icon={<PlusOutlined />}
+                onClick={() => {
+                  setClickedMcpInstance(undefined);
+                  setAddMcpModalVisible(true);
+                }}
+                style={{ width: '100%', marginBottom: '16px' }}
+              >
+                Add MCP Server to Agent
+              </Button>
+              {renderMcpList()}
+            </>
+          )}
         </>
       );
     }
@@ -1358,8 +1715,21 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
       <Divider style={{ margin: 0, backgroundColor: '#f0f0f0' }} />
       <WorkflowAddToolModal
         workflowId={workflowId}
+        preSelectedToolInstanceId={clickedToolInstanceId}
         open={isAddToolModalVisible}
-        onCancel={() => setAddToolModalVisible(false)}
+        onCancel={() => {
+          setAddToolModalVisible(false);
+          setClickedToolInstanceId(undefined);
+        }}
+      />
+      <WorkflowAddMcpModal
+        workflowId={workflowId}
+        preSelectedMcpInstance={clickedMcpInstance}
+        open={isAddMcpModalVisible}
+        onCancel={() => {
+          setAddMcpModalVisible(false);
+          setClickedMcpInstance(undefined);
+        }}
       />
       {defaultModel && (
         <GenerateAgentPropertiesModal
@@ -1423,11 +1793,25 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
     },
     {},
   );
+  const { data: mcpInstancesList = [] } = useListMcpInstancesQuery({ workflow_id: workflowId });
+  const mcpInstances = mcpInstancesList.reduce(
+    (acc: Record<string, McpInstance>, instance: McpInstance) => {
+      acc[instance.id] = instance;
+      return acc;
+    },
+    {},
+  );
   const { imageData } = useImageAssetsData([
-    ...Object.values(toolInstances).map((t: any) => t.tool_image_uri),
+    ...Object.values(toolInstances)
+      .map((t: ToolInstance) => t.tool_image_uri)
+      .filter((uri: string) => uri.length > 0),
+    ...Object.values(mcpInstances)
+      .map((m: McpInstance) => m.image_uri)
+      .filter((uri: string) => uri.length > 0),
     ...agents
-      .filter((agent: any) => workflowAgentIds.includes(agent.id))
-      .map((a: any) => a.agent_image_uri),
+      .filter((agent: AgentMetadata) => workflowAgentIds.includes(agent.id))
+      .map((a: AgentMetadata) => a.agent_image_uri)
+      .filter((uri: string) => uri.length > 0),
   ]);
   const selectedAssignedAgent = useAppSelector(selectEditorAgentViewAgent);
   const [updateAgent] = useUpdateAgentMutation();
@@ -1463,6 +1847,7 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
           backstory: '',
           goal: '',
           tools: [],
+          mcpInstances: [],
         }),
       );
       setToolDetails({
@@ -1538,7 +1923,7 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
             max_iter: 0,
           },
           tools_id: createAgentState?.tools || [],
-          mcp_instance_ids: [],
+          mcp_instance_ids: createAgentState?.mcpInstances || [],
           llm_provider_model_id: values.llm_provider_model_id,
           tool_template_ids: toolTemplateIds,
           tmp_agent_image_path: '',
@@ -1588,6 +1973,7 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
             backstory: '',
             goal: '',
             tools: [],
+            mcpInstances: [],
           }),
         );
       }
@@ -1673,6 +2059,7 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
             agents={agents}
             workflowAgentIds={workflowAgentIds}
             toolInstances={toolInstances}
+            mcpInstances={mcpInstances}
             imageData={imageData}
             updateAgent={updateAgent}
             createAgentState={createAgentState}

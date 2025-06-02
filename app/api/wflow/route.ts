@@ -63,6 +63,7 @@ const fetchModelUrl = async (cml_model_id: string): Promise<string | null> => {
 // is determined by env vars that are passed in at
 // application start.
 export async function GET(request: NextRequest) {
+  const studioAsMcpClient = process.env.AGENT_STUDIO_AS_MCP_CLIENT?.toLowerCase() === 'true';
   if (process.env.AGENT_STUDIO_RENDER_MODE === 'workflow') {
     const deployedModelId = process.env.AGENT_STUDIO_DEPLOYED_MODEL_ID;
     const modelUrl = await fetchModelUrl(deployedModelId as string);
@@ -161,6 +162,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       renderMode: process.env.AGENT_STUDIO_RENDER_MODE,
+      studioAsMcpClient: studioAsMcpClient,
       deployedWorkflowId: process.env.AGENT_STUDIO_DEPLOYED_WORKFLOW_ID,
       deployedWorkflow: deployedWorkflow,
       workflowModelUrl: await fetchModelUrl(deployedWorkflow.cml_deployed_model_id),
@@ -172,6 +174,7 @@ export async function GET(request: NextRequest) {
   } else {
     return NextResponse.json({
       renderMode: process.env.AGENT_STUDIO_RENDER_MODE,
+      studioAsMcpClient: studioAsMcpClient,
     });
   }
 }

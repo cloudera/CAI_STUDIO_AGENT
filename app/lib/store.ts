@@ -9,6 +9,8 @@ import { workflowsApi } from '../workflows/workflowsApi';
 import { agentsApi } from '../agents/agentApi';
 import { tasksApi } from '../tasks/tasksApi';
 import { toolInstancesApi } from '../tools/toolInstancesApi';
+import { mcpTemplatesApi } from '../mcp/mcpTemplatesApi';
+import { mcpInstancesApi } from '../mcp/mcpInstancesApi';
 import editorReducer from '../workflows/editorSlice';
 import workflowAppReducer from '../workflows/workflowAppSlice';
 
@@ -27,6 +29,8 @@ export const makeStore = () => {
         .concat(modelsApi.middleware)
         .concat(toolsApi.middleware)
         .concat(toolInstancesApi.middleware)
+        .concat(mcpTemplatesApi.middleware)
+        .concat(mcpInstancesApi.middleware)
         .concat(workflowsApi.middleware)
         .concat(agentsApi.middleware)
         .concat(tasksApi.middleware),

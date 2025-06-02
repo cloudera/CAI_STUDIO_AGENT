@@ -14,13 +14,10 @@ import {
   Space,
   Tooltip,
   Alert,
-  Row,
-  Col,
 } from 'antd';
 import {
   PlusOutlined,
   UploadOutlined,
-  EditOutlined,
   QuestionCircleOutlined,
   ExportOutlined,
   ReloadOutlined,
@@ -42,7 +39,6 @@ import { Editor } from '@monaco-editor/react';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   selectEditorWorkflowName,
-  selectEditorWorkflowId,
   selectEditorAgentViewCreateAgentToolTemplates,
   selectEditorAgentViewCreateAgentState,
   updatedEditorAgentViewCreateAgentState,
@@ -60,16 +56,17 @@ import { defaultToolPyCode, defaultRequirementsTxt } from '@/app/utils/defaultTo
 import { renderAlert } from '@/app/lib/alertUtils';
 
 const { Text } = Typography;
-const { TextArea } = Input;
 
 interface WorkflowAddToolModalProps {
   workflowId: string;
+  preSelectedToolInstanceId?: string;
   open: boolean;
   onCancel: () => void;
 }
 
 const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
   workflowId,
+  preSelectedToolInstanceId,
   open,
   onCancel,
 }) => {
@@ -89,7 +86,6 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
   const createAgentState = useSelector(selectEditorAgentViewCreateAgentState);
   const { data: toolInstancesList = [] } = useListToolInstancesQuery({ workflow_id: workflowId });
   const [createToolInstance] = useCreateToolInstanceMutation();
-  const [selectedAssignedAgent, setSelectedAssignedAgent] = useState<any>(null);
   const [updateAgent] = useUpdateAgentMutation();
   const { data: agents = [] } = useListAgentsQuery({ workflow_id: workflowId });
   const [uploadedFilePath, setUploadedFilePath] = useState<string>('');
@@ -138,6 +134,15 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
     }
   }, [toolTemplates, selectedToolTemplate, isCreateSelected]);
 
+  // Handle pre-selected tool instance
+  useEffect(() => {
+    if (preSelectedToolInstanceId && toolInstancesMap[preSelectedToolInstanceId] && open) {
+      handleSelectToolInstance(preSelectedToolInstanceId);
+    } else if (open) {
+      handleCreateCardSelect(); // If no pre-selected tool instance, select the create card
+    }
+  }, [preSelectedToolInstanceId, toolInstancesMap, open]);
+
   const handleSelectToolTemplate = (toolTemplateId: string) => {
     setSelectedToolTemplate(toolTemplateId);
     setSelectedToolInstance(null);
@@ -150,57 +155,6 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
     setSelectedToolInstance(null);
     setIsCreateSelected(true);
     setIsEditable(false);
-  };
-
-  const handleCreateTool = async () => {
-    const toolName = newToolName || `${workflowName || 'Workflow'} Tool`;
-
-    setLoading(true);
-    try {
-      const newToolId = await addToolTemplate({
-        tool_template_name: toolName,
-        tmp_tool_image_path: '',
-        workflow_template_id: '', // Assuming you have a workflow ID to associate
-      }).unwrap();
-
-      notificationApi.success({
-        message: 'Tool Created',
-        description: `Tool template "${toolName}" has been created.`,
-        placement: 'topRight',
-      });
-
-      // Refetch the tool templates to get the updated list
-      const updatedToolTemplates = await refetch().unwrap();
-
-      // Preselect the newly created tool template and place it at the top
-      const reorderedToolTemplates = [
-        updatedToolTemplates.find((tool) => tool.id === newToolId),
-        ...updatedToolTemplates.filter((tool) => tool.id !== newToolId),
-      ];
-
-      setSelectedToolTemplate(newToolId);
-      setIsEditable(true);
-
-      // Scroll to the newly added tool template
-      setTimeout(() => {
-        const listElement = listRef.current;
-        if (listElement) {
-          const newToolElement = listElement.children[0] as HTMLElement; // New tool is at the top
-          if (newToolElement) {
-            newToolElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-        }
-        setLoading(false); // Stop loading after the list is updated
-      }, 0);
-    } catch (error: any) {
-      const errorMessage = error.data?.error || 'Failed to create tool template. Please try again.';
-      notificationApi.error({
-        message: 'Error Creating Tool',
-        description: errorMessage,
-        placement: 'topRight',
-      });
-      setLoading(false);
-    }
   };
 
   const handleCreateToolInstance = async (toolTemplateId: string | undefined) => {

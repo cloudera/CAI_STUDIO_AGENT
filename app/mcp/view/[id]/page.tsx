@@ -9,6 +9,7 @@ import { MCPTemplate } from '@/studio/proto/agent_studio';
 import { DeleteOutlined, DownOutlined } from '@ant-design/icons';
 import { useRemoveMcpTemplateMutation, useGetMcpTemplateQuery } from '../../mcpTemplatesApi';
 import McpTemplateView from '@/app/components/McpTemplateView';
+import { useImageAssetsData } from '@/app/lib/hooks/useAssetData';
 const { Title } = Typography;
 
 const DeleteMcpTemplateModal: React.FC<{
@@ -41,6 +42,8 @@ const McpTemplateViewPage: React.FC = () => {
     mcp_template_id: mcpTemplateId || '',
   });
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  const { imageData: iconsData } = useImageAssetsData(mcpTemplate ? [mcpTemplate.image_uri] : []);
 
   if (!mcpTemplateId) {
     return (
@@ -98,7 +101,7 @@ const McpTemplateViewPage: React.FC = () => {
       <CommonBreadCrumb
         items={[{ title: 'Tool Catalog', href: '/tools' }, { title: 'View MCP' }]}
       />
-      <Layout
+      <div
         style={{
           display: 'flex',
           flexDirection: 'row',
@@ -107,7 +110,33 @@ const McpTemplateViewPage: React.FC = () => {
           borderBottom: '1px solid #f0f0f0',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              background: '#f1f1f1',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <img
+              src={
+                mcpTemplate?.image_uri
+                  ? iconsData[mcpTemplate.image_uri] || '/mcp-icon.svg'
+                  : '/mcp-icon.svg'
+              }
+              alt={mcpTemplate?.name}
+              style={{
+                width: '24px',
+                height: '24px',
+                objectFit: 'cover',
+                borderRadius: '2px',
+              }}
+            />
+          </div>
           <Title level={4} style={{ margin: 0 }}>
             {mcpTemplate?.name || 'Unknown MCP'}
           </Title>
@@ -130,7 +159,7 @@ const McpTemplateViewPage: React.FC = () => {
             Actions <DownOutlined />
           </Button>
         </Dropdown>
-      </Layout>
+      </div>
       <Layout style={{ marginTop: '20px' }}>
         <McpTemplateView mcpTemplateDetails={mcpTemplate} onRefresh={() => {}} />
       </Layout>
