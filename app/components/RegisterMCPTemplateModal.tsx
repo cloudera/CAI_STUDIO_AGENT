@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Modal, Input, Layout, Radio, Typography, Tooltip, Button } from 'antd';
-import { DeleteOutlined, InfoCircleFilled, PlusCircleOutlined } from '@ant-design/icons';
+import React, { useState, useEffect } from 'react';
+import { Modal, Typography, Alert } from 'antd';
+import { InfoCircleOutlined, WarningOutlined } from '@ant-design/icons';
+import Editor from '@monaco-editor/react';
 
 const { Text } = Typography;
 
@@ -10,143 +11,278 @@ interface RegisterMCPTemplateModalProps {
   onRegister: (mcpName: string, mcpType: string, mcpArgs: string, envNames: string[]) => void;
 }
 
+interface MCPConfig {
+  mcpServers: {
+    [key: string]: {
+      command: string;
+      args: string[];
+      env?: {
+        [key: string]: string;
+      };
+    };
+  };
+}
+
 const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
   isOpen,
   onCancel,
   onRegister,
 }) => {
-  const [mcpName, setMcpName] = useState('');
-  const [mcpType, setMcpType] = useState<'PYTHON' | 'NODE'>('PYTHON');
-  const [mcpArgs, setMcpArgs] = useState('');
-  const [envNames, setEnvNames] = useState<string[]>([]);
+  const [jsonInput, setJsonInput] = useState('');
+  const [validationError, setValidationError] = useState<React.ReactNode>('');
+  const [serverNameInfo, setServerNameInfo] = useState<React.ReactNode>('');
+  const [isValid, setIsValid] = useState(false);
+  const [parsedConfig, setParsedConfig] = useState<MCPConfig | null>(null);
 
-  const mcpTypeMappings = {
-    PYTHON: {
-      command: 'uvx',
-      guidance: 'uvx is used to run python-based MCPs.',
-    },
-    NODE: {
-      command: 'npx',
-      guidance: 'npx is used to run node-based MCPs.',
-    },
+  const defaultJson = `{
+  "mcpServers": {
+    "example-service": {
+      "command": "uvx",
+      "args": ["mcp-server-example"]
+    }
+  }
+}`;
+
+  useEffect(() => {
+    if (isOpen && !jsonInput) {
+      setJsonInput(defaultJson);
+    }
+  }, [isOpen]);
+
+  const validateJson = (input: string) => {
+    if (!input.trim()) {
+      setValidationError('');
+      setIsValid(false);
+      setParsedConfig(null);
+      return;
+    }
+
+    try {
+      const config: MCPConfig = JSON.parse(input);
+
+      // Check if mcpServers exists
+      if (!config.mcpServers || typeof config.mcpServers !== 'object') {
+        setValidationError('JSON must contain "mcpServers" object.');
+        setServerNameInfo('');
+        setIsValid(false);
+        setParsedConfig(null);
+        return;
+      }
+
+      const serverKeys = Object.keys(config.mcpServers);
+
+      // Check for multiple servers
+      if (serverKeys.length > 1) {
+        setValidationError("Multiple MCP servers can't be registered at the same time.");
+        setServerNameInfo('');
+        setIsValid(false);
+        setParsedConfig(null);
+        return;
+      }
+
+      if (serverKeys.length === 0) {
+        setValidationError('At least one MCP server must be defined.');
+        setServerNameInfo('');
+        setIsValid(false);
+        setParsedConfig(null);
+        return;
+      }
+
+      const serverName = serverKeys[0];
+      if (serverName.trim() === '') {
+        setValidationError('Server name cannot be empty.');
+        setServerNameInfo('');
+        setIsValid(false);
+        setParsedConfig(null);
+        return;
+      }
+      const serverConfig = config.mcpServers[serverName];
+
+      // Check for unknown fields
+      const allowedFields = ['command', 'args', 'env'];
+      const configFields = Object.keys(serverConfig);
+      const unknownFields = configFields.filter((field) => !allowedFields.includes(field));
+
+      if (unknownFields.length > 0) {
+        setValidationError(
+          <>
+            Please stick to the known JSON fields: <Text code>command</Text>, <Text code>args</Text>{' '}
+            or <Text code>env</Text>.
+          </>,
+        );
+        setServerNameInfo('');
+        setIsValid(false);
+        setParsedConfig(null);
+        return;
+      }
+
+      // Check for required fields
+      if (!serverConfig.command || !serverConfig.args) {
+        setValidationError(
+          <>
+            Both <Text code>command</Text> and <Text code>args</Text> fields are required
+          </>,
+        );
+        setServerNameInfo('');
+        setIsValid(false);
+        setParsedConfig(null);
+        return;
+      }
+
+      // Check command is uvx
+      if (serverConfig.command !== 'uvx') {
+        setValidationError(
+          <>
+            We only support <Text code>uvx</Text> as the runtime for python-based MCPs.
+          </>,
+        );
+        setServerNameInfo('');
+        setIsValid(false);
+        setParsedConfig(null);
+        return;
+      }
+
+      // Check args is array
+      if (!Array.isArray(serverConfig.args)) {
+        setValidationError(
+          <>
+            <Text code>args</Text> must be an array
+          </>,
+        );
+        setServerNameInfo('');
+        setIsValid(false);
+        setParsedConfig(null);
+        return;
+      }
+
+      // Check env is object if present
+      if (serverConfig.env && typeof serverConfig.env !== 'object') {
+        setValidationError(
+          <>
+            <Text code>env</Text> must be an object
+          </>,
+        );
+        setServerNameInfo('');
+        setIsValid(false);
+        setParsedConfig(null);
+        return;
+      }
+
+      // All validations passed
+      setServerNameInfo(
+        <>
+          The MCP Server name would be <Text code>{serverName}</Text>. Please use the sub-key under
+          "mcpServers" to change the name.
+        </>,
+      );
+      setValidationError('');
+      setIsValid(true);
+      setParsedConfig(config);
+    } catch (error) {
+      setValidationError('Invalid JSON format');
+      setServerNameInfo('');
+      setIsValid(false);
+      setParsedConfig(null);
+    }
   };
 
+  useEffect(() => {
+    validateJson(jsonInput);
+  }, [jsonInput]);
+
   const handleRegister = () => {
-    if (mcpName.trim() && mcpType && mcpArgs.trim()) {
-      onRegister(mcpName.trim(), mcpType, mcpArgs.trim(), envNames);
+    if (isValid && parsedConfig) {
+      const serverName = Object.keys(parsedConfig.mcpServers)[0];
+      const serverConfig = parsedConfig.mcpServers[serverName];
+
+      // Convert to the format expected by the parent component
+      const mcpArgs = serverConfig.args.join(' ');
+      const envNames = serverConfig.env ? Object.keys(serverConfig.env) : [];
+
+      onRegister(serverName, 'PYTHON', mcpArgs, envNames);
+
+      // Reset form
+      setJsonInput('');
+      setValidationError('');
+      setIsValid(false);
+      setParsedConfig(null);
     }
-    // set back fields to default values
-    setMcpName('');
-    setMcpType('PYTHON');
-    setMcpArgs('');
-    setEnvNames([]);
+  };
+
+  const handleCancel = () => {
+    // Reset form
+    setJsonInput('');
+    setValidationError('');
+    setServerNameInfo('');
+    setIsValid(false);
+    setParsedConfig(null);
+    onCancel();
   };
 
   return (
     <Modal
       title="Register MCP Server"
-      width="45%"
+      width="60%"
       open={isOpen}
-      onCancel={onCancel}
+      onCancel={handleCancel}
       onOk={handleRegister}
       okText="Register"
       cancelText="Cancel"
+      okButtonProps={{ disabled: !isValid }}
     >
-      <Layout style={{ flexDirection: 'column' }}>
-        <Input
-          placeholder="Enter MCP Name"
-          value={mcpName}
-          onChange={(e) => setMcpName(e.target.value)}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <Alert
+          message="Environment variable values are not saved by the Agent Studio for security purposes, and you would need to input the values again while configuring a workflow. We use dummy values to validate and reflect on the MCP Server."
+          type="info"
+          showIcon
         />
-        <Radio.Group
-          onChange={(e) => setMcpType(e.target.value)}
-          value={mcpType}
-          options={[
-            {
-              value: 'PYTHON',
-              label: (
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  Python
-                  <Tooltip title={mcpTypeMappings['PYTHON'].guidance}>
-                    <InfoCircleFilled style={{ marginLeft: 8, cursor: 'pointer' }} />
-                  </Tooltip>
-                </div>
-              ),
-            },
-            {
-              value: 'NODE',
-              label: (
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  Node
-                  <Tooltip title={mcpTypeMappings['NODE'].guidance}>
-                    <InfoCircleFilled style={{ marginLeft: 8, cursor: 'pointer' }} />
-                  </Tooltip>
-                </div>
-              ),
-            },
-          ]}
-        />
-        <p style={{ marginBottom: '10px' }}>Enter the command to run the MCP.</p>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <span style={{ marginRight: '4px', color: '#850020', fontFamily: 'monospace' }}>
-            {mcpTypeMappings[mcpType].command}
-          </span>
-          <Input value={mcpArgs} onChange={(e) => setMcpArgs(e.target.value)} placeholder="" />
-        </div>
-        <p style={{ marginBottom: '10px' }}>
-          Please mention the environment variable names that are required by the MCP.
-        </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {envNames.map((envName, index) => (
-            <div key={index} style={{ display: 'flex', alignItems: 'center' }}>
-              <Input
-                value={envName}
-                onChange={(e) => {
-                  const newEnvNames = [...envNames];
-                  newEnvNames[index] = e.target.value;
-                  setEnvNames(newEnvNames);
-                }}
-                placeholder="ENV_VAR_NAME"
-                style={{ marginRight: '8px' }}
-              />
-              <Button
-                type="primary"
-                shape="circle"
-                icon={<PlusCircleOutlined />}
-                onClick={() => {
-                  const newEnvNames = [...envNames];
-                  newEnvNames.splice(index + 1, 0, '');
-                  setEnvNames(newEnvNames);
-                }}
-              />
-              {envNames.length > 1 && (
-                <Button
-                  type="text"
-                  danger
-                  shape="circle"
-                  icon={<DeleteOutlined />}
-                  onClick={() => {
-                    const newEnvNames = [...envNames];
-                    newEnvNames.splice(index, 1);
-                    setEnvNames(newEnvNames);
-                  }}
-                  style={{ marginLeft: '4px' }}
-                />
-              )}
+
+        <div>
+          <Text style={{ marginBottom: '8px', display: 'block' }}>
+            Please enter the MCP Server configuration below:
+          </Text>
+
+          <div style={{ border: '1px solid #d9d9d9', borderRadius: '6px', overflow: 'hidden' }}>
+            <Editor
+              height="300px"
+              defaultLanguage="json"
+              theme="vs-light"
+              value={jsonInput}
+              onChange={(value) => setJsonInput(value || '')}
+              options={{
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                fontSize: 14,
+                lineNumbers: 'on',
+                wordWrap: 'on',
+                automaticLayout: true,
+              }}
+            />
+          </div>
+
+          {serverNameInfo && (
+            <div style={{ marginTop: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
+                <InfoCircleOutlined style={{ color: '#4d7cff', marginRight: '4px' }} />
+                <Text type="secondary" style={{ fontSize: '12px', color: '#4d7cff' }}>
+                  {serverNameInfo}
+                </Text>
+              </div>
             </div>
-          ))}
-          {envNames.length === 0 && (
-            <Button
-              type="dashed"
-              icon={<PlusCircleOutlined />}
-              onClick={() => setEnvNames([''])}
-              style={{ width: '100%' }}
-            >
-              Add Environment Variable
-            </Button>
+          )}
+
+          {validationError && (
+            <div style={{ marginTop: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
+                <WarningOutlined style={{ color: '#ff4d4f', marginRight: '4px' }} />
+                <Text type="danger" style={{ fontSize: '12px' }}>
+                  {validationError}
+                </Text>
+              </div>
+            </div>
           )}
         </div>
-      </Layout>
+      </div>
     </Modal>
   );
 };

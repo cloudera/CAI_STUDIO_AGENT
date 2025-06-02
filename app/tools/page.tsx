@@ -313,7 +313,10 @@ const MCPTabContent = () => {
           }}
         >
           <Text style={{ fontWeight: 600, fontSize: '18px' }}>Register a MCP Server</Text>
-          <Text style={{ fontWeight: 350 }}>Register a MCP Server to use in your AI agents.</Text>
+          <Text style={{ fontWeight: 350 }}>
+            Register a MCP Server to use in your AI agents. Learn more about Model Context Protocol{' '}
+            <a href="https://modelcontextprotocol.io/introduction">here</a>.
+          </Text>
         </Layout>
         <Button
           type="primary"
@@ -350,17 +353,24 @@ const MCPTabContent = () => {
 
 const ToolsPage = () => {
   const { data: wflowData, isLoading } = useGetWorkflowDataQuery();
+  const [activeTab, setActiveTab] = useState<'tools' | 'mcps'>('tools');
   return (
     <>
       <Layout style={{ flex: 1, padding: '16px 24px 22px', flexDirection: 'column' }}>
         <CommonBreadCrumb items={[{ title: 'Tools Catalog' }]} />
         {!wflowData?.studioAsMcpClient && <ToolsTabContent />}
         {wflowData?.studioAsMcpClient && (
-          <Tabs defaultActiveKey="tools" style={{ marginTop: '0px' }}>
+          <Tabs
+            defaultActiveKey={activeTab}
+            style={{ marginTop: '0px' }}
+            onChange={(activeKey) => {
+              setActiveTab(activeKey as 'tools' | 'mcps');
+            }}
+          >
             <TabPane tab="Agent Studio Tools" key="tools">
               <ToolsTabContent />
             </TabPane>
-            <TabPane tab="MCP Servers" key="mcp">
+            <TabPane tab="MCP Servers" key="mcps">
               <MCPTabContent />
             </TabPane>
           </Tabs>
