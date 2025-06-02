@@ -46,51 +46,34 @@ import base64
 
 import engine.types as input_types
 from engine.crewai.run import run_workflow_async
-from engine.crewai.tracing import instrument_crewai_workflow, reset_crewai_instrumentation
-from engine.crewai.tools import prepare_virtual_env_for_tool
-from engine.crewai.events import register_global_handlers
-from engine.artifact import extract_artifact_to_location, get_collated_input, get_artifact_workflow_name
+from engine.crewai.artifact import is_crewai_workflow, load_crewai_workflow
+from engine.artifact import extract_artifact_to_location, get_workflow_name
+from engine.langgraph.artifact import is_langgraph_workflow, load_langgraph_workflow
 
 import cml.models_v1 as cml_models
 
 
-# Currently the only artifact type supported for import is directory.
-# the collated input requirements are all relative to the workflow import path.
-def _install_python_requirements(collated_input: input_types.CollatedInput):
-    for tool_instance in collated_input.tool_instances:
-        print(f"PREPARING VIRTUAL ENV FOR {tool_instance.name}")
-        prepare_virtual_env_for_tool(
-            os.path.join(WORKFLOW_DIRECTORY, tool_instance.source_folder_path),
-            tool_instance.python_requirements_file_name,
-        )
-
-
 # Extract (or download) our artifact to MODEL_EXECUTION_DIR/workflow/*
 extract_artifact_to_location(WORFKLOW_ARTIFACT, WORKFLOW_DIRECTORY)
-collated_input = get_collated_input(os.path.join(WORKFLOW_DIRECTORY))
-_install_python_requirements(collated_input)
+
+LANGGRAPH_CALLABLES = None
+tracer = None  # keep this for CrewAI workflows
+
+if is_langgraph_workflow(WORKFLOW_DIRECTORY):
+    LANGGRAPH_CALLABLES = load_langgraph_workflow(WORKFLOW_DIRECTORY)
+elif is_crewai_workflow(WORKFLOW_DIRECTORY):
+    collated_input, tracer = load_crewai_workflow(WORKFLOW_DIRECTORY)
+else:
+    raise ValueError("Unsupported workflow artifact type.")
+
 
 # Extract the workflow name
-workflow_name = get_artifact_workflow_name(artifact_dir=WORKFLOW_DIRECTORY)
+workflow_name = get_workflow_name(workflow_dir=WORKFLOW_DIRECTORY)
 
 
 def base64_decode(encoded_str: str):
     decoded_bytes = base64.b64decode(encoded_str)
     return json.loads(decoded_bytes.decode("utf-8"))
-
-
-# Instrument our workflow given a specific workflow name and
-# set up the instrumentation. Also register our handlers.
-reset_crewai_instrumentation()
-tracer_provider = instrument_crewai_workflow(f"{workflow_name}")
-tracer = tracer_provider.get_tracer("opentelemetry.agentstudio.workflow.model")
-
-
-# Register our handlers. This can occur globally
-# because regardless of the actual workflow definition
-# we run, the event handlers can remain the same (since
-# trace ID is written as a contextvar on each async task)
-register_global_handlers()
 
 
 # TODO: remove dependence on collated_input workflow type
@@ -104,36 +87,60 @@ def api_wrapper(args: Union[dict, str]) -> str:
         inputs = (
             base64_decode(serve_workflow_parameters.kickoff_inputs) if serve_workflow_parameters.kickoff_inputs else {}
         )
-        collated_input_copy = collated_input.model_copy(deep=True)
 
-        # Extract our deployment config (API keys, env vars, etc.)
+        # Extract deployment config (API keys, env vars, etc.)
         deployment_config: input_types.DeploymentConfig = input_types.DeploymentConfig.model_validate(
             json.loads(WORKFLOW_DEPLOYMENT_CONFIG)
         )
 
-        current_time = datetime.now()
-        formatted_time = current_time.strftime("%b %d, %H:%M:%S.%f")[:-3]
-        span_name = f"Workflow Run: {formatted_time}"
-        with tracer.start_as_current_span(span_name) as parent_span:
-            decimal_trace_id = parent_span.get_span_context().trace_id
-            trace_id = f"{decimal_trace_id:032x}"
+        # Set environment variables defined in the deployment config
+        for key, value in deployment_config.environment.items():
+            os.environ[key] = str(value)
 
-            # Capture the current OpenTelemetry context
-            parent_context = get_current()
+        # Extract inputs
+        inputs = (
+            base64_decode(serve_workflow_parameters.kickoff_inputs) if serve_workflow_parameters.kickoff_inputs else {}
+        )
 
-            # Start the workflow in the background using the parent context
-            asyncio.create_task(
-                run_workflow_async(
-                    WORKFLOW_DIRECTORY,
-                    collated_input_copy,
-                    deployment_config.tool_config,
-                    deployment_config.mcp_config,
-                    deployment_config.llm_config,
-                    inputs,
-                    parent_context,
-                    trace_id,
+        # LangGraph workflow
+        if LANGGRAPH_CALLABLES:
+            graph_callable = LANGGRAPH_CALLABLES.get(workflow_name)
+            if not graph_callable:
+                raise ValueError(f"No graph callable found for workflow name '{workflow_name}'")
+
+            async def run_langgraph_workflow():
+                from engine.langgraph.run import run_workflow_langgraph_instance
+
+                await run_workflow_langgraph_instance(graph_callable, inputs)
+
+            asyncio.create_task(run_langgraph_workflow())
+            return {"trace_id": "n/a"}
+
+        # CrewAI workflow
+        else:
+            collated_input_copy = collated_input.model_copy(deep=True)
+            current_time = datetime.now()
+            formatted_time = current_time.strftime("%b %d, %H:%M:%S.%f")[:-3]
+            span_name = f"Workflow Run: {formatted_time}"
+
+            with tracer.start_as_current_span(span_name) as parent_span:
+                decimal_trace_id = parent_span.get_span_context().trace_id
+                trace_id = f"{decimal_trace_id:032x}"
+                parent_context = get_current()
+
+                asyncio.create_task(
+                    run_workflow_async(
+                        WORKFLOW_DIRECTORY,
+                        collated_input_copy,
+                        deployment_config.tool_config,
+                        deployment_config.mcp_config,
+                        deployment_config.llm_config,
+                        inputs,
+                        parent_context,
+                        trace_id,
+                    )
                 )
-            )
+            return {"trace_id": str(trace_id)}
 
         return {"trace_id": str(trace_id)}
     elif serve_workflow_parameters.action_type == input_types.DeployedWorkflowActions.GET_CONFIGURATION.value:

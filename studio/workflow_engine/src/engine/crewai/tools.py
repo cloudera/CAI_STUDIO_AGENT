@@ -193,7 +193,7 @@ def get_tool_instance_proxy(
     """
 
     if not is_venv_prepared_for_tool(
-        workflow_directory, tool_instance.source_folder_path, tool_instance.python_requirements_file_name
+        os.path.join(workflow_directory, tool_instance.source_folder_path), tool_instance.python_requirements_file_name
     ):
         raise ValueError(f"Virtual environment not prepared for tool '{tool_instance.name}'.")
 
@@ -485,6 +485,7 @@ def get_venv_tool(
                     capture_output=True,
                     text=True,
                     check=False,
+                    cwd=workflow_directory,
                     env={"VIRTUAL_ENV": self.venv_dir},
                 )
             except Exception as e:

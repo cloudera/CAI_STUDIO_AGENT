@@ -73,7 +73,6 @@ def test_validate_no_deployment_job_detects_running_job(mock_get_job):
         
         # This will now raise properly
         with pytest.raises(ValueError, match="workflow 'Test Workflow'"):
-            del os.environ["JOB_ARGUMENTS"]
             validate_no_deployment_job_in_progress(payload, session, cml)
 
 
@@ -108,7 +107,6 @@ def test_validate_no_deployment_job_detects_running_job_workflow_name(mock_get_j
             )
         )
         
-        del os.environ["JOB_ARGUMENTS"]
         validate_no_deployment_job_in_progress(payload, session, cml)
 
 

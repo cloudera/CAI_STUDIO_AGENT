@@ -32,6 +32,7 @@ class DeploymentTargetType(str, Enum):
     """
 
     WORKBENCH_MODEL = "workbench_model"
+    LANGGRAPH_SERVER = "langgraph_server"
     AI_INFERENCE = "ai_inference"
     MODEL_REGISTRY = "model_registry"
 
@@ -49,6 +50,7 @@ class WorkflowTargetType(str, Enum):
     """
     A prepackaged workflow artifact that is archived or zipped.
     """
+    GITHUB = "github"
 
 
 class WorkbenchDeploymentResourceProfile(BaseModel):
@@ -60,6 +62,15 @@ class WorkbenchDeploymentResourceProfile(BaseModel):
     num_replicas: int = 1
     cpu: int = 2
     mem: int = 4
+
+
+class ApplicationDeploymentResourceProfile(BaseModel):
+    """
+    Resource profile used to specify an application deployment.
+    """
+
+    cpu: int = 2
+    mem: int = 8
 
 
 class DeploymentArtifact(BaseModel):
@@ -95,6 +106,12 @@ class DeploymentTargetRequest(BaseModel):
     """
     Optional resource profile to specify for deploying to a workbench model target.
     Defaults to one replica, 2vCPU per replica, and 4GB of ram per replica.
+    """
+
+    application_resource_profile: ApplicationDeploymentResourceProfile = ApplicationDeploymentResourceProfile()
+    """
+    Optional resource profile to specify for deploying to an application target.
+    Defaults to 2vCPU and 8GB of ram.
     """
 
     deploy_application: bool = True
@@ -196,6 +213,11 @@ class WorkflowTargetRequest(BaseModel):
     within the workflow artifact must be unique to all workflows in an Agent Studio instance that
     are custom workflow artifacts. Cannot deploy a custom artifact to a workflow that is not a custom
     target.
+    """
+
+    github_url: Optional[str] = None
+    """
+    Github URL of a custom workflow template.
     """
 
 

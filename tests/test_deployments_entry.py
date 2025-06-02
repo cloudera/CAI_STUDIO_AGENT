@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
 import os
+import base64
 
 __import__('pysqlite3')
 import sys
@@ -192,9 +193,7 @@ def test_deploy_artifact_unsupported_ai_inference():
 @patch("studio.deployments.entry.DeploymentPayload.model_validate")
 @patch("studio.deployments.entry.json.loads")
 @patch("studio.deployments.entry.base64.b64decode")
-@patch("studio.deployments.entry.argparse.ArgumentParser.parse_args")
 def test_main_success(
-    mock_parse_args,
     mock_b64decode,
     mock_json_loads,
     mock_model_validate,
@@ -202,14 +201,13 @@ def test_main_success(
     mock_dao_class,
     mock_deploy,
 ):
-    # Set up mocks
-    dummy_arg_string = "--deployment_payload dummy_payload"
+    # Setup
+    encoded_payload = base64.b64encode(b'{"some": "data"}').decode("utf-8")
+    os.environ["AGENT_STUDIO_DEPLOYMENT_PAYLOAD"] = encoded_payload
+
     dummy_decoded_json = {"some": "data"}
     dummy_payload_obj = MagicMock(spec=DeploymentPayload)
 
-    os.environ["JOB_ARGUMENTS"] = dummy_arg_string
-
-    mock_parse_args.return_value = MagicMock(deployment_payload="dummy_payload")
     mock_b64decode.return_value = b'{"some": "data"}'
     mock_json_loads.return_value = dummy_decoded_json
     mock_model_validate.return_value = dummy_payload_obj
@@ -218,15 +216,15 @@ def test_main_success(
     mock_dao = MagicMock()
     mock_dao.get_session.return_value.__enter__.return_value = mock_session
     mock_dao_class.return_value = mock_dao
+
     mock_cml = MagicMock()
     mock_cml_client.return_value = mock_cml
 
-    # Run
+    # Execute
     main()
 
-    # Validate flow
-    mock_parse_args.assert_called_once()
-    mock_b64decode.assert_called_once_with("dummy_payload")
-    mock_json_loads.assert_called_once()
+    # Verify
+    mock_b64decode.assert_called_once_with(encoded_payload)
+    mock_json_loads.assert_called_once_with(b'{"some": "data"}'.decode("utf-8"))
     mock_model_validate.assert_called_once_with(dummy_decoded_json)
     mock_deploy.assert_called_once_with(dummy_payload_obj, mock_session, mock_cml)

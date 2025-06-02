@@ -9,7 +9,6 @@ import base64
 
 import cmlapi
 from cmlapi import CMLServiceApi
-import argparse
 
 from studio.deployments.types import (
     DeploymentStatus,
@@ -20,7 +19,8 @@ from studio.deployments.types import (
 )
 from studio.deployments.utils import initialize_deployment, update_deployment_metadata
 from studio.deployments.package import package_workflow_for_deployment
-from studio.deployments.targets import deploy_artifact_to_workbench
+from studio.deployments.package.github import package_github_for_deployment
+from studio.deployments.targets import deploy_artifact_to_workbench, deploy_artifact_to_langgraph_server
 from studio.db.dao import AgentStudioDao
 from sqlalchemy.orm.session import Session
 from studio.db.model import DeployedWorkflowInstance
@@ -44,6 +44,8 @@ def deploy_artifact(
 
     if payload.deployment_target.type == DeploymentTargetType.WORKBENCH_MODEL:
         deploy_artifact_to_workbench(artifact, payload, deployment, session, cml)
+    elif payload.deployment_target.type == DeploymentTargetType.LANGGRAPH_SERVER:
+        deploy_artifact_to_langgraph_server(artifact, payload, deployment, session, cml)
     else:
         raise ValueError(
             f'Deploying to a deployment target type of "{payload.deployment_target.type}" is not supported.'
@@ -61,6 +63,7 @@ def package_workflow_target(
     """
     Package a workflow target into an artifact.
     """
+    print(f"Packaging workflow target. Deployment ID: {deployment.id}, Deployment Name: {deployment.name}")
 
     deployment.status = DeploymentStatus.PACKAGING
     session.commit()
@@ -71,6 +74,8 @@ def package_workflow_target(
         artifact: DeploymentArtifact = DeploymentArtifact(
             project_location=payload.workflow_target.workflow_artifact_location
         )
+    elif payload.workflow_target.type == WorkflowTargetType.GITHUB:
+        artifact: DeploymentArtifact = package_github_for_deployment(payload, deployment, session, cml)
     else:
         raise ValueError(
             f'Deployment artifact of type "{payload.workflow_target.type}" is not supported for deployment.'
@@ -93,6 +98,7 @@ def deploy(payload: DeploymentPayload, session: Session, cml: CMLServiceApi) -> 
     try:
         # Initiate a deployment and get a reference to the deployed workflow instance.
         deployment: DeployedWorkflowInstance = initialize_deployment(payload, session, cml)
+        print(f"Deployment initialized. Deployment ID: {deployment.id}, Deployment Name: {deployment.name}")
 
         # Attempt a deployment
         try:
@@ -100,6 +106,7 @@ def deploy(payload: DeploymentPayload, session: Session, cml: CMLServiceApi) -> 
             deploy_artifact(artifact, payload, deployment, session, cml)
             deployment.status = DeploymentStatus.DEPLOYED
             session.commit()
+            cml.delete_job(os.getenv("CDSW_PROJECT_ID"), os.getenv("AGENT_STUDIO_DEPLOYMENT_JOB_ID"))
 
         # If a deployment fails, mark the deployment as failed in the DB
         # and continue to raise a runtime error
@@ -119,11 +126,8 @@ def deploy(payload: DeploymentPayload, session: Session, cml: CMLServiceApi) -> 
 
 
 def main():
-    arg_string = os.environ.get("JOB_ARGUMENTS", "")
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--deployment_payload", help="Payload of the deployment", required=True)
-    args = parser.parse_args(arg_string.split())
-    decoded_bytes = base64.b64decode(args.deployment_payload)
+    print("Starting deployment")
+    decoded_bytes = base64.b64decode(os.environ.get("AGENT_STUDIO_DEPLOYMENT_PAYLOAD"))
     decoded_str = decoded_bytes.decode("utf-8")
     deployment_payload_json: dict = json.loads(decoded_str)
     deployment_payload: DeploymentPayload = DeploymentPayload.model_validate(deployment_payload_json)

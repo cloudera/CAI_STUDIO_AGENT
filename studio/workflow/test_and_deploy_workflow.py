@@ -142,8 +142,16 @@ def deploy_workflow_from_payload(
             deployment_payload_b64 = base64.b64encode(
                 json.dumps(deployment_payload.model_dump()).encode("utf-8")
             ).decode("utf-8")
-            arguments = f"--deployment_payload {deployment_payload_b64}"
-            cml.create_job_run({"arguments": arguments}, project_id=os.getenv("CDSW_PROJECT_ID"), job_id=job.id)
+            cml.create_job_run(
+                {
+                    "environment": {
+                        "AGENT_STUDIO_DEPLOYMENT_JOB_ID": job.id,
+                        "AGENT_STUDIO_DEPLOYMENT_PAYLOAD": deployment_payload_b64,
+                    }
+                },
+                project_id=os.getenv("CDSW_PROJECT_ID"),
+                job_id=job.id,
+            )
 
             return DeployWorkflowResponse(
                 deployed_workflow_id=deployment.id, deployed_workflow_name=deployment.name, cml_deployed_model_id=""
