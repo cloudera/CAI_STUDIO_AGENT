@@ -88,8 +88,8 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
         return;
       }
 
-      const serverName = serverKeys[0];
-      if (serverName.trim() === '') {
+      const serverName = serverKeys[0].trim();
+      if (serverName === '') {
         setValidationError('Server name cannot be empty.');
         setServerNameInfo('');
         setIsValid(false);
@@ -106,8 +106,8 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
       if (unknownFields.length > 0) {
         setValidationError(
           <>
-            Please stick to the known JSON fields: <Text code>command</Text>, <Text code>args</Text>{' '}
-            or <Text code>env</Text>.
+            Only supported JSON fields are: <Text code>command</Text>, <Text code>args</Text> and{' '}
+            <Text code>env</Text>.
           </>,
         );
         setServerNameInfo('');
@@ -120,7 +120,7 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
       if (!serverConfig.command || !serverConfig.args) {
         setValidationError(
           <>
-            Both <Text code>command</Text> and <Text code>args</Text> fields are required
+            Both <Text code>command</Text> and <Text code>args</Text> fields are required.
           </>,
         );
         setServerNameInfo('');
@@ -133,7 +133,8 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
       if (serverConfig.command !== 'uvx') {
         setValidationError(
           <>
-            We only support <Text code>uvx</Text> as the runtime for python-based MCPs.
+            Only <Text code>uvx</Text> is supported as the runtime for (python-based) MCP servers
+            currently.
           </>,
         );
         setServerNameInfo('');
@@ -171,8 +172,8 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
       // All validations passed
       setServerNameInfo(
         <>
-          The MCP Server name would be <Text code>{serverName}</Text>. Please use the sub-key under
-          "mcpServers" to change the name.
+          The MCP Server name would be <Text code>{serverName}</Text>. The sub-key under
+          "mcpServers" can be used to change the name.
         </>,
       );
       setValidationError('');
@@ -232,15 +233,16 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <Alert
-          message="Environment variable values are not saved by the Agent Studio for security purposes, and you would need to input the values again while configuring a workflow. We use dummy values to validate and reflect on the MCP Server."
+          message={
+            'Environment variable values are not saved by the Agent Studio for security purposes ' +
+            'and the values would be required to be inputted again while configuring a workflow.'
+          }
           type="info"
           showIcon
         />
 
         <div>
-          <Text style={{ marginBottom: '8px', display: 'block' }}>
-            Please enter the MCP Server configuration below:
-          </Text>
+          <Text style={{ marginBottom: '8px', display: 'block' }}>MCP Server Configuration:</Text>
 
           <div style={{ border: '1px solid #d9d9d9', borderRadius: '6px', overflow: 'hidden' }}>
             <Editor
