@@ -106,9 +106,12 @@ export const processEvents = (
           const possibleMcpInstances = mcpInstances.filter((mi) =>
             agent?.mcp_instance_ids.includes(mi.id),
           );
-          const toolOrMcpId = event.tool_name.split('__instance_')[1];
-          const toolInstance = possibleToolInstances.find((t) => t.id === toolOrMcpId);
-          const mcpInstance = possibleMcpInstances.find((m) => m.id === toolOrMcpId);
+          const toolInstance = possibleToolInstances.find((t) => t.name === event.tool_name);
+          const mcpInstance = possibleMcpInstances.find((m) =>
+            JSON.parse(m.tools || '[]')
+              .map((t: any) => t.name)
+              .includes(event.tool_name),
+          );
           if (toolInstance || mcpInstance) {
             // Update the agent node
             activeNodes = activeNodes.filter((node) => node.id !== agentId);
@@ -128,10 +131,9 @@ export const processEvents = (
             nodeStack.push(toolInstance.id);
           } else if (mcpInstance) {
             // Add the MCP node to the stack
-            const toolName = event.tool_name.split('__instance_')[0];
             activeNodes.push({
               id: mcpInstance.id,
-              activeTool: toolName,
+              activeTool: event.tool_name,
               info: `${event.tool_args}`,
               infoType: 'ToolInput',
             });

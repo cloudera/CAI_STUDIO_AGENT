@@ -8,7 +8,6 @@ from crewai_tools import MCPServerAdapter
 
 import engine.types as input_types
 from engine.types import *
-from engine.crewai.wrappers import AgentStudioCrewAIMcpTool
 
 _mcp_type_to_command = {
     "PYTHON": "uvx",
@@ -25,13 +24,9 @@ def get_mcp_tools(
         env=env_vars,
     )
     adapter = MCPServerAdapter(server_params)
-
-    tool_list = [
-        AgentStudioCrewAIMcpTool(agent_studio_id=mcp_instance.id, crewai_tool=_t)
-        for _t in adapter.tools
-        if _t.name in mcp_instance.tools
-    ]
-
+    tool_list = adapter.tools
+    if mcp_instance.tools:  # Filter tools if specified
+        tool_list = [_t for _t in tool_list if _t.name in mcp_instance.tools]
     return input_types.MCPObjects(
         local_session=adapter,
         tools=tool_list,
