@@ -3,6 +3,7 @@ import {
   AgentMetadata,
   CrewAITaskMetadata,
   CrewAIWorkflowMetadata,
+  McpInstance,
   ToolInstance,
   UpdateWorkflowRequest,
 } from '@/studio/proto/agent_studio';
@@ -10,6 +11,7 @@ import { WorkflowState } from '../workflows/editorSlice';
 
 export interface ActiveNodeState {
   id: string;
+  activeTool?: string; // Only for McpNode
   info?: string;
   infoType?: string;
   isMostRecent?: boolean;
@@ -28,6 +30,7 @@ export const processEvents = (
   agents: AgentMetadata[],
   tasks: CrewAITaskMetadata[],
   toolInstances: ToolInstance[],
+  mcpInstances: McpInstance[],
   manager_agent_id: string | undefined,
   process: string | undefined,
 ): ProcessedState => {
@@ -97,9 +100,16 @@ export const processEvents = (
         } else {
           const agentId = nodeStack.at(-1);
           const agent = agents.find((a) => a.id === agentId);
-          const tools = toolInstances.filter((ti) => agent?.tools_id.includes(ti.id));
-          const tool = tools.find((t) => t.name === event.tool_name);
-          if (tool) {
+          const possibleToolInstances = toolInstances.filter((ti) =>
+            agent?.tools_id.includes(ti.id),
+          );
+          const possibleMcpInstances = mcpInstances.filter((mi) =>
+            agent?.mcp_instance_ids.includes(mi.id),
+          );
+          const toolOrMcpId = event.tool_name.split('__instance_')[1];
+          const toolInstance = possibleToolInstances.find((t) => t.id === toolOrMcpId);
+          const mcpInstance = possibleMcpInstances.find((m) => m.id === toolOrMcpId);
+          if (toolInstance || mcpInstance) {
             // Update the agent node
             activeNodes = activeNodes.filter((node) => node.id !== agentId);
             activeNodes.push({
@@ -107,14 +117,25 @@ export const processEvents = (
               info: `${event.tool_args}`,
               infoType: 'ToolInput',
             });
-
+          }
+          if (toolInstance) {
             // Add the tool node to the stack
             activeNodes.push({
-              id: tool.id,
+              id: toolInstance.id,
               info: `${event.tool_args}`,
               infoType: 'ToolInput',
             });
-            nodeStack.push(tool.id);
+            nodeStack.push(toolInstance.id);
+          } else if (mcpInstance) {
+            // Add the MCP node to the stack
+            const toolName = event.tool_name.split('__instance_')[0];
+            activeNodes.push({
+              id: mcpInstance.id,
+              activeTool: toolName,
+              info: `${event.tool_args}`,
+              infoType: 'ToolInput',
+            });
+            nodeStack.push(mcpInstance.id);
           }
         }
         break;

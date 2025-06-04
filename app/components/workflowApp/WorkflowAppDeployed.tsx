@@ -24,6 +24,7 @@ const WorkflowAppDeployed: React.FC<WorkflowAppDeployedProps> = ({ workflowData 
         refetchWorkflow={() => {}}
         tasks={workflowData.tasks}
         toolInstances={workflowData.toolInstances}
+        mcpInstances={workflowData.mcpInstances}
         agents={workflowData.agents}
         renderMode="workflow"
       />

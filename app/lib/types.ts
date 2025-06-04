@@ -5,6 +5,7 @@ import {
   Workflow,
   AgentMetadata,
   CrewAITaskMetadata,
+  McpInstance,
 } from '@/studio/proto/agent_studio';
 
 export interface OpsData {
@@ -22,6 +23,7 @@ export interface WorkflowData {
   tasks: CrewAITaskMetadata[];
   toolTemplates: ToolTemplate[];
   toolInstances: ToolInstance[];
+  mcpInstances: McpInstance[];
 }
 
 /**

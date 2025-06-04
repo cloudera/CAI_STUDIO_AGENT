@@ -6,6 +6,7 @@ import {
   ToolInstance,
   CrewAITaskMetadata,
   AgentMetadata,
+  McpInstance,
 } from '@/studio/proto/agent_studio';
 import { WorkflowState } from './editorSlice';
 
@@ -19,6 +20,7 @@ export interface DiagramStateInput {
   iconsData: { [key: string]: string };
   tasks?: CrewAITaskMetadata[];
   toolInstances?: ToolInstance[];
+  mcpInstances?: McpInstance[];
   toolTemplates?: ToolTemplate[];
   agents?: AgentMetadata[];
 }
@@ -129,6 +131,7 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
   workflowData.workflowState.workflowMetadata.agentIds?.forEach((agent_id, index) => {
     const agent = workflowData.agents?.find((agent) => agent.id === agent_id);
     agent && (totalXWidth += 220 * Math.max(0, agent?.tools_id.length - 1));
+    agent && (totalXWidth += 220 * Math.max(0, (agent?.mcp_instance_ids?.length || 0) - 1));
     agent && (totalXWidth += 220);
   });
 
@@ -200,7 +203,57 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
           xIndexOffset += 220;
         }
       });
-      if (agent.tools_id.length == 0) {
+
+      // Add nodes and edges of all the MCP instances
+      agent.mcp_instance_ids?.forEach((mcp_instance_id, index2) => {
+        // Find the appropriate MCP instance from the MCP instances
+        const mcpInstance = workflowData.mcpInstances?.find(
+          (mcpInstance: McpInstance) => mcpInstance.id === mcp_instance_id,
+        );
+
+        if (mcpInstance) {
+          // Parse tools from MCP instance
+          let mcpTools: string[] = [];
+          try {
+            const toolsData = JSON.parse(mcpInstance.tools || '[]');
+            mcpTools = Array.isArray(toolsData)
+              ? toolsData.map((tool: any) => tool.name || tool)
+              : [];
+          } catch (error) {
+            console.error('Failed to parse MCP tools:', error);
+          }
+
+          // Now add the MCP node
+          initialNodes.push({
+            type: 'mcp',
+            id: `${mcpInstance?.id}`,
+            position: { x: xIndexOffset, y: yIndex + 150 },
+            data: {
+              name: mcpInstance?.name,
+              iconData: workflowData.iconsData[mcpInstance?.image_uri ?? ''] ?? '',
+              active: false,
+              toolList: mcpTools,
+              activeTool: '',
+            },
+          });
+
+          // Add the edge from the agent to the MCP
+          initialEdges.push({
+            id: `e-${agent.id}-${mcpInstance?.id}`,
+            source: `${agent.id}`,
+            target: `${mcpInstance?.id}`,
+            markerEnd: {
+              type: MarkerType.Arrow,
+              width: 20,
+              height: 20,
+            },
+          });
+
+          xIndexOffset += 220;
+        }
+      });
+
+      if (agent.tools_id.length === 0 && (agent.mcp_instance_ids?.length || 0) === 0) {
         xIndexOffset += 220;
       }
     }

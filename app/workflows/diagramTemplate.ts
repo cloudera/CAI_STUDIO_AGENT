@@ -5,6 +5,7 @@ import {
   AgentTemplateMetadata,
   TaskTemplateMetadata,
   WorkflowTemplateMetadata,
+  MCPTemplate,
 } from '@/studio/proto/agent_studio';
 
 export interface TemplateDiagramState {
@@ -17,28 +18,33 @@ export interface TemplateDiagramInput {
   iconsData: { [key: string]: string };
   taskTemplates?: TaskTemplateMetadata[];
   toolTemplates?: ToolTemplate[];
+  mcpTemplates?: MCPTemplate[];
   agentTemplates?: AgentTemplateMetadata[];
 }
 
 export const createDiagramStateFromTemplate = (templateData: TemplateDiagramInput) => {
-  const managerAgentId = templateData.template.manager_agent_template_id;
-  const process = templateData.template.process;
-  const hasManagerAgent: boolean = process === 'hierarchical';
-  const useDefaultManager: boolean =
-    hasManagerAgent && !Boolean(managerAgentId && managerAgentId.trim());
-
   const initialNodes: Node[] = [];
   const initialEdges: Edge[] = [];
+
+  // Start layout positioning
   let yIndex = 0;
 
-  // Add task nodes
+  // Add task nodes first
+  const hasManagerAgent =
+    templateData.template.manager_agent_template_id !== null &&
+    templateData.template.manager_agent_template_id !== undefined &&
+    templateData.template.manager_agent_template_id !== '';
+  const managerAgentId = templateData.template.manager_agent_template_id;
+  const useDefaultManager =
+    managerAgentId === undefined || managerAgentId === null || managerAgentId === '';
+
   templateData.template.task_template_ids?.forEach((taskId, index) => {
     const task = templateData.taskTemplates?.find((t) => t.id === taskId);
-    const taskLabel =
-      task &&
-      (templateData.template.is_conversational
-        ? 'Conversation'
-        : `${task.description.substring(0, 50)}...`);
+
+    let taskLabel = `Task ${index + 1}`;
+    if (task) {
+      taskLabel = task.name;
+    }
 
     if (task) {
       initialNodes.push({
@@ -125,6 +131,7 @@ export const createDiagramStateFromTemplate = (templateData: TemplateDiagramInpu
   templateData.template.agent_template_ids?.forEach((agentId) => {
     const agent = templateData.agentTemplates?.find((a) => a.id === agentId);
     agent && (totalXWidth += 220 * Math.max(0, agent?.tool_template_ids?.length || 0));
+    agent && (totalXWidth += 220 * Math.max(0, agent?.mcp_template_ids?.length || 0));
     agent && (totalXWidth += 220);
   });
 
@@ -190,7 +197,49 @@ export const createDiagramStateFromTemplate = (templateData: TemplateDiagramInpu
         }
       });
 
-      if (!agent.tool_template_ids?.length) {
+      // Add nodes and edges for MCP templates
+      agent.mcp_template_ids?.forEach((mcpId) => {
+        const mcp = templateData.mcpTemplates?.find((m) => m.id === mcpId);
+        if (mcp) {
+          // Parse tools from MCP template
+          let mcpTools: string[] = [];
+          try {
+            const toolsData = JSON.parse(mcp.tools || '[]');
+            mcpTools = Array.isArray(toolsData)
+              ? toolsData.map((tool: any) => tool.name || tool)
+              : [];
+          } catch (error) {
+            console.error('Failed to parse MCP tools:', error);
+          }
+
+          initialNodes.push({
+            type: 'mcp',
+            id: `${mcp.id}`,
+            position: { x: xIndexOffset, y: yIndex + 150 },
+            data: {
+              name: mcp.name,
+              iconData: templateData.iconsData[mcp.image_uri ?? ''] ?? '',
+              active: false,
+              toolList: mcpTools,
+            },
+          });
+
+          initialEdges.push({
+            id: `e-${agent.id}-${mcp.id}`,
+            source: `${agent.id}`,
+            target: `${mcp.id}`,
+            markerEnd: {
+              type: MarkerType.Arrow,
+              width: 20,
+              height: 20,
+            },
+          });
+
+          xIndexOffset += 220;
+        }
+      });
+
+      if (!agent.tool_template_ids?.length && !agent.mcp_template_ids?.length) {
         xIndexOffset += 220;
       }
     }

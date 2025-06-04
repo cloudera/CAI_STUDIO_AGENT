@@ -17,6 +17,7 @@ import { useListToolInstancesQuery } from '../../tools/toolInstancesApi';
 import { useListTasksQuery } from '../../tasks/tasksApi';
 import { useListAgentsQuery } from '../../agents/agentApi';
 import WorkflowDiagramView from '../workflowApp/WorkflowDiagramView';
+import { useListMcpInstancesQuery } from '@/app/mcp/mcpInstancesApi';
 
 interface WorkflowOverviewProps {
   workflowId: string;
@@ -32,6 +33,7 @@ const WorkflowOverview: React.FC<WorkflowOverviewProps> = ({ workflowId }) => {
   const [undeployWorkflow] = useUndeployWorkflowMutation();
   const notificationsApi = useGlobalNotification();
   const { data: toolInstances } = useListToolInstancesQuery({ workflow_id: workflowId });
+  const { data: mcpInstances } = useListMcpInstancesQuery({ workflow_id: workflowId });
   const { data: tasks } = useListTasksQuery({ workflow_id: workflowId });
   const { data: agents } = useListAgentsQuery({ workflow_id: workflowId });
 
@@ -186,6 +188,7 @@ const WorkflowOverview: React.FC<WorkflowOverviewProps> = ({ workflowId }) => {
                 },
               }}
               toolInstances={toolInstances}
+              mcpInstances={mcpInstances}
               agents={agents}
               tasks={tasks}
               displayDiagnostics={false}

@@ -6,6 +6,7 @@ import { selectEditorWorkflow } from '../../workflows/editorSlice';
 import WorkflowEditorConfigureInputs from './WorkflowEditorConfigureInputs';
 import { Divider, Layout } from 'antd';
 import WorkflowDiagramView from '../workflowApp/WorkflowDiagramView';
+import { useListMcpInstancesQuery } from '@/app/mcp/mcpInstancesApi';
 
 interface WorkflowEditorConfigureViewProps {
   workflowId: string;
@@ -16,6 +17,7 @@ const WorkflowEditorConfigureView: React.FC<WorkflowEditorConfigureViewProps> = 
 }) => {
   const workflowState = useAppSelector(selectEditorWorkflow);
   const { data: toolInstances } = useListToolInstancesQuery({ workflow_id: workflowId });
+  const { data: mcpInstances } = useListMcpInstancesQuery({ workflow_id: workflowId });
   const { data: tasks } = useListTasksQuery({ workflow_id: workflowId });
   const { data: agents } = useListAgentsQuery({ workflow_id: workflowId });
 
@@ -34,6 +36,7 @@ const WorkflowEditorConfigureView: React.FC<WorkflowEditorConfigureViewProps> = 
         <WorkflowDiagramView
           workflowState={workflowState}
           toolInstances={toolInstances}
+          mcpInstances={mcpInstances}
           tasks={tasks}
           agents={agents}
           displayDiagnostics={false}

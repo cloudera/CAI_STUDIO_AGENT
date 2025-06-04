@@ -187,12 +187,12 @@ def add_workflow_template_from_workflow(
                     type=mcp_instance.type,
                     args=mcp_instance.args,
                     env_names=mcp_instance.env_names,
-                    status=mcp_instance.status,
+                    status=consts.MCPStatus.VALIDATING.value,
                     mcp_image_path="",
                 )
                 mcp_template_ids.append(mcp_template_id)
                 session.add(mcp_template)
-                get_thread_pool().submit(_update_mcp_tools, mcp_instance_id, db_model.MCPTemplate)
+                get_thread_pool().submit(_update_mcp_tools, mcp_template_id, db_model.MCPTemplate)
 
             # Add all new tool templates to the agent template
             agent_template.tool_template_ids = tool_template_ids

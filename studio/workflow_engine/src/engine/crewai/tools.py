@@ -257,7 +257,7 @@ def get_tool_instance_proxy(
     crewai_tool: BaseTool = EmbeddedCrewAITool()
     print(str(crewai_tool))
 
-    crewai_tool.name = tool_instance.name
+    crewai_tool.name = tool_instance.name + f"__instance_{tool_instance.id}"
     crewai_tool._generate_description()
 
     return crewai_tool
@@ -465,7 +465,7 @@ def get_venv_tool(
         python_file: str = os.path.join(
             workflow_directory, tool_instance.source_folder_path, tool_instance.python_code_file_name
         )
-        name: str = tool_instance.name
+        name: str = tool_instance.name + f"__instance_{tool_instance.id}"
         description: str = ast.get_docstring(ast.parse(tool_code))
         args_schema: Type[BaseModel] = get_venv_tool_tool_parameters_type(tool_code)
         venv_dir: str = os.path.join(workflow_directory, tool_instance.source_folder_path, ".venv")

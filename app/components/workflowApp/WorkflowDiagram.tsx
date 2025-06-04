@@ -16,7 +16,13 @@ import { useCallback, useEffect, useState } from 'react';
 import AgentNode from '../diagram/AgentNode';
 import TaskNode from '../diagram/TaskNode';
 import ToolNode from '../diagram/ToolNode';
-import { AgentMetadata, CrewAITaskMetadata, ToolInstance } from '@/studio/proto/agent_studio';
+import McpNode from '../diagram/McpNode';
+import {
+  AgentMetadata,
+  CrewAITaskMetadata,
+  McpInstance,
+  ToolInstance,
+} from '@/studio/proto/agent_studio';
 import { processEvents } from '@/app/lib/workflow';
 import { WorkflowState } from '@/app/workflows/editorSlice';
 import { useImageAssetsData } from '../../lib/hooks/useAssetData';
@@ -25,11 +31,13 @@ const nodeTypes: NodeTypes = {
   agent: AgentNode,
   task: TaskNode,
   tool: ToolNode,
+  mcp: McpNode,
 };
 
 export interface WorkflowDiagramProps {
   workflowState: WorkflowState;
   toolInstances?: ToolInstance[];
+  mcpInstances?: McpInstance[];
   agents?: AgentMetadata[];
   tasks?: CrewAITaskMetadata[];
   events?: any[];
@@ -38,6 +46,7 @@ export interface WorkflowDiagramProps {
 const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
   workflowState,
   toolInstances,
+  mcpInstances,
   agents,
   tasks,
   events,
@@ -61,6 +70,7 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
   const { imageData: iconsData, refetch: refetchIconsData } = useImageAssetsData([
     ...(toolInstances?.map((t_) => t_.tool_image_uri) ?? []),
     ...(agents?.map((a_) => a_.agent_image_uri) ?? []),
+    ...(mcpInstances?.map((m_) => m_.image_uri) ?? []),
   ]);
 
   // Add effect to refetch icons after 2 seconds if they are not loaded
@@ -76,12 +86,13 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
       workflowState,
       iconsData,
       toolInstances,
+      mcpInstances,
       agents,
       tasks,
     });
     setNodes((prevState) => diagramState.nodes);
     setEdges((prevState) => diagramState.edges);
-  }, [workflowState, toolInstances, agents, tasks, iconsData]);
+  }, [workflowState, toolInstances, mcpInstances, agents, tasks, iconsData]);
 
   useEffect(() => {
     setTimeout(() => {
@@ -97,6 +108,7 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
           agents || [],
           tasks || [],
           toolInstances || [],
+          mcpInstances || [],
           workflowState.workflowMetadata.managerAgentId,
           workflowState.workflowMetadata.process,
         )
@@ -115,6 +127,7 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
               info: activeNode.info,
               infoType: activeNode.infoType,
               isMostRecent: activeNode.isMostRecent,
+              activeTool: activeNode.activeTool, // Only for McpNode
             },
           };
         } else {

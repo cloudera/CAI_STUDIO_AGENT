@@ -2,7 +2,12 @@ import { Alert, Card, Layout, Tabs, Tooltip, Typography } from 'antd';
 import { ReactFlowProvider } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useLayoutEffect, useRef } from 'react';
-import { AgentMetadata, CrewAITaskMetadata, ToolInstance } from '@/studio/proto/agent_studio';
+import {
+  AgentMetadata,
+  CrewAITaskMetadata,
+  McpInstance,
+  ToolInstance,
+} from '@/studio/proto/agent_studio';
 import { WorkflowState } from '@/app/workflows/editorSlice';
 import WorkflowDiagram from './WorkflowDiagram';
 import {
@@ -23,6 +28,7 @@ const { Text, Paragraph } = Typography;
 export interface WorkflowDiagramViewProps {
   workflowState: WorkflowState;
   toolInstances?: ToolInstance[];
+  mcpInstances?: McpInstance[];
   agents?: AgentMetadata[];
   tasks?: CrewAITaskMetadata[];
   events?: any[];
@@ -32,6 +38,7 @@ export interface WorkflowDiagramViewProps {
 const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
   workflowState,
   toolInstances,
+  mcpInstances,
   agents,
   tasks,
   events,
@@ -60,6 +67,7 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
         <WorkflowDiagram
           workflowState={workflowState}
           toolInstances={toolInstances}
+          mcpInstances={mcpInstances}
           agents={agents}
           tasks={tasks}
           events={events}
@@ -117,6 +125,7 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
                   <WorkflowDiagram
                     workflowState={workflowState}
                     toolInstances={toolInstances}
+                    mcpInstances={mcpInstances}
                     agents={agents}
                     tasks={tasks}
                     events={events?.slice(0, currentEventIndex && currentEventIndex + 1)}

@@ -37,6 +37,7 @@ import WorkflowDiagramView from './WorkflowDiagramView';
 import {
   AgentMetadata,
   CrewAITaskMetadata,
+  McpInstance,
   ToolInstance,
   Workflow,
 } from '@/studio/proto/agent_studio';
@@ -58,6 +59,7 @@ export interface WorkflowAppProps {
   refetchWorkflow: () => void;
   agents: AgentMetadata[];
   toolInstances: ToolInstance[];
+  mcpInstances: McpInstance[];
   tasks: CrewAITaskMetadata[];
   renderMode: 'studio' | 'workflow';
 }
@@ -67,6 +69,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
   refetchWorkflow,
   agents,
   toolInstances,
+  mcpInstances,
   tasks,
   renderMode,
 }) => {
@@ -629,6 +632,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
                 },
               }}
               toolInstances={toolInstances}
+              mcpInstances={mcpInstances}
               tasks={tasks}
               agents={agents}
               events={currentEvents}

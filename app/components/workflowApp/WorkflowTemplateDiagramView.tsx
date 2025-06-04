@@ -8,6 +8,7 @@ import WorkflowTemplateDiagram from './WorkflowTemplateDiagram';
 import { useListAgentTemplatesQuery } from '../../agents/agentApi';
 import { useListTaskTemplatesQuery } from '../../tasks/tasksApi';
 import { useListToolTemplatesQuery } from '../../tools/toolTemplatesApi';
+import { useListMcpTemplatesQuery } from '../../mcp/mcpTemplatesApi';
 import { WorkflowTemplateMetadata } from '@/studio/proto/agent_studio';
 
 interface WorkflowTemplateDiagramViewProps {
@@ -24,8 +25,11 @@ const WorkflowTemplateDiagramView: React.FC<WorkflowTemplateDiagramViewProps> = 
   const { data: toolTemplates, isLoading: toolsLoading } = useListToolTemplatesQuery({
     workflow_template_id: template.id,
   });
+  const { data: mcpTemplates, isLoading: mcpLoading } = useListMcpTemplatesQuery({
+    workflow_template_id: template.id,
+  });
 
-  const isLoading = agentsLoading || tasksLoading || toolsLoading;
+  const isLoading = agentsLoading || tasksLoading || toolsLoading || mcpLoading;
 
   if (isLoading) {
     return (
@@ -37,7 +41,7 @@ const WorkflowTemplateDiagramView: React.FC<WorkflowTemplateDiagramViewProps> = 
     );
   }
 
-  if (!agentTemplates || !taskTemplates || !toolTemplates) {
+  if (!agentTemplates || !taskTemplates || !toolTemplates || !mcpTemplates) {
     return (
       <Alert message="Error" description="Failed to load template data" type="error" showIcon />
     );
@@ -100,6 +104,7 @@ const WorkflowTemplateDiagramView: React.FC<WorkflowTemplateDiagramViewProps> = 
                     toolTemplates={toolTemplates}
                     agentTemplates={agentTemplates}
                     taskTemplates={taskTemplates}
+                    mcpTemplates={mcpTemplates}
                   />
                 </ReactFlowProvider>
               </div>

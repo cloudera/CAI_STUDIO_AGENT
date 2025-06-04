@@ -6,6 +6,7 @@ import { useGetWorkflowByIdQuery } from '@/app/workflows/workflowsApi';
 import { useListToolInstancesQuery } from '@/app/tools/toolInstancesApi';
 import { useListAgentsQuery } from '@/app/agents/agentApi';
 import { useListTasksQuery } from '@/app/tasks/tasksApi';
+import { useListMcpInstancesQuery } from '@/app/mcp/mcpInstancesApi';
 
 interface WorkflowAppTestProps {
   workflowId: string;
@@ -19,6 +20,7 @@ interface WorkflowAppTestProps {
 const WorkflowAppTest: React.FC<WorkflowAppTestProps> = ({ workflowId }) => {
   const { data: workflow, refetch: refetchWorkflow } = useGetWorkflowByIdQuery(workflowId);
   const { data: toolInstances } = useListToolInstancesQuery({ workflow_id: workflowId });
+  const { data: mcpInstances } = useListMcpInstancesQuery({ workflow_id: workflowId });
   const { data: agents } = useListAgentsQuery({ workflow_id: workflowId });
   const { data: tasks } = useListTasksQuery({ workflow_id: workflowId });
 
@@ -33,6 +35,7 @@ const WorkflowAppTest: React.FC<WorkflowAppTestProps> = ({ workflowId }) => {
         refetchWorkflow={refetchWorkflow}
         tasks={tasks || []}
         toolInstances={toolInstances || []}
+        mcpInstances={mcpInstances || []}
         agents={agents || []}
         renderMode="studio"
       />
