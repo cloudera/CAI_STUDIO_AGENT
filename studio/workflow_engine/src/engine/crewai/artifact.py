@@ -96,8 +96,9 @@ def is_crewai_workflow(directory: str) -> bool:
 
 
 def load_crewai_workflow(directory: str) -> Any:
-    collated_input = get_collated_input(os.path.join(directory))
-    install_tool_virtual_envs(collated_input)
+    workflow_data = get_artifact_workflow(directory)
+    collated_input = get_collated_input(os.path.join(directory), workflow_data)
+    install_tool_virtual_envs(directory, collated_input)
 
     # Instrument our workflow given a specific workflow name and
     # set up the instrumentation. Also register our handlers.
