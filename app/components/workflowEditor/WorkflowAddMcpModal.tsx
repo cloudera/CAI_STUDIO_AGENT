@@ -528,7 +528,7 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
     }
 
     if (selectedMcpTemplate) {
-      return <McpTemplateView mcpTemplateDetails={selectedMcpTemplate} />;
+      return <McpTemplateView mcpTemplateDetails={selectedMcpTemplate} mode="view" />;
     }
     if (!selectedMcpInstance) {
       return <></>;

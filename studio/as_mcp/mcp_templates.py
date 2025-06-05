@@ -53,7 +53,53 @@ def add_mcp_template(request: AddMcpTemplateRequest, cml: CMLServiceApi, dao: Ag
 def update_mcp_template(
     request: UpdateMcpTemplateRequest, cml: CMLServiceApi, dao: AgentStudioDao
 ) -> UpdateMcpTemplateResponse:
-    pass
+    """
+    Update an existing MCP template.
+    """
+    try:
+        with dao.get_session() as session:
+            tool_update_required = False
+            mcp_template = session.query(db_model.MCPTemplate).filter_by(id=request.mcp_template_id).one_or_none()
+            if not mcp_template:
+                raise ValueError(f"MCP template with ID '{request.mcp_template_id}' not found.")
+
+            if request.name:
+                if not re.match(r"^[a-zA-Z0-9 ]+$", request.name):
+                    raise ValueError(
+                        "MCP name must only contain alphabets, numbers, and spaces, and must not contain special characters."
+                    )
+                mcp_template.name = request.name
+            if request.type:
+                if request.type not in [t.value for t in consts.SupportedMCPTypes]:
+                    raise ValueError(
+                        "MCP type must be one of the following: "
+                        + ", ".join([t.value for t in consts.SupportedMCPTypes])
+                    )
+                tool_update_required = tool_update_required or (request.name != str(mcp_template.name))
+                mcp_template.type = request.type
+            if request.args:
+                tool_update_required = tool_update_required or (list(request.args) != list(mcp_template.args))
+                mcp_template.args = list(request.args)
+            if request.env_names:
+                tool_update_required = tool_update_required or (list(request.env_names) != list(mcp_template.env_names))
+                mcp_template.env_names = list(request.env_names)
+
+            if tool_update_required:
+                mcp_template.status = consts.MCPStatus.VALIDATING.value
+
+            session.commit()
+
+            if tool_update_required:
+                get_thread_pool().submit(
+                    mcp_utils._update_mcp_tools,
+                    request.mcp_template_id,
+                    db_model.MCPTemplate,
+                )
+
+            return UpdateMcpTemplateResponse(mcp_template_id=mcp_template.id)
+
+    except Exception as e:
+        raise RuntimeError(f"Error while updating MCP template: {e}")
 
 
 def list_mcp_templates(

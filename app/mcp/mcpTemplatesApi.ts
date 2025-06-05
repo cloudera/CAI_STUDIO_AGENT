@@ -7,6 +7,8 @@ import {
   AddMcpTemplateResponse,
   RemoveMcpTemplateRequest,
   ListMcpTemplatesRequest,
+  UpdateMcpTemplateRequest,
+  UpdateMcpTemplateResponse,
 } from '@/studio/proto/agent_studio';
 
 import { apiSlice } from '../api/apiSlice';
@@ -56,6 +58,20 @@ export const mcpTemplatesApi = apiSlice.injectEndpoints({
       },
       invalidatesTags: [{ type: 'MCPTemplate', id: 'LIST' }],
     }),
+    updateMcpTemplate: builder.mutation<string, UpdateMcpTemplateRequest>({
+      query: (request) => ({
+        url: '/grpc/updateMcpTemplate',
+        method: 'POST',
+        body: request,
+      }),
+      transformResponse: (response: UpdateMcpTemplateResponse) => {
+        return response.mcp_template_id;
+      },
+      invalidatesTags: (result, error, { mcp_template_id }) => [
+        { type: 'MCPTemplate', id: mcp_template_id },
+        { type: 'MCPTemplate', id: 'LIST' },
+      ],
+    }),
     removeMcpTemplate: builder.mutation<void, RemoveMcpTemplateRequest>({
       query: (request) => ({
         url: '/grpc/removeMcpTemplate',
@@ -72,5 +88,6 @@ export const {
   useListMcpTemplatesQuery,
   useGetMcpTemplateQuery,
   useAddMcpTemplateMutation,
+  useUpdateMcpTemplateMutation,
   useRemoveMcpTemplateMutation,
 } = mcpTemplatesApi;
