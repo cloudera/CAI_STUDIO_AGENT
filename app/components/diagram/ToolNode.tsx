@@ -33,12 +33,12 @@ export default function ToolNode({ data }: NodeProps<ToolNode>) {
         justifyContent: 'center',
         padding: '16px',
         background: '#f3f3f3',
+        backgroundColor: '#d3d3d3',
         borderRadius: '8px',
         boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
         border: isHovered ? '2px solid rgb(47, 47, 47)' : '2px solid rgba(0,0,0,0)',
         animation: data.active ? 'pulse-in-out 1.0s infinite ease-in-out' : 'none',
         maxWidth: 200,
-        backgroundColor: 'lightgray',
       }}
     >
       {data.info && (

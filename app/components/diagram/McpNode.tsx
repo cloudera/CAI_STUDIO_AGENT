@@ -39,6 +39,7 @@ export default function McpNode({ data }: NodeProps<McpNode>) {
     return tools;
   };
 
+  const tagColor = '#a6a6a6';
   const totalTagsToShow = 4;
   const displayTools = getDisplayTools();
   const maxToolsToShow = data.activeTool && data.active ? totalTagsToShow - 2 : totalTagsToShow - 1; // Leave space for active tool
@@ -69,7 +70,8 @@ export default function McpNode({ data }: NodeProps<McpNode>) {
         justifyContent: 'center',
         padding: '8px',
         paddingBottom: '12px',
-        background: '#c3fac3',
+        background: '#f3f3f3',
+        backgroundColor: '#d3d3d3',
         borderRadius: '8px',
         boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
         border: isHovered ? '2px solid rgb(47, 47, 47)' : '2px solid rgba(0,0,0,0)',
@@ -151,7 +153,7 @@ export default function McpNode({ data }: NodeProps<McpNode>) {
         {data.activeTool && data.active && (
           <Tag
             style={{
-              backgroundColor: 'rgb(3, 149, 46)',
+              backgroundColor: tagColor,
               color: 'white',
               fontSize: 9,
               fontWeight: 400,
@@ -177,7 +179,7 @@ export default function McpNode({ data }: NodeProps<McpNode>) {
           <Tag
             key={`${tool}-${index}`}
             style={{
-              backgroundColor: 'rgb(3, 149, 46)',
+              backgroundColor: tagColor,
               color: 'white',
               fontSize: 9,
               fontWeight: 400,
@@ -199,7 +201,7 @@ export default function McpNode({ data }: NodeProps<McpNode>) {
         {extraToolsCount > 0 && (
           <Tag
             style={{
-              backgroundColor: 'rgb(3, 149, 46)',
+              backgroundColor: tagColor,
               color: 'white',
               fontSize: 9,
               fontWeight: 400,
