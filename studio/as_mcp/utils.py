@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 import asyncio
 from typing import List, Type, Union, Optional, Dict
 from mcp import ClientSession, StdioServerParameters, types as mcp_types
@@ -10,10 +11,12 @@ import studio.cross_cutting.utils as cc_utils
 
 
 async def _get_mcp_tools(server_params: StdioServerParameters) -> List[mcp_types.Tool]:
+    timeout = timedelta(seconds=30)
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(
-            read,
-            write,
+            read_stream=read,
+            write_stream=write,
+            read_timeout_seconds=timeout,
         ) as session:
             # Initialize the connection
             await session.initialize()

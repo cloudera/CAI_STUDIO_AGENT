@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from 'antd/lib/layout';
 import { Button, Typography, Input, Image, Tabs } from 'antd';
 import { ArrowRightOutlined } from '@ant-design/icons';
@@ -196,7 +196,19 @@ const ToolsTabContent = () => {
 const MCPTabContent = () => {
   const [addMcpTemplate] = useAddMcpTemplateMutation();
   const [removeMcpTemplate] = useRemoveMcpTemplateMutation();
-  const { data: mcps } = useListMcpTemplatesQuery({});
+  const [shouldPoll, setShouldPoll] = useState(false);
+
+  const { data: mcps } = useListMcpTemplatesQuery(
+    {},
+    {
+      pollingInterval: shouldPoll ? 3000 : 0,
+    },
+  );
+
+  useEffect(() => {
+    const hasValidatingTemplates = mcps?.some((mcp) => mcp.status === 'VALIDATING') || false;
+    setShouldPoll(hasValidatingTemplates);
+  }, [mcps]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 

@@ -61,12 +61,19 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
   open,
   onCancel,
 }) => {
+  const [shouldPollForMcpInstances, setShouldPollForMcpInstances] = useState(false);
+
   const { data: mcpTemplates = [], refetch: refetchMcpTemplates } = useListGlobalMcpTemplatesQuery(
     {},
   );
-  const { data: mcpInstanceList = [], refetch: refetchMcpInstanceList } = useListMcpInstancesQuery({
-    workflow_id: workflowId,
-  });
+  const { data: mcpInstanceList = [], refetch: refetchMcpInstanceList } = useListMcpInstancesQuery(
+    {
+      workflow_id: workflowId,
+    },
+    {
+      pollingInterval: shouldPollForMcpInstances ? 3000 : 0, // Only poll when needed
+    },
+  );
   const { data: agents = [] } = useListAgentsQuery({ workflow_id: workflowId });
   const [isLoading, setIsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -98,6 +105,7 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
   });
 
   useEffect(() => {
+    const hasValidatingInstances = mcpInstanceList.some((mcp) => mcp.status === 'VALIDATING');
     // update mcpInstancesMap whenever mcpInstanceList changes
     setMcpInstancesMap(
       mcpInstanceList.reduce((acc: Record<string, McpInstance>, instance: McpInstance) => {
@@ -105,6 +113,7 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
         return acc;
       }, {}),
     );
+    setShouldPollForMcpInstances(hasValidatingInstances); // Only poll when needed
   }, [mcpInstanceList]);
 
   useEffect(() => {

@@ -202,7 +202,7 @@ If the user's description is not clear, just do not generate the requested XML. 
     try {
       const response = await testModel({
         model_id: llmModel.model_id,
-        completion_role: 'assistant',
+        completion_role: 'user',
         completion_content: generatePrompt(userDescription, relevantToolInstances),
         temperature: 0.1,
         max_tokens: 1000,

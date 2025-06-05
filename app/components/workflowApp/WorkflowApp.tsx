@@ -214,7 +214,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
     try {
       const response = await testModel({
         model_id: defaultModel.model_id,
-        completion_role: 'assistant',
+        completion_role: 'user',
         completion_content: generateDescriptionPrompt(context),
         temperature: 0.1,
         max_tokens: 1000,

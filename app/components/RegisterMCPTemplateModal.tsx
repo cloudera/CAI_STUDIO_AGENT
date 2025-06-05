@@ -36,9 +36,10 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
 
   const defaultJson = `{
   "mcpServers": {
-    "example-service": {
+    "Example MCP Server": {
       "command": "uvx",
-      "args": ["mcp-server-example"]
+      "args": ["mcp-server-time", "--local-timezone=America/New_York"],
+      "env": {}
     }
   }
 }`;
