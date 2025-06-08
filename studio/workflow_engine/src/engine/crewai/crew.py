@@ -7,7 +7,7 @@ from crewai.tools import BaseTool
 import engine.types as input_types
 from engine.crewai.llms import get_crewai_llm
 from engine.crewai.tools import get_crewai_tool
-from engine.crewai.mcp import get_mcp_tools
+from engine.crewai.mcp import get_mcp_tools_for_crewai
 from engine.crewai.agents import get_crewai_agent
 from engine.crewai.wrappers import *
 
@@ -29,7 +29,7 @@ def create_crewai_objects(
 
     mcps: Dict[str, input_types.MCPObjects] = {}
     for m_ in collated_input.mcp_instances:
-        mcps[m_.id] = get_mcp_tools(m_, mcp_config.get(m_.id, {}), workflow_directory)
+        mcps[m_.id] = get_mcp_tools_for_crewai(m_, mcp_config.get(m_.id, {}))
 
     agents: Dict[str, AgentStudioCrewAIAgent] = {}
     for agent in collated_input.agents:

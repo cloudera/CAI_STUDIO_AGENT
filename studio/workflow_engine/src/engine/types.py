@@ -25,11 +25,11 @@ class DeploymentConfig(BaseModel):
     defaults are used for LLM completions.
     """
 
-    tool_config: Dict = {}
+    tool_config: Dict[str, Dict[str, str]] = {}
     """
     """
 
-    mcp_config: Dict = {}
+    mcp_config: Dict[str, Dict[str, str]] = {}
     """
     MCP config dict where the key is the MCP instance ID
     and 
@@ -148,6 +148,7 @@ class DeployedWorkflowActions(str, Enum):
     KICKOFF = "kickoff"
     GET_CONFIGURATION = "get-configuration"
     GET_ASSET_DATA = "get-asset-data"
+    GET_MCP_TOOL_DEFINITIONS = "get-mcp-tool-definitions"
 
 
 class ServeWorkflowParameters(BaseModel):

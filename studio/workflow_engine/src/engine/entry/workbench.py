@@ -40,11 +40,12 @@ sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
 import asyncio
 from opentelemetry.context import get_current
 from datetime import datetime
-from typing import Dict, Union
+from typing import List, Dict, Union, Optional
 import json
 import base64
 
 import engine.types as input_types
+from engine.crewai.mcp import get_mcp_tools_definitions
 from engine.crewai.run import run_workflow_async
 from engine.crewai.artifact import is_crewai_workflow, load_crewai_workflow
 from engine.artifact import extract_artifact_to_location, get_workflow_name
@@ -69,6 +70,22 @@ else:
 
 # Extract the workflow name
 workflow_name = get_workflow_name(workflow_dir=WORKFLOW_DIRECTORY)
+
+_mcp_tool_defintions: Optional[Dict[str, List[Dict]]] = None
+
+
+async def _set_mcp_tool_definitions():
+    global _mcp_tool_defintions
+    if not LANGGRAPH_CALLABLES:
+        deployment_config: input_types.DeploymentConfig = input_types.DeploymentConfig.model_validate(
+            json.loads(WORKFLOW_DEPLOYMENT_CONFIG)
+        )
+        result = await get_mcp_tools_definitions(collated_input.mcp_instances, deployment_config.mcp_config)
+        _mcp_tool_defintions = {mcp_id: [t.model_dump() for t in tool_list] for mcp_id, tool_list in result.items()}
+        print(f"MCP tool definitions are set")
+
+
+asyncio.create_task(_set_mcp_tool_definitions())
 
 
 def base64_decode(encoded_str: str):
@@ -168,5 +185,7 @@ def api_wrapper(args: Union[dict, str]) -> str:
                 asset_data[asset_uri] = base64.b64encode(asset_file.read()).decode()
                 # Decode at the destination with: base64.b64decode(asset_data[asset_uri])
         return {"asset_data": asset_data, "unavailable_assets": unavailable_assets}
+    elif serve_workflow_parameters.action_type == input_types.DeployedWorkflowActions.GET_MCP_TOOL_DEFINITIONS.value:
+        return {"ready": _mcp_tool_defintions is not None, "mcp_tool_definitions": _mcp_tool_defintions}
     else:
         raise ValueError("Invalid action type.")
