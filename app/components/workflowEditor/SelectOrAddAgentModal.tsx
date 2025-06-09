@@ -1416,33 +1416,30 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
             Create or Edit Tools
           </Button>
           {renderToolList()}
-          {wflowData?.studioAsMcpClient && (
-            <>
-              <Divider
-                style={{
-                  margin: 0,
-                  backgroundColor: '#f0f0f0',
-                  marginTop: '16px',
-                  marginBottom: '16px',
-                }}
-              />
-              <Typography.Title level={5} style={{ marginBottom: '14px' }}>
-                Add Optional MCP Servers
-              </Typography.Title>
-              <Button
-                type="dashed"
-                icon={<PlusOutlined />}
-                onClick={() => {
-                  setClickedMcpInstance(undefined);
-                  setAddMcpModalVisible(true);
-                }}
-                style={{ width: '100%', marginBottom: '16px' }}
-              >
-                Add MCP Server to Agent
-              </Button>
-              {renderMcpList()}
-            </>
-          )}
+
+          <Divider
+            style={{
+              margin: 0,
+              backgroundColor: '#f0f0f0',
+              marginTop: '16px',
+              marginBottom: '16px',
+            }}
+          />
+          <Typography.Title level={5} style={{ marginBottom: '14px' }}>
+            Add Optional MCP Servers
+          </Typography.Title>
+          <Button
+            type="dashed"
+            icon={<PlusOutlined />}
+            onClick={() => {
+              setClickedMcpInstance(undefined);
+              setAddMcpModalVisible(true);
+            }}
+            style={{ width: '100%', marginBottom: '16px' }}
+          >
+            Add MCP Server to Agent
+          </Button>
+          {renderMcpList()}
         </>
       );
     } else {
@@ -1463,33 +1460,30 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
             Create or Edit Tools
           </Button>
           {renderToolList()}
-          {wflowData?.studioAsMcpClient && (
-            <>
-              <Divider
-                style={{
-                  margin: 0,
-                  backgroundColor: '#f0f0f0',
-                  marginTop: '16px',
-                  marginBottom: '16px',
-                }}
-              />
-              <Typography.Title level={5} style={{ marginBottom: '14px' }}>
-                Add Optional MCP Servers
-              </Typography.Title>
-              <Button
-                type="dashed"
-                icon={<PlusOutlined />}
-                onClick={() => {
-                  setClickedMcpInstance(undefined);
-                  setAddMcpModalVisible(true);
-                }}
-                style={{ width: '100%', marginBottom: '16px' }}
-              >
-                Add MCP Server to Agent
-              </Button>
-              {renderMcpList()}
-            </>
-          )}
+
+          <Divider
+            style={{
+              margin: 0,
+              backgroundColor: '#f0f0f0',
+              marginTop: '16px',
+              marginBottom: '16px',
+            }}
+          />
+          <Typography.Title level={5} style={{ marginBottom: '14px' }}>
+            Add Optional MCP Servers
+          </Typography.Title>
+          <Button
+            type="dashed"
+            icon={<PlusOutlined />}
+            onClick={() => {
+              setClickedMcpInstance(undefined);
+              setAddMcpModalVisible(true);
+            }}
+            style={{ width: '100%', marginBottom: '16px' }}
+          >
+            Add MCP Server to Agent
+          </Button>
+          {renderMcpList()}
         </>
       );
     }

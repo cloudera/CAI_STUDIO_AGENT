@@ -14,7 +14,6 @@ export interface OpsData {
 
 export interface WorkflowData {
   renderMode: 'studio' | 'workflow';
-  studioAsMcpClient: boolean;
   deployedWorkflowId: string;
   deployedWorkflow: DeployedWorkflow;
   workflowModelUrl: string;

@@ -220,6 +220,7 @@ const MCPTabContent = () => {
     mcpType: string,
     mcpArgs: string,
     envNames: string[],
+    iconPath: string,
   ) => {
     try {
       notificationApi.info({
@@ -240,7 +241,7 @@ const MCPTabContent = () => {
         type: mcpType,
         args: mcpArgsArray,
         env_names: envNames,
-        tmp_mcp_image_path: '',
+        tmp_mcp_image_path: iconPath,
       }).unwrap();
 
       // Extract tool_template_id from the response
@@ -370,23 +371,20 @@ const ToolsPage = () => {
     <>
       <Layout style={{ flex: 1, padding: '16px 24px 22px', flexDirection: 'column' }}>
         <CommonBreadCrumb items={[{ title: 'Tools Catalog' }]} />
-        {!wflowData?.studioAsMcpClient && <ToolsTabContent />}
-        {wflowData?.studioAsMcpClient && (
-          <Tabs
-            defaultActiveKey={activeTab}
-            style={{ marginTop: '0px' }}
-            onChange={(activeKey) => {
-              setActiveTab(activeKey as 'tools' | 'mcps');
-            }}
-          >
-            <TabPane tab="Agent Studio Tools" key="tools">
-              <ToolsTabContent />
-            </TabPane>
-            <TabPane tab="MCP Servers" key="mcps">
-              <MCPTabContent />
-            </TabPane>
-          </Tabs>
-        )}
+        <Tabs
+          defaultActiveKey={activeTab}
+          style={{ marginTop: '0px' }}
+          onChange={(activeKey) => {
+            setActiveTab(activeKey as 'tools' | 'mcps');
+          }}
+        >
+          <TabPane tab="Agent Studio Tools" key="tools">
+            <ToolsTabContent />
+          </TabPane>
+          <TabPane tab="MCP Servers" key="mcps">
+            <MCPTabContent />
+          </TabPane>
+        </Tabs>
       </Layout>
     </>
   );

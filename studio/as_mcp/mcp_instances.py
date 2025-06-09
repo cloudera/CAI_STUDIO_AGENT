@@ -174,8 +174,7 @@ def _list_mcp_instances_impl(request: ListMcpInstancesRequest, session: DbSessio
             activated_tools=list(m.activated_tools),
             status=str(m.status),
             workflow_id=str(m.workflow_id),
-            mcp_image_path=str(m.mcp_image_path),
-            image_uri=os.path.relpath(m.mcp_image_path, consts.DYNAMIC_ASSETS_LOCATION) if m.mcp_image_path else "",
+            image_uri=(os.path.relpath(m.mcp_image_path, consts.DYNAMIC_ASSETS_LOCATION) if m.mcp_image_path else ""),
         )
         for m in mcp_instances
     ]
@@ -218,10 +217,11 @@ def _get_mcp_instance_impl(request: GetMcpInstanceRequest, session: DbSession) -
             activated_tools=list(mcp_instance.activated_tools),
             status=str(mcp_instance.status),
             workflow_id=str(mcp_instance.workflow_id),
-            mcp_image_path=str(mcp_instance.mcp_image_path),
-            image_uri=os.path.relpath(mcp_instance.mcp_image_path, consts.DYNAMIC_ASSETS_LOCATION)
-            if mcp_instance.mcp_image_path
-            else "",
+            image_uri=(
+                os.path.relpath(mcp_instance.mcp_image_path, consts.DYNAMIC_ASSETS_LOCATION)
+                if mcp_instance.mcp_image_path
+                else ""
+            ),
         )
     )
 

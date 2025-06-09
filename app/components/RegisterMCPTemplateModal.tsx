@@ -1,14 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Typography, Alert } from 'antd';
-import { InfoCircleOutlined, WarningOutlined } from '@ant-design/icons';
+import { Modal, Typography, Alert, Upload, Button } from 'antd';
+import {
+  InfoCircleOutlined,
+  WarningOutlined,
+  UploadOutlined,
+  FileImageOutlined,
+  DeleteOutlined,
+} from '@ant-design/icons';
 import Editor from '@monaco-editor/react';
+import { useGlobalNotification } from './Notifications';
+import { uploadFile } from '../lib/fileUpload';
 
 const { Text } = Typography;
 
 interface RegisterMCPTemplateModalProps {
   isOpen: boolean;
   onCancel: () => void;
-  onRegister: (mcpName: string, mcpType: string, mcpArgs: string, envNames: string[]) => void;
+  onRegister: (
+    mcpName: string,
+    mcpType: string,
+    mcpArgs: string,
+    envNames: string[],
+    iconPath: string,
+  ) => void;
 }
 
 interface MCPConfig {
@@ -33,6 +47,11 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
   const [serverNameInfo, setServerNameInfo] = useState<React.ReactNode>('');
   const [isValid, setIsValid] = useState(false);
   const [parsedConfig, setParsedConfig] = useState<MCPConfig | null>(null);
+  const [uploadedFilePath, setUploadedFilePath] = useState<string>('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const notificationApi = useGlobalNotification();
 
   const defaultJson = `{
   "mcpServers": {
@@ -45,8 +64,14 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
 }`;
 
   useEffect(() => {
-    if (isOpen && !jsonInput) {
-      setJsonInput(defaultJson);
+    if (isOpen) {
+      if (!jsonInput) {
+        setJsonInput(defaultJson);
+      }
+      // Reset file upload states when modal is opened
+      setUploadedFilePath('');
+      setSelectedFile(null);
+      setIsUploading(false);
     }
   }, [isOpen]);
 
@@ -192,6 +217,43 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
     validateJson(jsonInput);
   }, [jsonInput]);
 
+  const handleFileUpload = async (file: File) => {
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+    if (!validTypes.includes(file.type)) {
+      notificationApi.error({
+        message: 'Please upload a PNG or JPEG image file',
+        placement: 'topRight',
+      });
+      return;
+    }
+
+    // If file size is greater than 64KB, show a notification
+    if (file.size > 64 * 1024) {
+      notificationApi.warning({
+        message: 'File size should be less than 64KB',
+        placement: 'topRight',
+      });
+      return;
+    }
+
+    try {
+      const fp = await uploadFile(file, setIsUploading);
+      console.log('File uploaded to:', fp);
+      setUploadedFilePath(fp);
+      setSelectedFile(file);
+    } catch (error) {
+      setSelectedFile(null);
+      console.error('Upload failed:', error);
+      notificationApi.error({
+        message: 'Failed to upload file',
+        placement: 'topRight',
+      });
+    }
+  };
+
   const handleRegister = () => {
     if (isValid && parsedConfig) {
       const serverName = Object.keys(parsedConfig.mcpServers)[0];
@@ -201,13 +263,15 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
       const mcpArgs = serverConfig.args.join(' ');
       const envNames = serverConfig.env ? Object.keys(serverConfig.env) : [];
 
-      onRegister(serverName, 'PYTHON', mcpArgs, envNames);
+      onRegister(serverName, 'PYTHON', mcpArgs, envNames, uploadedFilePath);
 
       // Reset form
       setJsonInput('');
       setValidationError('');
       setIsValid(false);
       setParsedConfig(null);
+      setUploadedFilePath('');
+      setSelectedFile(null);
     }
   };
 
@@ -218,13 +282,15 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
     setServerNameInfo('');
     setIsValid(false);
     setParsedConfig(null);
+    setUploadedFilePath('');
+    setSelectedFile(null);
     onCancel();
   };
 
   return (
     <Modal
       title="Register MCP Server"
-      width="60%"
+      width="70%"
       open={isOpen}
       onCancel={handleCancel}
       onOk={handleRegister}
@@ -242,49 +308,103 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
           showIcon
         />
 
-        <div>
-          <Text style={{ marginBottom: '8px', display: 'block' }}>MCP Server Configuration:</Text>
+        <div style={{ display: 'flex', flexDirection: 'row', gap: '16px' }}>
+          {/* MCP Server Configuration - 75% */}
+          <div style={{ flex: '0 0 75%' }}>
+            <Text style={{ marginBottom: '8px', display: 'block' }}>MCP Server Configuration:</Text>
 
-          <div style={{ border: '1px solid #d9d9d9', borderRadius: '6px', overflow: 'hidden' }}>
-            <Editor
-              height="300px"
-              defaultLanguage="json"
-              theme="vs-light"
-              value={jsonInput}
-              onChange={(value) => setJsonInput(value || '')}
-              options={{
-                minimap: { enabled: false },
-                scrollBeyondLastLine: false,
-                fontSize: 14,
-                lineNumbers: 'on',
-                wordWrap: 'on',
-                automaticLayout: true,
-              }}
-            />
+            <div style={{ border: '1px solid #d9d9d9', borderRadius: '6px', overflow: 'hidden' }}>
+              <Editor
+                height="300px"
+                defaultLanguage="json"
+                theme="vs-light"
+                value={jsonInput}
+                onChange={(value) => setJsonInput(value || '')}
+                options={{
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  fontSize: 14,
+                  lineNumbers: 'on',
+                  wordWrap: 'on',
+                  automaticLayout: true,
+                }}
+              />
+            </div>
           </div>
 
-          {serverNameInfo && (
-            <div style={{ marginTop: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
-                <InfoCircleOutlined style={{ color: '#4d7cff', marginRight: '4px' }} />
-                <Text type="secondary" style={{ fontSize: '12px', color: '#4d7cff' }}>
-                  {serverNameInfo}
-                </Text>
-              </div>
-            </div>
-          )}
+          {/* Icon Upload - 25% */}
+          <div style={{ flex: '0 0 25%' }}>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <Text style={{ marginBottom: '8px', display: 'block' }}>Icon (Optional):</Text>
 
-          {validationError && (
-            <div style={{ marginTop: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
-                <WarningOutlined style={{ color: '#ff4d4f', marginRight: '4px' }} />
-                <Text type="danger" style={{ fontSize: '12px' }}>
-                  {validationError}
-                </Text>
+              <div
+                style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px' }}
+              >
+                {selectedFile && (
+                  <Button
+                    icon={<DeleteOutlined />}
+                    size="small"
+                    onClick={() => {
+                      setSelectedFile(null);
+                      setUploadedFilePath('');
+                    }}
+                  />
+                )}
+
+                <Upload
+                  accept=".png,.jpg,.jpeg"
+                  customRequest={({ file, onSuccess, onError }) => {
+                    handleFileUpload(file as File)
+                      .then(() => onSuccess?.('ok'))
+                      .catch((err) => onError?.(err));
+                  }}
+                  showUploadList={false}
+                  disabled={isUploading}
+                  style={{ flex: 1 }}
+                >
+                  <Button
+                    icon={selectedFile ? <FileImageOutlined /> : <UploadOutlined />}
+                    loading={isUploading}
+                    disabled={selectedFile !== null}
+                    style={{ width: '100%' }}
+                  >
+                    {selectedFile ? selectedFile.name : 'Upload Icon'}
+                  </Button>
+                </Upload>
               </div>
+
+              <Text
+                type="secondary"
+                style={{ fontSize: '11px', marginTop: '8px', lineHeight: '1.4' }}
+              >
+                Upload a PNG or JPEG image (max 64KB) to customize the MCP server icon.
+              </Text>
             </div>
-          )}
+          </div>
         </div>
+
+        {/* Validation Messages - Full Width */}
+        {serverNameInfo && (
+          <div style={{ marginTop: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
+              <InfoCircleOutlined style={{ color: '#4d7cff', marginRight: '4px' }} />
+              <Text type="secondary" style={{ fontSize: '12px', color: '#4d7cff' }}>
+                {serverNameInfo}
+              </Text>
+            </div>
+          </div>
+        )}
+
+        {validationError && (
+          <div style={{ marginTop: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
+              <WarningOutlined style={{ color: '#ff4d4f', marginRight: '4px' }} />
+              <Text type="danger" style={{ fontSize: '12px' }}>
+                {validationError}
+              </Text>
+            </div>
+          </div>
+        )}
       </div>
     </Modal>
   );

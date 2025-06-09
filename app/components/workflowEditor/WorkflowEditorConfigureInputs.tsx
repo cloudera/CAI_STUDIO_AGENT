@@ -665,7 +665,7 @@ const WorkflowEditorConfigureInputs: React.FC<WorkflowEditorConfigureInputsProps
               }}
             >
               <Title level={4} style={{ marginBottom: '16px', fontSize: 13, fontWeight: 600 }}>
-                {wflowData?.studioAsMcpClient ? 'Tools and MCPs' : 'Tools'}
+                Tools and MCPs
               </Title>
               {!hasConfigurableTools && !hasConfigurableMcpInstances && (
                 <Alert
