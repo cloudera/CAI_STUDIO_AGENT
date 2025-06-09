@@ -1,3 +1,5 @@
+import os
+import shutil
 from uuid import uuid4
 from typing import Optional
 from studio.db.dao import AgentStudioDao
@@ -8,6 +10,14 @@ import studio.consts as consts
 import studio.as_mcp.utils as mcp_utils
 from cmlapi import CMLServiceApi
 import json
+
+
+def _delete_icon_file(icon_path):
+    if icon_path and os.path.exists(icon_path):
+        try:
+            os.remove(icon_path)
+        except Exception:
+            pass
 
 
 def create_mcp_instance(
@@ -47,6 +57,15 @@ def _create_mcp_instance_impl(request: CreateMcpInstanceRequest, session: DbSess
     instance_uuid = str(uuid4())
     mcp_instance_name = request.name or (associated_mcp_template.name if associated_mcp_template else "MCP Instance")
     activated_tools = list(request.activated_tools)
+
+    # ICON HANDLING: from MCP template
+    mcp_image_path = ""
+    if associated_mcp_template.mcp_image_path:
+        _, ext = os.path.splitext(associated_mcp_template.mcp_image_path)
+        os.makedirs(consts.MCP_INSTANCE_ICONS_LOCATION, exist_ok=True)
+        mcp_image_path = os.path.join(consts.MCP_INSTANCE_ICONS_LOCATION, f"{instance_uuid}_icon{ext}")
+        shutil.copy(associated_mcp_template.mcp_image_path, mcp_image_path)
+
     mcp_instance = db_model.MCPInstance(
         id=instance_uuid,
         workflow_id=request.workflow_id,
@@ -56,7 +75,7 @@ def _create_mcp_instance_impl(request: CreateMcpInstanceRequest, session: DbSess
         env_names=associated_mcp_template.env_names,
         activated_tools=activated_tools,
         status=consts.MCPStatus.VALIDATING.value,
-        mcp_image_path="",
+        mcp_image_path=mcp_image_path,
     )
     session.add(mcp_instance)
 
@@ -66,7 +85,10 @@ def _create_mcp_instance_impl(request: CreateMcpInstanceRequest, session: DbSess
         db_model.MCPInstance,
     )
 
-    return CreateMcpInstanceResponse(mcp_instance_name=mcp_instance_name, mcp_instance_id=instance_uuid)
+    return CreateMcpInstanceResponse(
+        mcp_instance_name=mcp_instance_name,
+        mcp_instance_id=instance_uuid,
+    )
 
 
 def update_mcp_instance(
@@ -99,13 +121,23 @@ def _update_mcp_instance_impl(request: UpdateMcpInstanceRequest, session: DbSess
     if request.name:
         mcp_instance.name = request.name
     if request.tmp_mcp_image_path:
-        mcp_instance.mcp_image_path = request.tmp_mcp_image_path
+        if not os.path.exists(request.tmp_mcp_image_path):
+            raise ValueError(f"Temporary MCP image path {request.tmp_mcp_image_path} does not exist.")
+        _, ext = os.path.splitext(request.tmp_mcp_image_path)
+        ext = ext.lower()
+        if ext not in [".png", ".jpg", ".jpeg"]:
+            raise ValueError(f"Invalid MCP image extension {ext}, must be .png/.jpg/.jpeg")
+        mcp_image_path = os.path.join(consts.MCP_INSTANCE_ICONS_LOCATION, f"{mcp_instance.id}_icon{ext}")
+        os.makedirs(consts.MCP_INSTANCE_ICONS_LOCATION, exist_ok=True)
+        shutil.copy(request.tmp_mcp_image_path, mcp_image_path)
+        os.remove(request.tmp_mcp_image_path)
+        mcp_instance.mcp_image_path = mcp_image_path
     new_activated_tools = list(request.activated_tools) or []
-
-    # Update the activated tools anyway even if the list is empty: empty list means all tools are activated
     mcp_instance.activated_tools = new_activated_tools
 
-    return UpdateMcpInstanceResponse(mcp_instance_id=mcp_instance.id)
+    return UpdateMcpInstanceResponse(
+        mcp_instance_id=mcp_instance.id,
+    )
 
 
 def list_mcp_instances(
@@ -142,6 +174,8 @@ def _list_mcp_instances_impl(request: ListMcpInstancesRequest, session: DbSessio
             activated_tools=list(m.activated_tools),
             status=str(m.status),
             workflow_id=str(m.workflow_id),
+            mcp_image_path=str(m.mcp_image_path),
+            image_uri=os.path.relpath(m.mcp_image_path, consts.DYNAMIC_ASSETS_LOCATION) if m.mcp_image_path else "",
         )
         for m in mcp_instances
     ]
@@ -184,6 +218,10 @@ def _get_mcp_instance_impl(request: GetMcpInstanceRequest, session: DbSession) -
             activated_tools=list(mcp_instance.activated_tools),
             status=str(mcp_instance.status),
             workflow_id=str(mcp_instance.workflow_id),
+            mcp_image_path=str(mcp_instance.mcp_image_path),
+            image_uri=os.path.relpath(mcp_instance.mcp_image_path, consts.DYNAMIC_ASSETS_LOCATION)
+            if mcp_instance.mcp_image_path
+            else "",
         )
     )
 
@@ -214,5 +252,6 @@ def _remove_mcp_instance_impl(request: RemoveMcpInstanceRequest, session: DbSess
     mcp_instance = session.query(db_model.MCPInstance).filter_by(id=request.mcp_instance_id).first()
     if not mcp_instance:
         raise ValueError(f"MCP Instance with id {request.mcp_instance_id} not found")
+    _delete_icon_file(mcp_instance.mcp_image_path)
     session.delete(mcp_instance)
     return RemoveMcpInstanceResponse()
