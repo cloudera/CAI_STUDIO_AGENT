@@ -772,7 +772,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
 
     return (
       <List
-        grid={{ gutter: 16, column: 2 }}
+        grid={{ gutter: 16, column: items.length >= 2 ? 2 : 1 }}
         dataSource={items}
         renderItem={(mcp) => (
           <List.Item>
@@ -782,7 +782,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                 border: 'solid 1px #f0f0f0',
                 backgroundColor: '#fff',
                 width: '100%',
-                padding: '16px',
+                padding: '0',
                 display: 'flex',
                 flexDirection: 'column',
                 cursor: 'pointer',
@@ -806,25 +806,25 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
             >
               <div
                 style={{
+                  flex: 1,
                   display: 'flex',
-                  alignItems: 'center',
-                  width: '100%',
-                  justifyContent: 'space-between',
-                  marginBottom: '8px',
+                  flexDirection: 'column',
+                  overflow: 'auto',
+                  padding: '12px',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
                   <div
                     style={{
-                      width: '24px',
-                      height: '24px',
-                      minWidth: '24px',
+                      width: '20px',
+                      height: '20px',
+                      minWidth: '20px',
                       borderRadius: '50%',
                       background: '#f1f1f1',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      marginRight: '8px',
+                      marginRight: '4px',
                     }}
                   >
                     <Image
@@ -875,7 +875,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                             color: '#52c41a',
                             fontSize: '15px',
                             fontWeight: 1000,
-                            marginLeft: '12px',
+                            marginLeft: '6px',
                           }}
                         />
                       ) : mcp.status === 'VALIDATING' ? (
@@ -884,7 +884,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                             color: '#faad14',
                             fontSize: '15px',
                             fontWeight: 1000,
-                            marginLeft: '12px',
+                            marginLeft: '6px',
                           }}
                         />
                       ) : mcp.status === 'VALIDATION_FAILED' ? (
@@ -893,31 +893,42 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                             color: '#f5222d',
                             fontSize: '15px',
                             fontWeight: 1000,
-                            marginLeft: '12px',
+                            marginLeft: '6px',
                           }}
                         />
                       ) : null}
                     </Tooltip>
                   </div>
                 </div>
-                <div style={{ marginLeft: 'auto', flexShrink: 0 }}>
-                  <Popconfirm
-                    title="Dissociate MCP"
-                    description="Are you sure you want to dissociate this MCP from the agent?"
-                    onConfirm={(e) => {
-                      e?.stopPropagation();
-                      handleDeleteMcp(mcp.id, mcp.name);
-                    }}
-                    onCancel={(e) => e?.stopPropagation()}
-                  >
-                    <Button
-                      type="link"
-                      icon={<DeleteOutlined style={{ color: '#ff4d4f' }} />}
-                      onClick={(e) => e.stopPropagation()}
-                      disabled={isFormDisabled}
-                    />
-                  </Popconfirm>
-                </div>
+              </div>
+              <Divider style={{ flexGrow: 0, margin: '0px' }} type="horizontal" />
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  flexGrow: 0,
+                  background: 'transparent',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  padding: '0px',
+                }}
+              >
+                <Popconfirm
+                  title="Dissociate MCP"
+                  description="Are you sure you want to dissociate this MCP from the agent?"
+                  onConfirm={(e) => {
+                    e?.stopPropagation();
+                    handleDeleteMcp(mcp.id, mcp.name);
+                  }}
+                  onCancel={(e) => e?.stopPropagation()}
+                >
+                  <Button
+                    type="link"
+                    icon={<DeleteOutlined style={{ color: '#ff4d4f' }} />}
+                    onClick={(e) => e.stopPropagation()}
+                    disabled={isFormDisabled}
+                  />
+                </Popconfirm>
               </div>
             </div>
           </List.Item>
@@ -1034,7 +1045,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
 
       return (
         <List
-          grid={{ gutter: 16, column: 2 }}
+          grid={{ gutter: 16, column: items.length >= 2 ? 2 : 1 }}
           dataSource={items}
           renderItem={(tool: {
             id: string;
@@ -1050,7 +1061,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                   border: 'solid 1px #f0f0f0',
                   backgroundColor: '#fff',
                   width: '100%',
-                  padding: '16px',
+                  padding: '0',
                   display: 'flex',
                   flexDirection: 'column',
                   cursor: 'pointer',
@@ -1074,25 +1085,25 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
               >
                 <div
                   style={{
+                    flex: 1,
                     display: 'flex',
-                    alignItems: 'center',
-                    width: '100%',
-                    justifyContent: 'space-between',
-                    marginBottom: '8px',
+                    flexDirection: 'column',
+                    overflow: 'auto',
+                    padding: '12px',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
                     <div
                       style={{
-                        width: '24px',
-                        height: '24px',
-                        minWidth: '24px',
+                        width: '20px',
+                        height: '20px',
+                        minWidth: '20px',
                         borderRadius: '50%',
                         background: '#f1f1f1',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        marginRight: '8px',
+                        marginRight: '4px',
                       }}
                     >
                       <Image
@@ -1145,7 +1156,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                               color: '#52c41a',
                               fontSize: '15px',
                               fontWeight: 1000,
-                              marginLeft: '12px',
+                              marginLeft: '6px',
                             }}
                           />
                         ) : (
@@ -1154,31 +1165,42 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                               color: '#faad14',
                               fontSize: '15px',
                               fontWeight: 1000,
-                              marginLeft: '12px',
+                              marginLeft: '6px',
                             }}
                           />
                         )}
                       </Tooltip>
                     </div>
                   </div>
-                  <div style={{ marginLeft: 'auto', flexShrink: 0 }}>
-                    <Popconfirm
-                      title="Delete Tool"
-                      description="Are you sure you want to delete this tool?"
-                      onConfirm={(e) => {
-                        e?.stopPropagation();
-                        handleDeleteTool(tool.id, tool.name);
-                      }}
-                      onCancel={(e) => e?.stopPropagation()}
-                    >
-                      <Button
-                        type="link"
-                        icon={<DeleteOutlined style={{ color: '#ff4d4f' }} />}
-                        onClick={(e) => e.stopPropagation()}
-                        disabled={isFormDisabled}
-                      />
-                    </Popconfirm>
-                  </div>
+                </div>
+                <Divider style={{ flexGrow: 0, margin: '0px' }} type="horizontal" />
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    flexGrow: 0,
+                    background: 'transparent',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    padding: '0px',
+                  }}
+                >
+                  <Popconfirm
+                    title="Delete Tool"
+                    description="Are you sure you want to delete this tool?"
+                    onConfirm={(e) => {
+                      e?.stopPropagation();
+                      handleDeleteTool(tool.id, tool.name);
+                    }}
+                    onCancel={(e) => e?.stopPropagation()}
+                  >
+                    <Button
+                      type="link"
+                      icon={<DeleteOutlined style={{ color: '#ff4d4f' }} />}
+                      onClick={(e) => e.stopPropagation()}
+                      disabled={isFormDisabled}
+                    />
+                  </Popconfirm>
                 </div>
               </div>
             </List.Item>
@@ -1400,90 +1422,75 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
     } else if (selectedAssignedAgent) {
       return (
         <>
-          <Typography.Title level={5} style={{ marginBottom: '14px' }}>
-            Add Optional Tools
-          </Typography.Title>
-          <Button
-            type="dashed"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              setClickedToolInstanceId(undefined);
-              setAddToolModalVisible(true);
-            }}
-            style={{ width: '100%', marginBottom: '16px' }}
-            disabled={isFormDisabled}
-          >
-            Create or Edit Tools
-          </Button>
-          {renderToolList()}
+          <div style={{ display: 'flex', gap: '16px', height: '100%' }}>
+            {/* Tools Section */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+              <Typography.Title level={5} style={{ marginBottom: '14px' }}>
+                Add Optional Tools
+              </Typography.Title>
+              <Button
+                type="dashed"
+                icon={<PlusOutlined />}
+                onClick={() => {
+                  setClickedToolInstanceId(undefined);
+                  setAddToolModalVisible(true);
+                }}
+                style={{ width: '100%', marginBottom: '16px' }}
+                disabled={isFormDisabled}
+              >
+                Create or Edit Tools
+              </Button>
+              <div
+                style={{
+                  flex: 1,
+                  overflowY: 'auto',
+                  maxHeight: '300px',
+                  paddingRight: '8px',
+                }}
+              >
+                {renderToolList()}
+              </div>
+            </div>
 
-          <Divider
-            style={{
-              margin: 0,
-              backgroundColor: '#f0f0f0',
-              marginTop: '16px',
-              marginBottom: '16px',
-            }}
-          />
-          <Typography.Title level={5} style={{ marginBottom: '14px' }}>
-            Add Optional MCP Servers
-          </Typography.Title>
-          <Button
-            type="dashed"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              setClickedMcpInstance(undefined);
-              setAddMcpModalVisible(true);
-            }}
-            style={{ width: '100%', marginBottom: '16px' }}
-          >
-            Add MCP Server to Agent
-          </Button>
-          {renderMcpList()}
-        </>
-      );
-    } else {
-      return (
-        <>
-          <Typography.Title level={5} style={{ marginBottom: '14px' }}>
-            Add Optional Tools
-          </Typography.Title>
-          <Button
-            type="dashed"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              setClickedToolInstanceId(undefined);
-              setAddToolModalVisible(true);
-            }}
-            style={{ width: '100%', marginBottom: '16px' }}
-          >
-            Create or Edit Tools
-          </Button>
-          {renderToolList()}
+            {/* Vertical Divider */}
+            <Divider
+              type="vertical"
+              style={{
+                height: 'auto',
+                backgroundColor: '#f0f0f0',
+                margin: 0,
+                alignSelf: 'stretch',
+              }}
+            />
 
-          <Divider
-            style={{
-              margin: 0,
-              backgroundColor: '#f0f0f0',
-              marginTop: '16px',
-              marginBottom: '16px',
-            }}
-          />
-          <Typography.Title level={5} style={{ marginBottom: '14px' }}>
-            Add Optional MCP Servers
-          </Typography.Title>
-          <Button
-            type="dashed"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              setClickedMcpInstance(undefined);
-              setAddMcpModalVisible(true);
-            }}
-            style={{ width: '100%', marginBottom: '16px' }}
-          >
-            Add MCP Server to Agent
-          </Button>
-          {renderMcpList()}
+            {/* MCP Section */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+              <Typography.Title level={5} style={{ marginBottom: '14px' }}>
+                Add Optional MCP Servers
+              </Typography.Title>
+              <Button
+                type="dashed"
+                icon={<PlusOutlined />}
+                onClick={() => {
+                  setClickedMcpInstance(undefined);
+                  setAddMcpModalVisible(true);
+                }}
+                style={{ width: '100%', marginBottom: '16px' }}
+              >
+                Add MCP Server to Agent
+              </Button>
+              <div
+                style={{
+                  flex: 1,
+                  overflowY: 'auto',
+                  maxHeight: '300px',
+                  paddingLeft: '8px',
+                }}
+              >
+                {renderMcpList()}
+              </div>
+            </div>
+          </div>
         </>
       );
     }
