@@ -10,6 +10,15 @@ import studio.consts as consts
 import studio.cross_cutting.utils as cc_utils
 
 
+def _get_runtime_command(mcp_type: consts.SupportedMCPTypes) -> str:
+    if mcp_type == consts.SupportedMCPTypes.PYTHON.value:
+        return os.path.join(os.path.abspath(cc_utils.get_studio_subdirectory()), ".venv", "bin", "uvx")
+    elif mcp_type == consts.SupportedMCPTypes.NODE.value:
+        return "npx"
+    else:
+        raise ValueError(f"Unsupported MCP type: {mcp_type}")
+
+
 async def _get_mcp_tools(server_params: StdioServerParameters) -> List[mcp_types.Tool]:
     timeout = timedelta(seconds=30)
     async with stdio_client(server_params) as (read, write):
@@ -30,9 +39,6 @@ def _update_mcp_tools(
     db_class: Union[Type[db_model.MCPTemplate], Type[db_model.MCPInstance]],
     env_vars: Optional[Dict[str, str]] = None,
 ):
-    # Supporting python based MCPs for now
-
-    uvx_bin_path = os.path.join(os.path.abspath(cc_utils.get_studio_subdirectory()), ".venv", "bin", "uvx")
     print(f"Updating MCP tools for MCP {mcp_id}")
 
     with get_dao().get_session() as session:
@@ -43,8 +49,9 @@ def _update_mcp_tools(
 
         env_vars = env_vars or {}
         env_to_pass = {k: (env_vars[k] if k in env_vars else "dummy") for k in mcp_obj.env_names}
+        command = _get_runtime_command(mcp_obj.type)
         mcp_server_params = StdioServerParameters(
-            command=uvx_bin_path,
+            command=command,
             args=list(mcp_obj.args),
             env=env_to_pass,
         )

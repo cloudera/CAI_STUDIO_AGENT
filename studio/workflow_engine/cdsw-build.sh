@@ -8,5 +8,13 @@
 # Install UV for venv tool usage
 python -m pip install uv
 
+# Get node
+export NVM_DIR="$(pwd)/.nvm"
+mkdir -p $NVM_DIR
+wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+nvm install 22
+nvm use 22
+
 # Install engine code
 pip install .

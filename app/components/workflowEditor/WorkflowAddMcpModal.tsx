@@ -113,6 +113,13 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
         return acc;
       }, {}),
     );
+    if (selectedMcpInstance) {
+      // Refresh MCP Instance selection if list is refreshed.
+      const updatedInstance = mcpInstanceList.find((i) => i.id === selectedMcpInstance.id);
+      if (updatedInstance) {
+        handleSelectMcpInstance(updatedInstance);
+      }
+    }
     setShouldPollForMcpInstances(hasValidatingInstances); // Only poll when needed
   }, [mcpInstanceList]);
 
@@ -887,19 +894,27 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
             }}
           >
             <Layout
-              style={{ flex: 0.2, overflowY: 'auto', padding: '16px', backgroundColor: '#fff' }}
+              style={{
+                flex: 0.2,
+                padding: '16px',
+                backgroundColor: '#fff',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
             >
               <Layout
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
                   backgroundColor: '#fff',
+                  flex: 1,
+                  minHeight: 0,
                 }}
               >
                 <Typography.Title level={5} style={{ marginBottom: '8px' }}>
                   Edit MCP Server
                 </Typography.Title>
-                {renderMcpInstanceList()}
+                <div style={{ flex: 1, overflowY: 'auto' }}>{renderMcpInstanceList()}</div>
               </Layout>
               <Divider type="horizontal" style={{ margin: '8px', backgroundColor: '#f0f0f0' }} />
               <Layout
@@ -907,12 +922,14 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
                   display: 'flex',
                   flexDirection: 'column',
                   backgroundColor: '#fff',
+                  flex: 1,
+                  minHeight: 0,
                 }}
               >
                 <Typography.Title level={5} style={{ marginBottom: '8px' }}>
                   Add MCP Server to Agent
                 </Typography.Title>
-                {renderMcpTemplateList()}
+                <div style={{ flex: 1, overflowY: 'auto' }}>{renderMcpTemplateList()}</div>
               </Layout>
             </Layout>
             <Divider type="vertical" style={{ height: '100%', backgroundColor: '#f0f0f0' }} />

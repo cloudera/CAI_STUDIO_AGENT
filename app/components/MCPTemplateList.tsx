@@ -54,25 +54,52 @@ const getTypeTag = (mcpType: string): React.ReactNode => {
   switch (mcpType) {
     case 'PYTHON':
       return (
-        <Tag style={{ background: '#c3d4fa', margin: 0 }}>
+        <Tag
+          style={{
+            background: '#c3d4fa',
+            margin: 2,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+          }}
+        >
+          <img src="/mcp_types/python.svg" alt="Python" style={{ width: 12, height: 12 }} />
           <Text style={{ fontSize: 9, fontWeight: 400 }}>Python</Text>
         </Tag>
       );
     case 'NODE':
       return (
-        <Tag style={{ background: '#c3fac3', margin: 0 }}>
+        <Tag
+          style={{
+            background: '#c3fac3',
+            margin: 2,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+          }}
+        >
+          <img src="/mcp_types/node-js.svg" alt="Node.js" style={{ width: 12, height: 12 }} />
           <Text style={{ fontSize: 9, fontWeight: 400 }}>Node</Text>
         </Tag>
       );
     case 'DOCKER':
       return (
-        <Tag style={{ background: '#fac3e5', margin: 0 }}>
+        <Tag
+          style={{
+            background: '#fac3e5',
+            margin: 2,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+          }}
+        >
+          <img src="/mcp_types/docker.svg" alt="Docker" style={{ width: 12, height: 12 }} />
           <Text style={{ fontSize: 9, fontWeight: 400 }}>Docker</Text>
         </Tag>
       );
     default:
       return (
-        <Tag style={{ background: '#f2f2f2', margin: 0 }}>
+        <Tag style={{ background: '#f2f2f2', margin: 2 }}>
           <Text style={{ fontSize: 9, fontWeight: 400 }}>Unknown</Text>
         </Tag>
       );

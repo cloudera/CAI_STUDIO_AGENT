@@ -328,7 +328,14 @@ const MCPTabContent = () => {
           <Text style={{ fontWeight: 600, fontSize: '18px' }}>Register a MCP Server</Text>
           <Text style={{ fontWeight: 350 }}>
             Register a MCP Server to use in your AI agents. Learn more about Model Context Protocol{' '}
-            <a href="https://modelcontextprotocol.io/introduction">here</a>.
+            <a
+              href="https://modelcontextprotocol.io/introduction"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              here
+            </a>
+            .
           </Text>
         </Layout>
         <Button

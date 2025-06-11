@@ -13,6 +13,11 @@ import { uploadFile } from '../lib/fileUpload';
 
 const { Text } = Typography;
 
+const runtimeToTypeMapping: Record<string, string> = {
+  uvx: 'PYTHON',
+  npx: 'NODE',
+};
+
 interface RegisterMCPTemplateModalProps {
   isOpen: boolean;
   onCancel: () => void;
@@ -155,12 +160,12 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
         return;
       }
 
-      // Check command is uvx
-      if (serverConfig.command !== 'uvx') {
+      // Check command is uvx or npx
+      if (!Object.keys(runtimeToTypeMapping).includes(serverConfig.command)) {
         setValidationError(
           <>
-            Only <Text code>uvx</Text> is supported as the runtime for (python-based) MCP servers
-            currently.
+            Only <Text code>uvx</Text> (for Python-based) and <Text code>npx</Text> (for Node-based)
+            are supported as runtimes for MCP servers currently.
           </>,
         );
         setServerNameInfo('');
@@ -263,7 +268,13 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
       const mcpArgs = serverConfig.args.join(' ');
       const envNames = serverConfig.env ? Object.keys(serverConfig.env) : [];
 
-      onRegister(serverName, 'PYTHON', mcpArgs, envNames, uploadedFilePath);
+      onRegister(
+        serverName,
+        runtimeToTypeMapping[serverConfig.command],
+        mcpArgs,
+        envNames,
+        uploadedFilePath,
+      );
 
       // Reset form
       setJsonInput('');

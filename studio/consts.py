@@ -12,8 +12,8 @@ DEFAULT_PROJECT_DEFAULTS_LOCATION = "data/project_defaults.json"
 
 class SupportedMCPTypes(str, Enum):
     PYTHON = "PYTHON"
+    NODE = "NODE"
     # TODO: Add other MCP types in future
-    # NODE = "NODE"
     # DOCKER = "DOCKER"
 
 
