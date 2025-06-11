@@ -80,8 +80,8 @@ import {
 import { CrewAIAgentMetadata } from '@/studio/proto/agent_studio';
 import { useGetDefaultModelQuery, useListModelsQuery } from '../../models/modelsApi';
 import { useTestModelMutation } from '../../models/modelsApi';
-import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
 import { useListMcpInstancesQuery, useRemoveMcpInstanceMutation } from '@/app/mcp/mcpInstancesApi';
+import { useRouter } from 'next/navigation';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -472,7 +472,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
   isLoading,
   setIsLoading,
 }) => {
-  const { data: wflowData } = useGetWorkflowDataQuery();
+  const router = useRouter();
   const { data: defaultModel } = useGetDefaultModelQuery();
   const { data: toolTemplates = [] } = useListGlobalToolTemplatesQuery({});
   const { imageData: toolIconsData } = useImageAssetsData(
@@ -1419,7 +1419,8 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
           {renderToolList()}
         </>
       );
-    } else if (selectedAssignedAgent) {
+    } else {
+      // This handles both selectedAssignedAgent and new agent creation
       return (
         <>
           <div style={{ display: 'flex', gap: '16px', height: '100%' }}>
@@ -1465,7 +1466,42 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
             {/* MCP Section */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
               <Typography.Title level={5} style={{ marginBottom: '14px' }}>
-                Add Optional MCP Servers
+                <Space>
+                  Add Optional MCP Servers
+                  <Tooltip
+                    title={
+                      <span>
+                        Agents can tap into tools exposed by a MCP server. MCP servers can be
+                        registered in Agent Studio from the{' '}
+                        <a
+                          onClick={(e) => {
+                            e.preventDefault();
+                            router.push('/tools?section=mcp');
+                          }}
+                          style={{
+                            color: '#1890ff',
+                            textDecoration: 'underline',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Tools Catalog
+                        </a>{' '}
+                        page. Learn more about Model Context Protocol{' '}
+                        <a
+                          href="https://modelcontextprotocol.io/introduction"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: '#1890ff', textDecoration: 'underline' }}
+                        >
+                          here
+                        </a>
+                        .
+                      </span>
+                    }
+                  >
+                    <QuestionCircleOutlined style={{ color: '#666' }} />
+                  </Tooltip>
+                </Space>
               </Typography.Title>
               <Button
                 type="dashed"

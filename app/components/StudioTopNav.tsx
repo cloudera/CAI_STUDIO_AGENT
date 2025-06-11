@@ -46,7 +46,7 @@ const StudioTopNav: React.FC = () => {
 
   const menuItemActions: Record<string, () => void> = {
     '/workflows': () => router.push('/workflows'),
-    '/tools': () => router.push('/tools'),
+    '/tools': () => router.push('/tools?section=tools'),
     '/models': () => router.push('/models'),
     '/feedback': () => {},
   };

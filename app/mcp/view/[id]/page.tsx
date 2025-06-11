@@ -112,7 +112,7 @@ const McpTemplateViewPage: React.FC = () => {
         placement: 'topRight',
       });
       setIsDeleteModalOpen(false);
-      router.push('/tools');
+      router.push('/tools?section=mcp');
     } catch (err: any) {
       notificationApi.error({
         message: 'Error',
@@ -154,7 +154,7 @@ const McpTemplateViewPage: React.FC = () => {
         placement: 'topRight',
       });
 
-      router.push('/tools'); // Redirect to /tools page
+      router.push('/tools?section=mcp'); // Redirect to /tools page
     } catch (err: any) {
       const errorMessage = err.data?.error || err.message || 'Failed to update the MCP server.';
       notificationApi.error({
@@ -223,7 +223,7 @@ const McpTemplateViewPage: React.FC = () => {
     <Layout style={{ flex: 1, padding: '16px 24px 22px', flexDirection: 'column' }}>
       <CommonBreadCrumb
         items={[
-          { title: 'Tool Catalog', href: '/tools' },
+          { title: 'Tool Catalog', href: '/tools?section=mcp' },
           { title: isEditMode ? 'Edit MCP Server' : 'View MCP Server' },
         ]}
       />

@@ -68,6 +68,13 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
   }
 }`;
 
+  const availableRuntimeMessage: React.ReactNode = (
+    <>
+      Only <Text code>uvx</Text> (for Python-based) and <Text code>npx</Text> (for Node.js-based)
+      are supported as runtimes for MCP servers currently.
+    </>
+  );
+
   useEffect(() => {
     if (isOpen) {
       if (!jsonInput) {
@@ -135,12 +142,7 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
       const unknownFields = configFields.filter((field) => !allowedFields.includes(field));
 
       if (unknownFields.length > 0) {
-        setValidationError(
-          <>
-            Only supported JSON fields are: <Text code>command</Text>, <Text code>args</Text> and{' '}
-            <Text code>env</Text>.
-          </>,
-        );
+        setValidationError(availableRuntimeMessage);
         setServerNameInfo('');
         setIsValid(false);
         setParsedConfig(null);
@@ -396,11 +398,19 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
 
         {/* Validation Messages - Full Width */}
         {serverNameInfo && (
-          <div style={{ marginTop: '16px' }}>
+          <div style={{ marginTop: '16px', flexDirection: 'column' }}>
             <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
               <InfoCircleOutlined style={{ color: '#4d7cff', marginRight: '4px' }} />
               <Text type="secondary" style={{ fontSize: '12px', color: '#4d7cff' }}>
                 {serverNameInfo}
+              </Text>
+            </div>
+            <div
+              style={{ display: 'flex', alignItems: 'center', fontSize: '12px', marginTop: '2px' }}
+            >
+              <InfoCircleOutlined style={{ color: '#4d7cff', marginRight: '4px' }} />
+              <Text type="secondary" style={{ fontSize: '12px', color: '#4d7cff' }}>
+                {availableRuntimeMessage}
               </Text>
             </div>
           </div>

@@ -21,6 +21,7 @@ Cloudera AI Agent Studio is a low-code and powerful platform for building, testi
 These docs are targeted for people that are using Agent Studio to build and deploy workflows. 
  - Configure an LLM for your agents to use. ([LLMs User Guide](./docs/user_guide/models.md))
  - Create new tools or go through our existing set of tools. *This step is optional.* ([Tools User Guide](./docs/user_guide/tools.md))
+ - Configure [Model Context Protocol](https://modelcontextprotocol.io/introduction) servers to use with agents. *This step is optional.* ([MCP User Guide](./docs/user_guide/mcp.md))
  - Create, test, deploy and manage workflows. ([Workflows User Guide](./docs/user_guide/workflows.md))
  - Learn about using our example prepackaged workflow templates ([Workflow Templates Guide](docs/user_guide/workflow_templates.md))
  - Monitor your workflows. ([Monitoring User Guide](./docs/user_guide/monitoring.md))
@@ -34,4 +35,7 @@ These docs are targeted for individuals managing the Agent Studio instance itsel
 These docs are targeted for individuals who are building custom Agent Studio tools
  - [Creating Custom Tools](./docs/user_guide/custom_tools.md)
 
-
+### For [Model Context Protocol(MCP)](https://modelcontextprotocol.io/introduction) Users
+These docs are targetted towards individuals looking to connect MCP servers to agents in workflows.
+ - [MCP User Guide](./docs/user_guide/mcp.md)
+ - [Barebones example of using a MCP Server in Agent Studio](./docs/user_guide/mcp_example.md)

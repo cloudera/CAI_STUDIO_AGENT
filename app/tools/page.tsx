@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Layout from 'antd/lib/layout';
-import { Button, Typography, Input, Image, Tabs } from 'antd';
+import { Button, Typography, Image, Tabs, Spin } from 'antd';
 import { ArrowRightOutlined } from '@ant-design/icons';
 import ToolTemplateList from '../components/ToolTemplateList';
 import {
@@ -11,7 +11,7 @@ import {
   useAddToolTemplateMutation,
 } from './toolTemplatesApi';
 import CommonBreadCrumb from '../components/CommonBreadCrumb';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import CreateToolTemplateModal from '../components/CreateToolTemplateModal';
 import { useGlobalNotification } from '../components/Notifications'; // Assuming global notification
 import RegisterMCPTemplateModal from '../components/RegisterMCPTemplateModal';
@@ -371,29 +371,47 @@ const MCPTabContent = () => {
   );
 };
 
-const ToolsPage = () => {
-  const { data: wflowData, isLoading } = useGetWorkflowDataQuery();
-  const [activeTab, setActiveTab] = useState<'tools' | 'mcps'>('tools');
+const ToolsPageContent = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const section: 'tools' | 'mcp' | null = searchParams.get('section') as 'tools' | 'mcp' | null;
+
+  // Redirect to default section if none provided
+  useEffect(() => {
+    if (!section) {
+      router.replace('/tools?section=tools');
+      return;
+    }
+  }, [section, router]);
+
+  const handleTabChange = (activeKey: string) => {
+    router.push(`/tools?section=${activeKey}`);
+  };
+
+  if (!section) {
+    return null;
+  }
+
   return (
-    <>
-      <Layout style={{ flex: 1, padding: '16px 24px 22px', flexDirection: 'column' }}>
-        <CommonBreadCrumb items={[{ title: 'Tools Catalog' }]} />
-        <Tabs
-          defaultActiveKey={activeTab}
-          style={{ marginTop: '0px' }}
-          onChange={(activeKey) => {
-            setActiveTab(activeKey as 'tools' | 'mcps');
-          }}
-        >
-          <TabPane tab="Agent Studio Tools" key="tools">
-            <ToolsTabContent />
-          </TabPane>
-          <TabPane tab="MCP Servers" key="mcps">
-            <MCPTabContent />
-          </TabPane>
-        </Tabs>
-      </Layout>
-    </>
+    <Layout style={{ flex: 1, padding: '16px 24px 22px', flexDirection: 'column' }}>
+      <CommonBreadCrumb items={[{ title: 'Tools Catalog' }]} />
+      <Tabs activeKey={section} style={{ marginTop: '0px' }} onChange={handleTabChange}>
+        <TabPane tab="Agent Studio Tools" key="tools">
+          <ToolsTabContent />
+        </TabPane>
+        <TabPane tab="MCP Servers" key="mcp">
+          <MCPTabContent />
+        </TabPane>
+      </Tabs>
+    </Layout>
+  );
+};
+
+const ToolsPage = () => {
+  return (
+    <Suspense fallback={<Spin size="large" />}>
+      <ToolsPageContent />
+    </Suspense>
   );
 };
 
