@@ -1445,7 +1445,6 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                   flex: 1,
                   overflowY: 'auto',
                   maxHeight: '300px',
-                  paddingRight: '8px',
                 }}
               >
                 {renderToolList()}
@@ -1484,7 +1483,6 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                   flex: 1,
                   overflowY: 'auto',
                   maxHeight: '300px',
-                  paddingLeft: '8px',
                 }}
               >
                 {renderMcpList()}
