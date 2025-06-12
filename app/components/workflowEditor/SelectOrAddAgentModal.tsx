@@ -1471,7 +1471,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                   <Tooltip
                     title={
                       <span>
-                        Agents can tap into tools exposed by a MCP server. MCP servers can be
+                        Use tools and data sources registered as MCP servers. MCP servers can be
                         registered in Agent Studio from the{' '}
                         <a
                           onClick={(e) => {

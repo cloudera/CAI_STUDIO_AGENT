@@ -193,11 +193,6 @@ MCP tools integrate seamlessly into your workflow structure.
 
 ![Workflow with MCP Tools](./mcp_example_assets/08-workflow-with-mcp-tools.png)
 
-Multiple agents can:
-- Share the same MCP server
-- Use different tools from the same server
-- Coordinate actions across different external systems
-
 ## Additional Resources
 
 - [Model Context Protocol Documentation](https://modelcontextprotocol.io/introduction)

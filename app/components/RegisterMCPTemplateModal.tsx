@@ -166,8 +166,8 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
       if (!Object.keys(runtimeToTypeMapping).includes(serverConfig.command)) {
         setValidationError(
           <>
-            Only <Text code>uvx</Text> (for Python-based) and <Text code>npx</Text> (for Node-based)
-            are supported as runtimes for MCP servers currently.
+            Only <Text code>uvx</Text> (for Python-based) and <Text code>npx</Text> (for
+            Node.js-based) are supported as runtimes for MCP servers currently.
           </>,
         );
         setServerNameInfo('');
@@ -314,8 +314,9 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <Alert
           message={
-            'Environment variable values are not saved by the Agent Studio for security purposes ' +
-            'and the values would be required to be inputted again while configuring a workflow.'
+            'For security reasons, Agent Studio does not save environment variable values. ' +
+            'The values would need to be entered again while configuring a workflow. ' +
+            'It is recommended to use dummy values here for the environment variables.'
           }
           type="info"
           showIcon

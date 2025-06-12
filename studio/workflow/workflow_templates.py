@@ -184,8 +184,12 @@ def add_workflow_template_from_workflow(
                 if mcp_instance.mcp_image_path:
                     _, ext = os.path.splitext(mcp_instance.mcp_image_path)
                     os.makedirs(consts.MCP_TEMPLATE_ICONS_LOCATION, exist_ok=True)
-                    unique_mcp_identifier = cc_utils.create_slug_from_name(mcp_instance.name) + "_" + cc_utils.get_random_compact_string()
-                    mcp_template_image_path = os.path.join(consts.MCP_TEMPLATE_ICONS_LOCATION, f"{unique_mcp_identifier}_icon{ext}")
+                    unique_mcp_identifier = (
+                        cc_utils.create_slug_from_name(mcp_instance.name) + "_" + cc_utils.get_random_compact_string()
+                    )
+                    mcp_template_image_path = os.path.join(
+                        consts.MCP_TEMPLATE_ICONS_LOCATION, f"{unique_mcp_identifier}_icon{ext}"
+                    )
                     shutil.copy(mcp_instance.mcp_image_path, mcp_template_image_path)
 
                 mcp_template: db_model.MCPTemplate = db_model.MCPTemplate(
@@ -412,6 +416,7 @@ def export_workflow_template(
                 os.makedirs(os.path.join(temp_dir, consts.TOOL_TEMPLATE_CATALOG_LOCATION), exist_ok=True)
                 os.makedirs(os.path.join(temp_dir, consts.TOOL_TEMPLATE_ICONS_LOCATION), exist_ok=True)
                 os.makedirs(os.path.join(temp_dir, consts.AGENT_TEMPLATE_ICONS_LOCATION), exist_ok=True)
+                os.makedirs(os.path.join(temp_dir, consts.MCP_TEMPLATE_ICONS_LOCATION), exist_ok=True)
 
                 # Copy tool templates
                 for tool_template in tool_templates:
@@ -433,10 +438,8 @@ def export_workflow_template(
                 # Copy MCP template icons
                 for mcp_template in mcp_templates:
                     if mcp_template.mcp_image_path:
-                        shutil.copy(
-                            mcp_template.mcp_image_path, os.path.join(temp_dir, mcp_template.mcp_image_path)
-                        )
-                        
+                        shutil.copy(mcp_template.mcp_image_path, os.path.join(temp_dir, mcp_template.mcp_image_path))
+
                 # Create a zip file
                 zip_file_path = os.path.join(consts.TEMP_FILES_LOCATION, os.path.basename(temp_dir))
                 shutil.make_archive(zip_file_path, "zip", temp_dir)
@@ -505,7 +508,9 @@ def import_workflow_template(
             if _m.get("mcp_image_path"):
                 _, ext = os.path.splitext(_m["mcp_image_path"])
                 ext = ext.lower()
-                unique_mcp_identifier = cc_utils.create_slug_from_name(_m["name"]) + "_" + cc_utils.get_random_compact_string()
+                unique_mcp_identifier = (
+                    cc_utils.create_slug_from_name(_m["name"]) + "_" + cc_utils.get_random_compact_string()
+                )
                 new_image_path = os.path.join(consts.MCP_TEMPLATE_ICONS_LOCATION, f"{unique_mcp_identifier}_icon{ext}")
                 os.rename(os.path.join(temp_dir, _m["mcp_image_path"]), os.path.join(temp_dir, new_image_path))
                 _m["mcp_image_path"] = new_image_path
