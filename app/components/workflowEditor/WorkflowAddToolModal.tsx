@@ -461,19 +461,21 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                 marginRight: '8px',
               }}
             >
-              {template.tool_image_uri && toolIconsData[template.tool_image_uri] && (
-                <Image
-                  src={toolIconsData[template.tool_image_uri]}
-                  alt={template.name}
-                  width={16}
-                  height={16}
-                  preview={false}
-                  style={{
-                    borderRadius: '2px',
-                    objectFit: 'cover',
-                  }}
-                />
-              )}
+              <Image
+                src={
+                  template.tool_image_uri && toolIconsData[template.tool_image_uri]
+                    ? toolIconsData[template.tool_image_uri]
+                    : '/fallback-image.png'
+                }
+                alt={template.name}
+                width={16}
+                height={16}
+                preview={false}
+                style={{
+                  borderRadius: '2px',
+                  objectFit: 'cover',
+                }}
+              />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', flex: 1, gap: '4px' }}>
               <Text
@@ -594,19 +596,21 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                 marginRight: '8px',
               }}
             >
-              {imageUri && (
-                <Image
-                  src={toolIconsData[imageUri] || '/fallback-image.png'}
-                  alt={toolInstance.name}
-                  width={16}
-                  height={16}
-                  preview={false}
-                  style={{
-                    borderRadius: '2px',
-                    objectFit: 'cover',
-                  }}
-                />
-              )}
+              <Image
+                src={
+                  imageUri && toolIconsData[imageUri]
+                    ? toolIconsData[imageUri]
+                    : '/fallback-image.png'
+                }
+                alt={toolInstance.name}
+                width={16}
+                height={16}
+                preview={false}
+                style={{
+                  borderRadius: '2px',
+                  objectFit: 'cover',
+                }}
+              />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', flex: 1, gap: '4px' }}>
               <Text

@@ -233,202 +233,205 @@ const WorkflowAgentsComponent: React.FC<WorkflowAgentsComponentProps> = ({ workf
           <List
             grid={{ gutter: 16, column: 2 }}
             dataSource={agents?.filter((agent) => workflowAgentIds.includes(agent.id))}
-            renderItem={(agent) => (
-              <List.Item>
-                <Layout
-                  style={{
-                    borderRadius: '4px',
-                    border: 'solid 1px #f0f0f0',
-                    backgroundColor: '#fff',
-                    width: '100%',
-                    height: '180px',
-                    margin: '0px 12px 16px 0px',
-                    padding: '0',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    cursor: 'pointer',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'scale(1.03)';
-                    e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'scale(1)';
-                    e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
-                  }}
-                >
+            renderItem={(agent) => {
+              const iconResourceIds = (agent.tools_id || []).concat(agent.mcp_instance_ids || []);
+              return (
+                <List.Item>
                   <Layout
                     style={{
-                      flex: 1,
-                      background: 'transparent',
+                      borderRadius: '4px',
+                      border: 'solid 1px #f0f0f0',
+                      backgroundColor: '#fff',
+                      width: '100%',
+                      height: '180px',
+                      margin: '0px 12px 16px 0px',
+                      padding: '0',
                       display: 'flex',
                       flexDirection: 'column',
-                      overflow: 'auto',
+                      cursor: 'pointer',
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'scale(1.03)';
+                      e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
                     }}
                   >
-                    <div
+                    <Layout
                       style={{
-                        padding: '16px 24px',
+                        flex: 1,
+                        background: 'transparent',
                         display: 'flex',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: '12px',
+                        flexDirection: 'column',
+                        overflow: 'auto',
                       }}
                     >
-                      <Avatar
+                      <div
                         style={{
-                          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-                          backgroundColor: '#4b85d1',
-                          minWidth: '24px',
-                          minHeight: '24px',
-                          width: '24px',
-                          height: '24px',
-                          flex: '0 0 24px',
+                          padding: '16px 24px',
+                          display: 'flex',
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: '12px',
                         }}
-                        size={24}
-                        icon={<UserOutlined />}
-                      />
+                      >
+                        <Avatar
+                          style={{
+                            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+                            backgroundColor: '#4b85d1',
+                            minWidth: '24px',
+                            minHeight: '24px',
+                            width: '24px',
+                            height: '24px',
+                            flex: '0 0 24px',
+                          }}
+                          size={24}
+                          icon={<UserOutlined />}
+                        />
+                        <Text
+                          style={{
+                            fontSize: '14px',
+                            fontWeight: 400,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                          title={agent.name}
+                        >
+                          {agent.name}
+                        </Text>
+                      </div>
                       <Text
                         style={{
-                          fontSize: '14px',
+                          padding: '0 24px',
+                          fontSize: '11px',
+                          opacity: 0.45,
                           fontWeight: 400,
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                         }}
-                        title={agent.name}
                       >
-                        {agent.name}
+                        Goal:{' '}
+                        <span style={{ color: 'black', fontWeight: 400 }}>
+                          {agent.crew_ai_agent_metadata?.goal || 'N/A'}
+                        </span>
                       </Text>
-                    </div>
-                    <Text
-                      style={{
-                        padding: '0 24px',
-                        fontSize: '11px',
-                        opacity: 0.45,
-                        fontWeight: 400,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
-                    >
-                      Goal:{' '}
-                      <span style={{ color: 'black', fontWeight: 400 }}>
-                        {agent.crew_ai_agent_metadata?.goal || 'N/A'}
-                      </span>
-                    </Text>
-                    <Text
-                      style={{
-                        padding: '0 24px',
-                        fontSize: '11px',
-                        opacity: 0.45,
-                        fontWeight: 400,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        marginTop: '8px',
-                      }}
-                    >
-                      Backstory:{' '}
-                      <span style={{ color: 'black', fontWeight: 400 }}>
-                        {agent.crew_ai_agent_metadata?.backstory || 'N/A'}
-                      </span>
-                    </Text>
-                    {agent.tools_id?.length > 0 && (
-                      <Space
+                      <Text
                         style={{
-                          marginTop: '12px',
-                          paddingLeft: '24px',
-                          paddingRight: '24px',
-                          display: 'flex',
-                          flexWrap: 'wrap',
-                          gap: '10px',
+                          padding: '0 24px',
+                          fontSize: '11px',
+                          opacity: 0.45,
+                          fontWeight: 400,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          marginTop: '8px',
                         }}
                       >
-                        {agent.tools_id.concat(agent.mcp_instance_ids).map((resourceId) => {
-                          const toolInstance = toolInstancesMap[resourceId];
-                          const mcpInstance = mcpInstancesMap[resourceId];
-                          const resourceType: 'tool' | 'mcp' = toolInstance ? 'tool' : 'mcp';
-                          const imageUri =
-                            resourceType === 'tool'
-                              ? toolInstance?.tool_image_uri
-                              : mcpInstance?.image_uri;
-                          const imageSrc =
-                            imageUri && imageData[imageUri]
-                              ? imageData[imageUri]
-                              : resourceType === 'tool'
-                                ? '/fallback-image.png'
-                                : '/mcp-icon.svg';
-                          return (
-                            <Tooltip
-                              title={toolInstance?.name || mcpInstance?.name}
-                              key={resourceId}
-                              placement="top"
-                            >
-                              <div
-                                style={{
-                                  width: '24px',
-                                  height: '24px',
-                                  borderRadius: '50%',
-                                  background: '#f1f1f1',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  cursor: 'pointer',
-                                }}
+                        Backstory:{' '}
+                        <span style={{ color: 'black', fontWeight: 400 }}>
+                          {agent.crew_ai_agent_metadata?.backstory || 'N/A'}
+                        </span>
+                      </Text>
+                      {iconResourceIds.length > 0 && (
+                        <Space
+                          style={{
+                            marginTop: '12px',
+                            paddingLeft: '24px',
+                            paddingRight: '24px',
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: '10px',
+                          }}
+                        >
+                          {iconResourceIds.map((resourceId) => {
+                            const toolInstance = toolInstancesMap[resourceId];
+                            const mcpInstance = mcpInstancesMap[resourceId];
+                            const resourceType: 'tool' | 'mcp' = toolInstance ? 'tool' : 'mcp';
+                            const imageUri =
+                              resourceType === 'tool'
+                                ? toolInstance?.tool_image_uri
+                                : mcpInstance?.image_uri;
+                            const imageSrc =
+                              imageUri && imageData[imageUri]
+                                ? imageData[imageUri]
+                                : resourceType === 'tool'
+                                  ? '/fallback-image.png'
+                                  : '/mcp-icon.svg';
+                            return (
+                              <Tooltip
+                                title={toolInstance?.name || mcpInstance?.name}
+                                key={resourceId}
+                                placement="top"
                               >
-                                <Image
-                                  src={imageSrc}
-                                  alt={toolInstance?.name || mcpInstance?.name}
-                                  width={16}
-                                  height={16}
-                                  preview={false}
+                                <div
                                   style={{
-                                    borderRadius: '2px',
-                                    objectFit: 'cover',
+                                    width: '24px',
+                                    height: '24px',
+                                    borderRadius: '50%',
+                                    background: '#f1f1f1',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
                                   }}
-                                />
-                              </div>
-                            </Tooltip>
-                          );
-                        })}
-                      </Space>
-                    )}
-                  </Layout>
-                  <Divider style={{ flexGrow: 0, margin: '0px' }} type="horizontal" />
-                  <Layout
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'row',
-                      flexGrow: 0,
-                      background: 'transparent',
-                      justifyContent: 'space-around',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Button
-                      type="link"
-                      icon={<EditOutlined style={{ color: 'gray' }} />}
-                      onClick={() => {
-                        dispatch(updatedEditorAgentViewOpen(true));
-                        dispatch(updatedEditorAgentViewStep('Select'));
-                        dispatch(updatedEditorAgentViewAgent(agent));
+                                >
+                                  <Image
+                                    src={imageSrc}
+                                    alt={toolInstance?.name || mcpInstance?.name}
+                                    width={16}
+                                    height={16}
+                                    preview={false}
+                                    style={{
+                                      borderRadius: '2px',
+                                      objectFit: 'cover',
+                                    }}
+                                  />
+                                </div>
+                              </Tooltip>
+                            );
+                          })}
+                        </Space>
+                      )}
+                    </Layout>
+                    <Divider style={{ flexGrow: 0, margin: '0px' }} type="horizontal" />
+                    <Layout
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        flexGrow: 0,
+                        background: 'transparent',
+                        justifyContent: 'space-around',
+                        alignItems: 'center',
                       }}
-                    />
-                    <Popconfirm
-                      title={`Are you sure you want to delete agent ${agent.name}?`}
-                      onConfirm={() => handleDeleteAgent(agent.id, agent.name)}
-                      okText="Yes"
-                      cancelText="No"
                     >
-                      <Button type="link" icon={<DeleteOutlined style={{ color: 'red' }} />} />
-                    </Popconfirm>
+                      <Button
+                        type="link"
+                        icon={<EditOutlined style={{ color: 'gray' }} />}
+                        onClick={() => {
+                          dispatch(updatedEditorAgentViewOpen(true));
+                          dispatch(updatedEditorAgentViewStep('Select'));
+                          dispatch(updatedEditorAgentViewAgent(agent));
+                        }}
+                      />
+                      <Popconfirm
+                        title={`Are you sure you want to delete agent ${agent.name}?`}
+                        onConfirm={() => handleDeleteAgent(agent.id, agent.name)}
+                        okText="Yes"
+                        cancelText="No"
+                      >
+                        <Button type="link" icon={<DeleteOutlined style={{ color: 'red' }} />} />
+                      </Popconfirm>
+                    </Layout>
                   </Layout>
-                </Layout>
-              </List.Item>
-            )}
+                </List.Item>
+              );
+            }}
           />
         )}
       </Layout>

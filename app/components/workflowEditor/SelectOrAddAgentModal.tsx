@@ -1214,165 +1214,170 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
     <List
       grid={{ gutter: 16, column: 2 }}
       dataSource={agents?.filter((agent) => workflowAgentIds?.includes(agent.id))}
-      renderItem={(agent) => (
-        <List.Item>
-          <div
-            style={{
-              borderRadius: '4px',
-              border: 'solid 1px #f0f0f0',
-              backgroundColor: selectedAssignedAgent?.id === agent.id ? '#edf7ff' : '#fff',
-              width: '100%',
-              height: '160px',
-              padding: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              cursor: 'pointer',
-              transition: 'transform 0.2s, box-shadow 0.2s',
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-            }}
-            onClick={() => handleSelectAssignedAgent(agent)}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.03)';
-              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
-            }}
-          >
+      renderItem={(agent) => {
+        const iconResourceIds = (agent.tools_id || []).concat(agent.mcp_instance_ids || []);
+        return (
+          <List.Item>
             <div
               style={{
+                borderRadius: '4px',
+                border: 'solid 1px #f0f0f0',
+                backgroundColor: selectedAssignedAgent?.id === agent.id ? '#edf7ff' : '#fff',
+                width: '100%',
+                height: '160px',
+                padding: '16px',
                 display: 'flex',
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: '12px',
-                marginBottom: '16px',
+                flexDirection: 'column',
+                cursor: 'pointer',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+              }}
+              onClick={() => handleSelectAssignedAgent(agent)}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.03)';
+                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
               }}
             >
-              <Avatar
+              <div
                 style={{
-                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-                  backgroundColor: imageData[agent.agent_image_uri] ? '#b8d6ff' : '#78b2ff',
-                  minWidth: '24px',
-                  minHeight: '24px',
-                  width: '24px',
-                  height: '24px',
-                  flex: '0 0 24px',
-                  padding: imageData[agent.agent_image_uri] ? 4 : 0,
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: '12px',
+                  marginBottom: '16px',
                 }}
-                size={24}
-                icon={
-                  imageData[agent.agent_image_uri] ? (
-                    <Image src={imageData[agent.agent_image_uri]} alt={agent.name} />
-                  ) : (
-                    <UserOutlined />
-                  )
-                }
-              />
+              >
+                <Avatar
+                  style={{
+                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+                    backgroundColor: imageData[agent.agent_image_uri] ? '#b8d6ff' : '#78b2ff',
+                    minWidth: '24px',
+                    minHeight: '24px',
+                    width: '24px',
+                    height: '24px',
+                    flex: '0 0 24px',
+                    padding: imageData[agent.agent_image_uri] ? 4 : 0,
+                  }}
+                  size={24}
+                  icon={
+                    imageData[agent.agent_image_uri] ? (
+                      <Image src={imageData[agent.agent_image_uri]} alt={agent.name} />
+                    ) : (
+                      <UserOutlined />
+                    )
+                  }
+                />
+                <Text
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: 400,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                  title={agent.name}
+                >
+                  {agent.name}
+                </Text>
+              </div>
               <Text
                 style={{
-                  fontSize: '14px',
+                  fontSize: '11px',
+                  opacity: 0.45,
+                  fontWeight: 400,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  marginBottom: '4px',
+                }}
+              >
+                Goal:{' '}
+                <span style={{ color: 'black', fontWeight: 400 }}>
+                  {agent.crew_ai_agent_metadata?.goal || 'N/A'}
+                </span>
+              </Text>
+              <Text
+                style={{
+                  fontSize: '11px',
+                  opacity: 0.45,
                   fontWeight: 400,
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                 }}
-                title={agent.name}
               >
-                {agent.name}
+                Backstory:{' '}
+                <span style={{ color: 'black', fontWeight: 400 }}>
+                  {agent.crew_ai_agent_metadata?.backstory || 'N/A'}
+                </span>
               </Text>
-            </div>
-            <Text
-              style={{
-                fontSize: '11px',
-                opacity: 0.45,
-                fontWeight: 400,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                marginBottom: '4px',
-              }}
-            >
-              Goal:{' '}
-              <span style={{ color: 'black', fontWeight: 400 }}>
-                {agent.crew_ai_agent_metadata?.goal || 'N/A'}
-              </span>
-            </Text>
-            <Text
-              style={{
-                fontSize: '11px',
-                opacity: 0.45,
-                fontWeight: 400,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              Backstory:{' '}
-              <span style={{ color: 'black', fontWeight: 400 }}>
-                {agent.crew_ai_agent_metadata?.backstory || 'N/A'}
-              </span>
-            </Text>
-            {(agent.tools_id || []).length > 0 && (
-              <Space
-                style={{
-                  marginTop: '12px',
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: '10px',
-                }}
-              >
-                {(agent.tools_id || []).concat(agent.mcp_instance_ids || []).map((resourceId) => {
-                  const toolInstance = toolInstances[resourceId];
-                  const mcpInstance = mcpInstances[resourceId];
-                  const resourceType: 'tool' | 'mcp' = toolInstance ? 'tool' : 'mcp';
-                  const imageUri =
-                    resourceType === 'tool' ? toolInstance?.tool_image_uri : mcpInstance?.image_uri;
-                  const resourceName =
-                    resourceType === 'tool' ? toolInstance?.name : mcpInstance?.name;
-                  const imageSrc =
-                    imageUri && imageData[imageUri]
-                      ? imageData[imageUri]
-                      : resourceType === 'tool'
-                        ? '/fallback-image.png'
-                        : '/mcp-icon.svg';
-                  return (
-                    <Tooltip title={resourceName} key={resourceId} placement="top">
-                      <div
-                        style={{
-                          width: '24px',
-                          height: '24px',
-                          minWidth: '24px',
-                          minHeight: '24px',
-                          flex: '0 0 24px',
-                          borderRadius: '50%',
-                          background: '#f1f1f1',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        <Image
-                          src={imageSrc}
-                          alt={resourceName || resourceId}
-                          width={16}
-                          height={16}
-                          preview={false}
+              {iconResourceIds.length > 0 && (
+                <Space
+                  style={{
+                    marginTop: '12px',
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '10px',
+                  }}
+                >
+                  {iconResourceIds.map((resourceId) => {
+                    const toolInstance = toolInstances[resourceId];
+                    const mcpInstance = mcpInstances[resourceId];
+                    const resourceType: 'tool' | 'mcp' = toolInstance ? 'tool' : 'mcp';
+                    const imageUri =
+                      resourceType === 'tool'
+                        ? toolInstance?.tool_image_uri
+                        : mcpInstance?.image_uri;
+                    const resourceName =
+                      resourceType === 'tool' ? toolInstance?.name : mcpInstance?.name;
+                    const imageSrc =
+                      imageUri && imageData[imageUri]
+                        ? imageData[imageUri]
+                        : resourceType === 'tool'
+                          ? '/fallback-image.png'
+                          : '/mcp-icon.svg';
+                    return (
+                      <Tooltip title={resourceName} key={resourceId} placement="top">
+                        <div
                           style={{
-                            borderRadius: '2px',
-                            objectFit: 'cover',
+                            width: '24px',
+                            height: '24px',
+                            minWidth: '24px',
+                            minHeight: '24px',
+                            flex: '0 0 24px',
+                            borderRadius: '50%',
+                            background: '#f1f1f1',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
                           }}
-                        />
-                      </div>
-                    </Tooltip>
-                  );
-                })}
-              </Space>
-            )}
-          </div>
-        </List.Item>
-      )}
+                        >
+                          <Image
+                            src={imageSrc}
+                            alt={resourceName || resourceId}
+                            width={16}
+                            height={16}
+                            preview={false}
+                            style={{
+                              borderRadius: '2px',
+                              objectFit: 'cover',
+                            }}
+                          />
+                        </div>
+                      </Tooltip>
+                    );
+                  })}
+                </Space>
+              )}
+            </div>
+          </List.Item>
+        );
+      }}
     />
   );
 
