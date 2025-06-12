@@ -428,7 +428,9 @@ message MCPTemplate {
   optional string workflow_template_id = 9;
 }
 
-message ListMcpTemplatesRequest {}
+message ListMcpTemplatesRequest {
+  optional string workflow_template_id = 1;
+}
 
 message ListMcpTemplatesResponse {
   repeated MCPTemplate mcp_templates = 1;

@@ -3,6 +3,7 @@ import shutil
 import re
 from uuid import uuid4
 from studio.db.dao import AgentStudioDao
+from studio.proto.utils import is_field_set
 from studio.db import model as db_model
 from studio.api import *
 from studio.cross_cutting.global_thread_pool import get_thread_pool
@@ -156,7 +157,12 @@ def list_mcp_templates(
     request: ListMcpTemplatesRequest, cml: CMLServiceApi, dao: AgentStudioDao
 ) -> ListMcpTemplatesResponse:
     with dao.get_session() as session:
-        mcp_templates = session.query(db_model.MCPTemplate).all()
+        if is_field_set(request, "workflow_template_id"):
+            mcp_templates = (
+                session.query(db_model.MCPTemplate).filter_by(workflow_template_id=request.workflow_template_id).all()
+            )
+        else:
+            mcp_templates = session.query(db_model.MCPTemplate).all()
         return ListMcpTemplatesResponse(
             mcp_templates=[
                 MCPTemplate(
@@ -166,10 +172,11 @@ def list_mcp_templates(
                     args=list(_t.args),
                     env_names=list(_t.env_names),
                     tools=json.dumps(_t.tools),
-                    image_uri=os.path.relpath(_t.mcp_image_path, consts.DYNAMIC_ASSETS_LOCATION)
-                    if _t.mcp_image_path
-                    else "",
+                    image_uri=(
+                        os.path.relpath(_t.mcp_image_path, consts.DYNAMIC_ASSETS_LOCATION) if _t.mcp_image_path else ""
+                    ),
                     status=_t.status,
+                    workflow_template_id=_t.workflow_template_id,
                 )
                 for _t in mcp_templates
             ]

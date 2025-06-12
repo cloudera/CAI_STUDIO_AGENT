@@ -539,8 +539,10 @@ class MCPTemplate(_message.Message):
     ) -> None: ...
 
 class ListMcpTemplatesRequest(_message.Message):
-    __slots__ = ()
-    def __init__(self) -> None: ...
+    __slots__ = ("workflow_template_id",)
+    WORKFLOW_TEMPLATE_ID_FIELD_NUMBER: _ClassVar[int]
+    workflow_template_id: str
+    def __init__(self, workflow_template_id: _Optional[str] = ...) -> None: ...
 
 class ListMcpTemplatesResponse(_message.Message):
     __slots__ = ("mcp_templates",)

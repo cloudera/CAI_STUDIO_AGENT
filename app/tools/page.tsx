@@ -16,9 +16,9 @@ import CreateToolTemplateModal from '../components/CreateToolTemplateModal';
 import { useGlobalNotification } from '../components/Notifications'; // Assuming global notification
 import RegisterMCPTemplateModal from '../components/RegisterMCPTemplateModal';
 import {
-  useListMcpTemplatesQuery,
   useRemoveMcpTemplateMutation,
   useAddMcpTemplateMutation,
+  useListGlobalMcpTemplatesQuery,
 } from '../mcp/mcpTemplatesApi';
 import MCPTemplateList from '../components/MCPTemplateList';
 import { useGetWorkflowDataQuery } from '../workflows/workflowAppApi';
@@ -198,7 +198,7 @@ const MCPTabContent = () => {
   const [removeMcpTemplate] = useRemoveMcpTemplateMutation();
   const [shouldPoll, setShouldPoll] = useState(false);
 
-  const { data: mcps } = useListMcpTemplatesQuery(
+  const { data: mcps } = useListGlobalMcpTemplatesQuery(
     {},
     {
       pollingInterval: shouldPoll ? 3000 : 0,
