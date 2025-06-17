@@ -7,6 +7,7 @@ class SupportedModelTypes(str, Enum):
     AZURE_OPENAI = "AZURE_OPENAI"
     GEMINI = "GEMINI"
     ANTHROPIC = "ANTHROPIC"
+    CAII = "CAII"
 
 
 ALL_STUDIO_DATA_LOCATION = "studio-data"

@@ -55,5 +55,15 @@ def get_crewai_llm(language_model: Input__LanguageModel, llm_config_dict: Dict[s
             temperature=language_model.generation_config.get("temperature"),
             max_completion_tokens=language_model.generation_config.get("max_new_tokens"),
         )
+    elif llm_config.model_type == "CAII":
+        return AgentStudioCrewAILLM(
+            agent_studio_id=language_model.model_id,
+            model="openai/" + llm_config.provider_model,
+            api_key=llm_config.api_key,
+            base_url=llm_config.api_base,
+            temperature=language_model.generation_config.get("temperature"),
+            max_completion_tokens=language_model.generation_config.get("max_new_tokens"),
+            seed=0,
+        )
     else:
         raise ValueError(f"Model type {llm_config.model_type} is not supported.")

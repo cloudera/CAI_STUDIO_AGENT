@@ -74,6 +74,7 @@ const ModelList: React.FC<ModelListProps> = ({
           OPENAI_COMPATIBLE: 'OpenAI Compatible',
           GEMINI: 'Google Gemini',
           ANTHROPIC: 'Anthropic',
+          CAII: 'Cloudera AI Inference',
         };
         const iconMap: Record<string, string> = {
           OPENAI: '/llm_providers/openai.svg',
@@ -81,6 +82,7 @@ const ModelList: React.FC<ModelListProps> = ({
           OPENAI_COMPATIBLE: '/llm_providers/generic-llm.svg',
           GEMINI: '/llm_providers/gemini.svg',
           ANTHROPIC: '/llm_providers/anthropic.svg',
+          CAII: '/llm_providers/caii.svg',
         };
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

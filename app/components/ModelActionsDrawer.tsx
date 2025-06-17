@@ -89,6 +89,127 @@ const ModelActionsDrawer: React.FC<ModelActionsDrawerProps> = ({
     }
   };
 
+  const modelIdentifierOptions: Record<string, { value: string; label: string }[]> = {
+    OPENAI: [
+      { value: 'gpt-4.1', label: 'gpt-4.1' },
+      { value: 'gpt-4.1-mini', label: 'gpt-4.1-mini' },
+      { value: 'gpt-4.1-nano', label: 'gpt-4.1-nano' },
+      { value: 'gpt-4o', label: 'gpt-4o' },
+      { value: 'gpt-4o-mini', label: 'gpt-4o-mini' },
+      { value: 'gpt-4', label: 'gpt-4' },
+      { value: 'o4-mini', label: 'o4-mini' },
+      { value: 'o3-mini', label: 'o3-mini' },
+      { value: 'o1-mini', label: 'o1-mini' },
+    ],
+    GEMINI: [
+      { value: 'gemini-2.0-flash', label: 'gemini-2.0-flash' },
+      { value: 'gemini-2.5-flash-preview-05-20', label: 'gemini-2.5-flash-preview-05-20' },
+      { value: 'gemini-2.5-pro-preview-05-06', label: 'gemini-2.5-pro-preview-05-06' },
+    ],
+    ANTHROPIC: [
+      { value: 'claude-opus-4-0', label: 'claude-opus-4-0' },
+      { value: 'claude-sonnet-4-0', label: 'claude-sonnet-4-0' },
+      { value: 'claude-3-7-sonnet-latest', label: 'claude-3-7-sonnet-latest' },
+      { value: 'claude-3-5-sonnet-latest', label: 'claude-3-5-sonnet-latest' },
+      { value: 'claude-3-5-haiku-latest', label: 'claude-3-5-haiku-latest' },
+    ],
+  };
+
+  const renderModelIdentifier = () => {
+    const type = changedModel?.model_type;
+    const commonProps = {
+      label: (
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          Model Identifier
+          <Tooltip
+            title={
+              type === 'CAII'
+                ? 'Go to Cloudera AI Model Endpoint details page for Model_ID'
+                : type === 'AZURE_OPENAI'
+                  ? 'Enter the deployment name for the Azure model.'
+                  : 'Enter the provider-specific model identifier (e.g., gpt-4o for OpenAI).'
+            }
+          >
+            <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+          </Tooltip>
+        </div>
+      ),
+      name: 'modelIdentifier',
+      rules: [
+        {
+          required: true,
+          message:
+            type === 'CAII'
+              ? 'CAII model identifier is required.'
+              : type === 'AZURE_OPENAI'
+                ? 'Azure deployment name is required.'
+                : 'Model identifier is required.',
+        },
+      ],
+      initialValue: drawerMode === 'edit' ? changedModel?.provider_model : undefined,
+    };
+
+    if (type === 'CAII') {
+      return (
+        <Form.Item {...commonProps}>
+          <Input
+            placeholder="Enter the model ID"
+            onChange={(e) =>
+              setChangedModel(changedModel ? { ...changedModel, provider_model: e.target.value } : null)
+            }
+          />
+        </Form.Item>
+      );
+    }
+
+    if (type === 'AZURE_OPENAI') {
+      return (
+        <Form.Item {...commonProps}>
+          <Input
+            placeholder="Enter Azure deployment name"
+            onChange={(e) =>
+              setChangedModel(changedModel ? { ...changedModel, provider_model: e.target.value } : null)
+            }
+          />
+        </Form.Item>
+      );
+    }
+
+    if (type && modelIdentifierOptions[type]) {
+      return (
+        <Form.Item {...commonProps}>
+          <Select
+            placeholder="Select the model identifier"
+            onChange={(value) =>
+              setChangedModel(changedModel ? { ...changedModel, provider_model: value } : null)
+            }
+          >
+            {modelIdentifierOptions[type].map((opt) => (
+              <Option key={opt.value} value={opt.value}>
+                {opt.label}
+              </Option>
+            ))}
+          </Select>
+        </Form.Item>
+      );
+    }
+
+    if (type === 'OPENAI_COMPATIBLE') {
+      return (
+        <Form.Item {...commonProps}>
+          <Input
+            placeholder="Enter the model identifier at the provider"
+            onChange={(e) =>
+              setChangedModel(changedModel ? { ...changedModel, provider_model: e.target.value } : null)
+            }
+          />
+        </Form.Item>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <Drawer
       title={
@@ -140,7 +261,7 @@ const ModelActionsDrawer: React.FC<ModelActionsDrawerProps> = ({
             label={
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 Model Provider
-                <Tooltip title="Choose the model provider, such as OpenAI, OpenAI Compatible, Azure OpenAI, Google Gemini, or Anthropic.">
+                <Tooltip title="Choose the model provider, such as OpenAI, OpenAI Compatible, Azure OpenAI, Google Gemini, Anthropic, or Cloudera AI Inference.">
                   <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
                 </Tooltip>
               </div>
@@ -207,6 +328,16 @@ const ModelActionsDrawer: React.FC<ModelActionsDrawerProps> = ({
                   Anthropic
                 </div>
               </Option>
+              <Option value="CAII">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <img
+                    src="/llm_providers/caii.svg"
+                    alt="Cloudera AI Inference"
+                    style={{ width: '16px', height: '16px' }}
+                  />
+                  Cloudera AI Inference
+                </div>
+              </Option>
             </Select>
           </Form.Item>
 
@@ -235,84 +366,7 @@ const ModelActionsDrawer: React.FC<ModelActionsDrawerProps> = ({
 
           {/* Model Identifier */}
           <Form.Item shouldUpdate>
-            {changedModel?.model_type != 'AZURE_OPENAI' && (
-              <Form.Item
-                label={
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    Model Identifier
-                    <Tooltip title="Enter the provider-specific model identifier (e.g., gpt-4o for OpenAI).">
-                      <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
-                    </Tooltip>
-                  </div>
-                }
-                name="modelIdentifier"
-                rules={[{ required: true, message: 'Model identifier is required.' }]}
-                initialValue={drawerMode === 'edit' ? changedModel?.provider_model : undefined}
-              >
-                {changedModel?.model_type === 'OPENAI' ? (
-                  <Select
-                    placeholder="Select the model identifier"
-                    onChange={(value) => {
-                      setChangedModel(
-                        changedModel ? { ...changedModel, provider_model: value } : null,
-                      );
-                    }}
-                  >
-                    <Option value="gpt-4.1">gpt-4.1</Option>
-                    <Option value="gpt-4.1-mini">gpt-4.1-mini</Option>
-                    <Option value="gpt-4.1-nano">gpt-4.1-nano</Option>
-                    <Option value="gpt-4o">gpt-4o</Option>
-                    <Option value="gpt-4o-mini">gpt-4o-mini</Option>
-                    <Option value="gpt-4">gpt-4</Option>
-                    <Option value="o4-mini">o4-mini</Option>
-                    <Option value="o3-mini">o3-mini</Option>
-                    <Option value="o1-mini">o1-mini</Option>
-                  </Select>
-                ) : changedModel?.model_type === 'OPENAI_COMPATIBLE' ||
-                  changedModel?.model_type === 'AZURE_OPENAI' ? (
-                  <Input
-                    placeholder="Enter the model identifier at the provider"
-                    onChange={(e) => {
-                      setChangedModel(
-                        changedModel ? { ...changedModel, provider_model: e.target.value } : null,
-                      );
-                    }}
-                  />
-                ) : changedModel?.model_type === 'GEMINI' ? (
-                  <Select
-                    placeholder="Select the model identifier"
-                    onChange={(value) => {
-                      setChangedModel(
-                        changedModel ? { ...changedModel, provider_model: value } : null,
-                      );
-                    }}
-                  >
-                    <Option value="gemini-2.0-flash">gemini-2.0-flash</Option>
-                    <Option value="gemini-2.5-flash-preview-05-20">
-                      gemini-2.5-flash-preview-05-20
-                    </Option>
-                    <Option value="gemini-2.5-pro-preview-05-06">
-                      gemini-2.5-pro-preview-05-06
-                    </Option>
-                  </Select>
-                ) : changedModel?.model_type === 'ANTHROPIC' ? (
-                  <Select
-                    placeholder="Select the model identifier"
-                    onChange={(value) => {
-                      setChangedModel(
-                        changedModel ? { ...changedModel, provider_model: value } : null,
-                      );
-                    }}
-                  >
-                    <Option value="claude-opus-4-0">claude-opus-4-0</Option>
-                    <Option value="claude-sonnet-4-0">claude-sonnet-4-0</Option>
-                    <Option value="claude-3-7-sonnet-latest">claude-3-7-sonnet-latest</Option>
-                    <Option value="claude-3-5-sonnet-latest">claude-3-5-sonnet-latest</Option>
-                    <Option value="claude-3-5-haiku-latest">claude-3-5-haiku-latest</Option>
-                  </Select>
-                ) : null}
-              </Form.Item>
-            )}
+            {renderModelIdentifier()}
 
             {/* API Base */}
             {(changedModel?.model_type === 'OPENAI_COMPATIBLE' ||
@@ -340,36 +394,42 @@ const ModelActionsDrawer: React.FC<ModelActionsDrawerProps> = ({
                 />
               </Form.Item>
             )}
-            {changedModel?.model_type === 'AZURE_OPENAI' && (
+            {/* CAII API Base */}
+            {changedModel?.model_type === 'CAII' && (
               <Form.Item
                 label={
                   <div style={{ display: 'flex', alignItems: 'center' }}>
-                    Azure Deployment Name
-                    <Tooltip title="Enter the deployment name for the Azure model.">
+                    API Base
+                    <Tooltip title="Go to the Cloudera AI Model Endpoint details page to find the endpoint URL">
                       <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
                     </Tooltip>
                   </div>
                 }
-                name="modelIdentifier"
-                rules={[{ required: true, message: 'Azure deployment name is required.' }]}
-                initialValue={drawerMode === 'edit' ? changedModel?.provider_model : undefined}
+                name="apiBase"
+                rules={[{ required: true, message: 'CAII API Base is required.' }]}
+                initialValue={drawerMode === 'edit' ? changedModel?.api_base : undefined}
               >
                 <Input
-                  placeholder="Enter Azure deployment name"
+                  placeholder="Enter model endpoint URL"
                   onChange={(e) => {
                     setChangedModel(
-                      changedModel ? { ...changedModel, provider_model: e.target.value } : null,
+                      changedModel ? { ...changedModel, api_base: e.target.value } : null,
                     );
                   }}
                 />
               </Form.Item>
             )}
+
             {/* API Key */}
             <Form.Item
               label={
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                   API Key
-                  <Tooltip title="Provide the API key for accessing the model's service.">
+                  <Tooltip title={
+                    changedModel?.model_type === 'CAII'
+                      ? 'Generate a long-lived JWT token on the Knox Gateway Server in the Data Lake environment. Copy the CDP Token from the Cloudera AI Model Endpoint Code Sample page'
+                      : 'Provide the API key for accessing the model\'s service.'
+                  }>
                     <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
                   </Tooltip>
                 </div>
@@ -379,7 +439,11 @@ const ModelActionsDrawer: React.FC<ModelActionsDrawerProps> = ({
             >
               <Input.Password
                 placeholder={
-                  drawerMode === 'register' ? 'Enter API key' : 'Enter new API key (optional)'
+                  changedModel?.model_type === 'CAII'
+                    ? 'Enter JWT token'
+                    : drawerMode === 'register'
+                      ? 'Enter API key'
+                      : 'Enter new API key (optional)'
                 }
                 onChange={(e) => {
                   setChangedModel(

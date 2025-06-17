@@ -89,7 +89,7 @@ class Model(Base, MappedProtobuf, MappedDict):
     model_id = Column(String, primary_key=True, nullable=False)
     model_name = Column(String, nullable=False, unique=True)
     provider_model = Column(String, nullable=False)
-    # "OPENAI", "OPENAI_COMPATIBLE" or "AZURE_OPENAI"
+    # "OPENAI", "OPENAI_COMPATIBLE", "AZURE_OPENAI", "GEMINI", "ANTHROPIC", or "CAII"
     model_type = Column(String, nullable=False)
     api_base = Column(String, nullable=True)
     is_studio_default = Column(Boolean, default=False)

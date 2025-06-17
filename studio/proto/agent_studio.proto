@@ -172,7 +172,7 @@ message AddModelRequest {
   // Model Name at the provider
   string provider_model = 2;
   
-  // Provider of the model (e.g., OPENAI, OPENAI_COMPATIBLE, AZURE_OPENAI)
+  // Provider of the model (e.g., OPENAI, OPENAI_COMPATIBLE, AZURE_OPENAI, GEMINI, ANTHROPIC, CAII)
   string model_type = 3;
 
   // API Base for the model
