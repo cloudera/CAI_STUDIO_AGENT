@@ -9,6 +9,9 @@ from datetime import datetime
 from opentelemetry.context import get_current
 import subprocess
 
+# Disable CrewAI telemetry.
+os.environ["CREWAI_DISABLE_TELEMETRY"] = "true"
+
 # Ensure UV is available within the runner's env
 try:
     subprocess.run(["pip", "install", "uv"], text=True, check=True)

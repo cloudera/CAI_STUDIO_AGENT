@@ -193,7 +193,8 @@ const ModelsPageContent = () => {
           !changedModel?.api_key ||
           (['OPENAI_COMPATIBLE', 'AZURE_OPENAI', 'CAII'].includes(changedModel?.model_type) &&
             !changedModel?.api_base) ||
-          (['AZURE_OPENAI', 'CAII'].includes(changedModel?.model_type) && !changedModel?.provider_model)
+          (['AZURE_OPENAI', 'CAII'].includes(changedModel?.model_type) &&
+            !changedModel?.provider_model)
         ) {
           throw new Error('Please fill in all required fields.');
         }

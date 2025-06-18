@@ -31,6 +31,9 @@ export AGENT_STUDIO_NUM_WORKFLOW_RUNNERS=${AGENT_STUDIO_NUM_WORKFLOW_RUNNERS:-5}
 # Array to hold runner process IDs.
 declare -a RUNNER_PIDS=()
 
+# Disable CrewAI telemetry.
+export CREWAI_DISABLE_TELEMETRY=true
+
 # Function to clean up background processes
 cleanup() {
   echo "Shutting down services..."

@@ -101,6 +101,7 @@ def test_prepare_env_vars_for_workbench_success(mock_get_api_key, mock_validate,
         "CDSW_APIV2_KEY": "key_value",
         "CDSW_PROJECT_ID": "fake-project-id",
         "CUSTOM_ENV_VAR": "value",
+        "CREWAI_DISABLE_TELEMETRY": "true",
     }
 
     assert result == expected

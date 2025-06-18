@@ -1,7 +1,6 @@
 import json
 import os
 import shutil
-import base64
 from uuid import uuid4
 import cmlapi
 from typing import List, Optional
@@ -11,6 +10,7 @@ from google.protobuf.json_format import MessageToDict
 import json
 from cmlapi import CMLServiceApi
 
+from studio.cross_cutting.global_thread_pool import get_thread_pool
 from studio.proto.utils import is_field_set
 from studio.db.dao import AgentStudioDao
 from studio.api import *
@@ -19,6 +19,7 @@ import studio.cross_cutting.utils as cc_utils
 import studio.consts as consts
 from studio.workflow.utils import get_llm_config_for_workflow
 from studio.workflow.runners import get_workflow_runners
+from studio.deployments.entry import deploy_from_payload
 from studio.deployments.types import *
 from studio.deployments.package.collated_input import create_collated_input
 from studio.deployments.applications import (
@@ -27,7 +28,6 @@ from studio.deployments.applications import (
     get_application_name_for_deployed_workflow,
 )
 from studio.deployments.validation import validate_deployment_payload
-from studio.deployments.utils import initialize_deployment, get_deployment_job_for_workflow
 
 # Import engine code manually. Eventually when this code becomes
 # a separate git repo, or a custom runtime image, this path call
@@ -113,54 +113,6 @@ def test_workflow(
     return
 
 
-def deploy_workflow_from_payload(
-    deployment_payload: DeploymentPayload, cml: CMLServiceApi, dao: AgentStudioDao
-) -> DeployWorkflowResponse:
-    """
-    Deploy a workflow directly from a deployment payload. Ideally the deployment payload
-    should be used by our UI too, but this is an easy way to unblock CI/CD development.
-    """
-    try:
-        with dao.get_session() as session:
-            # Validate deployment payload
-            validate_deployment_payload(deployment_payload, session, cml)
-
-            # Initiate a deployment and get a reference to the deployed workflow instance.
-            deployment: db_model.DeployedWorkflowInstance = initialize_deployment(deployment_payload, session, cml)
-
-            # Now that we are guaranteed to have a workflow ID and a deployment ID created,
-            # we can use these directly as part of the deployment payload. Technically the
-            # deployment job runs initialization as well, but no new DB resources
-            # will be created since we now have workflow and deployed_workflow IDs. In this fashion, we are
-            # able to immediately return an initialized deployment to the frontend without the deployment
-            # job even starting yet.
-            workflow: db_model.Workflow = deployment.workflow
-            deployment_payload.workflow_target.workflow_id = workflow.id
-            deployment_payload.deployment_target.deployment_instance_id = deployment.id
-
-            job: cmlapi.Job = get_deployment_job_for_workflow(workflow, cml)
-            deployment_payload_b64 = base64.b64encode(
-                json.dumps(deployment_payload.model_dump()).encode("utf-8")
-            ).decode("utf-8")
-            cml.create_job_run(
-                {
-                    "environment": {
-                        "AGENT_STUDIO_DEPLOYMENT_JOB_ID": job.id,
-                        "AGENT_STUDIO_DEPLOYMENT_PAYLOAD": deployment_payload_b64,
-                    }
-                },
-                project_id=os.getenv("CDSW_PROJECT_ID"),
-                job_id=job.id,
-            )
-
-            return DeployWorkflowResponse(
-                deployed_workflow_id=deployment.id, deployed_workflow_name=deployment.name, cml_deployed_model_id=""
-            )
-
-    except Exception as e:
-        raise RuntimeError(f"Failed to deploy workflow via deployment payload: {str(e)}")
-
-
 def deploy_workflow(request: DeployWorkflowRequest, cml: CMLServiceApi, dao: AgentStudioDao) -> DeployWorkflowResponse:
     """Deploy a workflow."""
 
@@ -168,7 +120,10 @@ def deploy_workflow(request: DeployWorkflowRequest, cml: CMLServiceApi, dao: Age
     if is_field_set(request, "deployment_payload"):
         payload_dict = json.loads(request.deployment_payload)
         deployment_payload: DeploymentPayload = DeploymentPayload(**payload_dict)
-        return deploy_workflow_from_payload(deployment_payload, cml, dao)
+        with dao.get_session() as session:
+            validate_deployment_payload(deployment_payload, session, cml)
+        get_thread_pool().submit(deploy_from_payload, deployment_payload)
+        return DeployWorkflowResponse()
 
     try:
         request_dict = MessageToDict(request, preserving_proto_field_name=True)
@@ -204,7 +159,10 @@ def deploy_workflow(request: DeployWorkflowRequest, cml: CMLServiceApi, dao: Age
             ),
             deployment_config=deployment_config,
         )
-        return deploy_workflow_from_payload(deployment_payload, cml, dao)
+        with dao.get_session() as session:
+            validate_deployment_payload(deployment_payload, session, cml)
+        get_thread_pool().submit(deploy_from_payload, deployment_payload)
+        return DeployWorkflowResponse()
 
     except Exception as e:
         raise RuntimeError(f"Failed to deploy workflow: {str(e)}")

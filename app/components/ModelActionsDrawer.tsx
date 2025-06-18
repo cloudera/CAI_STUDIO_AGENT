@@ -155,7 +155,9 @@ const ModelActionsDrawer: React.FC<ModelActionsDrawerProps> = ({
           <Input
             placeholder="Enter the model ID"
             onChange={(e) =>
-              setChangedModel(changedModel ? { ...changedModel, provider_model: e.target.value } : null)
+              setChangedModel(
+                changedModel ? { ...changedModel, provider_model: e.target.value } : null,
+              )
             }
           />
         </Form.Item>
@@ -168,7 +170,9 @@ const ModelActionsDrawer: React.FC<ModelActionsDrawerProps> = ({
           <Input
             placeholder="Enter Azure deployment name"
             onChange={(e) =>
-              setChangedModel(changedModel ? { ...changedModel, provider_model: e.target.value } : null)
+              setChangedModel(
+                changedModel ? { ...changedModel, provider_model: e.target.value } : null,
+              )
             }
           />
         </Form.Item>
@@ -200,7 +204,9 @@ const ModelActionsDrawer: React.FC<ModelActionsDrawerProps> = ({
           <Input
             placeholder="Enter the model identifier at the provider"
             onChange={(e) =>
-              setChangedModel(changedModel ? { ...changedModel, provider_model: e.target.value } : null)
+              setChangedModel(
+                changedModel ? { ...changedModel, provider_model: e.target.value } : null,
+              )
             }
           />
         </Form.Item>
@@ -425,11 +431,13 @@ const ModelActionsDrawer: React.FC<ModelActionsDrawerProps> = ({
               label={
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                   API Key
-                  <Tooltip title={
-                    changedModel?.model_type === 'CAII'
-                      ? 'Generate a long-lived JWT token on the Knox Gateway Server in the Data Lake environment. Copy the CDP Token from the Cloudera AI Model Endpoint Code Sample page'
-                      : 'Provide the API key for accessing the model\'s service.'
-                  }>
+                  <Tooltip
+                    title={
+                      changedModel?.model_type === 'CAII'
+                        ? 'Generate a long-lived JWT token on the Knox Gateway Server in the Data Lake environment. Copy the CDP Token from the Cloudera AI Model Endpoint Code Sample page'
+                        : "Provide the API key for accessing the model's service."
+                    }
+                  >
                     <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
                   </Tooltip>
                 </div>

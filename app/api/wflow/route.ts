@@ -89,22 +89,37 @@ export async function GET(request: NextRequest) {
     const startTime = Date.now();
 
     while (Date.now() - startTime < maxWaitTime) {
-      const getMcpToolDefinitionsResponse = await fetch(`${modelUrl}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          request: {
-            action_type: 'get-mcp-tool-definitions',
+      try {
+        const getMcpToolDefinitionsResponse = await fetch(`${modelUrl}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-        }),
-        agent,
-      });
-      const getMcpToolDefinitionsResponseData = (await getMcpToolDefinitionsResponse.json()) as any;
+          body: JSON.stringify({
+            request: {
+              action_type: 'get-mcp-tool-definitions',
+            },
+          }),
+          agent,
+        });
 
-      if (getMcpToolDefinitionsResponseData.response?.ready) {
-        mcpToolDefinitions = getMcpToolDefinitionsResponseData.response?.mcp_tool_definitions;
+        // If status is not ok, abort the polling
+        if (!getMcpToolDefinitionsResponse.ok) {
+          console.error(
+            `Received error status ${getMcpToolDefinitionsResponse.status} from get-mcp-tool-definitions: aborting polling.`,
+          );
+          break;
+        }
+
+        const getMcpToolDefinitionsResponseData =
+          (await getMcpToolDefinitionsResponse.json()) as any;
+
+        if (getMcpToolDefinitionsResponseData.response?.ready) {
+          mcpToolDefinitions = getMcpToolDefinitionsResponseData.response?.mcp_tool_definitions;
+          break;
+        }
+      } catch (err) {
+        console.error('Error getching MCP tool definitions — aborting polling:', err);
         break;
       }
 
@@ -112,82 +127,90 @@ export async function GET(request: NextRequest) {
       await new Promise((resolve) => setTimeout(resolve, pollInterval));
     }
 
-    const toolInstances: ToolInstance[] = configuration.tool_instances.map((tool: any) => {
-      const t: ToolInstance = {
-        id: tool.id,
-        name: tool.name,
-        workflow_id: configuration.workflow.id,
-        python_code: '', // These fields aren't in the config response
-        python_requirements: '',
-        source_folder_path: '',
-        tool_metadata: tool.tool_metadata,
-        is_valid: true,
-        tool_image_uri: tool.tool_image_uri,
-        tool_description: '',
-        is_venv_tool: tool.is_venv_tool || false,
-      };
-      return t;
-    });
+    const toolInstances: ToolInstance[] = configuration.tool_instances
+      ? configuration.tool_instances.map((tool: any) => {
+          const t: ToolInstance = {
+            id: tool.id,
+            name: tool.name,
+            workflow_id: configuration.workflow.id,
+            python_code: '', // These fields aren't in the config response
+            python_requirements: '',
+            source_folder_path: '',
+            tool_metadata: tool.tool_metadata,
+            is_valid: true,
+            tool_image_uri: tool.tool_image_uri,
+            tool_description: '',
+            is_venv_tool: tool.is_venv_tool || false,
+          };
+          return t;
+        })
+      : [];
 
-    const mcpInstances: McpInstance[] = configuration.mcp_instances.map((mcp: any) => {
-      let toolsString = '[]';
-      if (mcpToolDefinitions && mcpToolDefinitions[mcp.id]) {
-        toolsString = JSON.stringify(mcpToolDefinitions[mcp.id]);
-      }
+    const mcpInstances: McpInstance[] = configuration.mcp_instances
+      ? configuration.mcp_instances.map((mcp: any) => {
+          let toolsString = '[]';
+          if (mcpToolDefinitions && mcpToolDefinitions[mcp.id]) {
+            toolsString = JSON.stringify(mcpToolDefinitions[mcp.id]);
+          }
 
-      const m: McpInstance = {
-        id: mcp.id,
-        name: mcp.name,
-        type: '',
-        args: [],
-        env_names: [],
-        tools: toolsString,
-        image_uri: '',
-        status: '',
-        activated_tools: mcp.tools,
-        workflow_id: configuration.workflow.id,
-      };
-      return m;
-    });
+          const m: McpInstance = {
+            id: mcp.id,
+            name: mcp.name,
+            type: '',
+            args: [],
+            env_names: [],
+            tools: toolsString,
+            image_uri: '',
+            status: '',
+            activated_tools: mcp.tools,
+            workflow_id: configuration.workflow.id,
+          };
+          return m;
+        })
+      : [];
 
-    const agents: AgentMetadata[] = configuration.agents.map((agent: any) => {
-      const a: AgentMetadata = {
-        id: agent.id,
-        name: agent.name,
-        llm_provider_model_id: agent.llm_provider_model_id || '',
-        tools_id: agent.tool_instance_ids,
-        mcp_instance_ids: agent.mcp_instance_ids,
-        crew_ai_agent_metadata: {
-          role: agent.crew_ai_role,
-          backstory: agent.crew_ai_backstory,
-          goal: agent.crew_ai_goal,
-          allow_delegation: agent.crew_ai_allow_delegation,
-          verbose: agent.crew_ai_verbose,
-          cache: agent.crew_ai_cache,
-          temperature: agent.crew_ai_temperature,
-          max_iter: agent.crew_ai_max_iter,
-        },
-        is_valid: true,
-        workflow_id: configuration.workflow.id,
-        agent_image_uri: agent.agent_image_uri || '',
-      };
-      return a;
-    });
+    const agents: AgentMetadata[] = configuration.agents
+      ? configuration.agents.map((agent: any) => {
+          const a: AgentMetadata = {
+            id: agent.id,
+            name: agent.name,
+            llm_provider_model_id: agent.llm_provider_model_id || '',
+            tools_id: agent.tool_instance_ids,
+            mcp_instance_ids: agent.mcp_instance_ids,
+            crew_ai_agent_metadata: {
+              role: agent.crew_ai_role,
+              backstory: agent.crew_ai_backstory,
+              goal: agent.crew_ai_goal,
+              allow_delegation: agent.crew_ai_allow_delegation,
+              verbose: agent.crew_ai_verbose,
+              cache: agent.crew_ai_cache,
+              temperature: agent.crew_ai_temperature,
+              max_iter: agent.crew_ai_max_iter,
+            },
+            is_valid: true,
+            workflow_id: configuration.workflow.id,
+            agent_image_uri: agent.agent_image_uri || '',
+          };
+          return a;
+        })
+      : [];
 
     const extractPlaceholders = (description: string): string[] => {
       const matches = description.match(/{(.*?)}/g) || [];
       return [...new Set(matches.map((match) => match.slice(1, -1)))];
     };
 
-    const tasks: CrewAITaskMetadata[] = configuration.tasks.map((task: any) => ({
-      task_id: task.id,
-      description: task.description,
-      expected_output: task.expected_output,
-      assigned_agent_id: task.assigned_agent_id,
-      is_valid: true,
-      inputs: extractPlaceholders(task.description),
-      workflow_id: configuration.workflow.id,
-    }));
+    const tasks: CrewAITaskMetadata[] = configuration.tasks
+      ? configuration.tasks.map((task: any) => ({
+          task_id: task.id,
+          description: task.description,
+          expected_output: task.expected_output,
+          assigned_agent_id: task.assigned_agent_id,
+          is_valid: true,
+          inputs: extractPlaceholders(task.description),
+          workflow_id: configuration.workflow.id,
+        }))
+      : [];
 
     const workflow: Workflow = {
       workflow_id: configuration.workflow.id,

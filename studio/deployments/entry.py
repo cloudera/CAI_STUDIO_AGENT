@@ -125,17 +125,22 @@ def deploy(payload: DeploymentPayload, session: Session, cml: CMLServiceApi) -> 
     return
 
 
-def main():
+def deploy_from_payload(payload: DeploymentPayload):
     print("Starting deployment")
-    decoded_bytes = base64.b64decode(os.environ.get("AGENT_STUDIO_DEPLOYMENT_PAYLOAD"))
-    decoded_str = decoded_bytes.decode("utf-8")
-    deployment_payload_json: dict = json.loads(decoded_str)
-    deployment_payload: DeploymentPayload = DeploymentPayload.model_validate(deployment_payload_json)
+
     dao: AgentStudioDao = AgentStudioDao()
     cml: CMLServiceApi = cmlapi.default_client()
 
     with dao.get_session() as session:
-        deploy(deployment_payload, session, cml)
+        deploy(payload, session, cml)
+
+
+def main():
+    decoded_bytes = base64.b64decode(os.environ.get("AGENT_STUDIO_DEPLOYMENT_PAYLOAD"))
+    decoded_str = decoded_bytes.decode("utf-8")
+    deployment_payload_json: dict = json.loads(decoded_str)
+    deployment_payload: DeploymentPayload = DeploymentPayload.model_validate(deployment_payload_json)
+    deploy_from_payload(deployment_payload)
 
 
 if __name__ == "__main__":

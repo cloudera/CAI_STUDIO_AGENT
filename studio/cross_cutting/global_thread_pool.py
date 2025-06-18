@@ -13,7 +13,7 @@ def get_thread_pool() -> ThreadPoolExecutor:
 
 def initialize_thread_pool():
     global _global_thread_pool
-    _global_thread_pool = ThreadPoolExecutor(max_workers=12, thread_name_prefix="global_thread_pool_")
+    _global_thread_pool = ThreadPoolExecutor(max_workers=24, thread_name_prefix="global_thread_pool_")
 
 
 def cleanup_thread_pool():

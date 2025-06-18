@@ -2,7 +2,7 @@ import pytest
 import os
 from unittest.mock import patch, MagicMock
 from studio.deployments.validation import utils as validation_utils
-from studio.deployments.types import DeploymentPayload, WorkflowTargetRequest
+from studio.deployments.types import DeploymentPayload, WorkflowTargetRequest, DeploymentStatus
 from studio.db.model import Workflow
 from studio.db import model as db_model
 from studio.db.dao import AgentStudioDao
@@ -12,18 +12,16 @@ from studio.deployments.validation.utils import (
 
 
 @patch.dict(os.environ, {"JOB_ARGUMENTS": "some args"})
-@patch("studio.deployments.validation.utils.get_deployment_job_for_workflow")
-def test_validate_no_deployment_job_skips_when_job_arguments_set(mock_get_job):
+def test_validate_no_deployment_job_skips_when_job_arguments_set():
     session = MagicMock()
     cml = MagicMock()
 
     payload = DeploymentPayload(workflow_target=WorkflowTargetRequest(type="workflow", workflow_id="id"))
     validation_utils.validate_no_deployment_job_in_progress(payload, session, cml)
-    mock_get_job.assert_not_called()
+
 
 @patch.dict(os.environ, {}, clear=True)
-@patch("studio.deployments.validation.utils.get_deployment_job_for_workflow")
-def test_validate_no_deployment_job_in_progress_no_workflow(mock_get_job):
+def test_validate_no_deployment_job_in_progress_no_workflow():
     session = MagicMock()
     cml = MagicMock()
 
@@ -39,8 +37,7 @@ def test_validate_no_deployment_job_in_progress_no_workflow(mock_get_job):
 
 
 @patch.dict("os.environ", {"CDSW_PROJECT_ID": "123"})
-@patch("studio.deployments.validation.utils.get_deployment_job_for_workflow")
-def test_validate_no_deployment_job_detects_running_job(mock_get_job):
+def test_validate_no_deployment_job_detects_running_job():
     # Setup in-memory DB
     test_dao = AgentStudioDao(engine_url="sqlite:///:memory:", echo=False)
 
@@ -53,19 +50,13 @@ def test_validate_no_deployment_job_detects_running_job(mock_get_job):
             directory="/some/dir",
         )
         session.add(workflow)
+        session.add(db_model.DeployedWorkflowInstance(
+            id="deployed_workflow_instance_id",
+            name="Test Workflow Deployed",
+            workflow_id="workflow1",
+            status=DeploymentStatus.INITIALIZED
+        ))
         session.commit()
-
-        # Mock job and running job runs
-        job = MagicMock(id="job_id")
-        job_run = MagicMock()
-        mock_get_job.return_value = job
-
-        cml = MagicMock()
-        cml.list_job_runs.side_effect = [
-            MagicMock(job_runs=[]),              # scheduling
-            MagicMock(job_runs=[job_run]),       # running — should trigger error
-            MagicMock(job_runs=[]),              # stopping
-        ]
 
         payload = DeploymentPayload(
             workflow_target=WorkflowTargetRequest(type="workflow", workflow_id="workflow1")
@@ -73,13 +64,12 @@ def test_validate_no_deployment_job_detects_running_job(mock_get_job):
         
         # This will now raise properly
         with pytest.raises(ValueError, match="workflow 'Test Workflow'"):
-            validate_no_deployment_job_in_progress(payload, session, cml)
+            validate_no_deployment_job_in_progress(payload, session)
 
 
 
 @patch.dict("os.environ", {"CDSW_PROJECT_ID": "123"})
-@patch("studio.deployments.validation.utils.get_deployment_job_for_workflow")
-def test_validate_no_deployment_job_detects_running_job_workflow_name(mock_get_job):
+def test_validate_no_deployment_job_detects_running_job_already_deployed():
     # Setup in-memory DB
     test_dao = AgentStudioDao(engine_url="sqlite:///:memory:", echo=False)
 
@@ -92,13 +82,13 @@ def test_validate_no_deployment_job_detects_running_job_workflow_name(mock_get_j
             directory="/some/dir",
         )
         session.add(workflow)
+        session.add(db_model.DeployedWorkflowInstance(
+            id="deployed_workflow_instance_id",
+            name="Test Workflow Deployed",
+            workflow_id="workflow1",
+            status=DeploymentStatus.DEPLOYED
+        ))
         session.commit()
-
-        # Mock job and running job runs
-        job = MagicMock(id="job_id")
-        mock_get_job.return_value = job
-
-        cml = MagicMock()
 
         payload = DeploymentPayload(
             workflow_target=WorkflowTargetRequest(
@@ -107,7 +97,7 @@ def test_validate_no_deployment_job_detects_running_job_workflow_name(mock_get_j
             )
         )
         
-        validate_no_deployment_job_in_progress(payload, session, cml)
+        validate_no_deployment_job_in_progress(payload, session)
 
 
 @patch("studio.deployments.validation.utils.validate_no_deployment_job_in_progress")

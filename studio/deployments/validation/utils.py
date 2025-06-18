@@ -1,15 +1,15 @@
 import os
 
-import cmlapi
 from cmlapi import CMLServiceApi
 
-from studio.db.model import Workflow
-from studio.deployments.utils import get_deployment_job_for_workflow
-from studio.deployments.types import DeploymentPayload
+from studio.db.model import DeployedWorkflowInstance, Workflow
+from studio.deployments.types import DeploymentPayload, DeploymentStatus
 from sqlalchemy.orm.session import Session
 
 
-def validate_no_deployment_job_in_progress(payload: DeploymentPayload, session: Session, cml: CMLServiceApi) -> None:
+def validate_no_deployment_job_in_progress(
+    payload: DeploymentPayload, session: Session, cml: CMLServiceApi = None
+) -> None:
     """
     Agent studio creates a deployment job for every workflow target. If the workflow itself is
     undergoing a deployment, then validation will fail. If we are calling validation routines
@@ -33,17 +33,20 @@ def validate_no_deployment_job_in_progress(payload: DeploymentPayload, session: 
     if workflow == None:
         return
 
-    # Get the job and list all runs to determine if there is a job running
-    job: cmlapi.Job = get_deployment_job_for_workflow(workflow, cml)
-    job_runs: list[cmlapi.JobRun] = []
-    job_runs.extend(cml.list_job_runs(project_id, job.id, search_filter='{"status": "scheduling"}').job_runs)
-    job_runs.extend(cml.list_job_runs(project_id, job.id, search_filter='{"status": "running"}').job_runs)
-    job_runs.extend(cml.list_job_runs(project_id, job.id, search_filter='{"status": "stopping"}').job_runs)
+    # Get the deployed workflow instances attached to this workflow
+    deployed_workflow_instances: list[DeployedWorkflowInstance] = workflow.deployed_workflow_instances
 
-    if job_runs:
-        raise ValueError(
-            f"workflow '{workflow.name}' (id: '{workflow.id}') can't be deployed. Deployment job for this workflow is already running."
-        )
+    # If there are any deployed workflow instances, then there is a deployment job running
+    for deployed_workflow_instance in deployed_workflow_instances:
+        if deployed_workflow_instance.status in [
+            DeploymentStatus.DEPLOYING,
+            DeploymentStatus.PACKAGED,
+            DeploymentStatus.PACKAGING,
+            DeploymentStatus.INITIALIZED,
+        ]:
+            raise ValueError(
+                f"workflow '{workflow.name}' (id: '{workflow.id}') can't be deployed. Deployment job for this workflow is already running."
+            )
 
 
 def validate_workflow_target(payload: DeploymentPayload, session: Session, cml: CMLServiceApi) -> None:

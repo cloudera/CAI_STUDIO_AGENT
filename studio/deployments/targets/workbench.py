@@ -87,6 +87,7 @@ def prepare_env_vars_for_workbench(
             "AGENT_STUDIO_MODEL_EXECUTION_DIR": workbench_model_config["model_execution_dir"],
             "CDSW_APIV2_KEY": key_value,  # Pass the validated API key
             "CDSW_PROJECT_ID": os.getenv("CDSW_PROJECT_ID"),  # Pass the project ID
+            "CREWAI_DISABLE_TELEMETRY": "true",  # disable crewai telemetry for the workflow engine
         }
     )
 
