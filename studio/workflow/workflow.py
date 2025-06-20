@@ -16,12 +16,13 @@ import studio.workflow.utils as workflow_utils
 from cmlapi import CMLServiceApi
 from typing import List, Set
 from crewai import Process
+import sys
+from datetime import datetime
+from studio.proto.agent_studio_pb2 import Workflow as ProtoWorkflow, CrewAIWorkflowMetadata, ListWorkflowsResponse, GetWorkflowResponse
 
 # Import engine code manually. Eventually when this code becomes
 # a separate git repo, or a custom runtime image, this path call
 # will go away and workflow engine features will be available already.
-import sys
-
 sys.path.append("studio/workflow_engine/src")
 from engine.crewai.tools import is_venv_prepared_for_tool
 
@@ -239,6 +240,9 @@ def add_workflow(request: AddWorkflowRequest, cml: CMLServiceApi, dao: AgentStud
             wf_dir = workflow_utils.get_fresh_workflow_directory(request.name)
             os.makedirs(wf_dir, exist_ok=True)
 
+            # Audit fields
+            now = datetime.utcnow()
+
             # Create a new workflow
             workflow = db_model.Workflow(
                 id=str(uuid4()),
@@ -252,6 +256,10 @@ def add_workflow(request: AddWorkflowRequest, cml: CMLServiceApi, dao: AgentStud
                 is_conversational=request.is_conversational,
                 is_draft=True,
                 directory=wf_dir,
+                created_at=now,
+                updated_at=now,
+                created_by_username="Unknown",
+                updated_by_username="Unknown",
             )
             session.add(workflow)
             session.commit()
@@ -277,24 +285,29 @@ def list_workflows(
 
             workflow_list = []
             for workflow in workflows:
+                created_at = workflow.created_at.isoformat() if workflow.created_at else ""
+                updated_at = workflow.updated_at.isoformat() if workflow.updated_at else ""
                 # Include workflow metadata with extracted placeholders
                 workflow_list.append(
-                    Workflow(
+                    ProtoWorkflow(
                         workflow_id=workflow.id,
                         name=workflow.name,
-                        description=workflow.description,
+                        description=workflow.description or "",
                         crew_ai_workflow_metadata=CrewAIWorkflowMetadata(
-                            agent_id=workflow.crew_ai_agents,
-                            task_id=workflow.crew_ai_tasks,
-                            manager_agent_id=workflow.crew_ai_manager_agent,
-                            process=workflow.crew_ai_process,
-                            manager_llm_model_provider_id=workflow.crew_ai_llm_provider_model_id,
+                            agent_id=workflow.crew_ai_agents or [],
+                            task_id=workflow.crew_ai_tasks or [],
+                            manager_agent_id=workflow.crew_ai_manager_agent or "",
+                            process=workflow.crew_ai_process or "",
+                            manager_llm_model_provider_id=workflow.crew_ai_llm_provider_model_id or "",
                         ),
-                        # No need to do expensive computation on list operation.
                         is_ready=False,
-                        is_conversational=workflow.is_conversational,
-                        is_draft=workflow.is_draft,
-                        directory=workflow.directory,
+                        is_conversational=workflow.is_conversational or False,
+                        is_draft=workflow.is_draft or False,
+                        directory=workflow.directory or "",
+                        created_at=created_at,
+                        updated_at=updated_at,
+                        created_by_username=workflow.created_by_username or "",
+                        updated_by_username=workflow.updated_by_username or "",
                     )
                 )
             return ListWorkflowsResponse(workflows=workflow_list)
@@ -341,22 +354,28 @@ def get_workflow(request: GetWorkflowRequest, cml: CMLServiceApi, dao: AgentStud
                 for t_ in tool_instances
             )
 
+            created_at = workflow.created_at.isoformat() if workflow.created_at else ""
+            updated_at = workflow.updated_at.isoformat() if workflow.updated_at else ""
             # Include workflow metadata with extracted placeholders
-            workflow_metadata = Workflow(
+            workflow_metadata = ProtoWorkflow(
                 workflow_id=workflow.id,
                 name=workflow.name,
-                description=workflow.description,
+                description=workflow.description or "",
                 crew_ai_workflow_metadata=CrewAIWorkflowMetadata(
-                    agent_id=workflow.crew_ai_agents,
-                    task_id=workflow.crew_ai_tasks,
-                    manager_agent_id=workflow.crew_ai_manager_agent,
-                    process=workflow.crew_ai_process,
-                    manager_llm_model_provider_id=workflow.crew_ai_llm_provider_model_id,
+                    agent_id=workflow.crew_ai_agents or [],
+                    task_id=workflow.crew_ai_tasks or [],
+                    manager_agent_id=workflow.crew_ai_manager_agent or "",
+                    process=workflow.crew_ai_process or "",
+                    manager_llm_model_provider_id=workflow.crew_ai_llm_provider_model_id or "",
                 ),
                 is_ready=are_all_tools_ready,
-                is_conversational=workflow.is_conversational,
-                is_draft=workflow.is_draft,
-                directory=workflow.directory,
+                is_conversational=workflow.is_conversational or False,
+                is_draft=workflow.is_draft or False,
+                directory=workflow.directory or "",
+                created_at=created_at,
+                updated_at=updated_at,
+                created_by_username=workflow.created_by_username or "",
+                updated_by_username=workflow.updated_by_username or "",
             )
             return GetWorkflowResponse(workflow=workflow_metadata)
     except SQLAlchemyError as e:
@@ -441,6 +460,11 @@ def update_workflow(
             )
             for deployed_workflow_instance in deployed_workflow_instances:
                 deployed_workflow_instance.is_stale = True
+
+            # Update audit fields
+            now = datetime.utcnow()
+            workflow.updated_at = now
+            workflow.updated_by_username = "Unknown"
 
             # Commit the updated workflow
             session.commit()

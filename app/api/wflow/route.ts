@@ -226,6 +226,10 @@ export async function GET(request: NextRequest) {
       is_ready: true,
       is_conversational: configuration.workflow.is_conversational,
       is_draft: false,
+      created_at: '',
+      updated_at: '',
+      created_by_username: '',
+      updated_by_username: '',
     };
 
     const deployedWorkflow: DeployedWorkflow = {

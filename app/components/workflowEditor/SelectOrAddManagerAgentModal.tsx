@@ -14,7 +14,12 @@ import {
   Alert,
   Select,
 } from 'antd';
-import { PlusOutlined, QuestionCircleOutlined, UsergroupAddOutlined } from '@ant-design/icons';
+import {
+  PlusOutlined,
+  QuestionCircleOutlined,
+  UsergroupAddOutlined,
+  UndoOutlined,
+} from '@ant-design/icons';
 import {
   useListGlobalAgentTemplatesQuery,
   useAddAgentMutation,
@@ -33,9 +38,16 @@ import { useUpdateWorkflowMutation, useAddWorkflowMutation } from '../../workflo
 import { createUpdateRequestFromEditor, createAddRequestFromEditor } from '../../lib/workflow';
 import { useGlobalNotification } from '../Notifications';
 import { useListModelsQuery, useGetModelMutation } from '../../models/modelsApi';
+import GenerateAgentPropertiesModal from './GenerateAgentPropertiesModal';
 
 const { Text } = Typography;
 const { TextArea } = Input;
+
+const SparkleIcon = (
+  <svg width="22" height="22" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: 4, display: 'inline-block', verticalAlign: 'middle' }}>
+    <path d="m4.86 10.009 1.643.593-1.643.59-.589 1.641-.598-1.642-1.633-.59 1.646-.592.585-1.639.59 1.639zM10.01 6.6l2.821 1.017-2.82 1.013L9 11.448 7.974 8.631 5.17 7.618l2.824-1.017L9 3.787l1.01 2.814zM5.004 3.397l2.236.807-2.236.804-.8 2.234-.815-2.234-2.224-.804 2.24-.807.798-2.23.8 2.23z" fill="#0074D2"/>
+  </svg>
+);
 
 const SelectManagerAgentComponent: React.FC<{
   form: any;
@@ -51,6 +63,20 @@ const SelectManagerAgentComponent: React.FC<{
   defaultModelId,
 }) => {
   const { data: models = [] } = useListModelsQuery({});
+  const [isGenerateManagerModalVisible, setIsGenerateManagerModalVisible] = useState(false);
+  const [parsedSuggestions, setParsedSuggestions] = useState({ role: '', goal: '', backstory: '' });
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [userDescription, setUserDescription] = useState('');
+
+  const handleApplySuggestions = () => {
+    form.setFieldsValue({
+      name: parsedSuggestions.role,
+      role: parsedSuggestions.role,
+      goal: parsedSuggestions.goal,
+      backstory: parsedSuggestions.backstory,
+    });
+    setIsGenerateManagerModalVisible(false);
+  };
 
   return (
     <>
@@ -168,7 +194,34 @@ const SelectManagerAgentComponent: React.FC<{
         <Divider type="vertical" style={{ height: 'auto', backgroundColor: '#f0f0f0' }} />
         <Layout style={{ flex: 1, backgroundColor: '#fff', padding: '16px', overflowY: 'auto' }}>
           <Typography.Title level={5} style={{ marginBottom: '16px' }}>
-            Manager Agent Details
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span>Manager Agent Details</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Button
+                  type="default"
+                  icon={SparkleIcon}
+                  style={{ color: '#0074D2', borderColor: '#0074D2' }}
+                  onClick={() => setIsGenerateManagerModalVisible(true)}
+                >
+                  <span style={{ color: '#0074D2' }}>Generate with AI</span>
+                </Button>
+                <Button
+                  type="default"
+                  icon={<UndoOutlined style={{ color: '#0074D2', fontSize: 18, marginRight: 4 }} />}
+                  style={{ color: '#0074D2', borderColor: '#0074D2' }}
+                  onClick={() => {
+                    form.setFieldsValue({
+                      name: '',
+                      role: '',
+                      backstory: '',
+                      goal: '',
+                    });
+                  }}
+                >
+                  Reset Fields
+                </Button>
+              </span>
+            </div>
           </Typography.Title>
           <Form form={form} layout="vertical">
             <Form.Item
@@ -249,6 +302,14 @@ const SelectManagerAgentComponent: React.FC<{
               </Select>
             </Form.Item>
           </Form>
+          <GenerateAgentPropertiesModal
+            open={isGenerateManagerModalVisible}
+            setOpen={setIsGenerateManagerModalVisible}
+            onCancel={() => setIsGenerateManagerModalVisible(false)}
+            form={form}
+            llmModel={models.find(m => m.model_id === (form.getFieldValue('llm_provider_model_id') || defaultModelId)) || models[0]}
+            toolInstances={{}}
+          />
         </Layout>
       </Layout>
       <Divider style={{ margin: 0, backgroundColor: '#f0f0f0' }} />

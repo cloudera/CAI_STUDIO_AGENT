@@ -28,12 +28,15 @@ import ContentWithHealthCheck from '../components/ContentWithHealthCheck';
 const { Text, Title, Paragraph } = Typography;
 
 const WorkflowsPageContent: React.FC = () => {
-  const { data: workflows } = useListWorkflowsQuery({});
+  const { data: workflows } = useListWorkflowsQuery({}, { refetchOnMountOrArgChange: true });
   const { data: deployedWorkflowInstances } = useListDeployedWorkflowsQuery(
     {},
     { pollingInterval: 10000 },
   );
-  const { data: workflowTemplates } = useListWorkflowTemplatesQuery({});
+  const { data: workflowTemplates } = useListWorkflowTemplatesQuery(
+    {},
+    { refetchOnMountOrArgChange: true },
+  );
   const [removeWorkflow] = useRemoveWorkflowMutation();
   const [undeployWorkflow] = useUndeployWorkflowMutation();
   const [removeWorkflowTemplate] = useRemoveWorkflowTemplateMutation();

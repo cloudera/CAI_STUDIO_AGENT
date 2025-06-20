@@ -223,16 +223,34 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
     (w) => w.is_draft && !deployedWorkflowIds.has(w.workflow_id),
   );
 
-  // Modify template display logic
-  const displayedTemplates = showAllTemplates
-    ? filteredWorkflowTemplates
-    : filteredWorkflowTemplates.slice(0, 5);
+  // Sort by updated_at descending (most recent first)
+  const sortByUpdatedAtDesc = (a: any, b: any) => {
+    const aTime = new Date(a.updated_at || a.updatedAt || 0).getTime();
+    const bTime = new Date(b.updated_at || b.updatedAt || 0).getTime();
+    return bTime - aTime;
+  };
 
-  const displayedDrafts = showAllDrafts ? draftWorkflows : draftWorkflows.slice(0, 5);
+  const sortedDeployedWorkflows = [...filteredDeployedWorkflows]
+    .map(dw => ({...dw, workflow: workflows.find(w => w.workflow_id === dw.workflow_id)}))
+    .filter(dw => dw.workflow)
+    .sort((a, b) => sortByUpdatedAtDesc(a.workflow, b.workflow));
+  const sortedDeployedWorkflowIds = sortedDeployedWorkflows.map(dw => dw.workflow_id);
+
+  const sortedDraftWorkflows = [...filteredWorkflows]
+    .filter(w => w.is_draft && !deployedWorkflowIds.has(w.workflow_id))
+    .sort(sortByUpdatedAtDesc);
+
+  const sortedWorkflowTemplates = [...filteredWorkflowTemplates].sort(sortByUpdatedAtDesc);
+
+  const displayedTemplates = showAllTemplates
+    ? sortedWorkflowTemplates
+    : sortedWorkflowTemplates.slice(0, 5);
+
+  const displayedDrafts = showAllDrafts ? sortedDraftWorkflows : sortedDraftWorkflows.slice(0, 5);
 
   const displayedDeployed = showAllDeployed
-    ? Object.keys(deployedWorkflowMap)
-    : Object.keys(deployedWorkflowMap).slice(0, 5);
+    ? sortedDeployedWorkflowIds
+    : sortedDeployedWorkflowIds.slice(0, 5);
 
   const EmptyWorkflowState = () => (
     <div
@@ -485,7 +503,17 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
                   marginBottom: '10px',
                 }}
               >
-                <Text style={{ fontSize: '18px', fontWeight: 600 }}>Workflow Templates</Text>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <Text style={{ fontSize: '18px', fontWeight: 600 }}>Workflow Templates</Text>
+                  <Button
+                    type="text"
+                    size="small"
+                    onClick={() => setImportModalVisible(true)}
+                    style={{ marginLeft: 30, background: 'white', border: '1px solid #d9d9d9' }}
+                  >
+                    <PlusCircleOutlined /> Import Template
+                  </Button>
+                </div>
                 <div
                   style={{
                     display: 'flex',
@@ -495,14 +523,6 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
                     alignItems: 'center',
                   }}
                 >
-                  <Button
-                    type="text"
-                    size="small"
-                    onClick={() => setImportModalVisible(true)}
-                    style={buttonStyle}
-                  >
-                    <PlusCircleOutlined /> Import Template
-                  </Button>
                   <div style={{ width: '1px', background: '#d9d9d9' }} />
                   <Button
                     type="link"

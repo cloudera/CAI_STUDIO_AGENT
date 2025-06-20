@@ -82,9 +82,16 @@ import { useGetDefaultModelQuery, useListModelsQuery } from '../../models/models
 import { useTestModelMutation } from '../../models/modelsApi';
 import { useListMcpInstancesQuery, useRemoveMcpInstanceMutation } from '@/app/mcp/mcpInstancesApi';
 import { useRouter } from 'next/navigation';
+import GenerateAgentPropertiesModal from './GenerateAgentPropertiesModal';
 
 const { Text } = Typography;
 const { TextArea } = Input;
+
+const SparkleIcon = (
+  <svg width="22" height="22" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: 4, display: 'inline-block', verticalAlign: 'middle' }}>
+    <path d="m4.86 10.009 1.643.593-1.643.59-.589 1.641-.598-1.642-1.633-.59 1.646-.592.585-1.639.59 1.639zM10.01 6.6l2.821 1.017-2.82 1.013L9 11.448 7.974 8.631 5.17 7.618l2.824-1.017L9 3.787l1.01 2.814zM5.004 3.397l2.236.807-2.236.804-.8 2.234-.815-2.234-2.224-.804 2.24-.807.798-2.23.8 2.23z" fill="#0074D2"/>
+  </svg>
+);
 
 interface GenerateAgentPropertiesModalProps {
   open: boolean;
@@ -100,338 +107,6 @@ interface GenerateAgentPropertiesModalProps {
   llmModel: Model;
   toolInstances: Record<string, ToolInstance>;
 }
-
-const GenerateAgentPropertiesModal: React.FC<GenerateAgentPropertiesModalProps> = ({
-  open,
-  setOpen,
-  onCancel,
-  form,
-  llmModel,
-  toolInstances,
-}) => {
-  const [userDescription, setUserDescription] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [hideInfoBox, setHideInfoBox] = useState(false);
-  const [parsedSuggestions, setParsedSuggestions] = useState<{
-    role?: string;
-    goal?: string;
-    backstory?: string;
-    error?: string;
-  }>({});
-  const selectedAgent = useAppSelector(selectEditorAgentViewAgent);
-  const createAgentState = useSelector(selectEditorAgentViewCreateAgentState);
-
-  const [testModel] = useTestModelMutation();
-
-  const relevantToolInstances = Object.values(toolInstances).filter((toolInstance) => {
-    if (selectedAgent) {
-      return selectedAgent?.tools_id?.includes(toolInstance.id);
-    } else {
-      return createAgentState?.tools?.includes(toolInstance.id);
-    }
-  });
-
-  useEffect(() => {
-    if (!open) {
-      setUserDescription('');
-      setParsedSuggestions({});
-      setIsGenerating(false);
-      setHideInfoBox(false);
-    } // reset on close
-  }, [open]);
-
-  const generatePrompt = (description: string, tools: ToolInstance[]) => {
-    const toolsDescription = tools
-      .map((tool) => ` - ${tool.name}: ${tool.tool_description.replace(/\n/g, ' ')}`)
-      .join('\n');
-
-    return `Given a user's description of an AI agent and the tools available to it, generate appropriate role, goal, and backstory for the agent. Tools are used by agents to perform computation or connect to external systems, which might be difficult to do using just a traditional LLM.
-
-User's Description: ${description.replace(/\n/g, ' ')}
-
-Available Tools:
-${toolsDescription}
-
-
-Please generate the agent properties in the following XML format:
-<agent>
-  <role>Defines the agent's function and expertise. It should be very concise, akin to a job title.</role>
-  <goal>The individual objective that guides the agent's decision-making.</goal>
-  <backstory>A brief background that explains the agent's expertise. Provides context and personality to the agent, enriching interactions.</backstory>
-</agent>
-
-Keep the responses concise but meaningful. The role should be professional, the goal should be task driven(like objectives the agent can complete), and the backstory should provide context for the agent's expertise.
-If the user's description is not clear, just do not generate the requested XML. Instead give a short error message.`;
-  };
-
-  const parseXMLResponse = (
-    xmlString: string,
-  ): { role?: string; goal?: string; backstory?: string; error?: string } => {
-    try {
-      // Extract content between XML tags using regex
-      const roleMatch = xmlString.match(/<role>(.*?)<\/role>/);
-      const goalMatch = xmlString.match(/<goal>(.*?)<\/goal>/);
-      const backstoryMatch = xmlString.match(/<backstory>(.*?)<\/backstory>/);
-      const role = roleMatch?.[1]?.trim();
-      const goal = goalMatch?.[1]?.trim();
-      const backstory = backstoryMatch?.[1]?.trim();
-
-      if (role || goal || backstory) {
-        return {
-          role,
-          goal,
-          backstory,
-        };
-      }
-
-      return { error: `No properties found in the response: ${xmlString}` };
-    } catch (error: unknown) {
-      console.error('Error parsing XML response:', error);
-      if (error instanceof Error) {
-        return { error: error.message };
-      }
-      return { error: 'Unknown error occurred while parsing XML' };
-    }
-  };
-
-  const handleGenerate = async () => {
-    if (!userDescription.trim()) return;
-
-    setIsGenerating(true);
-    setHideInfoBox(true);
-    try {
-      const response = await testModel({
-        model_id: llmModel.model_id,
-        completion_role: 'user',
-        completion_content: generatePrompt(userDescription, relevantToolInstances),
-        temperature: 0.1,
-        max_tokens: 1000,
-        timeout: 10,
-      }).unwrap();
-
-      setParsedSuggestions(parseXMLResponse(response));
-    } catch (error) {
-      console.error('Error generating suggestions:', error);
-      setParsedSuggestions({ error: 'Error generating suggestions' });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleApplySuggestions = () => {
-    if (parsedSuggestions.role || parsedSuggestions.goal || parsedSuggestions.backstory) {
-      const currentFormValues = form.getFieldsValue();
-      form.setFieldsValue({
-        name: currentFormValues.name || parsedSuggestions.role,
-        role: parsedSuggestions.role,
-        goal: parsedSuggestions.goal,
-        backstory: parsedSuggestions.backstory,
-      });
-      setOpen(false);
-    }
-  };
-
-  const infoMessage =
-    'This feature uses the default LLM model to suggest agent properties. ' +
-    'Please provide a succint descipription of your agent and the task it will be performing. ' +
-    'It would look at the tools available with the agent along with your description to generate ' +
-    'a set of properties that can be used to create an agent.';
-
-  return (
-    <Modal
-      open={open}
-      onCancel={onCancel}
-      width="50%"
-      title={
-        <Typography.Title level={5}>
-          <div
-            style={{ display: 'flex', alignItems: 'center', gap: '4px', verticalAlign: 'middle' }}
-          >
-            <img
-              src="/ai-assistant.svg"
-              alt="AI Assistant"
-              style={{
-                filter: 'invert(70%) sepia(80%) saturate(1000%) hue-rotate(360deg)',
-                width: '20px',
-                height: '20px',
-              }}
-            />
-            Generate Agent Properties using AI
-          </div>
-        </Typography.Title>
-      }
-      footer={[
-        <Button key="cancel" type="default" onClick={onCancel}>
-          Close
-        </Button>,
-        <Button
-          key="apply"
-          type="primary"
-          disabled={
-            (!parsedSuggestions.role && !parsedSuggestions.goal && !parsedSuggestions.backstory) ||
-            isGenerating
-          }
-          onClick={handleApplySuggestions}
-        >
-          Apply Suggestions
-        </Button>,
-      ]}
-    >
-      <Space direction="vertical" style={{ width: '100%' }} size="large">
-        {!hideInfoBox && (
-          <Alert
-            style={{
-              alignItems: 'flex-start',
-              justifyContent: 'flex-start',
-              padding: 12,
-            }}
-            message={
-              <Layout
-                style={{ flexDirection: 'column', gap: 4, padding: 0, background: 'transparent' }}
-              >
-                <Layout
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 8,
-                    background: 'transparent',
-                  }}
-                >
-                  <InfoCircleOutlined style={{ fontSize: 16, color: '#1890ff' }} />
-                  <Text style={{ fontSize: 13, fontWeight: 400, background: 'transparent' }}>
-                    {infoMessage}
-                  </Text>
-                </Layout>
-              </Layout>
-            }
-            type="info"
-            showIcon={false}
-            closable={false}
-          />
-        )}
-
-        <div style={{ width: '100%', display: 'flex', gap: '6px', alignItems: 'stretch' }}>
-          <div style={{ flex: 1 }}>
-            <Input.TextArea
-              placeholder="Describe the agent you want to create..."
-              value={userDescription}
-              onChange={(e) => setUserDescription(e.target.value)}
-              autoSize={{ minRows: 3, maxRows: 5 }}
-              style={{ width: '100%', height: '100%' }}
-              onKeyDown={(e) => {
-                // trigger on generate on ctrl/cmd + enter
-                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-                  handleGenerate();
-                }
-              }}
-            />
-          </div>
-          <Button
-            type="primary"
-            style={{
-              width: 'clamp(36px, 5%, 50px)',
-              backgroundColor: '#52c41a',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '4px',
-              height: 'auto',
-              position: 'relative',
-            }}
-            icon={
-              isGenerating ? (
-                <LoadingOutlined style={{ color: '#fff', fontSize: '150%' }} />
-              ) : (
-                <PlayCircleOutlined style={{ color: '#fff', fontSize: '150%' }} />
-              )
-            }
-            onClick={handleGenerate}
-            loading={isGenerating}
-            disabled={!userDescription.trim()}
-          />
-        </div>
-
-        <Space direction="vertical" style={{ width: '100%' }}>
-          {parsedSuggestions.role && (
-            <Alert
-              message={
-                <Layout
-                  style={{
-                    flexDirection: 'column',
-                    gap: 12,
-                    padding: 0,
-                    background: 'transparent',
-                  }}
-                >
-                  <Layout
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 8,
-                      background: 'transparent',
-                      paddingLeft: '12px',
-                      paddingTop: '12px',
-                    }}
-                  >
-                    <CheckCircleOutlined style={{ fontSize: 20, color: '#52c41a' }} />
-                    <Text style={{ fontSize: 16, fontWeight: 500, background: 'transparent' }}>
-                      Generated Properties
-                    </Text>
-                  </Layout>
-                  <Space
-                    direction="vertical"
-                    style={{ width: '100%', padding: '12px', gap: '6px' }}
-                  >
-                    <div>
-                      <Text style={{ fontWeight: 'bold' }}>Role: </Text>
-                      <Text style={{ fontWeight: 'normal' }}>{parsedSuggestions.role}</Text>
-                    </div>
-                    <div>
-                      <Text style={{ fontWeight: 'bold' }}>Goal: </Text>
-                      <Text style={{ fontWeight: 'normal' }}>{parsedSuggestions.goal}</Text>
-                    </div>
-                    <div>
-                      <Text style={{ fontWeight: 'bold' }}>Backstory: </Text>
-                      <Text style={{ fontWeight: 'normal' }}>{parsedSuggestions.backstory}</Text>
-                    </div>
-                  </Space>
-                </Layout>
-              }
-              type="success"
-              showIcon={false}
-            />
-          )}
-          {parsedSuggestions.error && (
-            <Alert
-              message={
-                <Layout
-                  style={{ flexDirection: 'column', gap: 4, padding: 0, background: 'transparent' }}
-                >
-                  <Layout
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 8,
-                      background: 'transparent',
-                      padding: '12px',
-                    }}
-                  >
-                    <ExclamationCircleOutlined style={{ fontSize: 18, color: '#faad14' }} />
-                    <Text style={{ fontSize: 13, fontWeight: 200, background: 'transparent' }}>
-                      {parsedSuggestions.error}
-                    </Text>
-                  </Layout>
-                </Layout>
-              }
-              type="error"
-              showIcon={false}
-            />
-          )}
-        </Space>
-      </Space>
-    </Modal>
-  );
-};
 
 interface SelectAgentComponentProps {
   workflowId: string;
@@ -454,6 +129,8 @@ interface SelectAgentComponentProps {
   createAgentState: any;
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
+  isGenerateAgentPropertiesModalVisible: boolean;
+  setIsGenerateAgentPropertiesModalVisible: (visible: boolean) => void;
 }
 
 const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
@@ -471,6 +148,8 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
   createAgentState,
   isLoading,
   setIsLoading,
+  isGenerateAgentPropertiesModalVisible,
+  setIsGenerateAgentPropertiesModalVisible,
 }) => {
   const router = useRouter();
   const { data: defaultModel } = useGetDefaultModelQuery();
@@ -483,8 +162,6 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
   const [isAddMcpModalVisible, setAddMcpModalVisible] = useState(false);
   const [clickedToolInstanceId, setClickedToolInstanceId] = useState<string | undefined>(undefined);
   const [clickedMcpInstance, setClickedMcpInstance] = useState<McpInstance | undefined>(undefined);
-  const [isGenerateAgentPropertiesModalVisible, setIsGenerateAgentPropertiesModalVisible] =
-    useState(false);
   const notificationApi = useGlobalNotification();
   const [isCreateMode, setIsCreateMode] = useState(false);
   const [deleteToolInstance] = useRemoveToolInstanceMutation();
@@ -1624,51 +1301,34 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                 justifyContent: 'space-between',
               }}
             >
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '4px',
-                  alignItems: 'center',
-                  verticalAlign: 'middle',
-                }}
-              >
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 Agent Details
-                {defaultModel && (
-                  <Tooltip title="Generate agent properties using AI">
-                    <Button
-                      type="text"
-                      icon={
-                        <img
-                          src="/ai-assistant.svg"
-                          alt="AI Assistant"
-                          style={{
-                            filter: 'invert(70%) sepia(80%) saturate(1000%) hue-rotate(360deg)',
-                            width: '20px',
-                            height: '20px',
-                          }}
-                        />
-                      }
-                      style={{ padding: '2px' }}
-                      onClick={() => setIsGenerateAgentPropertiesModalVisible(true)}
-                    />
-                  </Tooltip>
-                )}
-              </div>
-              <div>
-                {!isCreateMode && (
-                  <Button
-                    type="text"
-                    onClick={() => {
-                      if (selectedAssignedAgent) {
-                        handleSelectAssignedAgent(selectedAssignedAgent);
-                      }
-                    }}
-                    size="small"
-                  >
-                    Reset Fields <UndoOutlined />
-                  </Button>
-                )}
-              </div>
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Button
+                  type="default"
+                  icon={SparkleIcon}
+                  style={{ color: '#0074D2', borderColor: '#0074D2' }}
+                  onClick={() => setIsGenerateAgentPropertiesModalVisible(true)}
+                >
+                  <span style={{ color: '#0074D2' }}>Generate with AI</span>
+                </Button>
+                <Button
+                  type="default"
+                  icon={<UndoOutlined style={{ color: '#0074D2', fontSize: 18, marginRight: 4 }} />}
+                  style={{ color: '#0074D2', borderColor: '#0074D2' }}
+                  onClick={() => {
+                    form.setFieldsValue({
+                      name: '',
+                      role: '',
+                      backstory: '',
+                      goal: '',
+                    });
+                  }}
+                >
+                  Reset Fields
+                </Button>
+              </span>
             </div>
           </Typography.Title>
           <Form form={form} layout="vertical">
@@ -1858,6 +1518,7 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
   const createAgentState = useSelector(selectEditorAgentViewCreateAgentState);
   const { data: defaultModel } = useGetDefaultModelQuery();
   const [isLoading, setIsLoading] = useState(false);
+  const [isGenerateAgentPropertiesModalVisible, setIsGenerateAgentPropertiesModalVisible] = useState(false);
 
   // Add useEffect to set default model when form is initialized or when defaultModel changes
   useEffect(() => {
@@ -2066,7 +1727,7 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
           disabled={!defaultModel} // Disable button if no default model
         >
           {getButtonText()}
-        </Button>,
+        </Button>
       ]}
     >
       <div style={{ position: 'relative' }}>
@@ -2105,6 +1766,8 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
             createAgentState={createAgentState}
             isLoading={isLoading}
             setIsLoading={setIsLoading}
+            isGenerateAgentPropertiesModalVisible={isGenerateAgentPropertiesModalVisible}
+            setIsGenerateAgentPropertiesModalVisible={setIsGenerateAgentPropertiesModalVisible}
           />
         </div>
       </div>

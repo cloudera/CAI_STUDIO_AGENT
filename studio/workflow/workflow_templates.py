@@ -6,6 +6,7 @@ import shutil
 from typing import List, Dict
 from uuid import uuid4
 from google.protobuf.json_format import MessageToDict
+from datetime import datetime
 
 from cmlapi import CMLServiceApi
 
@@ -32,7 +33,7 @@ def list_workflow_templates(
     with dao.get_session() as session:
         workflow_templates: List[db_model.WorkflowTemplate] = session.query(db_model.WorkflowTemplate).all()
         return ListWorkflowTemplatesResponse(
-            workflow_templates=[workflow_template.to_protobuf() for workflow_template in workflow_templates]
+            workflow_templates=[wt.to_protobuf() for wt in workflow_templates]
         )
 
 
@@ -266,6 +267,12 @@ def add_workflow_template(
         workflow_template_dict = {"id": str(uuid4())}
         workflow_template_dict.update(MessageToDict(request, preserving_proto_field_name=True))
         workflow_template_dict["pre_packaged"] = False  # Not shipped with the studio
+        # Audit fields
+        now = datetime.utcnow().isoformat()
+        workflow_template_dict["created_at"] = now
+        workflow_template_dict["updated_at"] = now
+        workflow_template_dict["created_by_username"] = "Unknown"
+        workflow_template_dict["updated_by_username"] = "Unknown"
         workflow_template: db_model.WorkflowTemplate = db_model.WorkflowTemplate.from_dict(workflow_template_dict)
         session.add(workflow_template)
         return AddWorkflowTemplateResponse(id=workflow_template.id)

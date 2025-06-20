@@ -8,6 +8,7 @@ import {
   addedEditorWorkflowTask,
   removedEditorWorkflowTask,
   selectEditorWorkflowProcess,
+  updatedEditorWorkflowTaskIds,
 } from '../../workflows/editorSlice';
 import {
   Alert,
@@ -35,6 +36,10 @@ import {
   FileDoneOutlined,
   WarningOutlined,
   SaveOutlined,
+  ArrowUpOutlined,
+  ArrowDownOutlined,
+  SwapOutlined,
+  CloseOutlined,
 } from '@ant-design/icons';
 import { useListAgentsQuery } from '../../agents/agentApi';
 import { AgentMetadata, RemoveTaskRequest } from '@/studio/proto/agent_studio';
@@ -45,7 +50,7 @@ import {
   useUpdateTaskMutation,
 } from '../../tasks/tasksApi';
 import { useUpdateWorkflowMutation } from '../../workflows/workflowsApi';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createUpdateRequestFromEditor, createAddRequestFromEditor } from '../../lib/workflow';
 import { useGlobalNotification } from '../Notifications';
 import React from 'react';
@@ -236,12 +241,73 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
   const notificationApi = useGlobalNotification();
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [updateTask] = useUpdateTaskMutation();
+  const [isReordering, setIsReordering] = useState(false);
+  const [localTaskIds, setLocalTaskIds] = useState(workflowTaskIds);
+
+  useEffect(() => {
+    if (!isReordering) {
+      setLocalTaskIds(workflowTaskIds);
+    }
+  }, [workflowTaskIds, isReordering]);
 
   // Find the name of the selected agent from the filtered list
   const selectedAgentName =
     agents
       ?.filter((agent) => workflowAgentIds.includes(agent.id))
       .find((agent) => agent.id === selectedAgentId)?.name || '';
+
+  const handleMoveTask = (index: number, direction: 'up' | 'down') => {
+    const newTasks = [...localTaskIds];
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+
+    if (newIndex < 0 || newIndex >= newTasks.length) {
+      return;
+    }
+
+    [newTasks[index], newTasks[newIndex]] = [newTasks[newIndex], newTasks[index]];
+    setLocalTaskIds(newTasks);
+  };
+
+  const handleSaveReorder = async () => {
+    try {
+      notificationApi.info({
+        message: 'Saving new task order...',
+        placement: 'topRight',
+      });
+
+      const updatedWorkflowState = {
+        ...workflowState,
+        workflowMetadata: {
+          ...workflowState.workflowMetadata,
+          taskIds: localTaskIds,
+        },
+      };
+
+      await updateWorkflow(createUpdateRequestFromEditor(updatedWorkflowState)).unwrap();
+      dispatch(updatedEditorWorkflowTaskIds(localTaskIds));
+      setIsReordering(false);
+
+      notificationApi.success({
+        message: 'Task Order Saved',
+        description: 'The new task order has been saved successfully.',
+        placement: 'topRight',
+      });
+    } catch (error) {
+      console.error('Failed to save task order:', error);
+      notificationApi.error({
+        message: 'Error',
+        description: 'Failed to save the new task order.',
+        placement: 'topRight',
+      });
+      setLocalTaskIds(workflowTaskIds);
+      setIsReordering(false);
+    }
+  };
+
+  const handleCancelReorder = () => {
+    setLocalTaskIds(workflowTaskIds);
+    setIsReordering(false);
+  };
 
   const handleAddTask = async () => {
     if (!selectedAgentId && !hasManagerAgent) {
@@ -433,12 +499,34 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
             background: 'white',
             flexDirection: 'row',
             gap: 4,
+            justifyContent: 'space-between',
+            alignItems: 'center',
           }}
         >
-          <Text style={{ fontSize: 13, fontWeight: 600 }}>Tasks</Text>
-          <Tooltip title={tasksTooltip} placement="right">
-            <QuestionCircleOutlined />
-          </Tooltip>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Text style={{ fontSize: 13, fontWeight: 600 }}>Tasks</Text>
+            <Tooltip title={tasksTooltip} placement="right">
+              <QuestionCircleOutlined />
+            </Tooltip>
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {isReordering ? (
+              <>
+                <Button size="small" icon={<SaveOutlined />} onClick={handleSaveReorder} type="primary">
+                  Save
+                </Button>
+                <Button size="small" icon={<CloseOutlined />} onClick={handleCancelReorder}>
+                  Cancel
+                </Button>
+              </>
+            ) : (
+              localTaskIds.length > 1 && (
+                <Button size="small" icon={<SwapOutlined />} onClick={() => setIsReordering(true)}>
+                  Reorder
+                </Button>
+              )
+            )}
+          </div>
         </Layout>
 
         {workflowTaskIds.length === 0 && (
@@ -474,7 +562,7 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
           />
         )}
 
-        {workflowTaskIds.map((task_id, index) => {
+        {localTaskIds.map((task_id, index) => {
           const task = tasks?.find((task) => task.task_id === task_id);
 
           if (!task) {
@@ -562,19 +650,38 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
                 </div>
               )}
               <div style={{ display: 'flex', gap: 8 }}>
-                <Button
-                  type="link"
-                  icon={<EditOutlined />}
-                  onClick={() => handleEditTask(task_id)}
-                  disabled={!!(isConversational && Boolean(hasManagerAgent))}
-                />
-                <Button
-                  danger
-                  style={{ border: 'none' }}
-                  icon={<DeleteOutlined color="red" />}
-                  disabled={isConversational}
-                  onClick={() => handleDeleteTask(task_id)}
-                />
+                {isReordering ? (
+                  <>
+                    <Button
+                      type="link"
+                      icon={<ArrowUpOutlined />}
+                      onClick={() => handleMoveTask(index, 'up')}
+                      disabled={index === 0}
+                    />
+                    <Button
+                      type="link"
+                      icon={<ArrowDownOutlined />}
+                      onClick={() => handleMoveTask(index, 'down')}
+                      disabled={index === localTaskIds.length - 1}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      type="link"
+                      icon={<EditOutlined />}
+                      onClick={() => handleEditTask(task_id)}
+                      disabled={!!(isConversational && Boolean(hasManagerAgent))}
+                    />
+                    <Button
+                      danger
+                      style={{ border: 'none' }}
+                      icon={<DeleteOutlined color="red" />}
+                      disabled={isConversational}
+                      onClick={() => handleDeleteTask(task_id)}
+                    />
+                  </>
+                )}
               </div>
             </Layout>
           );
