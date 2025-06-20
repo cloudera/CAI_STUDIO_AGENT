@@ -10,7 +10,6 @@ import subprocess
 import json
 from textwrap import dedent, indent
 import threading
-import hashlib
 import re
 import shutil
 import venv
@@ -192,11 +191,6 @@ def get_tool_instance_proxy(
     Get the tool instance proxy callable for the tool instance.
     """
 
-    if not is_venv_prepared_for_tool(
-        os.path.join(workflow_directory, tool_instance.source_folder_path), tool_instance.python_requirements_file_name
-    ):
-        raise ValueError(f"Virtual environment not prepared for tool '{tool_instance.name}'.")
-
     tool_file_path = os.path.join(
         workflow_directory, tool_instance.source_folder_path, tool_instance.python_code_file_name
     )
@@ -263,86 +257,85 @@ def get_tool_instance_proxy(
     return crewai_tool
 
 
-def is_venv_prepared_for_tool(source_folder_path: str, requirements_file_name: str) -> bool:
+def create_virtual_env(source_folder_path: str, with_: Literal["venv", "uv"]):
+    """
+    Create a virtual environment in the given source folder path.
+    Only runs if the .venv directory doesn't exist.
+    """
     venv_dir = os.path.join(source_folder_path, ".venv")
-    if not os.path.exists(venv_dir):
-        return False
-    hash_file_path = os.path.join(source_folder_path, ".requirements_hash.txt")
-    if not os.path.exists(hash_file_path):
-        return False
-    with open(hash_file_path, "r") as hash_file:
-        previous_hash = hash_file.read().strip()
-    with open(os.path.join(source_folder_path, requirements_file_name), "r") as requirements_file:
-        requirements_content = requirements_file.read()
-        requirements_hash = hashlib.md5(requirements_content.encode()).hexdigest()
-    return requirements_hash == previous_hash
 
+    # Only create if .venv directory doesn't exist
+    if os.path.exists(venv_dir):
+        return
 
-def _prepare_virtual_env_for_tool_impl(
-    source_folder_path: str, requirements_file_name: str, with_: Literal["venv", "uv"]
-):
-    venv_dir = os.path.join(source_folder_path, ".venv")
     uv_bin = shutil.which("uv")
 
     try:
         if with_ == "uv":
             uv_venv_setup_command = [uv_bin, "venv", venv_dir]
-            subprocess.run(
+            result = subprocess.run(
                 uv_venv_setup_command,
                 check=True,
+                capture_output=True,
                 text=True,
             )
         else:
             venv.create(venv_dir, with_pip=True)
     except Exception as e:
-        print(f"Error creating virtual environment for tool directory {source_folder_path}: {e.with_traceback()}")
-        raise RuntimeError(f"COULD NOT CREATE VENV: {e.with_traceback()}")
-        return
+        error_msg = f"Error creating virtual environment for tool directory {source_folder_path}:\n"
+        error_msg += f"Command: {' '.join(uv_venv_setup_command)}\n"
+        error_msg += f"Return code: {result.returncode}\n"
+        if result.stdout:
+            error_msg += f"STDOUT:\n{result.stdout}\n"
+        if result.stderr:
+            error_msg += f"STDERR:\n{result.stderr}\n"
+        print(error_msg)
+        raise RuntimeError(f"COULD NOT CREATE VENV: {error_msg}")
 
-    # Check for previous requirements file hash
-    hash_file_path = os.path.join(source_folder_path, ".requirements_hash.txt")
-    previous_hash = ""
-    if os.path.exists(hash_file_path):
-        with open(hash_file_path, "r") as hash_file:
-            previous_hash = hash_file.read().strip()
 
-    # Calculate the hash of the requirements file
+def _prepare_virtual_env_for_tool_impl(
+    source_folder_path: str, requirements_file_name: str, with_: Literal["venv", "uv"]
+):
+    # Create virtual environment if it doesn't exist
+    create_virtual_env(source_folder_path, with_)
+
+    venv_dir = os.path.join(source_folder_path, ".venv")
+    uv_bin = shutil.which("uv")
     requirements_file_path = os.path.join(source_folder_path, requirements_file_name)
-    with open(requirements_file_path, "r") as requirements_file:
-        requirements_content = requirements_file.read()
-        requirements_hash = hashlib.md5(requirements_content.encode()).hexdigest()
 
-    # If the hash has changed, install the requirements
+    # Always install requirements (fast if already up to date)
     try:
-        if requirements_hash != previous_hash:
-            if os.path.exists(hash_file_path):
-                os.remove(hash_file_path)
-            if with_ == "uv":
-                pip_install_command = [uv_bin, "pip", "install", "-r", requirements_file_path]
-            else:
-                python_exe = os.path.join(venv_dir, "bin", "python")
-                pip_install_command = [
-                    python_exe,
-                    "-m",
-                    "pip",
-                    "install",
-                    "--no-user",
-                    "-r",
-                    requirements_file_path,
-                ]
-            subprocess.run(
-                pip_install_command,
-                check=True,
-                text=True,
-                env={"VIRTUAL_ENV": venv_dir} if with_ == "uv" else None,
-            )
-
-            with open(hash_file_path, "w") as hash_file:
-                hash_file.write(requirements_hash)
+        if with_ == "uv":
+            pip_install_command = [uv_bin, "pip", "install", "-r", requirements_file_path]
+        else:
+            python_exe = os.path.join(venv_dir, "bin", "python")
+            pip_install_command = [
+                python_exe,
+                "-m",
+                "pip",
+                "install",
+                "--no-user",
+                "-r",
+                requirements_file_path,
+            ]
+        result = subprocess.run(
+            pip_install_command,
+            check=True,
+            text=True,
+            capture_output=True,  # Capture stdout/stderr
+            env={"VIRTUAL_ENV": venv_dir} if with_ == "uv" else None,
+        )
     except subprocess.CalledProcessError as e:
         # We're not raising error as this will bring down the whole studio, as it's running in a thread
-        print(f"Error installing venv requirements for tool directory {source_folder_path}: {e.with_traceback()}")
-        raise RuntimeError(f"COULD NOT INSTALL REQUIREMENTS: {e.with_traceback()}")
+        error_msg = f"Error installing venv requirements for tool directory {source_folder_path}:\n"
+        error_msg += f"Command: {' '.join(pip_install_command)}\n"
+        error_msg += f"Return code: {e.returncode}\n"
+        if e.stdout:
+            error_msg += f"STDOUT:\n{e.stdout}\n"
+        if e.stderr:
+            error_msg += f"STDERR:\n{e.stderr}\n"
+        print(error_msg)
+        raise RuntimeError(f"COULD NOT INSTALL REQUIREMENTS: {error_msg}")
 
 
 def prepare_virtual_env_for_tool(source_folder_path: str, requirements_file_name: str):

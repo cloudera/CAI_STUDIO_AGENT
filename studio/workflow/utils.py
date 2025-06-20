@@ -8,10 +8,13 @@ from cmlapi import CMLServiceApi
 
 from studio.cross_cutting import utils as cc_utils
 from studio import consts
-from studio.db.model import Workflow, Model, Agent
+from studio.cross_cutting.global_thread_pool import get_thread_pool
+from studio.db.model import Workflow, Model, Agent, ToolInstance
+from studio.api.types import ToolInstanceStatus
 from sqlalchemy.orm.session import Session
 
 from studio.models.utils import get_model_api_key_from_env
+from studio.tools.tool_instance import prepare_tool_instance
 
 
 def get_llm_config_for_workflow(workflow: Workflow, session: Session, cml: CMLServiceApi) -> dict:
@@ -123,6 +126,51 @@ def is_custom_model_root_dir_feature_enabled() -> bool:
 
 def get_fresh_workflow_directory(workflow_name: str) -> str:
     return f"{consts.WORKFLOWS_LOCATION}/{cc_utils.create_slug_from_name(workflow_name)}_{cc_utils.get_random_compact_string()}"
+
+
+def get_all_tools_for_workflow(workflow_id: str, session: Session) -> List[ToolInstance]:
+    """
+    Get all tool instances for a given workflow.
+    """
+    try:
+        # Get the workflow
+        workflow: Workflow = session.query(Workflow).filter_by(id=workflow_id).one()
+        agents: List[Agent] = session.query(Agent).filter(Agent.id.in_(workflow.crew_ai_agents)).all()
+        tool_instance_ids = {tool_id for agent in agents if agent.tool_ids for tool_id in agent.tool_ids}
+        tool_instances: List[ToolInstance] = (
+            session.query(ToolInstance).filter(ToolInstance.id.in_(list(tool_instance_ids))).all()
+        )
+        return tool_instances
+
+    except Exception as e:
+        raise RuntimeError(f"Error getting tools for workflow {workflow_id}: {str(e)}")
+
+
+def is_workflow_ready(workflow_id: str, session: Session) -> bool:
+    """
+    Check if a workflow is ready for execution.
+    """
+    try:
+        # Determine if all tools are ready
+        tool_instances: List[ToolInstance] = get_all_tools_for_workflow(workflow_id, session)
+        all_tools_ready = all(tool.status == ToolInstanceStatus.READY.value for tool in tool_instances)
+
+        return all([all_tools_ready])
+
+    except Exception as e:
+        raise RuntimeError(f"Error checking workflow readiness for workflow {workflow_id}: {str(e)}")
+
+
+def prepare_tools_for_workflow(workflow_id: str, session: Session) -> None:
+    """
+    Prepare all tools for a given workflow.
+    """
+    tool_instances: List[ToolInstance] = get_all_tools_for_workflow(workflow_id, session)
+    for tool_instance in tool_instances:
+        get_thread_pool().submit(
+            prepare_tool_instance,
+            tool_instance.id,
+        )
 
 
 def invalidate_workflow(preexisting_db_session, condition) -> None:

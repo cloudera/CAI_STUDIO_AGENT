@@ -381,6 +381,7 @@ message ToolInstance {
   string tool_image_uri = 9; // Image of the tool 
   string tool_description = 10; // Detailed description of the tool.
   bool is_venv_tool = 11; // Expanded "venv" tool feature.
+  string status = 12; // current status of the tool (used to identify testing readiness)
 }
 
 message AddMcpTemplateRequest {

@@ -74,6 +74,16 @@ const CreateWorkflowContent: React.FC = () => {
 
       // Initialize redux state with this configuration.
       dispatch(updatedWorkflowConfiguration(workflowConfiguration));
+
+      // Send one update workflow request to ensure that the workflow is in a
+      // valid state and trigger tool venv updates.
+      await updateWorkflow({
+        workflow_id: workflowId,
+        name: workflow.name,
+        description: workflow.description,
+        is_conversational: workflow.is_conversational,
+        crew_ai_workflow_metadata: workflow.crew_ai_workflow_metadata,
+      }).unwrap();
     };
 
     const searchWorkflowId = searchParams.get('workflowId');

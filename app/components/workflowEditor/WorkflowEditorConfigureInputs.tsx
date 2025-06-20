@@ -27,6 +27,7 @@ import {
 } from '../../workflows/editorSlice';
 import {
   readWorkflowConfigurationFromLocalStorage,
+  resetLocalStorageState,
   writeWorkflowConfigurationToLocalStorage,
 } from '../../lib/localStorage';
 import { WorkflowGenerationConfig, WorkflowConfiguration } from '../../lib/types';
@@ -93,6 +94,7 @@ export const setWorkflowToolParameterInLocalStorage = (
     writeWorkflowConfigurationToLocalStorage(workflowId, workflowConfiguration);
   } catch (error) {
     console.error('Error setting configuration parameter:', error);
+    resetLocalStorageState();
   }
 };
 
@@ -120,6 +122,7 @@ export const setWorkflowMcpInstanceParameterInLocalStorage = (
     writeWorkflowConfigurationToLocalStorage(workflowId, workflowConfiguration);
   } catch (error) {
     console.error('Error setting configuration parameter:', error);
+    resetLocalStorageState();
   }
 };
 

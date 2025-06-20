@@ -17,7 +17,10 @@ from studio.api import *
 from studio.db import model as db_model
 import studio.cross_cutting.utils as cc_utils
 import studio.consts as consts
-from studio.workflow.utils import get_llm_config_for_workflow
+from studio.workflow.utils import (
+    get_llm_config_for_workflow,
+    is_workflow_ready,
+)
 from studio.workflow.runners import get_workflow_runners
 from studio.deployments.entry import deploy_from_payload
 from studio.deployments.types import *
@@ -56,6 +59,10 @@ def test_workflow(
         llm_config = {}
         with dao.get_session() as session:
             workflow: db_model.Workflow = session.query(db_model.Workflow).filter_by(id=request.workflow_id).one()
+
+            if not is_workflow_ready(workflow.id, session):
+                raise RuntimeError(f"Workflow '{workflow.name}' is not ready for testing!")
+
             collated_input: input_types.CollatedInput = create_collated_input(workflow, session)
 
             # Model config is already created as part of creating collated input.

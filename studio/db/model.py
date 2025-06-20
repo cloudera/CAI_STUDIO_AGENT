@@ -106,6 +106,7 @@ class ToolInstance(Base, MappedProtobuf, MappedDict):
     source_folder_path = Column(Text, nullable=False)
     tool_image_path = Column(Text, nullable=False)
     is_venv_tool = Column(Boolean, default=False)
+    status = Column(String, nullable=False, default="CREATED")
 
 
 class ToolTemplate(Base, MappedProtobuf, MappedDict):

@@ -304,6 +304,8 @@ export interface ToolInstance {
   tool_description: string;
   /** Expanded "venv" tool feature. */
   is_venv_tool: boolean;
+  /** current status of the tool (used to identify testing readiness) */
+  status: string;
 }
 
 export interface AddMcpTemplateRequest {
@@ -4118,6 +4120,7 @@ function createBaseToolInstance(): ToolInstance {
     tool_image_uri: "",
     tool_description: "",
     is_venv_tool: false,
+    status: "",
   };
 }
 
@@ -4155,6 +4158,9 @@ export const ToolInstance: MessageFns<ToolInstance> = {
     }
     if (message.is_venv_tool !== false) {
       writer.uint32(88).bool(message.is_venv_tool);
+    }
+    if (message.status !== "") {
+      writer.uint32(98).string(message.status);
     }
     return writer;
   },
@@ -4254,6 +4260,14 @@ export const ToolInstance: MessageFns<ToolInstance> = {
           message.is_venv_tool = reader.bool();
           continue;
         }
+        case 12: {
+          if (tag !== 98) {
+            break;
+          }
+
+          message.status = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -4276,6 +4290,7 @@ export const ToolInstance: MessageFns<ToolInstance> = {
       tool_image_uri: isSet(object.tool_image_uri) ? globalThis.String(object.tool_image_uri) : "",
       tool_description: isSet(object.tool_description) ? globalThis.String(object.tool_description) : "",
       is_venv_tool: isSet(object.is_venv_tool) ? globalThis.Boolean(object.is_venv_tool) : false,
+      status: isSet(object.status) ? globalThis.String(object.status) : "",
     };
   },
 
@@ -4314,6 +4329,9 @@ export const ToolInstance: MessageFns<ToolInstance> = {
     if (message.is_venv_tool !== false) {
       obj.is_venv_tool = message.is_venv_tool;
     }
+    if (message.status !== "") {
+      obj.status = message.status;
+    }
     return obj;
   },
 
@@ -4333,6 +4351,7 @@ export const ToolInstance: MessageFns<ToolInstance> = {
     message.tool_image_uri = object.tool_image_uri ?? "";
     message.tool_description = object.tool_description ?? "";
     message.is_venv_tool = object.is_venv_tool ?? false;
+    message.status = object.status ?? "";
     return message;
   },
 };

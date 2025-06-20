@@ -14,17 +14,11 @@ from studio.tools.tool_instance import remove_tool_instance
 from studio.cross_cutting.global_thread_pool import get_thread_pool
 import studio.workflow.utils as workflow_utils
 from cmlapi import CMLServiceApi
-from typing import List, Set
+from typing import List
 from crewai import Process
 import sys
 from datetime import datetime
 from studio.proto.agent_studio_pb2 import Workflow as ProtoWorkflow, CrewAIWorkflowMetadata, ListWorkflowsResponse, GetWorkflowResponse
-
-# Import engine code manually. Eventually when this code becomes
-# a separate git repo, or a custom runtime image, this path call
-# will go away and workflow engine features will be available already.
-sys.path.append("studio/workflow_engine/src")
-from engine.crewai.tools import is_venv_prepared_for_tool
 
 
 def _validate_agents(metadata: CrewAIWorkflowMetadata, cml: CMLServiceApi, dao: AgentStudioDao = None) -> None:
@@ -329,31 +323,6 @@ def get_workflow(request: GetWorkflowRequest, cml: CMLServiceApi, dao: AgentStud
             if not workflow:
                 raise ValueError(f"Workflow with ID '{request.workflow_id}' not found.")
 
-            agent_ids = workflow.crew_ai_agents or []
-            agents: List[db_model.Agent] = []
-            if agent_ids:
-                agents = session.query(db_model.Agent).filter(db_model.Agent.id.in_(agent_ids)).all()
-
-            # Collect all tool IDs from agents
-            tool_instance_ids: Set[str] = set()
-            for agent in agents:
-                if agent.tool_ids:
-                    tool_instance_ids.update(agent.tool_ids)
-
-            # Get all tool instances in a single query
-            tool_instances: List[db_model.ToolInstance] = []
-            if tool_instance_ids:
-                tool_instances = (
-                    session.query(db_model.ToolInstance)
-                    .filter(db_model.ToolInstance.id.in_(list(tool_instance_ids)))
-                    .all()
-                )
-
-            are_all_tools_ready = all(
-                is_venv_prepared_for_tool(t_.source_folder_path, t_.python_requirements_file_name)
-                for t_ in tool_instances
-            )
-
             created_at = workflow.created_at.isoformat() if workflow.created_at else ""
             updated_at = workflow.updated_at.isoformat() if workflow.updated_at else ""
             # Include workflow metadata with extracted placeholders
@@ -368,7 +337,7 @@ def get_workflow(request: GetWorkflowRequest, cml: CMLServiceApi, dao: AgentStud
                     process=workflow.crew_ai_process or "",
                     manager_llm_model_provider_id=workflow.crew_ai_llm_provider_model_id or "",
                 ),
-                is_ready=are_all_tools_ready,
+                is_ready=workflow_utils.is_workflow_ready(workflow.id, session),
                 is_conversational=workflow.is_conversational or False,
                 is_draft=workflow.is_draft or False,
                 directory=workflow.directory or "",
@@ -468,6 +437,10 @@ def update_workflow(
 
             # Commit the updated workflow
             session.commit()
+
+            # Update all tools for the workflow
+            workflow_utils.prepare_tools_for_workflow(workflow.id, session)
+
             return UpdateWorkflowResponse()
 
     except SQLAlchemyError as e:

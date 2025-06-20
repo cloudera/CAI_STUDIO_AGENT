@@ -141,6 +141,7 @@ export async function GET(request: NextRequest) {
             tool_image_uri: tool.tool_image_uri,
             tool_description: '',
             is_venv_tool: tool.is_venv_tool || false,
+            status: '',
           };
           return t;
         })

@@ -4,6 +4,7 @@ from studio.db.dao import AgentStudioDao
 from studio.db import model as db_model, DbSession
 from typing import Optional
 from studio.api import *
+from studio.api.types import ToolInstanceStatus
 from cmlapi import CMLServiceApi
 import json
 import os
@@ -21,6 +22,62 @@ import sys
 
 sys.path.append("studio/workflow_engine/src/")
 from engine.crewai.tools import prepare_virtual_env_for_tool
+
+
+def prepare_tool_instance(tool_instance_id: str):
+    """
+    Prepare virtual environment for a tool instance.
+    Updates tool status throughout the process. DAO is created within
+    the method because this run on a separate thread.
+    """
+    dao: AgentStudioDao = AgentStudioDao()
+
+    try:
+        # Get tool instance info and check if we need to clean up failed state
+        with dao.get_session() as session:
+            tool_instance = session.query(db_model.ToolInstance).filter_by(id=tool_instance_id).one()
+
+            # If tool is in PREPARING state, return
+            if tool_instance.status == ToolInstanceStatus.PREPARING.value:
+                print(f"Tool instance {tool_instance_id} is already being prepared on a separate thread")
+                return
+
+            # Get the info we need for venv preparation
+            source_folder_path = tool_instance.source_folder_path
+            requirements_file_name = tool_instance.python_requirements_file_name
+            current_status = tool_instance.status
+
+            # If tool is in FAILED state, remove .venv directory entirely
+            if current_status == ToolInstanceStatus.FAILED.value:
+                venv_dir = os.path.join(source_folder_path, ".venv")
+                if os.path.exists(venv_dir):
+                    try:
+                        shutil.rmtree(venv_dir)
+                        print(f"Removed existing .venv directory for failed tool instance {tool_instance_id}")
+                    except Exception as e:
+                        print(f"Error removing .venv directory for tool instance {tool_instance_id}: {e}")
+
+            # Set status to PREPARING
+            tool_instance.status = ToolInstanceStatus.PREPARING.value
+            session.commit()
+
+            # Prepare the virtual environment
+            prepare_virtual_env_for_tool(source_folder_path, requirements_file_name)
+
+            tool_instance.status = ToolInstanceStatus.READY.value
+            session.commit()
+
+    except Exception as e:
+        print(f"Error preparing virtual environment for tool instance {tool_instance_id}: {e}")
+        # Set status to FAILED
+        try:
+            with dao.get_session() as session:
+                tool_instance = session.query(db_model.ToolInstance).filter_by(id=tool_instance_id).first()
+                if tool_instance:
+                    tool_instance.status = ToolInstanceStatus.FAILED.value
+                    session.commit()
+        except Exception as commit_error:
+            print(f"Error updating tool instance {tool_instance_id} status to FAILED: {commit_error}")
 
 
 def create_tool_instance(
@@ -91,6 +148,7 @@ def _create_tool_instance_impl(request: CreateToolInstanceRequest, session: DbSe
             source_folder_path=tool_instance_dir,
             tool_image_path=tool_image_path,
             is_venv_tool=associated_tool_template.is_venv_tool,
+            status=ToolInstanceStatus.CREATED.value,
         )
         session.add(tool_instance)
     else:
@@ -104,13 +162,14 @@ def _create_tool_instance_impl(request: CreateToolInstanceRequest, session: DbSe
             source_folder_path=tool_instance_dir,
             tool_image_path="",
             is_venv_tool=True,
+            status=ToolInstanceStatus.CREATED.value,
         )
         session.add(tool_instance)
+    session.commit()
 
     get_thread_pool().submit(
-        prepare_virtual_env_for_tool,
-        tool_instance_dir,
-        "requirements.txt",
+        prepare_tool_instance,
+        instance_uuid,
     )
     return CreateToolInstanceResponse(
         tool_instance_id=instance_uuid,
@@ -147,6 +206,15 @@ def _update_tool_instance_impl(request: UpdateToolInstanceRequest, session: DbSe
     tool_instance = session.query(db_model.ToolInstance).filter_by(id=request.tool_instance_id).first()
     if not tool_instance:
         raise ValueError(f"Tool Instance with id '{request.tool_instance_id}' not found")
+
+    # Check tool status before deciding whether to prepare venv
+    current_status = tool_instance.status
+    should_prepare_venv = current_status in [
+        ToolInstanceStatus.CREATED.value,
+        ToolInstanceStatus.READY.value,
+        ToolInstanceStatus.FAILED.value,
+    ]
+
     if request.name:
         tool_instance.name = request.name
     if request.tmp_tool_image_path:
@@ -162,11 +230,16 @@ def _update_tool_instance_impl(request: UpdateToolInstanceRequest, session: DbSe
         shutil.copy(request.tmp_tool_image_path, tool_image_path)
         tool_instance.tool_image_path = tool_image_path
         os.remove(request.tmp_tool_image_path)
-    get_thread_pool().submit(
-        prepare_virtual_env_for_tool,
-        tool_instance.source_folder_path,
-        tool_instance.python_requirements_file_name,
-    )
+
+    # Only submit venv preparation if tool is not already preparing
+    if should_prepare_venv:
+        get_thread_pool().submit(
+            prepare_tool_instance,
+            request.tool_instance_id,
+        )
+    else:
+        print(f"Skipping venv preparation for tool instance {request.tool_instance_id} - status is {current_status}")
+
     return UpdateToolInstanceResponse(tool_instance_id=tool_instance.id)
 
 
@@ -250,6 +323,7 @@ def _get_tool_instance_impl(request: GetToolInstanceRequest, session: DbSession)
             tool_image_uri=tool_image_uri,
             tool_description=tool_description,
             is_venv_tool=tool_instance.is_venv_tool,
+            status=tool_instance.status,
         )
     )
 
@@ -336,6 +410,7 @@ def _list_tool_instances_impl(request: ListToolInstancesRequest, session: DbSess
                 tool_image_uri=tool_image_uri,
                 tool_description=tool_description,
                 is_venv_tool=tool_instance.is_venv_tool,
+                status=tool_instance.status,
             )
         )
     return ListToolInstancesResponse(tool_instances=tool_instances_response)

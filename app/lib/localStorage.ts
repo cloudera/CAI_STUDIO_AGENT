@@ -17,6 +17,14 @@ export const readLocalStorageState = () => {
 };
 
 /**
+ * Fully reset local storage state back to initial state. 
+ */
+export const resetLocalStorageState = () => {
+  localStorage.removeItem('state');
+  localStorage.setItem('state', JSON.stringify(INITIAL_LOCAL_STORAGE_STAGE));
+};
+
+/**
  * Retrieve view settings from local storage.
  */
 export const readViewSettingsFromLocalStorage = () => {
