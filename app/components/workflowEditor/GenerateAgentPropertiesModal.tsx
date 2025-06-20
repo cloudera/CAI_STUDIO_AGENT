@@ -1,12 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Layout, Typography, Input, Alert, Space } from 'antd';
-import { LoadingOutlined, PlayCircleOutlined, CheckCircleOutlined, ExclamationCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import {
+  LoadingOutlined,
+  PlayCircleOutlined,
+  CheckCircleOutlined,
+  ExclamationCircleOutlined,
+  InfoCircleOutlined,
+} from '@ant-design/icons';
 import { FormInstance } from 'antd';
 import { Model, ToolInstance } from '@/studio/proto/agent_studio';
 import { useAppSelector } from '../../lib/hooks/hooks';
 import { useSelector } from 'react-redux';
 import { useTestModelMutation } from '../../models/modelsApi';
-import { selectEditorAgentViewAgent, selectEditorAgentViewCreateAgentState } from '../../workflows/editorSlice';
+import {
+  selectEditorAgentViewAgent,
+  selectEditorAgentViewCreateAgentState,
+} from '../../workflows/editorSlice';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -341,4 +350,4 @@ const GenerateAgentPropertiesModal: React.FC<GenerateAgentPropertiesModalProps> 
   );
 };
 
-export default GenerateAgentPropertiesModal; 
+export default GenerateAgentPropertiesModal;

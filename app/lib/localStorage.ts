@@ -17,7 +17,7 @@ export const readLocalStorageState = () => {
 };
 
 /**
- * Fully reset local storage state back to initial state. 
+ * Fully reset local storage state back to initial state.
  */
 export const resetLocalStorageState = () => {
   localStorage.removeItem('state');

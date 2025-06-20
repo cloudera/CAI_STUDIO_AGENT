@@ -32,9 +32,7 @@ def list_workflow_templates(
 ) -> ListWorkflowTemplatesResponse:
     with dao.get_session() as session:
         workflow_templates: List[db_model.WorkflowTemplate] = session.query(db_model.WorkflowTemplate).all()
-        return ListWorkflowTemplatesResponse(
-            workflow_templates=[wt.to_protobuf() for wt in workflow_templates]
-        )
+        return ListWorkflowTemplatesResponse(workflow_templates=[wt.to_protobuf() for wt in workflow_templates])
 
 
 def get_workflow_template(

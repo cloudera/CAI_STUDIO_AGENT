@@ -264,9 +264,15 @@ def create_virtual_env(source_folder_path: str, with_: Literal["venv", "uv"]):
     """
     venv_dir = os.path.join(source_folder_path, ".venv")
 
-    # Only create if .venv directory doesn't exist
-    if os.path.exists(venv_dir):
+    # Only create if .venv directory doesn't exist and .venv/bin/python exists
+    if os.path.exists(venv_dir) and os.path.exists(os.path.join(venv_dir, "bin", "python")):
         return
+
+    # If .venv/ exists but .venv/bin/python doesn't exist, remove .venv/ because
+    # it's an invalid venv and has been corrupted.
+    if os.path.exists(venv_dir) and not os.path.exists(os.path.join(venv_dir, "bin", "python")):
+        print(f"Removing invalid venv directory {venv_dir} and recreating it because it's missing .venv/bin/python")
+        shutil.rmtree(venv_dir)
 
     uv_bin = shutil.which("uv")
 

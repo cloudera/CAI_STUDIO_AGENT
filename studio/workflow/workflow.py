@@ -16,9 +16,13 @@ import studio.workflow.utils as workflow_utils
 from cmlapi import CMLServiceApi
 from typing import List
 from crewai import Process
-import sys
 from datetime import datetime
-from studio.proto.agent_studio_pb2 import Workflow as ProtoWorkflow, CrewAIWorkflowMetadata, ListWorkflowsResponse, GetWorkflowResponse
+from studio.proto.agent_studio_pb2 import (
+    Workflow as ProtoWorkflow,
+    CrewAIWorkflowMetadata,
+    ListWorkflowsResponse,
+    GetWorkflowResponse,
+)
 
 
 def _validate_agents(metadata: CrewAIWorkflowMetadata, cml: CMLServiceApi, dao: AgentStudioDao = None) -> None:

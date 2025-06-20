@@ -88,8 +88,18 @@ const { Text } = Typography;
 const { TextArea } = Input;
 
 const SparkleIcon = (
-  <svg width="22" height="22" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: 4, display: 'inline-block', verticalAlign: 'middle' }}>
-    <path d="m4.86 10.009 1.643.593-1.643.59-.589 1.641-.598-1.642-1.633-.59 1.646-.592.585-1.639.59 1.639zM10.01 6.6l2.821 1.017-2.82 1.013L9 11.448 7.974 8.631 5.17 7.618l2.824-1.017L9 3.787l1.01 2.814zM5.004 3.397l2.236.807-2.236.804-.8 2.234-.815-2.234-2.224-.804 2.24-.807.798-2.23.8 2.23z" fill="#0074D2"/>
+  <svg
+    width="22"
+    height="22"
+    viewBox="0 0 14 14"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    style={{ marginRight: 4, display: 'inline-block', verticalAlign: 'middle' }}
+  >
+    <path
+      d="m4.86 10.009 1.643.593-1.643.59-.589 1.641-.598-1.642-1.633-.59 1.646-.592.585-1.639.59 1.639zM10.01 6.6l2.821 1.017-2.82 1.013L9 11.448 7.974 8.631 5.17 7.618l2.824-1.017L9 3.787l1.01 2.814zM5.004 3.397l2.236.807-2.236.804-.8 2.234-.815-2.234-2.224-.804 2.24-.807.798-2.23.8 2.23z"
+      fill="#0074D2"
+    />
   </svg>
 );
 
@@ -1301,9 +1311,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                 justifyContent: 'space-between',
               }}
             >
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                Agent Details
-              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Agent Details</span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Button
                   type="default"
@@ -1518,7 +1526,8 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
   const createAgentState = useSelector(selectEditorAgentViewCreateAgentState);
   const { data: defaultModel } = useGetDefaultModelQuery();
   const [isLoading, setIsLoading] = useState(false);
-  const [isGenerateAgentPropertiesModalVisible, setIsGenerateAgentPropertiesModalVisible] = useState(false);
+  const [isGenerateAgentPropertiesModalVisible, setIsGenerateAgentPropertiesModalVisible] =
+    useState(false);
 
   // Add useEffect to set default model when form is initialized or when defaultModel changes
   useEffect(() => {
@@ -1727,7 +1736,7 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
           disabled={!defaultModel} // Disable button if no default model
         >
           {getButtonText()}
-        </Button>
+        </Button>,
       ]}
     >
       <div style={{ position: 'relative' }}>

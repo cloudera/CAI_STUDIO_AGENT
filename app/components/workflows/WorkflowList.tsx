@@ -231,13 +231,13 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
   };
 
   const sortedDeployedWorkflows = [...filteredDeployedWorkflows]
-    .map(dw => ({...dw, workflow: workflows.find(w => w.workflow_id === dw.workflow_id)}))
-    .filter(dw => dw.workflow)
+    .map((dw) => ({ ...dw, workflow: workflows.find((w) => w.workflow_id === dw.workflow_id) }))
+    .filter((dw) => dw.workflow)
     .sort((a, b) => sortByUpdatedAtDesc(a.workflow, b.workflow));
-  const sortedDeployedWorkflowIds = sortedDeployedWorkflows.map(dw => dw.workflow_id);
+  const sortedDeployedWorkflowIds = sortedDeployedWorkflows.map((dw) => dw.workflow_id);
 
   const sortedDraftWorkflows = [...filteredWorkflows]
-    .filter(w => w.is_draft && !deployedWorkflowIds.has(w.workflow_id))
+    .filter((w) => w.is_draft && !deployedWorkflowIds.has(w.workflow_id))
     .sort(sortByUpdatedAtDesc);
 
   const sortedWorkflowTemplates = [...filteredWorkflowTemplates].sort(sortByUpdatedAtDesc);

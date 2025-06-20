@@ -104,7 +104,15 @@ const WorkflowDisplayCard: React.FC<WorkflowDisplayCardProps> = ({
         >
           {workflow?.name}
         </Text>
-        <div style={{ margin: '3px 0 9px 0', fontSize: '13px', color: '#888', display: 'flex', flexDirection: 'column' }}></div>
+        <div
+          style={{
+            margin: '3px 0 9px 0',
+            fontSize: '13px',
+            color: '#888',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        ></div>
         <Space
           style={{
             marginTop: 'auto',
@@ -156,9 +164,13 @@ const WorkflowDisplayCard: React.FC<WorkflowDisplayCardProps> = ({
                   <Tooltip
                     title={
                       <div>
-                        {agents?.slice(MAX_VISIBLE_AGENTS).map((agent, idx) => (
-                          <div key={agent?.id || `hidden-agent-${idx}`}>{agent?.name || 'Unknown'}</div>
-                        ))}
+                        {agents
+                          ?.slice(MAX_VISIBLE_AGENTS)
+                          .map((agent, idx) => (
+                            <div key={agent?.id || `hidden-agent-${idx}`}>
+                              {agent?.name || 'Unknown'}
+                            </div>
+                          ))}
                       </div>
                     }
                     placement="top"
@@ -228,8 +240,16 @@ const WorkflowTemplateDisplayCard: React.FC<WorkflowTemplateDisplayCardProps> = 
         >
           {workflowTemplate?.name}
         </Text>
-        
-        <div style={{ margin: '3px 0 9px 0', fontSize: '13px', color: '#888', display: 'flex', flexDirection: 'column' }}>
+
+        <div
+          style={{
+            margin: '3px 0 9px 0',
+            fontSize: '13px',
+            color: '#888',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
           {/*
           <span style={{ marginBottom: 3 }}>
             Created By: 
@@ -276,8 +296,10 @@ const WorkflowTemplateDisplayCard: React.FC<WorkflowTemplateDisplayCardProps> = 
           }}
         >
           {(() => {
-            const visibleAgentIds = workflowTemplate?.agent_template_ids?.slice(0, MAX_VISIBLE_AGENTS) || [];
-            const hiddenCount = (workflowTemplate?.agent_template_ids?.length || 0) - visibleAgentIds.length;
+            const visibleAgentIds =
+              workflowTemplate?.agent_template_ids?.slice(0, MAX_VISIBLE_AGENTS) || [];
+            const hiddenCount =
+              (workflowTemplate?.agent_template_ids?.length || 0) - visibleAgentIds.length;
             return (
               <>
                 {visibleAgentIds.map((agentId, index) => {
@@ -326,7 +348,9 @@ const WorkflowTemplateDisplayCard: React.FC<WorkflowTemplateDisplayCardProps> = 
                           .map((agentId, idx) => {
                             const agent = agentTemplates?.find((a) => a.id === agentId);
                             return (
-                              <div key={agent?.id || `hidden-agent-template-${idx}`}>{agent?.name || 'Unknown'}</div>
+                              <div key={agent?.id || `hidden-agent-template-${idx}`}>
+                                {agent?.name || 'Unknown'}
+                              </div>
                             );
                           })}
                       </div>
@@ -414,13 +438,33 @@ export const getStatusDisplay = (status: string): string => {
 
 // Place the inline SVG icon definitions after imports and before any component/function definitions
 const ClouderaAIWorkbenchAppIcon = (
-  <svg viewBox="0 0 24 24" width="20" height="20" style={{ opacity: 0.45, verticalAlign: 'middle', display: 'inline-block' }}>
-    <path fillRule="evenodd" clipRule="evenodd" d="M12 2L2 8.252l10-6.24 10 6.24L12 2zM2 8.252l2.1 1.311.9.566.146.088L7.1 11.439l.9.555v.012l2.1 1.298 1.9 1.19 1.9-1.19 2.1-1.298v-.012l.9-.555 1.954-1.222.146-.088.9-.566 2.1-1.31L12 2.01 2 8.252zm4.188 0L12 4.62l5.812 3.632L12 11.883l-5.812-3.63zM12 15.7l-8.044-5.019L2 11.902l10 6.241 10-6.24-1.956-1.222L12 15.7zm7.9-1.263L12 19.38l-7.9-4.943h-.011L2 15.747 12 22l10-6.252-2.089-1.311H19.9z" fill="currentColor"/>
+  <svg
+    viewBox="0 0 24 24"
+    width="20"
+    height="20"
+    style={{ opacity: 0.45, verticalAlign: 'middle', display: 'inline-block' }}
+  >
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M12 2L2 8.252l10-6.24 10 6.24L12 2zM2 8.252l2.1 1.311.9.566.146.088L7.1 11.439l.9.555v.012l2.1 1.298 1.9 1.19 1.9-1.19 2.1-1.298v-.012l.9-.555 1.954-1.222.146-.088.9-.566 2.1-1.31L12 2.01 2 8.252zm4.188 0L12 4.62l5.812 3.632L12 11.883l-5.812-3.63zM12 15.7l-8.044-5.019L2 11.902l10 6.241 10-6.24-1.956-1.222L12 15.7zm7.9-1.263L12 19.38l-7.9-4.943h-.011L2 15.747 12 22l10-6.252-2.089-1.311H19.9z"
+      fill="currentColor"
+    />
   </svg>
 );
 const ClouderaAIWorkbenchModelIcon = (
-  <svg viewBox="0 0 24 24" width="20" height="20" style={{ opacity: 0.45, verticalAlign: 'middle', display: 'inline-block' }}>
-    <path fillRule="evenodd" clipRule="evenodd" d="M19.073 8.956a2.215 2.215 0 00-1.337 1.337h-3.073a3.159 3.159 0 00-.956-.956V6.264a2.215 2.215 0 001.337-1.337h2.692a2.218 2.218 0 001.337 1.337v2.692zm-8.78 8.78a2.213 2.213 0 00-1.337 1.337H6.263a2.214 2.214 0 00-1.336-1.337v-2.692a2.211 2.211 0 001.336-1.337h3.074c.243.381.575.713.956.956v3.073zM20.78 6.156A2.193 2.193 0 0022 4.196C22 2.985 21.014 2 19.804 2c-.858 0-1.599.498-1.96 1.22h-2.908A2.193 2.193 0 0012.976 2c-1.21 0-2.196.985-2.196 2.195 0 .86.498 1.6 1.22 1.961V8.83A3.178 3.178 0 008.83 12H6.155a2.194 2.194 0 00-1.96-1.22c-1.21 0-2.196.986-2.196 2.196 0 .858.498 1.6 1.22 1.96v2.908A2.194 2.194 0 002 19.805C2 21.015 2.985 22 4.195 22c.858 0 1.6-.498 1.961-1.22h2.907A2.196 2.196 0 0011.024 22c1.21 0 2.195-.985 2.195-2.195 0-.859-.498-1.6-1.219-1.96V15.17a3.178 3.178 0 003.171-3.17h2.673a2.193 2.193 0 001.96 1.22A2.2 2.2 0 0022 11.023c0-.858-.498-1.599-1.22-1.96V6.155z" fill="currentColor"/>
+  <svg
+    viewBox="0 0 24 24"
+    width="20"
+    height="20"
+    style={{ opacity: 0.45, verticalAlign: 'middle', display: 'inline-block' }}
+  >
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M19.073 8.956a2.215 2.215 0 00-1.337 1.337h-3.073a3.159 3.159 0 00-.956-.956V6.264a2.215 2.215 0 001.337-1.337h2.692a2.218 2.218 0 001.337 1.337v2.692zm-8.78 8.78a2.213 2.213 0 00-1.337 1.337H6.263a2.214 2.214 0 00-1.336-1.337v-2.692a2.211 2.211 0 001.336-1.337h3.074c.243.381.575.713.956.956v3.073zM20.78 6.156A2.193 2.193 0 0022 4.196C22 2.985 21.014 2 19.804 2c-.858 0-1.599.498-1.96 1.22h-2.908A2.193 2.193 0 0012.976 2c-1.21 0-2.196.985-2.196 2.195 0 .86.498 1.6 1.22 1.961V8.83A3.178 3.178 0 008.83 12H6.155a2.194 2.194 0 00-1.96-1.22c-1.21 0-2.196.986-2.196 2.196 0 .858.498 1.6 1.22 1.96v2.908A2.194 2.194 0 002 19.805C2 21.015 2.985 22 4.195 22c.858 0 1.6-.498 1.961-1.22h2.907A2.196 2.196 0 0011.024 22c1.21 0 2.195-.985 2.195-2.195 0-.859-.498-1.6-1.219-1.96V15.17a3.178 3.178 0 003.171-3.17h2.673a2.193 2.193 0 001.96 1.22A2.2 2.2 0 0022 11.023c0-.858-.498-1.599-1.22-1.96V6.155z"
+      fill="currentColor"
+    />
   </svg>
 );
 

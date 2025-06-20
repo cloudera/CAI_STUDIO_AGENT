@@ -512,7 +512,12 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
           <div style={{ display: 'flex', gap: '8px' }}>
             {isReordering ? (
               <>
-                <Button size="small" icon={<SaveOutlined />} onClick={handleSaveReorder} type="primary">
+                <Button
+                  size="small"
+                  icon={<SaveOutlined />}
+                  onClick={handleSaveReorder}
+                  type="primary"
+                >
                   Save
                 </Button>
                 <Button size="small" icon={<CloseOutlined />} onClick={handleCancelReorder}>
