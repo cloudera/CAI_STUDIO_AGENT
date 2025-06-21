@@ -134,6 +134,18 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
         setParsedConfig(null);
         return;
       }
+
+      // Validate server name format (same as backend validation)
+      if (!/^[a-zA-Z0-9 ]+$/.test(serverName)) {
+        setValidationError(
+          'MCP name must only contain alphabets, numbers, and spaces, and must not contain special characters.',
+        );
+        setServerNameInfo('');
+        setIsValid(false);
+        setParsedConfig(null);
+        return;
+      }
+
       const serverConfig = config.mcpServers[serverName];
 
       // Check for unknown fields

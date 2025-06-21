@@ -30,14 +30,20 @@ def create_mcp_instance(
     Create a new MCP instance
     """
     try:
+        response = None
         if dao is not None:
             with dao.get_session() as session:
                 response = _create_mcp_instance_impl(request, session)
                 session.commit()
-                return response
         else:
             session = preexisting_db_session
-            return _create_mcp_instance_impl(request, session)
+            response = _create_mcp_instance_impl(request, session)
+        get_thread_pool().submit(
+            mcp_utils._update_mcp_tools,
+            response.mcp_instance_id,
+            db_model.MCPInstance,
+        )
+        return response
 
     except Exception as e:
         raise RuntimeError(f"An unexpected error occurred: {e}")
@@ -78,12 +84,6 @@ def _create_mcp_instance_impl(request: CreateMcpInstanceRequest, session: DbSess
         mcp_image_path=mcp_image_path,
     )
     session.add(mcp_instance)
-
-    get_thread_pool().submit(
-        mcp_utils._update_mcp_tools,
-        instance_uuid,
-        db_model.MCPInstance,
-    )
 
     return CreateMcpInstanceResponse(
         mcp_instance_name=mcp_instance_name,

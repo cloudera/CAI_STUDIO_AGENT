@@ -4,7 +4,7 @@ from uuid import uuid4
 from typing import List, Optional
 from sqlalchemy.exc import SQLAlchemyError
 from studio import consts
-from studio.db.dao import AgentStudioDao
+from studio.db.dao import AgentStudioDao, get_dao
 from studio.db import model as db_model, DbSession
 from studio.api import *
 from studio.tools.tool_instance import get_tool_instance
@@ -200,8 +200,8 @@ def _add_agent_from_template(
         response: CreateMcpInstanceResponse = create_mcp_instance(
             CreateMcpInstanceRequest(workflow_id=request.workflow_id, name="", mcp_template_id=mcp_template.id),
             cml=cml,
-            dao=None,
-            preexisting_db_session=db_session,
+            dao=get_dao(),
+            preexisting_db_session=None,  # Don't use preexisting db session here, it will cause issues with the MCP instance validation
         )
         mcp_instance_ids.append(response.mcp_instance_id)
 
