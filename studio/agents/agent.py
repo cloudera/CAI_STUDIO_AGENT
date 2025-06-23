@@ -200,8 +200,8 @@ def _add_agent_from_template(
         response: CreateMcpInstanceResponse = create_mcp_instance(
             CreateMcpInstanceRequest(workflow_id=request.workflow_id, name="", mcp_template_id=mcp_template.id),
             cml=cml,
-            dao=get_dao(),
-            preexisting_db_session=None,  # Don't use preexisting db session here, it will cause issues with the MCP instance validation
+            dao=None,
+            preexisting_db_session=db_session,
         )
         mcp_instance_ids.append(response.mcp_instance_id)
 

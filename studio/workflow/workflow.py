@@ -13,6 +13,7 @@ from studio.agents.agent import remove_agent, add_agent
 from studio.tools.tool_instance import remove_tool_instance
 from studio.cross_cutting.global_thread_pool import get_thread_pool
 import studio.workflow.utils as workflow_utils
+import studio.as_mcp.utils as mcp_utils
 from cmlapi import CMLServiceApi
 from typing import List
 from crewai import Process
@@ -206,8 +207,21 @@ def add_workflow_from_template(
             session.add(agent)
             workflow.crew_ai_manager_agent = agent.id
 
+        mcp_instance_ids: list[str] = []
+        for _, agent_id in agent_templates_to_created_agent_id.items():
+            agent: db_model.Agent = session.query(db_model.Agent).filter_by(id=agent_id).one()
+            for ms in list(agent.mcp_instance_ids or []):
+                mcp_instance_ids.extend(ms)
+
         session.commit()
 
+        for mcp_instance_id in mcp_instance_ids:
+            get_thread_pool().submit(
+            mcp_utils._update_mcp_tools,
+            mcp_instance_id,
+            db_model.MCPInstance,
+        )
+            
         return AddWorkflowResponse(workflow_id=workflow.id)
 
 
