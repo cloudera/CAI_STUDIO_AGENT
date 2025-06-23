@@ -1,4 +1,3 @@
-import os
 from datetime import timedelta
 import asyncio
 from typing import List, Type, Union, Optional, Dict
@@ -7,12 +6,11 @@ from mcp.client.stdio import stdio_client
 from studio.db.dao import get_dao
 from studio.db import model as db_model
 import studio.consts as consts
-import studio.cross_cutting.utils as cc_utils
 
 
 def _get_runtime_command(mcp_type: consts.SupportedMCPTypes) -> str:
     if mcp_type == consts.SupportedMCPTypes.PYTHON.value:
-        return os.path.join(os.path.abspath(cc_utils.get_studio_subdirectory()), ".venv", "bin", "uvx")
+        return "uvx"
     elif mcp_type == consts.SupportedMCPTypes.NODE.value:
         return "npx"
     else:
@@ -61,5 +59,6 @@ def _update_mcp_tools(
             mcp_obj.status = consts.MCPStatus.VALID.value
             mcp_obj.tools = [_t.model_dump() for _t in tools]
         except Exception as e:
+            print(f"Error updating MCP tools for MCP {mcp_id}: {e}")
             mcp_obj.status = consts.MCPStatus.VALIDATION_FAILED.value
         session.commit()
