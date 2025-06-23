@@ -788,11 +788,6 @@ message Workflow {
   string description = 8;
   // Directory
   optional string directory = 9;
-  // Audit fields
-  string created_at = 10;
-  string updated_at = 11;
-  string created_by_username = 12;
-  string updated_by_username = 13;
 }
 
 message CrewAIWorkflowMetadata {
@@ -1086,11 +1081,6 @@ message WorkflowTemplateMetadata {
   bool is_conversational = 9;
   // Is the template shipped as part of the studio
   bool pre_packaged = 10;
-  // Audit fields
-  string created_at = 11;
-  string updated_at = 12;
-  string created_by_username = 13;
-  string updated_by_username = 14;
 }
 
 message ExportWorkflowTemplateRequest {

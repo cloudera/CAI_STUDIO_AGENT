@@ -1243,10 +1243,6 @@ class Workflow(_message.Message):
         "is_draft",
         "description",
         "directory",
-        "created_at",
-        "updated_at",
-        "created_by_username",
-        "updated_by_username",
     )
     WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
@@ -1257,10 +1253,6 @@ class Workflow(_message.Message):
     IS_DRAFT_FIELD_NUMBER: _ClassVar[int]
     DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
     DIRECTORY_FIELD_NUMBER: _ClassVar[int]
-    CREATED_AT_FIELD_NUMBER: _ClassVar[int]
-    UPDATED_AT_FIELD_NUMBER: _ClassVar[int]
-    CREATED_BY_USERNAME_FIELD_NUMBER: _ClassVar[int]
-    UPDATED_BY_USERNAME_FIELD_NUMBER: _ClassVar[int]
     workflow_id: str
     name: str
     crew_ai_workflow_metadata: CrewAIWorkflowMetadata
@@ -1270,10 +1262,6 @@ class Workflow(_message.Message):
     is_draft: bool
     description: str
     directory: str
-    created_at: str
-    updated_at: str
-    created_by_username: str
-    updated_by_username: str
     def __init__(
         self,
         workflow_id: _Optional[str] = ...,
@@ -1285,10 +1273,6 @@ class Workflow(_message.Message):
         is_draft: bool = ...,
         description: _Optional[str] = ...,
         directory: _Optional[str] = ...,
-        created_at: _Optional[str] = ...,
-        updated_at: _Optional[str] = ...,
-        created_by_username: _Optional[str] = ...,
-        updated_by_username: _Optional[str] = ...,
     ) -> None: ...
 
 class CrewAIWorkflowMetadata(_message.Message):
@@ -1845,10 +1829,6 @@ class WorkflowTemplateMetadata(_message.Message):
         "use_default_manager",
         "is_conversational",
         "pre_packaged",
-        "created_at",
-        "updated_at",
-        "created_by_username",
-        "updated_by_username",
     )
     ID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
@@ -1860,10 +1840,6 @@ class WorkflowTemplateMetadata(_message.Message):
     USE_DEFAULT_MANAGER_FIELD_NUMBER: _ClassVar[int]
     IS_CONVERSATIONAL_FIELD_NUMBER: _ClassVar[int]
     PRE_PACKAGED_FIELD_NUMBER: _ClassVar[int]
-    CREATED_AT_FIELD_NUMBER: _ClassVar[int]
-    UPDATED_AT_FIELD_NUMBER: _ClassVar[int]
-    CREATED_BY_USERNAME_FIELD_NUMBER: _ClassVar[int]
-    UPDATED_BY_USERNAME_FIELD_NUMBER: _ClassVar[int]
     id: str
     name: str
     description: str
@@ -1874,10 +1850,6 @@ class WorkflowTemplateMetadata(_message.Message):
     use_default_manager: bool
     is_conversational: bool
     pre_packaged: bool
-    created_at: str
-    updated_at: str
-    created_by_username: str
-    updated_by_username: str
     def __init__(
         self,
         id: _Optional[str] = ...,
@@ -1890,10 +1862,6 @@ class WorkflowTemplateMetadata(_message.Message):
         use_default_manager: bool = ...,
         is_conversational: bool = ...,
         pre_packaged: bool = ...,
-        created_at: _Optional[str] = ...,
-        updated_at: _Optional[str] = ...,
-        created_by_username: _Optional[str] = ...,
-        updated_by_username: _Optional[str] = ...,
     ) -> None: ...
 
 class ExportWorkflowTemplateRequest(_message.Message):

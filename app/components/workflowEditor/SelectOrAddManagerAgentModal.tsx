@@ -11,24 +11,16 @@ import {
   Space,
   Tooltip,
   Avatar,
-  Alert,
   Select,
 } from 'antd';
+import { QuestionCircleOutlined, UsergroupAddOutlined, UndoOutlined } from '@ant-design/icons';
 import {
-  PlusOutlined,
-  QuestionCircleOutlined,
-  UsergroupAddOutlined,
-  UndoOutlined,
-} from '@ant-design/icons';
-import {
-  useListGlobalAgentTemplatesQuery,
   useAddAgentMutation,
   useUpdateAgentMutation,
   useListAgentsQuery,
 } from '../../agents/agentApi';
 import { useAppDispatch, useAppSelector } from '../../lib/hooks/hooks';
 import {
-  selectEditorWorkflowId,
   updatedEditorWorkflowManagerAgentId,
   selectEditorWorkflow,
   updatedEditorWorkflowProcess,
@@ -42,22 +34,6 @@ import GenerateAgentPropertiesModal from './GenerateAgentPropertiesModal';
 
 const { Text } = Typography;
 const { TextArea } = Input;
-
-const SparkleIcon = (
-  <svg
-    width="22"
-    height="22"
-    viewBox="0 0 14 14"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    style={{ marginRight: 4, display: 'inline-block', verticalAlign: 'middle' }}
-  >
-    <path
-      d="m4.86 10.009 1.643.593-1.643.59-.589 1.641-.598-1.642-1.633-.59 1.646-.592.585-1.639.59 1.639zM10.01 6.6l2.821 1.017-2.82 1.013L9 11.448 7.974 8.631 5.17 7.618l2.824-1.017L9 3.787l1.01 2.814zM5.004 3.397l2.236.807-2.236.804-.8 2.234-.815-2.234-2.224-.804 2.24-.807.798-2.23.8 2.23z"
-      fill="#0074D2"
-    />
-  </svg>
-);
 
 const SelectManagerAgentComponent: React.FC<{
   form: any;
@@ -209,7 +185,18 @@ const SelectManagerAgentComponent: React.FC<{
               <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Button
                   type="default"
-                  icon={SparkleIcon}
+                  icon={
+                    <img
+                      src="/ai-assistant.svg"
+                      alt="AI Assistant"
+                      style={{
+                        filter:
+                          'invert(27%) sepia(99%) saturate(1352%) hue-rotate(204deg) brightness(97%) contrast(97%)',
+                        width: '20px',
+                        height: '20px',
+                      }}
+                    />
+                  }
                   style={{ color: '#0074D2', borderColor: '#0074D2' }}
                   onClick={() => setIsGenerateManagerModalVisible(true)}
                 >

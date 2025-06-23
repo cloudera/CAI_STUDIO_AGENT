@@ -833,14 +833,7 @@ export interface Workflow {
   /** Workflow description */
   description: string;
   /** Directory */
-  directory?:
-    | string
-    | undefined;
-  /** Audit fields */
-  created_at: string;
-  updated_at: string;
-  created_by_username: string;
-  updated_by_username: string;
+  directory?: string | undefined;
 }
 
 export interface CrewAIWorkflowMetadata {
@@ -1180,11 +1173,6 @@ export interface WorkflowTemplateMetadata {
   is_conversational: boolean;
   /** Is the template shipped as part of the studio */
   pre_packaged: boolean;
-  /** Audit fields */
-  created_at: string;
-  updated_at: string;
-  created_by_username: string;
-  updated_by_username: string;
 }
 
 export interface ExportWorkflowTemplateRequest {
@@ -10156,10 +10144,6 @@ function createBaseWorkflow(): Workflow {
     is_draft: false,
     description: "",
     directory: undefined,
-    created_at: "",
-    updated_at: "",
-    created_by_username: "",
-    updated_by_username: "",
   };
 }
 
@@ -10191,18 +10175,6 @@ export const Workflow: MessageFns<Workflow> = {
     }
     if (message.directory !== undefined) {
       writer.uint32(74).string(message.directory);
-    }
-    if (message.created_at !== "") {
-      writer.uint32(82).string(message.created_at);
-    }
-    if (message.updated_at !== "") {
-      writer.uint32(90).string(message.updated_at);
-    }
-    if (message.created_by_username !== "") {
-      writer.uint32(98).string(message.created_by_username);
-    }
-    if (message.updated_by_username !== "") {
-      writer.uint32(106).string(message.updated_by_username);
     }
     return writer;
   },
@@ -10286,38 +10258,6 @@ export const Workflow: MessageFns<Workflow> = {
           message.directory = reader.string();
           continue;
         }
-        case 10: {
-          if (tag !== 82) {
-            break;
-          }
-
-          message.created_at = reader.string();
-          continue;
-        }
-        case 11: {
-          if (tag !== 90) {
-            break;
-          }
-
-          message.updated_at = reader.string();
-          continue;
-        }
-        case 12: {
-          if (tag !== 98) {
-            break;
-          }
-
-          message.created_by_username = reader.string();
-          continue;
-        }
-        case 13: {
-          if (tag !== 106) {
-            break;
-          }
-
-          message.updated_by_username = reader.string();
-          continue;
-        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -10340,10 +10280,6 @@ export const Workflow: MessageFns<Workflow> = {
       is_draft: isSet(object.is_draft) ? globalThis.Boolean(object.is_draft) : false,
       description: isSet(object.description) ? globalThis.String(object.description) : "",
       directory: isSet(object.directory) ? globalThis.String(object.directory) : undefined,
-      created_at: isSet(object.created_at) ? globalThis.String(object.created_at) : "",
-      updated_at: isSet(object.updated_at) ? globalThis.String(object.updated_at) : "",
-      created_by_username: isSet(object.created_by_username) ? globalThis.String(object.created_by_username) : "",
-      updated_by_username: isSet(object.updated_by_username) ? globalThis.String(object.updated_by_username) : "",
     };
   },
 
@@ -10376,18 +10312,6 @@ export const Workflow: MessageFns<Workflow> = {
     if (message.directory !== undefined) {
       obj.directory = message.directory;
     }
-    if (message.created_at !== "") {
-      obj.created_at = message.created_at;
-    }
-    if (message.updated_at !== "") {
-      obj.updated_at = message.updated_at;
-    }
-    if (message.created_by_username !== "") {
-      obj.created_by_username = message.created_by_username;
-    }
-    if (message.updated_by_username !== "") {
-      obj.updated_by_username = message.updated_by_username;
-    }
     return obj;
   },
 
@@ -10408,10 +10332,6 @@ export const Workflow: MessageFns<Workflow> = {
     message.is_draft = object.is_draft ?? false;
     message.description = object.description ?? "";
     message.directory = object.directory ?? undefined;
-    message.created_at = object.created_at ?? "";
-    message.updated_at = object.updated_at ?? "";
-    message.created_by_username = object.created_by_username ?? "";
-    message.updated_by_username = object.updated_by_username ?? "";
     return message;
   },
 };
@@ -14111,10 +14031,6 @@ function createBaseWorkflowTemplateMetadata(): WorkflowTemplateMetadata {
     use_default_manager: false,
     is_conversational: false,
     pre_packaged: false,
-    created_at: "",
-    updated_at: "",
-    created_by_username: "",
-    updated_by_username: "",
   };
 }
 
@@ -14149,18 +14065,6 @@ export const WorkflowTemplateMetadata: MessageFns<WorkflowTemplateMetadata> = {
     }
     if (message.pre_packaged !== false) {
       writer.uint32(80).bool(message.pre_packaged);
-    }
-    if (message.created_at !== "") {
-      writer.uint32(90).string(message.created_at);
-    }
-    if (message.updated_at !== "") {
-      writer.uint32(98).string(message.updated_at);
-    }
-    if (message.created_by_username !== "") {
-      writer.uint32(106).string(message.created_by_username);
-    }
-    if (message.updated_by_username !== "") {
-      writer.uint32(114).string(message.updated_by_username);
     }
     return writer;
   },
@@ -14252,38 +14156,6 @@ export const WorkflowTemplateMetadata: MessageFns<WorkflowTemplateMetadata> = {
           message.pre_packaged = reader.bool();
           continue;
         }
-        case 11: {
-          if (tag !== 90) {
-            break;
-          }
-
-          message.created_at = reader.string();
-          continue;
-        }
-        case 12: {
-          if (tag !== 98) {
-            break;
-          }
-
-          message.updated_at = reader.string();
-          continue;
-        }
-        case 13: {
-          if (tag !== 106) {
-            break;
-          }
-
-          message.created_by_username = reader.string();
-          continue;
-        }
-        case 14: {
-          if (tag !== 114) {
-            break;
-          }
-
-          message.updated_by_username = reader.string();
-          continue;
-        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -14311,10 +14183,6 @@ export const WorkflowTemplateMetadata: MessageFns<WorkflowTemplateMetadata> = {
       use_default_manager: isSet(object.use_default_manager) ? globalThis.Boolean(object.use_default_manager) : false,
       is_conversational: isSet(object.is_conversational) ? globalThis.Boolean(object.is_conversational) : false,
       pre_packaged: isSet(object.pre_packaged) ? globalThis.Boolean(object.pre_packaged) : false,
-      created_at: isSet(object.created_at) ? globalThis.String(object.created_at) : "",
-      updated_at: isSet(object.updated_at) ? globalThis.String(object.updated_at) : "",
-      created_by_username: isSet(object.created_by_username) ? globalThis.String(object.created_by_username) : "",
-      updated_by_username: isSet(object.updated_by_username) ? globalThis.String(object.updated_by_username) : "",
     };
   },
 
@@ -14350,18 +14218,6 @@ export const WorkflowTemplateMetadata: MessageFns<WorkflowTemplateMetadata> = {
     if (message.pre_packaged !== false) {
       obj.pre_packaged = message.pre_packaged;
     }
-    if (message.created_at !== "") {
-      obj.created_at = message.created_at;
-    }
-    if (message.updated_at !== "") {
-      obj.updated_at = message.updated_at;
-    }
-    if (message.created_by_username !== "") {
-      obj.created_by_username = message.created_by_username;
-    }
-    if (message.updated_by_username !== "") {
-      obj.updated_by_username = message.updated_by_username;
-    }
     return obj;
   },
 
@@ -14380,10 +14236,6 @@ export const WorkflowTemplateMetadata: MessageFns<WorkflowTemplateMetadata> = {
     message.use_default_manager = object.use_default_manager ?? false;
     message.is_conversational = object.is_conversational ?? false;
     message.pre_packaged = object.pre_packaged ?? false;
-    message.created_at = object.created_at ?? "";
-    message.updated_at = object.updated_at ?? "";
-    message.created_by_username = object.created_by_username ?? "";
-    message.updated_by_username = object.updated_by_username ?? "";
     return message;
   },
 };

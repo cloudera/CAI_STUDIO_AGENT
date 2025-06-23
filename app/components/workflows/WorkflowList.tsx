@@ -1,17 +1,9 @@
 import path from 'path';
 import React, { useState, useEffect, useRef } from 'react';
 import { Layout, Typography, List, Button, Modal, Input, message, Alert, Spin, Select } from 'antd';
-import {
-  Workflow,
-  DeployedWorkflow,
-  AgentMetadata,
-  WorkflowTemplateMetadata,
-  AgentTemplateMetadata,
-} from '@/studio/proto/agent_studio';
+import { Workflow, DeployedWorkflow, WorkflowTemplateMetadata } from '@/studio/proto/agent_studio';
 import SearchBar from './WorkflowSearchBar';
 import WorkflowListItem from './WorkflowListItem';
-import { useListDeployedWorkflowsQuery } from '@/app/workflows/deployedWorkflowsApi';
-import { useImageAssetsData } from '../../lib/hooks/useAssetData';
 import { useImportWorkflowTemplateMutation } from '@/app/workflows/workflowsApi';
 import {
   PlusCircleOutlined,
@@ -20,7 +12,6 @@ import {
   LeftOutlined,
 } from '@ant-design/icons';
 import { useGlobalNotification } from '../Notifications';
-import { useListAgentsQuery, useListGlobalAgentTemplatesQuery } from '../../agents/agentApi';
 
 const { Text } = Typography;
 
@@ -223,34 +214,15 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
     (w) => w.is_draft && !deployedWorkflowIds.has(w.workflow_id),
   );
 
-  // Sort by updated_at descending (most recent first)
-  const sortByUpdatedAtDesc = (a: any, b: any) => {
-    const aTime = new Date(a.updated_at || a.updatedAt || 0).getTime();
-    const bTime = new Date(b.updated_at || b.updatedAt || 0).getTime();
-    return bTime - aTime;
-  };
-
-  const sortedDeployedWorkflows = [...filteredDeployedWorkflows]
-    .map((dw) => ({ ...dw, workflow: workflows.find((w) => w.workflow_id === dw.workflow_id) }))
-    .filter((dw) => dw.workflow)
-    .sort((a, b) => sortByUpdatedAtDesc(a.workflow, b.workflow));
-  const sortedDeployedWorkflowIds = sortedDeployedWorkflows.map((dw) => dw.workflow_id);
-
-  const sortedDraftWorkflows = [...filteredWorkflows]
-    .filter((w) => w.is_draft && !deployedWorkflowIds.has(w.workflow_id))
-    .sort(sortByUpdatedAtDesc);
-
-  const sortedWorkflowTemplates = [...filteredWorkflowTemplates].sort(sortByUpdatedAtDesc);
-
   const displayedTemplates = showAllTemplates
-    ? sortedWorkflowTemplates
-    : sortedWorkflowTemplates.slice(0, 5);
+    ? filteredWorkflowTemplates
+    : filteredWorkflowTemplates.slice(0, 5);
 
-  const displayedDrafts = showAllDrafts ? sortedDraftWorkflows : sortedDraftWorkflows.slice(0, 5);
+  const displayedDrafts = showAllDrafts ? draftWorkflows : draftWorkflows.slice(0, 5);
 
   const displayedDeployed = showAllDeployed
-    ? sortedDeployedWorkflowIds
-    : sortedDeployedWorkflowIds.slice(0, 5);
+    ? Object.keys(deployedWorkflowMap)
+    : Object.keys(deployedWorkflowMap).slice(0, 5);
 
   const EmptyWorkflowState = () => (
     <div

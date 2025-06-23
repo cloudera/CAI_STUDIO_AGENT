@@ -1,11 +1,10 @@
 import os
-from sqlalchemy import Column, String, Text, Float, JSON, ForeignKey, Integer, Boolean, DateTime
+from sqlalchemy import Column, String, Text, Float, JSON, ForeignKey, Integer, Boolean
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.inspection import inspect
 from google.protobuf.message import Message
 from studio import consts
 from studio.api import *
-from datetime import datetime
 
 
 # Define the declarative base
@@ -228,26 +227,12 @@ class Workflow(Base, MappedProtobuf, MappedDict):
     is_draft = Column(Boolean, nullable=True)
     # directory location of the workflow
     directory = Column(String, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    created_by_username = Column(String, nullable=True)
-    updated_by_username = Column(String, nullable=True)
 
     # Relationships
     deployed_workflow_instances = relationship(
         "DeployedWorkflowInstance", back_populates="workflow")
 
-    # Manual dict middleman to handle JSON -> repeated string conversions
-    def to_protobuf(self):
-        self_dict = self.to_dict()
-        # Ensure datetime fields are converted to ISO strings for proto
-        if 'created_at' in self_dict and self_dict['created_at'] is not None:
-            self_dict['created_at'] = self_dict['created_at'].isoformat()
-        if 'updated_at' in self_dict and self_dict['updated_at'] is not None:
-            self_dict['updated_at'] = self_dict['updated_at'].isoformat()
-        return Workflow(
-            **self_dict
-        )
+
 
 
 class DeployedWorkflowInstance(Base, MappedProtobuf, MappedDict):
@@ -298,20 +283,10 @@ class WorkflowTemplate(Base, MappedProtobuf, MappedDict):
     # Is the template shipped as part of the studio
     pre_packaged = Column(Boolean, default=False)
 
-    # Add these fields:
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    created_by_username = Column(String, nullable=True)
-    updated_by_username = Column(String, nullable=True)
 
     # Manual dict middleman to handle JSON -> repeated string conversions
     def to_protobuf(self):
         self_dict = self.to_dict()
-        # Ensure datetime fields are converted to ISO strings for proto
-        if 'created_at' in self_dict and self_dict['created_at'] is not None:
-            self_dict['created_at'] = self_dict['created_at'].isoformat()
-        if 'updated_at' in self_dict and self_dict['updated_at'] is not None:
-            self_dict['updated_at'] = self_dict['updated_at'].isoformat()
         return WorkflowTemplateMetadata(
             **self_dict
         )
