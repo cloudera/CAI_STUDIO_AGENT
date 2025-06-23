@@ -161,7 +161,7 @@ export async function GET(request: NextRequest) {
             args: [],
             env_names: [],
             tools: toolsString,
-            image_uri: '',
+            image_uri: mcp.image_uri,
             status: '',
             activated_tools: mcp.tools,
             workflow_id: configuration.workflow.id,
