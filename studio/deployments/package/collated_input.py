@@ -142,7 +142,7 @@ def get_mcp_instances_for_agents(mcp_ids: set, session: Session):
                 args=list(mcp.args or []),
                 env_names=list(mcp.env_names or []),
                 tools=list(mcp.activated_tools or []),
-                mcp_image_uri="",
+                mcp_image_uri=mcp.mcp_image_path or "",
             )
         )
     return inputs
