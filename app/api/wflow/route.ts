@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
     const configuration = getConfigurationResponseData.response?.configuration;
 
     let mcpToolDefinitions: any = null;
-    const maxWaitTime = 30000; // 30 seconds
+    const maxWaitTime = 60000; // 60 seconds
     const pollInterval = 1000; // 1 second
     const startTime = Date.now();
 

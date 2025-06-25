@@ -217,11 +217,11 @@ def add_workflow_from_template(
 
         for mcp_instance_id in mcp_instance_ids:
             get_thread_pool().submit(
-            mcp_utils._update_mcp_tools,
-            mcp_instance_id,
-            db_model.MCPInstance,
-        )
-            
+                mcp_utils._update_mcp_tools,
+                mcp_instance_id,
+                db_model.MCPInstance,
+            )
+
         return AddWorkflowResponse(workflow_id=workflow.id)
 
 

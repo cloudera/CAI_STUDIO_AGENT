@@ -53,6 +53,7 @@ def add_mcp_template(request: AddMcpTemplateRequest, cml: CMLServiceApi, dao: Ag
         unique_mcp_identifier = (
             cc_utils.create_slug_from_name(request.name) + "_" + cc_utils.get_random_compact_string()
         )
+        os.makedirs(consts.MCP_TEMPLATE_ICONS_LOCATION, exist_ok=True)
         mcp_image_path = os.path.join(consts.MCP_TEMPLATE_ICONS_LOCATION, f"{unique_mcp_identifier}_icon{ext}")
         shutil.copy(request.tmp_mcp_image_path, mcp_image_path)
         os.remove(request.tmp_mcp_image_path)

@@ -35,7 +35,7 @@ def get_mcp_tools_for_crewai(mcp_instance: Input__MCPInstance, env_vars: Dict[st
 
 
 async def get_mcp_tool_definitions(mcp_instance: Input__MCPInstance, env_vars: Dict[str, str]) -> List[mcp_types.Tool]:
-    timeout = timedelta(seconds=30)
+    timeout = timedelta(seconds=60)  # 60 seconds
     server_params = StdioServerParameters(
         command=_mcp_type_to_command[mcp_instance.type],
         args=mcp_instance.args,

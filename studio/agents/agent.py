@@ -4,7 +4,7 @@ from uuid import uuid4
 from typing import List, Optional
 from sqlalchemy.exc import SQLAlchemyError
 from studio import consts
-from studio.db.dao import AgentStudioDao, get_dao
+from studio.db.dao import AgentStudioDao
 from studio.db import model as db_model, DbSession
 from studio.api import *
 from studio.tools.tool_instance import get_tool_instance
