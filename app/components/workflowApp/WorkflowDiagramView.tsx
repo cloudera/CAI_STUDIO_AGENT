@@ -1,7 +1,7 @@
-import { Alert, Card, Layout, Tabs, Tooltip, Typography } from 'antd';
+import { Alert, Card, Layout, Tabs, Tooltip, Typography, Checkbox } from 'antd';
 import { ReactFlowProvider } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import {
   AgentMetadata,
   CrewAITaskMetadata,
@@ -48,6 +48,8 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
   const { data: opsData } = useGetOpsDataQuery();
 
   const eventLogs = useRef<(HTMLDivElement | null)[]>([]); // Create refs array
+  const [eventTypeFilters, setEventTypeFilters] = useState<string[]>([]);
+  const [categoryFilters, setCategoryFilters] = useState<string[]>([]);
 
   const scrollToEventLog = (index: number) => {
     if (eventLogs.current[index]) {
@@ -60,6 +62,29 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
       scrollToEventLog(currentEventIndex);
     }
   }, [currentEventIndex]);
+
+  // Filtering logic
+  const filteredEvents = (events || []).filter((event) => {
+    // Error filter only
+    if (eventTypeFilters.includes('error')) {
+      const isError = /error|fail/i.test(event.type);
+      if (!isError) return false;
+    }
+    // Category filter
+    if (categoryFilters.length > 0) {
+      const type = event.type.toLowerCase();
+      const matches = categoryFilters.some((cat) => {
+        if (cat === 'workflow') return type.includes('crew');
+        if (cat === 'task') return type.includes('task');
+        if (cat === 'agent') return type.includes('agent');
+        if (cat === 'llm') return type.includes('llm');
+        if (cat === 'tool') return type.includes('tool');
+        return false;
+      });
+      if (!matches) return false;
+    }
+    return true;
+  });
 
   if (!displayDiagnostics) {
     return (
@@ -165,9 +190,53 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
                   flexDirection: 'column',
                 }}
               >
-                {!events ? (
-                  <Alert message="No events yet" type="info" showIcon />
-                ) : events && events.length === 0 ? (
+                {/* Filter checkboxes */}
+                <div style={{ display: 'flex', gap: 12, marginBottom: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 12, color: '#888' }}>Filter:</span>
+                  <Checkbox
+                    checked={eventTypeFilters.includes('error')}
+                    onChange={e => {
+                      setEventTypeFilters(f => e.target.checked ? [...f, 'error'] : f.filter(x => x !== 'error'));
+                    }}
+                    style={{ fontSize: 11, padding: 0 }}
+                  >Error</Checkbox>
+                  <Checkbox
+                    checked={categoryFilters.includes('workflow')}
+                    onChange={e => {
+                      setCategoryFilters(f => e.target.checked ? [...f, 'workflow'] : f.filter(x => x !== 'workflow'));
+                    }}
+                    style={{ fontSize: 11, padding: 0 }}
+                  >Workflow</Checkbox>
+                  <Checkbox
+                    checked={categoryFilters.includes('task')}
+                    onChange={e => {
+                      setCategoryFilters(f => e.target.checked ? [...f, 'task'] : f.filter(x => x !== 'task'));
+                    }}
+                    style={{ fontSize: 11, padding: 0 }}
+                  >Task</Checkbox>
+                  <Checkbox
+                    checked={categoryFilters.includes('agent')}
+                    onChange={e => {
+                      setCategoryFilters(f => e.target.checked ? [...f, 'agent'] : f.filter(x => x !== 'agent'));
+                    }}
+                    style={{ fontSize: 11, padding: 0 }}
+                  >Agent</Checkbox>
+                  <Checkbox
+                    checked={categoryFilters.includes('llm')}
+                    onChange={e => {
+                      setCategoryFilters(f => e.target.checked ? [...f, 'llm'] : f.filter(x => x !== 'llm'));
+                    }}
+                    style={{ fontSize: 11, padding: 0 }}
+                  >LLM</Checkbox>
+                  <Checkbox
+                    checked={categoryFilters.includes('tool')}
+                    onChange={e => {
+                      setCategoryFilters(f => e.target.checked ? [...f, 'tool'] : f.filter(x => x !== 'tool'));
+                    }}
+                    style={{ fontSize: 11, padding: 0 }}
+                  >Tool</Checkbox>
+                </div>
+                {!filteredEvents || filteredEvents.length === 0 ? (
                   <Alert message="No events yet" type="info" showIcon />
                 ) : (
                   <Layout
@@ -180,8 +249,9 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
                       padding: 4,
                     }}
                   >
-                    {events &&
-                      events.map((event, index) => (
+                    {filteredEvents.map((event, index) => {
+                      const isError = /error|fail/i.test(event.type);
+                      return (
                         <Card
                           key={index}
                           ref={(el) => {
@@ -191,11 +261,13 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
                           style={{
                             margin: 8,
                             backgroundColor:
-                              event.type === 'crew_kickoff_completed'
+                              isError
+                                ? '#ffeaea'
+                                : event.type === 'crew_kickoff_completed'
                                 ? '#a2f5bf'
                                 : index === currentEventIndex
-                                  ? '#8fe6ff'
-                                  : 'white',
+                                ? '#8fe6ff'
+                                : 'white',
                             fontSize: '9px',
                             maxWidth: '100%',
                             overflow: 'hidden',
@@ -220,7 +292,8 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
                             </pre>
                           )}
                         </Card>
-                      ))}
+                      );
+                    })}
                   </Layout>
                 )}
               </div>

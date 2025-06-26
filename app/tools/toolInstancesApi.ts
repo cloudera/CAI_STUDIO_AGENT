@@ -9,6 +9,8 @@ import {
   RemoveToolInstanceRequest,
   UpdateToolInstanceRequest,
   UpdateToolInstanceResponse,
+  TestToolInstanceRequest,
+  TestToolInstanceResponse,
 } from '@/studio/proto/agent_studio';
 
 import { apiSlice } from '../api/apiSlice';
@@ -80,6 +82,15 @@ export const toolInstancesApi = apiSlice.injectEndpoints({
         { type: 'ToolInstance', id: tool_instance_id },
       ],
     }),
+
+    // Test Tool Instance
+    testToolInstance: builder.mutation<TestToolInstanceResponse, TestToolInstanceRequest>({
+      query: (body) => ({
+        url: '/grpc/testToolInstance',
+        method: 'POST',
+        body,
+      }),
+    }),
   }),
 });
 
@@ -89,4 +100,5 @@ export const {
   useCreateToolInstanceMutation,
   useRemoveToolInstanceMutation,
   useUpdateToolInstanceMutation,
+  useTestToolInstanceMutation,
 } = toolInstancesApi;

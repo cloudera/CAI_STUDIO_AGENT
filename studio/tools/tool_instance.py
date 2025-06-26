@@ -13,7 +13,11 @@ import studio.tools.utils as tool_utils
 from studio.cross_cutting.global_thread_pool import get_thread_pool
 import studio.consts as consts
 import studio.cross_cutting.utils as cc_utils
-from studio.tools.utils import read_tool_instance_code
+from studio.tools.utils import read_tool_instance_code, extract_tool_params_from_code
+from studio.workflow.runners import get_workflow_runners
+from studio.proto import agent_studio_pb2
+import time
+import requests
 
 # Import engine code manually. Eventually when this code becomes
 # a separate git repo, or a custom runtime image, this path call
@@ -288,11 +292,13 @@ def _get_tool_instance_impl(request: GetToolInstanceRequest, session: DbSession)
         is_valid = False
 
     user_params_dict = {}
+    tool_params_dict = {}
     try:
         if tool_code:
             user_params_dict = tool_utils.extract_user_params_from_code(tool_code)
+            tool_params_dict = extract_tool_params_from_code(tool_code)
     except Exception as e:
-        status_message = f"Error extracting user params: {str(e)}"
+        status_message = f"Error extracting user/tool params: {str(e)}"
         is_valid = False
 
     tool_image_uri = ""
@@ -316,6 +322,7 @@ def _get_tool_instance_impl(request: GetToolInstanceRequest, session: DbSession)
                 {
                     "user_params": list(user_params_dict.keys()),
                     "user_params_metadata": user_params_dict,
+                    "tool_params_metadata": tool_params_dict,
                     "status": status_message,
                 }
             ),
@@ -375,11 +382,13 @@ def _list_tool_instances_impl(request: ListToolInstancesRequest, session: DbSess
             is_valid = False
 
         user_params_dict = {}
+        tool_params_dict = {}
         try:
             if tool_code:
                 user_params_dict = tool_utils.extract_user_params_from_code(tool_code)
+                tool_params_dict = extract_tool_params_from_code(tool_code)
         except Exception as e:
-            status_message = f"Error extracting user params: {str(e)}"
+            status_message = f"Error extracting user/tool params: {str(e)}"
             is_valid = False
 
         tool_image_uri = ""
@@ -403,6 +412,7 @@ def _list_tool_instances_impl(request: ListToolInstancesRequest, session: DbSess
                     {
                         "user_params": list(user_params_dict.keys()),
                         "user_params_metadata": user_params_dict,
+                        "tool_params_metadata": tool_params_dict,
                         "status": status_message,
                     }
                 ),
@@ -479,3 +489,50 @@ def _remove_tool_instance_impl(
 
     session.delete(tool_instance)
     return RemoveToolInstanceResponse()
+
+
+def test_tool_instance(request, cml: CMLServiceApi = None, dao: AgentStudioDao = None):
+    """
+    Test a tool instance by id. Ensures venv is ready, then sends test request to runner.
+    """
+    if dao is None:
+        dao = AgentStudioDao()
+    with dao.get_session() as session:
+        # 1. Fetch tool instance details
+        try:
+            tool_instance_resp = _get_tool_instance_impl(
+                agent_studio_pb2.GetToolInstanceRequest(tool_instance_id=request.tool_instance_id),
+                session
+            )
+            tool = tool_instance_resp.tool_instance
+        except Exception as e:
+            raise RuntimeError(f"Failed to fetch tool instance: {e}")
+
+        # 2. Check validity and status
+        if not tool.is_valid:
+            raise RuntimeError("Tool instance is not valid. Please check the code and requirements.")
+        # 3. Select available runner
+        workflow_runners = get_workflow_runners()
+        available_runners = [r for r in workflow_runners if not r["busy"]]
+        if not available_runners:
+            raise RuntimeError("No workflow runners currently available to test tool instance!")
+        runner = available_runners[0]
+        runner_url = f"{runner['endpoint']}/test_tool_instance"
+
+        # 4. Prepare payload
+        trace_id = str(uuid4())
+        payload = {
+            "tool_instance_id": tool.id,
+            "tool_directory": tool.source_folder_path,
+            "user_params": dict(request.user_params),
+            "tool_params": dict(request.tool_params),
+            "trace_id": trace_id,
+        }
+        try:
+            resp = requests.post(runner_url, json=payload)
+            resp.raise_for_status()
+        except Exception as e:
+            raise RuntimeError(f"Failed to send test request to runner: {e}")
+
+        # Just return the trace_id so the UI/other service can fetch events
+        return agent_studio_pb2.TestToolInstanceResponse(trace_id=trace_id)

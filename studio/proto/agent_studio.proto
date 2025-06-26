@@ -55,6 +55,7 @@ service AgentStudio {
   rpc CreateToolInstance (CreateToolInstanceRequest) returns (CreateToolInstanceResponse) {}
   rpc UpdateToolInstance (UpdateToolInstanceRequest) returns (UpdateToolInstanceResponse) {}
   rpc RemoveToolInstance (RemoveToolInstanceRequest) returns (RemoveToolInstanceResponse) {}
+  rpc TestToolInstance (TestToolInstanceRequest) returns (TestToolInstanceResponse) {}
 
   // Agent operations
   rpc ListAgents (ListAgentsRequest) returns (ListAgentsResponse) {}
@@ -1177,5 +1178,15 @@ message RotateCmlApiRequest {}
 
 message RotateCmlApiResponse {
   string message = 1;
+}
+
+message TestToolInstanceRequest {
+  string tool_instance_id = 1;
+  map<string, string> user_params = 2;
+  map<string, string> tool_params = 3;
+}
+
+message TestToolInstanceResponse {
+  string trace_id = 1;
 }
 

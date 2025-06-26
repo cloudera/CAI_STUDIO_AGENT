@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Card, Input, Layout, Typography, Alert, Spin } from 'antd';
+import { Button, Card, Input, Layout, Typography, Alert, Spin, Menu, Dropdown } from 'antd';
 import { getWorkflowInputs } from '@/app/lib/workflow';
 import { useGetWorkflowByIdQuery, useTestWorkflowMutation } from '@/app/workflows/workflowsApi';
 import { useListTasksQuery } from '@/app/tasks/tasksApi';
@@ -14,7 +14,7 @@ import {
   updatedCrewOutput,
   selectCurrentEvents,
 } from '@/app/workflows/workflowAppSlice';
-import { PauseCircleOutlined, SendOutlined, DownloadOutlined } from '@ant-design/icons';
+import { PauseCircleOutlined, SendOutlined, DownloadOutlined, MoreOutlined } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -62,10 +62,31 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
   const renderMode = workflowData?.renderMode;
   const workflowModelUrl = workflowData?.workflowModelUrl;
 
+  const allEventsRef = React.useRef<any[]>([]);
+  const [lastRun, setLastRun] = useState<{ userInput: string; output: string; events: any[] } | null>(null);
+
   // Add effect to clear crew output when workflow changes
   useEffect(() => {
     dispatch(updatedCrewOutput(undefined));
   }, [workflow?.workflow_id, dispatch]);
+
+  useEffect(() => {
+    // Accumulate all events for the current run
+    if (isRunning && currentEvents && currentEvents.length > 0) {
+      allEventsRef.current = [...allEventsRef.current, ...currentEvents];
+    }
+  }, [currentEvents, isRunning]);
+
+  useEffect(() => {
+    // When workflow completes, store the last run info
+    if (!isRunning && crewOutput && allEventsRef.current.length > 0) {
+      setLastRun({
+        userInput: Object.values(inputs).join(' | '),
+        output: crewOutput,
+        events: allEventsRef.current,
+      });
+    }
+  }, [isRunning, crewOutput, inputs]);
 
   if (!workflow) {
     return <></>;
@@ -138,6 +159,8 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
       }
       dispatch(updatedCurrentTraceId(traceId));
       dispatch(updatedIsRunning(true));
+      allEventsRef.current = [];
+      setLastRun(null);
     } else {
       console.log('ERROR: could not start the crew!');
       dispatch(updatedIsRunning(false));
@@ -206,6 +229,31 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
       console.error('Error generating PDF:', error);
     }
   };
+
+  const handleDownloadLogs = () => {
+    if (!lastRun) return;
+    const log = [{
+      User: lastRun.userInput,
+      Assistant: lastRun.output,
+      events: lastRun.events,
+    }];
+    const fileName = `${workflow?.name || 'workflow_log'}.json`;
+    const blob = new Blob([JSON.stringify(log, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const menu = (
+    <Menu>
+      <Menu.Item key="download" onClick={handleDownloadLogs}>
+        <DownloadOutlined style={{ marginRight: 8 }} />Log Bundle
+      </Menu.Item>
+    </Menu>
+  );
 
   // If we are not fully loaded, don't display anything
   if (isLoading || !workflowData || !workflowData.renderMode) {
@@ -291,6 +339,9 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
           >
             {isRunning ? 'Workflow Running...' : 'Run Workflow'}
           </Button>
+          <Dropdown overlay={menu} trigger={["click"]} placement="bottomRight">
+            <Button icon={<MoreOutlined />} />
+          </Dropdown>
         </div>
 
         <div

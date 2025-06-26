@@ -5,6 +5,7 @@ export interface WorkflowAppChatMessage {
   id?: string;
   role: 'user' | 'assistant';
   content: string;
+  events?: any[];
 }
 
 export interface WorkflowAppChat {

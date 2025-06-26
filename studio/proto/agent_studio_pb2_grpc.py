@@ -2,6 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 
 import grpc
+import warnings
 
 from studio.proto import agent_studio_pb2 as studio_dot_proto_dot_agent__studio__pb2
 
@@ -207,6 +208,12 @@ class AgentStudioStub(object):
             "/agent_studio.AgentStudio/RemoveToolInstance",
             request_serializer=studio_dot_proto_dot_agent__studio__pb2.RemoveToolInstanceRequest.SerializeToString,
             response_deserializer=studio_dot_proto_dot_agent__studio__pb2.RemoveToolInstanceResponse.FromString,
+            _registered_method=True,
+        )
+        self.TestToolInstance = channel.unary_unary(
+            "/agent_studio.AgentStudio/TestToolInstance",
+            request_serializer=studio_dot_proto_dot_agent__studio__pb2.TestToolInstanceRequest.SerializeToString,
+            response_deserializer=studio_dot_proto_dot_agent__studio__pb2.TestToolInstanceResponse.FromString,
             _registered_method=True,
         )
         self.ListAgents = channel.unary_unary(
@@ -658,6 +665,12 @@ class AgentStudioServicer(object):
         context.set_details("Method not implemented!")
         raise NotImplementedError("Method not implemented!")
 
+    def TestToolInstance(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
     def ListAgents(self, request, context):
         """Agent operations"""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -1070,6 +1083,11 @@ def add_AgentStudioServicer_to_server(servicer, server):
             servicer.RemoveToolInstance,
             request_deserializer=studio_dot_proto_dot_agent__studio__pb2.RemoveToolInstanceRequest.FromString,
             response_serializer=studio_dot_proto_dot_agent__studio__pb2.RemoveToolInstanceResponse.SerializeToString,
+        ),
+        "TestToolInstance": grpc.unary_unary_rpc_method_handler(
+            servicer.TestToolInstance,
+            request_deserializer=studio_dot_proto_dot_agent__studio__pb2.TestToolInstanceRequest.FromString,
+            response_serializer=studio_dot_proto_dot_agent__studio__pb2.TestToolInstanceResponse.SerializeToString,
         ),
         "ListAgents": grpc.unary_unary_rpc_method_handler(
             servicer.ListAgents,
@@ -2141,6 +2159,36 @@ class AgentStudio(object):
             "/agent_studio.AgentStudio/RemoveToolInstance",
             studio_dot_proto_dot_agent__studio__pb2.RemoveToolInstanceRequest.SerializeToString,
             studio_dot_proto_dot_agent__studio__pb2.RemoveToolInstanceResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def TestToolInstance(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/agent_studio.AgentStudio/TestToolInstance",
+            studio_dot_proto_dot_agent__studio__pb2.TestToolInstanceRequest.SerializeToString,
+            studio_dot_proto_dot_agent__studio__pb2.TestToolInstanceResponse.FromString,
             options,
             channel_credentials,
             insecure,

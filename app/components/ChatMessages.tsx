@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Input, Button, Avatar, Layout, Spin, Tooltip } from 'antd';
+import { Input, Button, Avatar, Layout, Spin, Tooltip, Menu, Dropdown } from 'antd';
 import {
   UserOutlined,
   RobotOutlined,
@@ -9,6 +9,7 @@ import {
   PauseCircleOutlined,
   DownloadOutlined,
   ClearOutlined,
+  MoreOutlined,
 } from '@ant-design/icons';
 import { jsPDF } from 'jspdf';
 import ReactMarkdown from 'react-markdown';
@@ -25,11 +26,12 @@ import showdown from 'showdown';
 const { TextArea } = Input;
 
 interface ChatMessagesProps {
-  messages: { role: 'user' | 'assistant'; content: string }[];
+  messages: { role: 'user' | 'assistant'; content: string; events?: any[] }[];
   handleTestWorkflow: () => void;
   isProcessing: boolean;
   messagesEndRef: React.RefObject<HTMLDivElement>;
   clearMessages: () => void;
+  workflowName: string;
 }
 
 const ChatMessages: React.FC<ChatMessagesProps> = ({
@@ -38,6 +40,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   isProcessing,
   messagesEndRef,
   clearMessages,
+  workflowName,
 }) => {
   const userInput = useAppSelector(selectWorkflowAppChatUserInput);
   const dispatch = useAppDispatch();
@@ -106,6 +109,39 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
       console.error('Error generating PDF:', error);
     }
   };
+
+  const handleDownloadLogs = () => {
+    // Construct a single JSON payload
+    const chatPairsWithEvents = [];
+    let lastUser = null;
+    for (let i = 0; i < messages.length; i++) {
+      const msg = messages[i];
+      if (msg.role === 'user') {
+        lastUser = msg.content;
+      } else if (msg.role === 'assistant') {
+        chatPairsWithEvents.push({ User: lastUser, Assistant: msg.content, events: msg.events || [] });
+      }
+    }
+    const fileName = `${workflowName || 'chat_log'}.json`;
+    const blob = new Blob([JSON.stringify(chatPairsWithEvents, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const menu = (
+    <Menu>
+      <Menu.Item key="clear" onClick={clearMessages}>
+        <ClearOutlined style={{ marginRight: 8 }} />Clear Chat
+      </Menu.Item>
+      <Menu.Item key="download" onClick={handleDownloadLogs}>
+        <DownloadOutlined style={{ marginRight: 8 }} />Log Bundle
+      </Menu.Item>
+    </Menu>
+  );
 
   return (
     <>
@@ -242,22 +278,11 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
           icon={isProcessing ? <Spin size="small" /> : <SendOutlined />}
           onClick={handleTestWorkflow}
           disabled={isProcessing}
-          style={{
-            marginRight: '8px',
-          }}
+          style={{ marginRight: '8px' }}
         />
-        <Tooltip title="Clear Chat">
-          <Button
-            icon={<ClearOutlined />}
-            onClick={clearMessages}
-            disabled={messages.length === 0}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          />
-        </Tooltip>
+        <Dropdown overlay={menu} trigger={["click"]} placement="bottomRight">
+          <Button icon={<MoreOutlined />} />
+        </Dropdown>
       </div>
     </>
   );

@@ -1565,11 +1565,6 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
 
       if (selectedAssignedAgent) {
         // Show update initiation notification
-        notificationApi.info({
-          message: 'Updating Agent',
-          description: 'Initiating agent update...',
-          placement: 'topRight',
-        });
 
         // Update existing agent
         await updateAgent({
@@ -1599,11 +1594,6 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
         });
       } else {
         // Show creation initiation notification
-        notificationApi.info({
-          message: 'Creating Agent',
-          description: 'Initiating agent creation...',
-          placement: 'topRight',
-        });
 
         // Create new agent
         const newAgent = await addAgent({
@@ -1628,11 +1618,6 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
         }).unwrap();
 
         // Show workflow update notification
-        notificationApi.info({
-          message: 'Updating Workflow',
-          description: 'Adding agent to workflow...',
-          placement: 'topRight',
-        });
 
         const updatedAgentIds = [...(workflowState.workflowMetadata.agentIds || []), newAgent];
         dispatch(updatedEditorWorkflowAgentIds(updatedAgentIds));

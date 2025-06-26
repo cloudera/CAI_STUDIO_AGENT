@@ -48,6 +48,7 @@ from studio.tools.tool_instance import (
     create_tool_instance,
     remove_tool_instance,
     update_tool_instance,
+    test_tool_instance,
 )
 from studio.tools.tool_template import (
     list_tool_templates,
@@ -325,6 +326,12 @@ class AgentStudioApp(AgentStudioServicer):
         Update a tool instance by id
         """
         return update_tool_instance(request, self.cml, dao=self.dao)
+
+    def TestToolInstance(self, request, context):
+        """
+        Test a tool instance by id.
+        """
+        return test_tool_instance(request, self.cml, dao=self.dao)
 
     def ListAgents(self, request, context):
         """

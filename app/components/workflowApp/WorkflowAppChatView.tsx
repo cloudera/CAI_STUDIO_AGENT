@@ -184,6 +184,7 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow, tas
           isProcessing={isRunning || false}
           messagesEndRef={messagesEndRef}
           clearMessages={handleClearMessages}
+          workflowName={workflow.name}
         />
       </Layout>
     </>

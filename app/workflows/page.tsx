@@ -242,7 +242,7 @@ const WorkflowsPageContent: React.FC = () => {
     <Layout
       style={{
         flex: 1,
-        padding: '16px 24px 22px',
+        padding: '16px 24px 0px',
         flexDirection: 'column',
         background: 'transparent',
       }}

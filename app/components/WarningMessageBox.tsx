@@ -1,18 +1,26 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Typography, Layout } from 'antd';
-import { WarningOutlined } from '@ant-design/icons';
+import { WarningOutlined, CloseOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
 
 interface WarningMessageBoxProps {
   messageTrigger: boolean;
   message: React.ReactNode;
+  onClose?: () => void;
 }
 
-const WarningMessageBox: React.FC<WarningMessageBoxProps> = ({ messageTrigger, message }) => {
-  if (!messageTrigger) {
+const WarningMessageBox: React.FC<WarningMessageBoxProps> = ({ messageTrigger, message, onClose }) => {
+  const [visible, setVisible] = useState(true);
+
+  if (!messageTrigger || !visible) {
     return null;
   }
+
+  const handleClose = () => {
+    setVisible(false);
+    if (onClose) onClose();
+  };
 
   return (
     <Layout
@@ -26,6 +34,9 @@ const WarningMessageBox: React.FC<WarningMessageBoxProps> = ({ messageTrigger, m
         justifyContent: 'space-between',
         flexGrow: 0,
         padding: '10px 16px',
+        marginTop: 8,
+        marginLeft: 24,
+        marginRight: 24,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', flex: 1 }}>
@@ -44,6 +55,16 @@ const WarningMessageBox: React.FC<WarningMessageBoxProps> = ({ messageTrigger, m
           {message}
         </Text>
       </div>
+      <CloseOutlined
+        onClick={handleClose}
+        style={{
+          fontSize: '16px',
+          color: '#bfbfbf',
+          cursor: 'pointer',
+          marginLeft: 16,
+        }}
+        aria-label="Close warning message"
+      />
     </Layout>
   );
 };

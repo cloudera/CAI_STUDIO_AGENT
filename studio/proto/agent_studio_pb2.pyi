@@ -2022,3 +2022,40 @@ class RotateCmlApiResponse(_message.Message):
     MESSAGE_FIELD_NUMBER: _ClassVar[int]
     message: str
     def __init__(self, message: _Optional[str] = ...) -> None: ...
+
+class TestToolInstanceRequest(_message.Message):
+    __slots__ = ("tool_instance_id", "user_params", "tool_params")
+    class UserParamsEntry(_message.Message):
+        __slots__ = ("key", "value")
+        KEY_FIELD_NUMBER: _ClassVar[int]
+        VALUE_FIELD_NUMBER: _ClassVar[int]
+        key: str
+        value: str
+        def __init__(self, key: _Optional[str] = ..., value: _Optional[str] = ...) -> None: ...
+
+    class ToolParamsEntry(_message.Message):
+        __slots__ = ("key", "value")
+        KEY_FIELD_NUMBER: _ClassVar[int]
+        VALUE_FIELD_NUMBER: _ClassVar[int]
+        key: str
+        value: str
+        def __init__(self, key: _Optional[str] = ..., value: _Optional[str] = ...) -> None: ...
+
+    TOOL_INSTANCE_ID_FIELD_NUMBER: _ClassVar[int]
+    USER_PARAMS_FIELD_NUMBER: _ClassVar[int]
+    TOOL_PARAMS_FIELD_NUMBER: _ClassVar[int]
+    tool_instance_id: str
+    user_params: _containers.ScalarMap[str, str]
+    tool_params: _containers.ScalarMap[str, str]
+    def __init__(
+        self,
+        tool_instance_id: _Optional[str] = ...,
+        user_params: _Optional[_Mapping[str, str]] = ...,
+        tool_params: _Optional[_Mapping[str, str]] = ...,
+    ) -> None: ...
+
+class TestToolInstanceResponse(_message.Message):
+    __slots__ = ("trace_id",)
+    TRACE_ID_FIELD_NUMBER: _ClassVar[int]
+    trace_id: str
+    def __init__(self, trace_id: _Optional[str] = ...) -> None: ...

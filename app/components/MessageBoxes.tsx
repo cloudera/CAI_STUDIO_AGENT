@@ -168,6 +168,7 @@ const MessageBoxes: React.FC = () => {
   const [rotateApiKey] = useRotateApiKeyMutation();
   const notificationsApi = useGlobalNotification();
   const [isRotating, setIsRotating] = useState(false);
+  const [closedWarnings, setClosedWarnings] = useState<Set<number>>(new Set());
 
   // Add CML API check with proper skip condition
   const { data: cmlApiCheck, refetch: refetchApiCheck } = useCmlApiCheckQuery(undefined, {
@@ -315,21 +316,15 @@ const MessageBoxes: React.FC = () => {
 
       <UpgradeModal upgradeStatus={upgradeStatus} isOpen={isOpen} setIsOpen={setIsOpen} />
       {currentWarningMessages.map((warningMessage, index) =>
-        warningMessage.messageTrigger ? (
-          <Layout
+        warningMessage.messageTrigger && !closedWarnings.has(index) ? (
+          <WarningMessageBox
             key={`warning-${index}`}
-            style={{
-              padding: 10,
-              flexGrow: 0,
-              flexShrink: 0,
-              paddingBottom: 0,
+            message={warningMessage.message}
+            messageTrigger={warningMessage.messageTrigger}
+            onClose={() => {
+              setClosedWarnings(prev => new Set(prev).add(index));
             }}
-          >
-            <WarningMessageBox
-              message={warningMessage.message}
-              messageTrigger={warningMessage.messageTrigger}
-            />
-          </Layout>
+          />
         ) : null,
       )}
     </>

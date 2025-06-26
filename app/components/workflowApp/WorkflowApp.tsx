@@ -101,6 +101,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
 
   // Track processed exception IDs
   const processedExceptionsRef = useRef<Set<string>>(new Set());
+  const allEventsRef = useRef<any[]>([]);
 
   // Add effect to update showMonitoring when renderMode changes
   useEffect(() => {
@@ -257,6 +258,8 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
         dispatch(addedCurrentEvents(newEvents));
 
         if (newEvents && newEvents.length > 0) {
+          allEventsRef.current = [...allEventsRef.current, ...newEvents];
+
           // Check for successful completion as before
           const crewCompleteEvent = newEvents.find(
             (event) =>
@@ -266,6 +269,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
             stopPolling();
             dispatch(updatedCrewOutput(crewCompleteEvent.output || crewCompleteEvent.error));
             dispatch(updatedIsRunning(false));
+            dispatch(addedCurrentEvents(newEvents));
 
             if (workflow?.is_conversational) {
               dispatch(
@@ -273,6 +277,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
                   id: crewCompleteEvent.id,
                   role: 'assistant',
                   content: crewCompleteEvent.output || crewCompleteEvent.error,
+                  events: allEventsRef.current,
                 }),
               );
             }

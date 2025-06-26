@@ -234,7 +234,7 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
         padding: '40px',
         background: 'white',
         borderRadius: '8px',
-        margin: '20px 0',
+        margin: '20px 0 0 0',
       }}
     >
       <Text>No workflows here yet</Text>
@@ -256,10 +256,10 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
   return (
     <Layout
       style={{
-        display: 'flex',
         flexDirection: 'column',
         height: '100%',
         position: 'relative',
+        margin: '0px 0px 0px 0px',
       }}
     >
       {/* Search and Filter Bar */}
@@ -307,7 +307,7 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
       </div>
 
       {/* Scrollable content area */}
-      <div style={{ overflowY: 'auto', height: 'calc(100% - 70px)' }}>
+      <div style={{ overflowY: 'auto', height: 'calc(100% - 0px)' }}>
         {/* Show empty state when no workflows exist */}
         {!Object.keys(deployedWorkflowMap).length &&
           !draftWorkflows.length &&
@@ -399,8 +399,8 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginTop: '25px',
-                marginBottom: '10px',
+                marginTop: '1px',
+                marginBottom: '1px',
               }}
             >
               <Text style={{ fontSize: '18px', fontWeight: 600 }}>Draft Workflows</Text>
@@ -471,8 +471,8 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  marginTop: '25px',
-                  marginBottom: '10px',
+                  marginTop: '1px',
+                  marginBottom: '1px',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center' }}>

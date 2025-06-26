@@ -8,6 +8,7 @@ import requests
 from datetime import datetime
 from opentelemetry.context import get_current
 import subprocess
+from typing import Dict, Any
 
 # Disable CrewAI telemetry.
 os.environ["CREWAI_DISABLE_TELEMETRY"] = "true"
@@ -31,6 +32,7 @@ from engine.crewai.run import run_workflow
 from engine.crewai.tracing import instrument_crewai_workflow, reset_crewai_instrumentation
 from engine.ops import get_ops_endpoint
 from engine.crewai.events import register_global_handlers
+from engine.tool.run import run_tool_test
 
 app = FastAPI()
 
@@ -51,6 +53,14 @@ class KickoffPayload(BaseModel):
     llm_config: dict
     inputs: dict
     events_trace_id: str
+
+
+class ToolTestPayload(BaseModel):
+    tool_instance_id: str
+    tool_directory: str
+    user_params: Dict[str, Any]
+    tool_params: Dict[str, Any]
+    trace_id: str
 
 
 # Register our handlers. This can occur globally
@@ -167,3 +177,27 @@ async def status():
         return {"busy": True, "workflow": running_workflow}
     else:
         return {"busy": False}
+
+
+@app.post("/test_tool_instance")
+async def test_tool_instance(payload: ToolTestPayload):
+    if global_lock.locked():
+        raise HTTPException(status_code=409, detail="Runner is busy")
+    await global_lock.acquire()
+    async def run_tool_test_background():
+        try:
+            loop = asyncio.get_running_loop()
+            # Run the blocking tool test in a separate thread
+            await loop.run_in_executor(
+                None,
+                run_tool_test,
+                payload.tool_instance_id,
+                payload.tool_directory,
+                payload.user_params,
+                payload.tool_params,
+                payload.trace_id,
+            )
+        finally:
+            global_lock.release()
+    asyncio.create_task(run_tool_test_background())
+    return {"status": "Tool test started", "trace_id": payload.trace_id}

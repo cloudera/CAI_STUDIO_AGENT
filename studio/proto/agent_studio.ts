@@ -1276,6 +1276,26 @@ export interface RotateCmlApiResponse {
   message: string;
 }
 
+export interface TestToolInstanceRequest {
+  tool_instance_id: string;
+  user_params: { [key: string]: string };
+  tool_params: { [key: string]: string };
+}
+
+export interface TestToolInstanceRequest_UserParamsEntry {
+  key: string;
+  value: string;
+}
+
+export interface TestToolInstanceRequest_ToolParamsEntry {
+  key: string;
+  value: string;
+}
+
+export interface TestToolInstanceResponse {
+  trace_id: string;
+}
+
 function createBaseModel(): Model {
   return { model_id: "", model_name: "", provider_model: "", model_type: "", api_base: "", is_studio_default: false };
 }
@@ -15668,6 +15688,352 @@ export const RotateCmlApiResponse: MessageFns<RotateCmlApiResponse> = {
   },
 };
 
+function createBaseTestToolInstanceRequest(): TestToolInstanceRequest {
+  return { tool_instance_id: "", user_params: {}, tool_params: {} };
+}
+
+export const TestToolInstanceRequest: MessageFns<TestToolInstanceRequest> = {
+  encode(message: TestToolInstanceRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.tool_instance_id !== "") {
+      writer.uint32(10).string(message.tool_instance_id);
+    }
+    Object.entries(message.user_params).forEach(([key, value]) => {
+      TestToolInstanceRequest_UserParamsEntry.encode({ key: key as any, value }, writer.uint32(18).fork()).join();
+    });
+    Object.entries(message.tool_params).forEach(([key, value]) => {
+      TestToolInstanceRequest_ToolParamsEntry.encode({ key: key as any, value }, writer.uint32(26).fork()).join();
+    });
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): TestToolInstanceRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseTestToolInstanceRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.tool_instance_id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          const entry2 = TestToolInstanceRequest_UserParamsEntry.decode(reader, reader.uint32());
+          if (entry2.value !== undefined) {
+            message.user_params[entry2.key] = entry2.value;
+          }
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          const entry3 = TestToolInstanceRequest_ToolParamsEntry.decode(reader, reader.uint32());
+          if (entry3.value !== undefined) {
+            message.tool_params[entry3.key] = entry3.value;
+          }
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): TestToolInstanceRequest {
+    return {
+      tool_instance_id: isSet(object.tool_instance_id) ? globalThis.String(object.tool_instance_id) : "",
+      user_params: isObject(object.user_params)
+        ? Object.entries(object.user_params).reduce<{ [key: string]: string }>((acc, [key, value]) => {
+          acc[key] = String(value);
+          return acc;
+        }, {})
+        : {},
+      tool_params: isObject(object.tool_params)
+        ? Object.entries(object.tool_params).reduce<{ [key: string]: string }>((acc, [key, value]) => {
+          acc[key] = String(value);
+          return acc;
+        }, {})
+        : {},
+    };
+  },
+
+  toJSON(message: TestToolInstanceRequest): unknown {
+    const obj: any = {};
+    if (message.tool_instance_id !== "") {
+      obj.tool_instance_id = message.tool_instance_id;
+    }
+    if (message.user_params) {
+      const entries = Object.entries(message.user_params);
+      if (entries.length > 0) {
+        obj.user_params = {};
+        entries.forEach(([k, v]) => {
+          obj.user_params[k] = v;
+        });
+      }
+    }
+    if (message.tool_params) {
+      const entries = Object.entries(message.tool_params);
+      if (entries.length > 0) {
+        obj.tool_params = {};
+        entries.forEach(([k, v]) => {
+          obj.tool_params[k] = v;
+        });
+      }
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<TestToolInstanceRequest>): TestToolInstanceRequest {
+    return TestToolInstanceRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<TestToolInstanceRequest>): TestToolInstanceRequest {
+    const message = createBaseTestToolInstanceRequest();
+    message.tool_instance_id = object.tool_instance_id ?? "";
+    message.user_params = Object.entries(object.user_params ?? {}).reduce<{ [key: string]: string }>(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = globalThis.String(value);
+        }
+        return acc;
+      },
+      {},
+    );
+    message.tool_params = Object.entries(object.tool_params ?? {}).reduce<{ [key: string]: string }>(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = globalThis.String(value);
+        }
+        return acc;
+      },
+      {},
+    );
+    return message;
+  },
+};
+
+function createBaseTestToolInstanceRequest_UserParamsEntry(): TestToolInstanceRequest_UserParamsEntry {
+  return { key: "", value: "" };
+}
+
+export const TestToolInstanceRequest_UserParamsEntry: MessageFns<TestToolInstanceRequest_UserParamsEntry> = {
+  encode(message: TestToolInstanceRequest_UserParamsEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): TestToolInstanceRequest_UserParamsEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseTestToolInstanceRequest_UserParamsEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): TestToolInstanceRequest_UserParamsEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? globalThis.String(object.value) : "",
+    };
+  },
+
+  toJSON(message: TestToolInstanceRequest_UserParamsEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<TestToolInstanceRequest_UserParamsEntry>): TestToolInstanceRequest_UserParamsEntry {
+    return TestToolInstanceRequest_UserParamsEntry.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<TestToolInstanceRequest_UserParamsEntry>): TestToolInstanceRequest_UserParamsEntry {
+    const message = createBaseTestToolInstanceRequest_UserParamsEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
+function createBaseTestToolInstanceRequest_ToolParamsEntry(): TestToolInstanceRequest_ToolParamsEntry {
+  return { key: "", value: "" };
+}
+
+export const TestToolInstanceRequest_ToolParamsEntry: MessageFns<TestToolInstanceRequest_ToolParamsEntry> = {
+  encode(message: TestToolInstanceRequest_ToolParamsEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): TestToolInstanceRequest_ToolParamsEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseTestToolInstanceRequest_ToolParamsEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): TestToolInstanceRequest_ToolParamsEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? globalThis.String(object.value) : "",
+    };
+  },
+
+  toJSON(message: TestToolInstanceRequest_ToolParamsEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<TestToolInstanceRequest_ToolParamsEntry>): TestToolInstanceRequest_ToolParamsEntry {
+    return TestToolInstanceRequest_ToolParamsEntry.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<TestToolInstanceRequest_ToolParamsEntry>): TestToolInstanceRequest_ToolParamsEntry {
+    const message = createBaseTestToolInstanceRequest_ToolParamsEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
+function createBaseTestToolInstanceResponse(): TestToolInstanceResponse {
+  return { trace_id: "" };
+}
+
+export const TestToolInstanceResponse: MessageFns<TestToolInstanceResponse> = {
+  encode(message: TestToolInstanceResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.trace_id !== "") {
+      writer.uint32(10).string(message.trace_id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): TestToolInstanceResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseTestToolInstanceResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.trace_id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): TestToolInstanceResponse {
+    return { trace_id: isSet(object.trace_id) ? globalThis.String(object.trace_id) : "" };
+  },
+
+  toJSON(message: TestToolInstanceResponse): unknown {
+    const obj: any = {};
+    if (message.trace_id !== "") {
+      obj.trace_id = message.trace_id;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<TestToolInstanceResponse>): TestToolInstanceResponse {
+    return TestToolInstanceResponse.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<TestToolInstanceResponse>): TestToolInstanceResponse {
+    const message = createBaseTestToolInstanceResponse();
+    message.trace_id = object.trace_id ?? "";
+    return message;
+  },
+};
+
 /** gRPC service for basic Agent Studio operations. */
 export type AgentStudioService = typeof AgentStudioService;
 export const AgentStudioService = {
@@ -15950,6 +16316,16 @@ export const AgentStudioService = {
     responseSerialize: (value: RemoveToolInstanceResponse) =>
       Buffer.from(RemoveToolInstanceResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer) => RemoveToolInstanceResponse.decode(value),
+  },
+  testToolInstance: {
+    path: "/agent_studio.AgentStudio/TestToolInstance",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: TestToolInstanceRequest) => Buffer.from(TestToolInstanceRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => TestToolInstanceRequest.decode(value),
+    responseSerialize: (value: TestToolInstanceResponse) =>
+      Buffer.from(TestToolInstanceResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => TestToolInstanceResponse.decode(value),
   },
   /** Agent operations */
   listAgents: {
@@ -16433,6 +16809,7 @@ export interface AgentStudioServer extends UntypedServiceImplementation {
   createToolInstance: handleUnaryCall<CreateToolInstanceRequest, CreateToolInstanceResponse>;
   updateToolInstance: handleUnaryCall<UpdateToolInstanceRequest, UpdateToolInstanceResponse>;
   removeToolInstance: handleUnaryCall<RemoveToolInstanceRequest, RemoveToolInstanceResponse>;
+  testToolInstance: handleUnaryCall<TestToolInstanceRequest, TestToolInstanceResponse>;
   /** Agent operations */
   listAgents: handleUnaryCall<ListAgentsRequest, ListAgentsResponse>;
   getAgent: handleUnaryCall<GetAgentRequest, GetAgentResponse>;
@@ -16914,6 +17291,21 @@ export interface AgentStudioClient extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: RemoveToolInstanceResponse) => void,
+  ): ClientUnaryCall;
+  testToolInstance(
+    request: TestToolInstanceRequest,
+    callback: (error: ServiceError | null, response: TestToolInstanceResponse) => void,
+  ): ClientUnaryCall;
+  testToolInstance(
+    request: TestToolInstanceRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: TestToolInstanceResponse) => void,
+  ): ClientUnaryCall;
+  testToolInstance(
+    request: TestToolInstanceRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: TestToolInstanceResponse) => void,
   ): ClientUnaryCall;
   /** Agent operations */
   listAgents(

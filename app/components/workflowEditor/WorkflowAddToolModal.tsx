@@ -14,6 +14,10 @@ import {
   Space,
   Tooltip,
   Alert,
+  Switch,
+  Row,
+  Col,
+  Card,
 } from 'antd';
 import {
   PlusOutlined,
@@ -48,12 +52,14 @@ import {
   useListToolInstancesQuery,
   useCreateToolInstanceMutation,
   useUpdateToolInstanceMutation,
+  useTestToolInstanceMutation,
 } from '@/app/tools/toolInstancesApi';
 import { useUpdateAgentMutation, useListAgentsQuery } from '../../agents/agentApi';
 import { uploadFile } from '../../lib/fileUpload';
 import { useGetParentProjectDetailsQuery } from '../../lib/crossCuttingApi';
 import { defaultToolPyCode, defaultRequirementsTxt } from '@/app/utils/defaultToolCode'; // Import default code
 import { renderAlert } from '@/app/lib/alertUtils';
+import { useGetEventsMutation } from '@/app/ops/opsApi'; // This is the same as WorkflowApp.tsx
 
 const { Text } = Typography;
 
@@ -100,6 +106,17 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
   const [searchTemplates, setSearchTemplates] = useState('');
   const [searchTools, setSearchTools] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [playgroundEnabled, setPlaygroundEnabled] = useState(false);
+  const [userParams, setUserParams] = useState<{ [key: string]: string }>({});
+  const [toolParams, setToolParams] = useState<{ [key: string]: string }>({});
+  const [traceId, setTraceId] = useState<string>('');
+  const [logs, setLogs] = useState<any[]>([]);
+  const [isTesting, setIsTesting] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [testToolInstance] = useTestToolInstanceMutation();
+  const [getEvents] = useGetEventsMutation();
+  const [testError, setTestError] = useState<string | null>(null);
+  const allEventsRef = useRef<any[]>([]);
 
   // Create a map of tool instances
   const [toolInstancesMap, setToolInstancesMap] = useState<Record<string, any>>(() => {
@@ -136,18 +153,21 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
 
   // Handle pre-selected tool instance
   useEffect(() => {
-    if (preSelectedToolInstanceId && toolInstancesMap[preSelectedToolInstanceId] && open) {
-      handleSelectToolInstance(preSelectedToolInstanceId);
-    } else if (open) {
-      handleCreateCardSelect(); // If no pre-selected tool instance, select the create card
+    if (!selectedToolInstance) {
+      if (preSelectedToolInstanceId && toolInstancesMap[preSelectedToolInstanceId] && open) {
+        handleSelectToolInstance(preSelectedToolInstanceId);
+      } else if (open) {
+        handleCreateCardSelect();
+      }
     }
-  }, [preSelectedToolInstanceId, toolInstancesMap, open]);
+  }, [preSelectedToolInstanceId, toolInstancesMap, open, selectedToolInstance]);
 
   const handleSelectToolTemplate = (toolTemplateId: string) => {
     setSelectedToolTemplate(toolTemplateId);
     setSelectedToolInstance(null);
     setIsCreateSelected(false);
     setIsEditable(false);
+    resetPlaygroundState();
   };
 
   const handleCreateCardSelect = () => {
@@ -155,6 +175,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
     setSelectedToolInstance(null);
     setIsCreateSelected(true);
     setIsEditable(false);
+    resetPlaygroundState();
   };
 
   const handleCreateToolInstance = async (toolTemplateId: string | undefined) => {
@@ -258,6 +279,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
     if (toolInstance) {
       setEditedToolName(toolInstance.name);
     }
+    resetPlaygroundState();
   };
 
   const selectedTool = toolTemplates.find((tool) => tool.id === selectedToolTemplate);
@@ -320,24 +342,34 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
 
     setIsRefreshing(true);
     try {
-      // Fetch the specific tool instance details using the mutation
       const response = await getToolInstance({ tool_instance_id: selectedToolInstance }).unwrap();
 
       if (!response || !response.tool_instance) {
-        throw new Error('Failed to fetch tool data.');
+        notificationApi.error({
+          message: 'Refresh Failed',
+          description: 'Failed to fetch tool details.',
+          placement: 'topRight',
+        });
+        setIsRefreshing(false);
+        return;
       }
 
-      console.log('Refreshed Tool:', response);
+      // Only update code/requirements, keep all other state as is
+      setToolInstancesMap(prev => {
+        if (!prev[selectedToolInstance]) return prev; // Defensive: don't update if not present
+        return {
+          ...prev,
+          [selectedToolInstance]: {
+            ...prev[selectedToolInstance],
+            python_code: response.tool_instance!.python_code,
+            python_requirements: response.tool_instance!.python_requirements,
+            // Optionally update other fields if you want them refreshed
+          }
+        };
+      });
+      setEditorKey((prev) => prev + 1);
 
-      // Update the tool instance map with the refreshed data
-      const updatedToolInstancesMap = {
-        ...toolInstancesMap,
-        [selectedToolInstance]: response.tool_instance, // Access the nested tool_instance data
-      };
-
-      // Update the state with the refreshed tool instance data
-      setToolInstancesMap(updatedToolInstancesMap);
-      setEditorKey((prev) => prev + 1); // Force re-render of editors
+      // Do NOT touch selection state here!
 
       notificationApi.success({
         message: 'Refreshed',
@@ -367,6 +399,14 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
         description: 'Saving tool changes...',
         placement: 'topRight',
       });
+
+      const toolMetadata: {
+        user_params_metadata?: Record<string, { required: boolean }>;
+        tool_params_metadata?: Record<string, { required: boolean }>;
+        [key: string]: any;
+      } = typeof toolInstance.tool_metadata === 'string'
+        ? JSON.parse(toolInstance.tool_metadata)
+        : toolInstance.tool_metadata || {};
 
       await updateToolInstance({
         tool_instance_id: selectedToolInstance,
@@ -686,6 +726,14 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
     const toolInstance = toolInstancesMap[selectedToolInstance || ''];
     if (!toolInstance) return null;
 
+    const toolMetadata: {
+      user_params_metadata?: Record<string, { required: boolean }>;
+      tool_params_metadata?: Record<string, { required: boolean }>;
+      [key: string]: any;
+    } = typeof toolInstance.tool_metadata === 'string'
+      ? JSON.parse(toolInstance.tool_metadata)
+      : toolInstance.tool_metadata || {};
+
     return (
       <Layout style={{ flex: 1, backgroundColor: '#fff', padding: '0px', overflowY: 'auto' }}>
         <Typography.Title level={5} style={{ marginBottom: '16px' }}>
@@ -761,7 +809,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
             </div>
           </Form.Item>
 
-          <div style={{ marginBottom: '24px' }}>
+          {/* <div style={{ marginBottom: '24px' }}>
             <div
               style={{
                 width: '100%',
@@ -805,9 +853,9 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
               options={{ readOnly: true }}
               theme="vs-dark"
             />
-          </div>
+          </div> */}
 
-          <Form.Item
+          {/* <Form.Item
             label={
               <Space>
                 requirements.txt
@@ -825,7 +873,259 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
               options={{ readOnly: true }}
               theme="vs-dark"
             />
+          </Form.Item> */}
+
+          <Form.Item label="Playground">
+            <Switch
+              checked={playgroundEnabled}
+              onChange={(checked) => {
+                if (!checked) {
+                  resetPlaygroundState();
+                }
+                setPlaygroundEnabled(checked);
+              }}
+            />
           </Form.Item>
+
+          {playgroundEnabled ? (
+            <>
+              <Divider style={{ margin: '8px 0 11px 0' }} />
+              {Object.keys(toolMetadata.user_params_metadata || {}).length > 0 && (
+                <Typography.Text style={{ fontWeight: 600, fontSize: 14, marginBottom: 8, display: 'block' }}>
+                  User Parameters
+                </Typography.Text>
+              )}
+              <Row gutter={16} style={{ marginBottom: 0 }}>
+                {Object.entries(toolMetadata.user_params_metadata || {}).map(([key, meta]) => (
+                  <Col span={12} key={key}>
+                    <Form.Item label={key} required={meta.required}>
+                      <Input
+                        value={userParams[key] || ''}
+                        onChange={e => setUserParams({ ...userParams, [key]: e.target.value })}
+                      />
+                    </Form.Item>
+                  </Col>
+                ))}
+              </Row>
+
+              {Object.keys(toolMetadata.tool_params_metadata || {}).length > 0 && (
+                <Typography.Text style={{ fontWeight: 600, fontSize: 14, marginBottom: 8, display: 'block' }}>
+                  Tool Parameters
+                </Typography.Text>
+              )}
+              <Row gutter={16} style={{ marginBottom: 4 }}>
+                {Object.entries(toolMetadata.tool_params_metadata || {}).map(([key, meta]) => (
+                  <Col span={12} key={key}>
+                    <Form.Item label={key} required={meta.required}>
+                      <Input
+                        value={toolParams[key] || ''}
+                        onChange={e => setToolParams({ ...toolParams, [key]: e.target.value })}
+                      />
+                    </Form.Item>
+                  </Col>
+                ))}
+              </Row>
+              <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                <Button
+                  type="primary"
+                  block
+                  icon={isTesting ? <Spin size="small" /> : undefined}
+                  onClick={async () => {
+                    setIsTesting(true);
+                    setLogs([]);
+                    setTestError(null);
+                    allEventsRef.current = [];
+                    if (intervalRef.current) {
+                      clearInterval(intervalRef.current);
+                      intervalRef.current = null;
+                    }
+                    try {
+                      setTestError(null); // Clear previous error
+                      const resp = await testToolInstance({
+                        tool_instance_id: toolInstance.id,
+                        user_params: userParams,
+                        tool_params: toolParams,
+                      }).unwrap();
+                      setTraceId(resp.trace_id);
+
+                      // Start polling for events
+                      intervalRef.current = setInterval(async () => {
+                        try {
+                          const { events: newEvents } = await getEvents({ traceId: resp.trace_id }).unwrap();
+
+                          // Always deduplicate by a unique key (timestamp+type+output+error)
+                          const makeKey = (e: any) =>
+                            [e.timestamp, e.type, e.output, e.error, e.tool_instance_id].join('|');
+
+                          // Build a set of all seen event keys
+                          const seenKeys = new Set(allEventsRef.current.map(makeKey));
+
+                          // Only add truly new events
+                          const trulyNewEvents = (newEvents || []).filter(e => !seenKeys.has(makeKey(e)));
+
+                          if (trulyNewEvents.length > 0) {
+                            allEventsRef.current = [...allEventsRef.current, ...trulyNewEvents];
+                            setLogs([...allEventsRef.current]);
+                          }
+
+                          // Always update logs even if only a single event arrives
+                          if (allEventsRef.current.length === 0 && (newEvents && newEvents.length > 0)) {
+                            allEventsRef.current = [...newEvents];
+                            setLogs([...allEventsRef.current]);
+                          }
+
+                          // Check for final event in the accumulated list
+                          const hasFinalEvent = allEventsRef.current.some(
+                            e => e.type === 'ToolTestCompleted' || e.type === 'ToolTestFailed'
+                          );
+                          if (hasFinalEvent) {
+                            if (intervalRef.current) {
+                              clearInterval(intervalRef.current);
+                              intervalRef.current = null;
+                            }
+                            setIsTesting(false);
+                          }
+                        } catch (err) {
+                          // Optionally handle error
+                        }
+                      }, 1000);
+                    } catch (err: any) {
+                      setIsTesting(false);
+                      let errorMsg = "Failed to test tool.";
+                      if (err?.data?.detail) {
+                        errorMsg = typeof err.data.detail === "string" ? err.data.detail : JSON.stringify(err.data.detail);
+                      } else if (err?.error) {
+                        errorMsg = err.error;
+                      } else if (err?.message) {
+                        errorMsg = err.message;
+                      } else if (typeof err === "string") {
+                        errorMsg = err;
+                      } else {
+                        errorMsg = JSON.stringify(err);
+                      }
+                      setTestError(errorMsg);
+                    }
+                  }}
+                  disabled={isTesting}
+                  style={{ flex: 1 }}
+                >
+                  {isTesting ? 'Testing...' : 'Test Tool'}
+                </Button>
+              </div>
+              {logs.length > 0 && (
+                <div style={{ marginTop: 4 }}>
+                  {logs.map((event, idx) => (
+                    <Card
+                      key={idx}
+                      title={event.type}
+                      style={{
+                        backgroundColor:
+                          /error|fail/i.test(event.type)
+                            ? '#ffeaea'
+                            : event.type === 'ToolTestCompleted'
+                            ? '#a2f5bf'
+                            : 'white',
+                        fontSize: '9px',
+                        maxWidth: '100%',
+                        overflow: 'hidden',
+                        flexShrink: 0,
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.4)',
+                        marginBottom: 8,
+                      }}
+                      headStyle={{ fontSize: '14px' }}
+                      bodyStyle={{ fontSize: '9px', padding: '12px', overflow: 'auto' }}
+                    >
+                      <pre
+                        style={{
+                          fontSize: '9px',
+                          margin: 0,
+                          overflow: 'auto',
+                          maxWidth: '100%',
+                        }}
+                      >
+                        {JSON.stringify(event, null, 2)}
+                      </pre>
+                    </Card>
+                  ))}
+                </div>
+              )}
+              {testError && (
+                <Alert
+                  type="error"
+                  message={testError}
+                  showIcon
+                  style={{ fontSize: 12, marginTop: 8 }}
+                />
+              )}
+            </>
+          ) : (
+            <>
+              <div style={{ marginBottom: '24px' }}>
+                <div
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: '8px',
+                  }}
+                >
+                  <Space>
+                    <Text style={{ fontWeight: 'normal' }}>tool.py</Text>
+                    <Tooltip title="The Python code that defines the tool's functionality and interface">
+                      <QuestionCircleOutlined style={{ color: '#666' }} />
+                    </Tooltip>
+                  </Space>
+                  <Space>
+                    <Button
+                      type="text"
+                      icon={<ExportOutlined />}
+                      onClick={handleEditToolFile}
+                      size="small"
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      type="text"
+                      icon={isRefreshing ? <SyncOutlined spin /> : <ReloadOutlined />}
+                      onClick={handleRefresh}
+                      disabled={isRefreshing}
+                      size="small"
+                    >
+                      Refresh
+                    </Button>
+                  </Space>
+                </div>
+                <Editor
+                  key={`python-${editorKey}`}
+                  height="400px"
+                  defaultLanguage="python"
+                  value={toolInstance.python_code || 'N/A'}
+                  options={{ readOnly: true }}
+                  theme="vs-dark"
+                />
+              </div>
+              <Form.Item
+                label={
+                  <Space>
+                    requirements.txt
+                    <Tooltip title="Python package dependencies required by this tool">
+                      <QuestionCircleOutlined style={{ color: '#666' }} />
+                    </Tooltip>
+                  </Space>
+                }
+              >
+                <Editor
+                  key={`requirements-${editorKey}`}
+                  height="150px"
+                  defaultLanguage="plaintext"
+                  value={toolInstance.python_requirements || 'N/A'}
+                  options={{ readOnly: true }}
+                  theme="vs-dark"
+                />
+              </Form.Item>
+            </>
+          )}
         </Form>
       </Layout>
     );
@@ -938,6 +1238,29 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
     }
     return 'Add Tool';
   };
+
+  const resetPlaygroundState = () => {
+    setLogs([]);
+    setTraceId('');
+    setUserParams({});
+    setToolParams({});
+    setIsTesting(false);
+    setPlaygroundEnabled(false); // Disable playground
+    setTestError(null); // Clear error alert
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, []);
 
   return (
     <Modal

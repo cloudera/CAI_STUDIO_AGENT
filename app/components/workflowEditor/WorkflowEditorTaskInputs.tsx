@@ -310,6 +310,8 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
   };
 
   const handleAddTask = async () => {
+    const shouldClearAssignedAgent = hasManagerAgent;
+
     if (!selectedAgentId && !hasManagerAgent) {
       notificationApi.error({
         message: 'Error',
@@ -325,7 +327,7 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
         add_crew_ai_task_request: {
           description,
           expected_output: expectedOutput,
-          assigned_agent_id: selectedAgentId || '',
+          assigned_agent_id: shouldClearAssignedAgent ? '' : (selectedAgentId || ''),
         },
         workflow_id: workflowState.workflowId || '',
         template_id: '',
@@ -419,13 +421,15 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
       return;
     }
 
+    const shouldClearAssignedAgent = hasManagerAgent;
+
     try {
       await updateTask({
         task_id: editingTaskId,
         UpdateCrewAITaskRequest: {
           description,
           expected_output: expectedOutput,
-          assigned_agent_id: selectedAgentId || '',
+          assigned_agent_id: shouldClearAssignedAgent ? '' : (selectedAgentId || ''),
         },
       }).unwrap();
 
