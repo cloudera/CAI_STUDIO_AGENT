@@ -2,7 +2,7 @@
 
 ## Overview
 
-Workflows are the core of AI agents. A workflow represents a collaborative group of agents working together to achieve a set of tasks. Each workflow defines the strategy for task execution and agent collaboration.
+Workflows are the core resource type of Agent Studio. A workflow represents a collaborative group of agents working together to achieve a set of tasks. Each workflow defines the strategy for task execution and agent collaboration.
 
 ![Workflow Page](../../images/for_docs/Workflow-page.png)
 
@@ -54,15 +54,13 @@ A task can be configured with the following parameters:
 ![Create Workflow First Page](../../images/for_docs/Create-workflow-flow.png)
 
 ## Workflow Deployments
-A deployed workflow is a stanadlone application that no longer allows you to edit the workflow. It is meant to be a production-ready application, ready to be used by end-users(or other stakeholders within your organization).
-
-Each deployed consists of 2 components:
- - The workflow backend is served my a [AI Workbench model](https://docs.cloudera.com/machine-learning/cloud/models/topics/ml-models.html).
- - The workflow frontend is served by a [AI Workbench application](https://docs.cloudera.com/machine-learning/cloud/applications/topics/ml-applications-c.html).
-
-A workflow when deployed, would give you deeplinks to access the application, the workbench configuration of the model & workbench configuration of the application.
+A deployed workflow is a stanadlone endpoint that is meant to be a production-ready application, ready to be used by end-users (or other stakeholders within your organization).
 
 ![Deployed Workflow](../../images/for_docs/Workflow-deployment.png)
 
-## Workflow Templates
-Workflow templates are pre-configured workflows that can be used as a starting point for new workflows. They are useful for quickly creating new workflows with a predefined structure.
+For detailed information about how deployed workflows operate, including all available endpoint actions, see the [Deployment Guide](./deployments.md).
+
+## Custom Workflows
+
+Workflows can be built entirely outside of Agent Studio and can then use Agent Studio for highly-available hosting of the workflows. For more
+information on how to build custom workflows, see [Custom Workflows](./custom_workflows.md).
