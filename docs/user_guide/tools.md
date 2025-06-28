@@ -134,3 +134,10 @@ When creating a tool from a template, you can **extend its functionality** by:
 This flexibility allows you to tailor tools for specific workflows and agent needs. 
 
 To edit the the tool code or requirements, you can click on the `Edit Tool File` button in the "View Tool" page. Clicking it would redirect you to a AI workbench file deeplink, so that you can make your edits & test there. For security reasons, we don't allow editing of the tool files in the Studio UI.
+
+### S3 Reader Tool
+
+You can create a custom tool to connect to the environment’s S3 buckets on AWS workbenches where RAZ (Ranger Authorization Service) is enabled.  
+Refer to https://pypi.org/project/raz-client/ for connection snippets.  
+For more information on enabling RAZ in your environment, refer to https://docs.cloudera.com/management-console/cloud/fine-grained-access-control-aws/topics/raz-aws-register-env.html  
+Note that you must have the appropriate permissions configured in Ranger to perform operations in S3.
