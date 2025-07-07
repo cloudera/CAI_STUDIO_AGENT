@@ -91,7 +91,7 @@ def test_get_crewai_tool_venv_tool(
         tool_image_uri="",
         is_venv_tool=False,  # DEPRECATED, not used
     )
-    out = get_crewai_tool(tool_instance, {})
+    out = get_crewai_tool(tool_instance, {}, "/fake/workflow/directory")
     mock_get_venv_tool.assert_called_once()
 
 
@@ -114,5 +114,5 @@ def test_get_crewai_tool_tool_proxy(
         tool_image_uri="",
         is_venv_tool=False,  # DEPRECATED, not used
     )
-    out = get_crewai_tool(tool_instance, {})
+    out = get_crewai_tool(tool_instance, {}, "/fake/workflow/directory")
     mock_get_tool_instance_proxy.assert_called_once()

@@ -479,13 +479,17 @@ def get_venv_tool(
                     "--tool-params",
                     json.dumps(dict(kwargs)),
                 ]
+                # Copy the entire existing environment and override specific variables
+                env = os.environ.copy()
+                env.update({"VIRTUAL_ENV": self.venv_dir})
+                
                 result = subprocess.run(
                     cmd,
                     capture_output=True,
                     text=True,
                     check=False,
                     cwd=workflow_directory,
-                    env={"VIRTUAL_ENV": self.venv_dir},
+                    env=env,
                 )
             except Exception as e:
                 return f"Tool call failed: {e}"
