@@ -13,6 +13,7 @@ import { WorkflowState } from './editorSlice';
 export interface DiagramState {
   nodes: Node[];
   edges: Edge[];
+  hasCustomPositions?: boolean; // Track if user has made position changes
 }
 
 export interface DiagramStateInput {
@@ -25,6 +26,15 @@ export interface DiagramStateInput {
   agents?: AgentMetadata[];
 }
 
+/**
+ * Creates diagram state from workflow data.
+ * 
+ * This function generates the initial diagram layout. Position persistence
+ * is handled by the React component using Redux state.
+ * 
+ * @param workflowData - Contains workflow state, tool instances, agents, tasks
+ * @returns DiagramState with nodes and edges using default positions
+ */
 export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) => {
   const managerAgentId = workflowData.workflowState.workflowMetadata.managerAgentId;
   const process = workflowData.workflowState.workflowMetadata.process;
@@ -45,10 +55,12 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
         ? 'Conversation'
         : `${task.description.substring(0, 50)}...`);
     if (task) {
+      const defaultPosition = { x: index * 300, y: yIndex };
+      
       initialNodes.push({
         type: 'task',
         id: `${task.task_id}`,
-        position: { x: index * 300, y: yIndex },
+        position: defaultPosition,
         data: {
           label: `${taskLabel}`,
           name: `${taskLabel}`,

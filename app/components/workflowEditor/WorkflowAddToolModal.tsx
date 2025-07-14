@@ -899,9 +899,10 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                 {Object.entries(toolMetadata.user_params_metadata || {}).map(([key, meta]) => (
                   <Col span={12} key={key}>
                     <Form.Item label={key} required={meta.required}>
-                      <Input
+                      <Input.Password
                         value={userParams[key] || ''}
                         onChange={e => setUserParams({ ...userParams, [key]: e.target.value })}
+                        visibilityToggle={true}
                       />
                     </Form.Item>
                   </Col>

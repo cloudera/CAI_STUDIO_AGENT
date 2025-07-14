@@ -90,6 +90,7 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
     return (
       <ReactFlowProvider>
         <WorkflowDiagram
+          key={`diagram-${workflowState.workflowId || 'default'}`}
           workflowState={workflowState}
           toolInstances={toolInstances}
           mcpInstances={mcpInstances}

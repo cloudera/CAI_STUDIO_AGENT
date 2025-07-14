@@ -32,6 +32,7 @@ import {
   updatedEditorWorkflowDescription,
   selectEditorWorkflowDescription,
   selectWorkflowConfiguration,
+  selectEditorWorkflow,
 } from '@/app/workflows/editorSlice';
 import WorkflowDiagramView from './WorkflowDiagramView';
 import {
@@ -79,6 +80,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
   const workflowPollingRef = useRef<NodeJS.Timeout | null>(null);
   const dispatch = useAppDispatch();
   const currentEvents = useAppSelector(selectCurrentEvents);
+  const workflowState = useAppSelector(selectEditorWorkflow);
 
   const [getEvents] = useGetEventsMutation();
 
@@ -625,17 +627,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
             </Tooltip>
 
             <WorkflowDiagramView
-              workflowState={{
-                name: workflow.name,
-                workflowId: '',
-                isConversational: workflow.is_conversational,
-                workflowMetadata: {
-                  agentIds: workflow.crew_ai_workflow_metadata?.agent_id,
-                  taskIds: workflow.crew_ai_workflow_metadata?.task_id,
-                  process: workflow.crew_ai_workflow_metadata?.process,
-                  managerAgentId: workflow.crew_ai_workflow_metadata?.manager_agent_id,
-                },
-              }}
+              workflowState={workflowState}
               toolInstances={toolInstances}
               mcpInstances={mcpInstances}
               tasks={tasks}

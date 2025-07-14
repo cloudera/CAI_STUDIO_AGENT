@@ -1,5 +1,6 @@
+import { useEffect } from 'react';
 import { useListAgentsQuery } from '../../agents/agentApi';
-import { useAppSelector } from '../../lib/hooks/hooks';
+import { useAppDispatch, useAppSelector } from '../../lib/hooks/hooks';
 import { useListTasksQuery } from '../../tasks/tasksApi';
 import { useListToolInstancesQuery } from '../../tools/toolInstancesApi';
 import { selectEditorWorkflow } from '../../workflows/editorSlice';
@@ -7,17 +8,36 @@ import WorkflowEditorAgentInputs from './WorkflowEditorAgentInputs';
 import { Divider, Layout } from 'antd';
 import WorkflowDiagramView from '../workflowApp/WorkflowDiagramView';
 import { useListMcpInstancesQuery } from '@/app/mcp/mcpInstancesApi';
+import { useGetWorkflowMutation } from '../../workflows/workflowsApi';
+import { updatedEditorWorkflowFromExisting } from '../../workflows/editorSlice';
 
 interface WorkflowEditorAgentViewProps {
   workflowId: string;
 }
 
 const WorkflowEditorAgentView: React.FC<WorkflowEditorAgentViewProps> = ({ workflowId }) => {
+  const dispatch = useAppDispatch();
   const workflowState = useAppSelector(selectEditorWorkflow);
+  const [getWorkflow] = useGetWorkflowMutation();
   const { data: toolInstances } = useListToolInstancesQuery({ workflow_id: workflowId });
   const { data: mcpInstances } = useListMcpInstancesQuery({ workflow_id: workflowId });
   const { data: tasks } = useListTasksQuery({ workflow_id: workflowId });
   const { data: agents } = useListAgentsQuery({ workflow_id: workflowId });
+
+  useEffect(() => {
+    if (!workflowState.workflowId || workflowState.workflowId !== workflowId) {
+      getWorkflow({ workflow_id: workflowId })
+        .unwrap()
+        .then((workflow: any) => {
+          dispatch(updatedEditorWorkflowFromExisting(workflow));
+        })
+        .catch((error: any) => {
+          console.error('Failed to sync workflow state:', error);
+        });
+    }
+  }, [workflowId, workflowState.workflowId, dispatch, getWorkflow]);
+
+  if (!workflowState.workflowId) return null;
 
   return (
     <>

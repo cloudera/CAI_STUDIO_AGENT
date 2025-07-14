@@ -8,8 +8,8 @@ import {
   useUndeployWorkflowMutation,
 } from '@/app/workflows/deployedWorkflowsApi';
 import WorkflowDetails from './WorkflowDetails';
-import { useAppDispatch } from '../../lib/hooks/hooks';
-import { updatedEditorWorkflowFromExisting } from '../../workflows/editorSlice';
+import { useAppDispatch, useAppSelector } from '../../lib/hooks/hooks';
+import { updatedEditorWorkflowFromExisting, selectEditorWorkflow } from '../../workflows/editorSlice';
 import { DeployedWorkflow } from '@/studio/proto/agent_studio';
 import { useGlobalNotification } from '../Notifications';
 import ErrorBoundary from '../ErrorBoundary';
@@ -36,6 +36,7 @@ const WorkflowOverview: React.FC<WorkflowOverviewProps> = ({ workflowId }) => {
   const { data: mcpInstances } = useListMcpInstancesQuery({ workflow_id: workflowId });
   const { data: tasks } = useListTasksQuery({ workflow_id: workflowId });
   const { data: agents } = useListAgentsQuery({ workflow_id: workflowId });
+  const reduxWorkflowState = useAppSelector(selectEditorWorkflow);
 
   useEffect(() => {
     const fetchWorkflow = async () => {
@@ -175,24 +176,26 @@ const WorkflowOverview: React.FC<WorkflowOverviewProps> = ({ workflowId }) => {
               minHeight: 0, // Important for ReactFlow
             }}
           >
-            <WorkflowDiagramView
-              workflowState={{
-                name: workflowDetails.name,
-                workflowId: '', // not used for diagram
-                isConversational: workflowDetails.is_conversational,
-                workflowMetadata: {
-                  agentIds: workflowDetails.crew_ai_workflow_metadata?.agent_id,
-                  taskIds: workflowDetails.crew_ai_workflow_metadata?.task_id,
-                  process: workflowDetails.crew_ai_workflow_metadata?.process,
-                  managerAgentId: workflowDetails.crew_ai_workflow_metadata?.manager_agent_id,
-                },
-              }}
-              toolInstances={toolInstances}
-              mcpInstances={mcpInstances}
-              agents={agents}
-              tasks={tasks}
-              displayDiagnostics={false}
-            />
+            {reduxWorkflowState?.workflowId && workflowDetails ? (
+              <WorkflowDiagramView
+                workflowState={reduxWorkflowState}
+                toolInstances={toolInstances}
+                mcpInstances={mcpInstances}
+                agents={agents}
+                tasks={tasks}
+                displayDiagnostics={false}
+              />
+            ) : (
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                height: '100%',
+                background: '#f5f5f5'
+              }}>
+                <Spin size="large" />
+              </div>
+            )}
           </Layout.Content>
         </Layout>
       </Suspense>

@@ -7,6 +7,7 @@ import {
   WorkflowResourceConfiguration,
 } from '../lib/types';
 import { DEFAULT_GENERATION_CONFIG } from '../lib/constants';
+import type { Edge, Node } from '@xyflow/react';
 
 // We store workflow information right in the editor. ts-proto compiles
 // everything to be non-optional in protobuf messages, but we need
@@ -54,11 +55,18 @@ export interface WorkflowConfigurationState {
   generationConfig: WorkflowGenerationConfig;
 }
 
+export interface DiagramState {
+  nodes: Node[];
+  edges: Edge[];
+  hasCustomPositions: boolean; // Track if user has made position changes
+}
+
 interface EditorState {
   currentStep?: 'Agents' | 'Tasks' | 'Configure' | 'Test' | 'Deploy';
   workflow: WorkflowState;
   agentView: AgentViewState;
   workflowConfiguration: WorkflowConfigurationState;
+  diagramState: DiagramState;
 }
 
 const initialState: EditorState = {
@@ -76,6 +84,11 @@ const initialState: EditorState = {
     toolConfigurations: {},
     mcpInstanceConfigurations: {},
     generationConfig: {},
+  },
+  diagramState: {
+    nodes: [],
+    edges: [],
+    hasCustomPositions: false,
   },
 };
 
@@ -100,6 +113,9 @@ export const editorSlice = createSlice({
 
     updatedEditorWorkflowFromExisting: (state, action: PayloadAction<Workflow>) => {
       const workflow: Workflow = action.payload;
+      const prevWorkflowId = state.workflow.workflowId;
+      const prevWorkflowState = JSON.stringify(state.workflow);
+      
       state.workflow = {
         workflowId: workflow.workflow_id,
         name: workflow.name,
@@ -110,9 +126,19 @@ export const editorSlice = createSlice({
           taskIds: workflow.crew_ai_workflow_metadata?.task_id,
           managerAgentId: workflow.crew_ai_workflow_metadata?.manager_agent_id,
           process: workflow.crew_ai_workflow_metadata?.process,
-          // managerModelId: workflow.crew_ai_workflow_metadata?.manager_llm_model_provider_id,
         },
       };
+      
+      const newWorkflowState = JSON.stringify(state.workflow);
+      
+      // Reset diagram state if workflowId changed OR workflow state changed (new nodes added/removed)
+      if (prevWorkflowId !== workflow.workflow_id || prevWorkflowState !== newWorkflowState) {
+        state.diagramState = {
+          nodes: [],
+          edges: [],
+          hasCustomPositions: false,
+        };
+      }
     },
 
     updatedEditorWorkflowProcess: (state, action: PayloadAction<string>) => {
@@ -265,6 +291,41 @@ export const editorSlice = createSlice({
     resetEditor: (state) => {
       return initialState;
     },
+
+    // Diagram state actions
+    updatedDiagramState: (state, action: PayloadAction<DiagramState>) => {
+      state.diagramState = action.payload;
+    },
+
+    updatedDiagramNodes: (state, action: PayloadAction<Node[]>) => {
+      state.diagramState.nodes = action.payload;
+      state.diagramState.hasCustomPositions = true;
+    },
+
+    updatedDiagramEdges: (state, action: PayloadAction<Edge[]>) => {
+      state.diagramState.edges = action.payload;
+    },
+
+    updatedNodePosition: (state, action: PayloadAction<{ nodeId: string; position: { x: number; y: number } }>) => {
+      const { nodeId, position } = action.payload;
+      const nodeIndex = state.diagramState.nodes.findIndex(node => node.id === nodeId);
+      if (nodeIndex !== -1) {
+        state.diagramState.nodes[nodeIndex].position = position;
+        state.diagramState.hasCustomPositions = true;
+      }
+    },
+
+    resetDiagramCustomPositions: (state) => {
+      state.diagramState.hasCustomPositions = false;
+    },
+
+    resetDiagramToDefaults: (state) => {
+      state.diagramState = {
+        nodes: [],
+        edges: [],
+        hasCustomPositions: false,
+      };
+    },
   },
 });
 
@@ -295,6 +356,12 @@ export const {
   removedEditorToolTemplateFromAgent,
   removedEditorWorkflowTask,
   resetEditor,
+  updatedDiagramState,
+  updatedDiagramNodes,
+  updatedDiagramEdges,
+  updatedNodePosition,
+  resetDiagramCustomPositions,
+  resetDiagramToDefaults,
 } = editorSlice.actions;
 
 export const selectEditor = (state: RootState) => state.editor;
@@ -339,5 +406,12 @@ export const selectWorkflowConfiguration = (state: RootState): WorkflowConfigura
   state.editor.workflowConfiguration;
 export const selectWorkflowGenerationConfig = (state: RootState): WorkflowGenerationConfig =>
   state.editor.workflowConfiguration.generationConfig;
+
+// Diagram state selectors
+export const selectDiagramState = (state: RootState): DiagramState => state.editor.diagramState;
+export const selectDiagramNodes = (state: RootState): Node[] => state.editor.diagramState.nodes;
+export const selectDiagramEdges = (state: RootState): Edge[] => state.editor.diagramState.edges;
+export const selectDiagramHasCustomPositions = (state: RootState): boolean => 
+  state.editor.diagramState.hasCustomPositions;
 
 export default editorSlice.reducer;
