@@ -1,8 +1,16 @@
 import React, { useState } from 'react';
 import { Handle, Position, NodeProps, Node, NodeToolbar } from '@xyflow/react';
-import { Avatar, Image, Typography } from 'antd';
-import { UsergroupAddOutlined, UserOutlined } from '@ant-design/icons';
+import { Avatar, Image, Typography, Button, Tooltip } from 'antd';
+import { UsergroupAddOutlined, UserOutlined, EditOutlined } from '@ant-design/icons';
 import { useImageAssetsData } from '@/app/lib/hooks/useAssetData';
+import { useAppDispatch } from '@/app/lib/hooks/hooks';
+import {
+  updatedEditorAgentViewOpen,
+  updatedEditorAgentViewStep,
+  updatedEditorAgentViewAgent,
+} from '@/app/workflows/editorSlice';
+import { AgentMetadata } from '@/studio/proto/agent_studio';
+
 const { Paragraph } = Typography;
 
 type AgentNode = Node<
@@ -14,12 +22,35 @@ type AgentNode = Node<
     info?: string;
     infoType?: string;
     isMostRecent?: boolean;
+    agentId?: string; // Add agent ID for edit functionality
+    agentData?: AgentMetadata; // Add full agent data
+    isDefaultManager?: boolean; // Add flag for default manager
+    onEditManager?: (agent: AgentMetadata) => void; // Add callback for manager edit
   },
   'agent'
 >;
 
 export default function AgentNode({ data }: NodeProps<AgentNode>) {
   const [isHovered, setIsHovered] = useState(false);
+  const dispatch = useAppDispatch();
+
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (data.agentData) {
+      dispatch(updatedEditorAgentViewOpen(true));
+      dispatch(updatedEditorAgentViewStep('Select'));
+      dispatch(updatedEditorAgentViewAgent(data.agentData));
+    }
+  };
+
+  const handleEditManagerClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // For manager agents, we need to open the manager modal
+    // This will be handled by the parent component through a callback
+    if (data.onEditManager && data.agentData) {
+      data.onEditManager(data.agentData);
+    }
+  };
 
   return (
     <div
@@ -39,6 +70,64 @@ export default function AgentNode({ data }: NodeProps<AgentNode>) {
         backgroundColor: data.manager ? 'white' : 'lightblue',
       }}
     >
+      {/* Edit Button - Show for non-manager agents */}
+      {!data.manager && data.agentData && (
+        <Tooltip title="Edit Agent">
+          <Button
+            type="text"
+            icon={<EditOutlined style={{ color: 'white' }} />}
+            size="small"
+            onClick={handleEditClick}
+            style={{
+              position: 'absolute',
+              bottom: -10, // Move to bottom right
+              right: -10,
+              zIndex: 10,
+              width: '24px',
+              height: '24px',
+              borderRadius: '50%',
+              backgroundColor: '#78b2ff',
+              border: '2px solid #78b2ff',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 0,
+              minWidth: 'auto',
+            }}
+          />
+        </Tooltip>
+      )}
+
+      {/* Edit Button - Show for custom manager agents (not default) */}
+      {data.manager && data.agentData && !data.isDefaultManager && (
+        <Tooltip title="Edit Manager Agent">
+          <Button
+            type="text"
+            icon={<EditOutlined style={{ color: 'white' }} />}
+            size="small"
+            onClick={handleEditManagerClick}
+            style={{
+              position: 'absolute',
+              bottom: -10, // Move to bottom right
+              right: -10,
+              zIndex: 10,
+              width: '24px',
+              height: '24px',
+              borderRadius: '50%',
+              backgroundColor: 'lightgrey',
+              border: '2px solid lightgrey',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 0,
+              minWidth: 'auto',
+            }}
+          />
+        </Tooltip>
+      )}
+
       {data.info && (
         <>
           <NodeToolbar

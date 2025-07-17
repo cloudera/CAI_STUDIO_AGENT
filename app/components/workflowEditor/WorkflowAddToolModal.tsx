@@ -145,11 +145,20 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
 
   const { imageData: toolIconsData, refetch: refetchImages } = useImageAssetsData(allImageUris);
 
+  // Fix: Only preselect first template if modal is open, no template is selected, and isCreateSelected is false
   useEffect(() => {
-    if (toolTemplates.length > 0 && !selectedToolTemplate && !isCreateSelected) {
+    // Don't auto-select template if we're in create mode or if a tool instance is selected
+    if (open && toolTemplates.length > 0 && !selectedToolTemplate && !isCreateSelected && !selectedToolInstance) {
       setSelectedToolTemplate(toolTemplates[0].id); // Preselect the first tool template
     }
-  }, [toolTemplates, selectedToolTemplate, isCreateSelected]);
+  }, [open, toolTemplates, selectedToolTemplate, isCreateSelected, selectedToolInstance]);
+
+  // Separate useEffect to clear template when switching to create mode
+  useEffect(() => {
+    if (isCreateSelected) {
+      setSelectedToolTemplate(null);
+    }
+  }, [isCreateSelected]);
 
   // Handle pre-selected tool instance
   useEffect(() => {
@@ -162,6 +171,40 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
     }
   }, [preSelectedToolInstanceId, toolInstancesMap, open, selectedToolInstance]);
 
+  // Add a useRef to track the last mode (create/template/instance)
+  const lastModeRef = useRef<string>('');
+
+  // Add a useEffect to robustly reset state when switching between modes
+  useEffect(() => {
+    // Determine the current mode
+    let mode = 'none';
+    if (isCreateSelected) mode = 'create';
+    else if (selectedToolInstance) mode = 'instance';
+    else if (selectedToolTemplate) mode = 'template';
+
+    // If the mode changed, reset all relevant state
+    if (lastModeRef.current !== mode) {
+      if (mode === 'create') {
+        setSelectedToolInstance(null);
+        setSelectedToolTemplate(null);
+        setIsEditable(false);
+        setNewToolName('');
+        resetPlaygroundState();
+      } else if (mode === 'template') {
+        setSelectedToolInstance(null);
+        setIsCreateSelected(false);
+        setIsEditable(false);
+        resetPlaygroundState();
+      } else if (mode === 'instance') {
+        setSelectedToolTemplate(null);
+        setIsCreateSelected(false);
+        setIsEditable(false);
+        resetPlaygroundState();
+      }
+      lastModeRef.current = mode;
+    }
+  }, [isCreateSelected, selectedToolInstance, selectedToolTemplate]);
+
   const handleSelectToolTemplate = (toolTemplateId: string) => {
     setSelectedToolTemplate(toolTemplateId);
     setSelectedToolInstance(null);
@@ -171,11 +214,13 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
   };
 
   const handleCreateCardSelect = () => {
+    // Clear all other selections first
     setSelectedToolTemplate(null);
     setSelectedToolInstance(null);
-    setIsCreateSelected(true);
     setIsEditable(false);
     resetPlaygroundState();
+    // Set create mode last to ensure other state is cleared first
+    setIsCreateSelected(true);
   };
 
   const handleCreateToolInstance = async (toolTemplateId: string | undefined) => {

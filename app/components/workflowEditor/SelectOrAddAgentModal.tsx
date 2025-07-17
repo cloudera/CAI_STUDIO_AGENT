@@ -1443,9 +1443,10 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
 
 interface SelectOrAddAgentModalProps {
   workflowId: string;
+  onClose?: () => void; // Add optional onClose callback
 }
 
-const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowId }) => {
+const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowId, onClose }) => {
   const isModalOpen = useAppSelector(selectEditorAgentViewIsOpen);
   const modalLayout = useAppSelector(selectEditorAgentViewStep);
   const dispatch = useAppDispatch();
@@ -1693,13 +1694,19 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
   return (
     <Modal
       open={isModalOpen}
-      onCancel={() => dispatch(updatedEditorAgentViewOpen(false))}
+      onCancel={() => {
+        dispatch(updatedEditorAgentViewOpen(false));
+        onClose?.(); // Call onClose callback if provided
+      }}
       centered
       title={title}
       width="98%"
       style={{ height: '95vh' }}
       footer={[
-        <Button key="cancel" onClick={() => dispatch(updatedEditorAgentViewOpen(false))}>
+        <Button key="cancel" onClick={() => {
+          dispatch(updatedEditorAgentViewOpen(false));
+          onClose?.(); // Call onClose callback if provided
+        }}>
           Close
         </Button>,
         <Button

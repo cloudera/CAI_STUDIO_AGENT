@@ -67,6 +67,7 @@ interface EditorState {
   agentView: AgentViewState;
   workflowConfiguration: WorkflowConfigurationState;
   diagramState: DiagramState;
+  editingTaskId?: string | null; // Add task editing state
 }
 
 const initialState: EditorState = {
@@ -90,6 +91,7 @@ const initialState: EditorState = {
     edges: [],
     hasCustomPositions: false,
   },
+  editingTaskId: null, // Initialize task editing state
 };
 
 export interface UpdateWorkflowParameters {
@@ -194,6 +196,14 @@ export const editorSlice = createSlice({
 
     updatedEditorAgentViewCreateAgentState: (state, action: PayloadAction<CreateAgentState>) => {
       state.agentView.createAgent = action.payload;
+    },
+
+    updatedEditorTaskEditingId: (state, action: PayloadAction<string | null>) => {
+      state.editingTaskId = action.payload;
+    },
+
+    clearEditorTaskEditingState: (state) => {
+      state.editingTaskId = null;
     },
 
     addedEditorWorkflowTask: (state, action: PayloadAction<string>) => {
@@ -345,6 +355,8 @@ export const {
   updatedEditorAgentViewOpen,
   updatedEditorAgentViewAgent,
   updatedEditorAgentViewCreateAgentState,
+  updatedEditorTaskEditingId,
+  clearEditorTaskEditingState,
   addedEditorWorkflowTask,
   addedEditorToolInstanceToAgent,
   updatedEditorAgentViewCreateAgentToolTemplates,
@@ -402,6 +414,10 @@ export const selectEditorAgentViewCreateAgentMcpInstances = (state: RootState) =
   state.editor.agentView.createAgent.mcpInstances;
 export const selectEditorAgentViewCreateAgentState = (state: RootState): CreateAgentState =>
   state.editor.agentView.createAgent;
+
+export const selectEditorTaskEditingId = (state: RootState): string | null =>
+  state.editor.editingTaskId || null;
+
 export const selectWorkflowConfiguration = (state: RootState): WorkflowConfiguration =>
   state.editor.workflowConfiguration;
 export const selectWorkflowGenerationConfig = (state: RootState): WorkflowGenerationConfig =>

@@ -9,6 +9,9 @@ import {
   removedEditorWorkflowTask,
   selectEditorWorkflowProcess,
   updatedEditorWorkflowTaskIds,
+  selectEditorTaskEditingId,
+  updatedEditorTaskEditingId,
+  clearEditorTaskEditingState,
 } from '../../workflows/editorSlice';
 import {
   Alert,
@@ -239,7 +242,7 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
   const [updateWorkflow] = useUpdateWorkflowMutation();
   const workflowState = useAppSelector(selectEditorWorkflow);
   const notificationApi = useGlobalNotification();
-  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const editingTaskId = useAppSelector(selectEditorTaskEditingId);
   const [updateTask] = useUpdateTaskMutation();
   const [isReordering, setIsReordering] = useState(false);
   const [localTaskIds, setLocalTaskIds] = useState(workflowTaskIds);
@@ -249,6 +252,23 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
       setLocalTaskIds(workflowTaskIds);
     }
   }, [workflowTaskIds, isReordering]);
+
+  // Effect to automatically populate form when editingTaskId is set from Redux
+  useEffect(() => {
+    if (editingTaskId && tasks) {
+      const task = tasks.find((task) => task.task_id === editingTaskId);
+      if (task) {
+        setDescription(task.description);
+        setExpectedOutput(task.expected_output);
+        setSelectedAgentId(task.assigned_agent_id || '');
+      }
+    } else if (!editingTaskId) {
+      // Clear form fields when editingTaskId is cleared
+      setDescription('');
+      setExpectedOutput('');
+      setSelectedAgentId('');
+    }
+  }, [editingTaskId, tasks]);
 
   // Find the name of the selected agent from the filtered list
   const selectedAgentName =
@@ -405,7 +425,7 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
       setDescription(task.description);
       setExpectedOutput(task.expected_output);
       setSelectedAgentId(task.assigned_agent_id || '');
-      setEditingTaskId(taskId);
+      dispatch(updatedEditorTaskEditingId(taskId));
     }
   };
 
@@ -434,7 +454,7 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
       }).unwrap();
 
       // Clear form fields and reset editing state after successful save
-      setEditingTaskId(null);
+      dispatch(clearEditorTaskEditingState());
       setDescription('');
       setExpectedOutput('');
       setSelectedAgentId('');

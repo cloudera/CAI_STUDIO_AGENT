@@ -64,6 +64,9 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
         data: {
           label: `${taskLabel}`,
           name: `${taskLabel}`,
+          taskId: task.task_id, // Add task ID
+          taskData: task, // Add full task data for edit functionality
+          isConversational: workflowData.workflowState.isConversational, // Add conversational flag
         },
       });
 
@@ -132,6 +135,9 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
         name: agentName,
         manager: true,
         iconData: '',
+        agentId: mId, // Add agent ID for consistency
+        agentData: useDefaultManager ? undefined : agent, // Only set agentData for custom managers
+        isDefaultManager: useDefaultManager, // Add flag to identify default manager
       },
     });
     yIndex += 150;
@@ -161,6 +167,8 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
           label: `${agent.name}`,
           name: `${agent.name}`,
           iconData: workflowData.iconsData[agent.agent_image_uri ?? ''] ?? '',
+          agentId: agent.id, // Add agent ID
+          agentData: agent, // Add full agent data for edit functionality
         },
       });
 
@@ -197,6 +205,10 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
               label: `Tool: ${toolInstance?.name}`,
               name: toolInstance?.name,
               iconData: workflowData.iconsData[toolInstance?.tool_image_uri ?? ''] ?? '',
+              workflowId: workflowData.workflowState.workflowId,
+              toolInstanceId: toolInstance.id,
+              agentId: agent.id,
+              agentTools: agent.tools_id,
             },
           });
 
