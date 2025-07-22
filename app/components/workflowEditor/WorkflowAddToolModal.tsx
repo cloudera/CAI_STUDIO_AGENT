@@ -18,6 +18,7 @@ import {
   Row,
   Col,
   Card,
+  Popconfirm,
 } from 'antd';
 import {
   PlusOutlined,
@@ -53,6 +54,7 @@ import {
   useCreateToolInstanceMutation,
   useUpdateToolInstanceMutation,
   useTestToolInstanceMutation,
+  useRemoveToolInstanceMutation,
 } from '@/app/tools/toolInstancesApi';
 import { useUpdateAgentMutation, useListAgentsQuery } from '../../agents/agentApi';
 import { uploadFile } from '../../lib/fileUpload';
@@ -115,6 +117,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const [testToolInstance] = useTestToolInstanceMutation();
   const [getEvents] = useGetEventsMutation();
+  const [deleteToolInstance] = useRemoveToolInstanceMutation();
   const [testError, setTestError] = useState<string | null>(null);
   const allEventsRef = useRef<any[]>([]);
 
@@ -657,6 +660,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
             cursor: 'pointer',
             transition: 'transform 0.2s, box-shadow 0.2s',
             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+            position: 'relative',
           }}
           onClick={() => handleSelectToolInstance(toolInstanceId)}
           onMouseEnter={(e: React.MouseEvent<HTMLElement>) => {
@@ -668,84 +672,113 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
             e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-            <div
-              style={{
-                width: '24px',
-                height: '24px',
-                borderRadius: '50%',
-                background: '#f1f1f1',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginRight: '8px',
-              }}
-            >
-              <Image
-                src={
-                  imageUri && toolIconsData[imageUri]
-                    ? toolIconsData[imageUri]
-                    : '/fallback-image.png'
-                }
-                alt={toolInstance.name}
-                width={16}
-                height={16}
-                preview={false}
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div
                 style={{
-                  borderRadius: '2px',
-                  objectFit: 'cover',
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  background: '#f1f1f1',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginRight: '8px',
+                }}
+              >
+                <Image
+                  src={
+                    imageUri && toolIconsData[imageUri]
+                      ? toolIconsData[imageUri]
+                      : '/fallback-image.png'
+                  }
+                  alt={toolInstance.name}
+                  width={16}
+                  height={16}
+                  preview={false}
+                  style={{
+                    borderRadius: '2px',
+                    objectFit: 'cover',
+                  }}
+                />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Text
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    maxWidth: '150px',
+                    display: 'inline-block',
+                  }}
+                  title={toolInstance.name}
+                >
+                  {toolInstance.name}
+                </Text>
+                              <Tooltip
+                  title={
+                    toolInstance.is_valid
+                      ? 'Tool is valid'
+                      : toolInstance.tool_metadata
+                        ? JSON.parse(
+                            typeof toolInstance.tool_metadata === 'string'
+                              ? toolInstance.tool_metadata
+                              : JSON.stringify(toolInstance.tool_metadata),
+                          ).status || 'Tool status unknown'
+                        : 'Tool status unknown'
+                  }
+                >
+                  {toolInstance.is_valid ? (
+                    <CheckCircleOutlined
+                      style={{
+                        color: '#52c41a',
+                        fontSize: '15px',
+                        fontWeight: 1000,
+                        marginLeft: '4px',
+                      }}
+                    />
+                  ) : (
+                    <ExclamationCircleOutlined
+                      style={{
+                        color: '#faad14',
+                        fontSize: '15px',
+                        fontWeight: 1000,
+                        marginLeft: '4px',
+                      }}
+                    />
+                  )}
+                </Tooltip>
+              </div>
+            </div>
+            {/* Delete Button - on the right side, same line as tool name */}
+            <Popconfirm
+              title="Delete Tool"
+              description="Are you sure you want to delete this tool?"
+              onConfirm={(e) => {
+                e?.stopPropagation();
+                handleDeleteTool(toolInstanceId, toolInstance.name);
+              }}
+              onCancel={(e) => e?.stopPropagation()}
+            >
+              <Button
+                type="link"
+                icon={<DeleteOutlined style={{ color: '#ff4d4f' }} />}
+                onClick={(e) => e.stopPropagation()}
+                disabled={isLoading}
+                size="small"
+                style={{
+                  width: '20px',
+                  height: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 0,
+                  minWidth: 'auto',
                 }}
               />
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', flex: 1, gap: '4px' }}>
-              <Text
-                style={{
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  maxWidth: '50%',
-                  display: 'inline-block',
-                }}
-                title={toolInstance.name}
-              >
-                {toolInstance.name}
-              </Text>
-              <Tooltip
-                title={
-                  toolInstance.is_valid
-                    ? 'Tool is valid'
-                    : toolInstance.tool_metadata
-                      ? JSON.parse(
-                          typeof toolInstance.tool_metadata === 'string'
-                            ? toolInstance.tool_metadata
-                            : JSON.stringify(toolInstance.tool_metadata),
-                        ).status || 'Tool status unknown'
-                      : 'Tool status unknown'
-                }
-              >
-                {toolInstance.is_valid ? (
-                  <CheckCircleOutlined
-                    style={{
-                      color: '#52c41a',
-                      fontSize: '15px',
-                      fontWeight: 1000,
-                      marginLeft: '4px',
-                    }}
-                  />
-                ) : (
-                  <ExclamationCircleOutlined
-                    style={{
-                      color: '#faad14',
-                      fontSize: '15px',
-                      fontWeight: 1000,
-                      marginLeft: '4px',
-                    }}
-                  />
-                )}
-              </Tooltip>
-            </div>
+            </Popconfirm>
           </div>
           <Tooltip title={description}>
             <Text
@@ -1296,6 +1329,70 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
+    }
+  };
+
+  const handleDeleteTool = async (toolId: string, toolName: string) => {
+    try {
+      setIsLoading(true);
+
+      notificationApi.info({
+        message: 'Initiating Tool Removal',
+        description: `Starting to remove ${toolName} from the agent...`,
+        placement: 'topRight',
+      });
+
+      await deleteToolInstance({ tool_instance_id: toolId }).unwrap();
+
+      notificationApi.success({
+        message: 'Tool Deletion In Progress',
+        description: `${toolName} will be removed in a few seconds after cleanup of remaining artifacts.`,
+        placement: 'topRight',
+        duration: 5,
+      });
+
+      // Update the createAgentState to remove the tool
+      if (createAgentState) {
+        const updatedTools = (createAgentState.tools || []).filter((t) => t !== toolId);
+        dispatch(
+          updatedEditorAgentViewCreateAgentState({
+            ...createAgentState,
+            tools: updatedTools,
+          }),
+        );
+      }
+
+      // Update the agent to remove the tool
+      const agent = agents.find((a) => a.id === createAgentState.agentId);
+      if (agent) {
+        const updatedToolIds = (agent.tools_id || []).filter((id) => id !== toolId);
+        await updateAgent({
+          agent_id: agent.id,
+          name: agent.name,
+          crew_ai_agent_metadata: agent.crew_ai_agent_metadata,
+          tools_id: updatedToolIds,
+          mcp_instance_ids: agent.mcp_instance_ids || [],
+          tool_template_ids: [],
+          llm_provider_model_id: '',
+          tmp_agent_image_path: '',
+        }).unwrap();
+      }
+
+      // Clear selection if the deleted tool was selected
+      if (selectedToolInstance === toolId) {
+        setSelectedToolInstance(null);
+        setEditedToolName('');
+        resetPlaygroundState();
+      }
+    } catch (error: any) {
+      const errorMessage = error.data?.error || 'Failed to remove tool. Please try again.';
+      notificationApi.error({
+        message: 'Error Removing Tool',
+        description: errorMessage,
+        placement: 'topRight',
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 

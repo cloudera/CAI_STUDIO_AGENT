@@ -33,6 +33,7 @@ import {
   useAddAgentMutation,
   useUpdateAgentMutation,
   useListAgentsQuery,
+  useRemoveAgentMutation,
 } from '../../agents/agentApi';
 import { useAppDispatch, useAppSelector } from '../../lib/hooks/hooks';
 import {
@@ -118,6 +119,7 @@ interface SelectAgentComponentProps {
   setIsLoading: (loading: boolean) => void;
   isGenerateAgentPropertiesModalVisible: boolean;
   setIsGenerateAgentPropertiesModalVisible: (visible: boolean) => void;
+  onDeleteAgent: (agentId: string, agentName: string) => Promise<void>;
 }
 
 const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
@@ -137,6 +139,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
   setIsLoading,
   isGenerateAgentPropertiesModalVisible,
   setIsGenerateAgentPropertiesModalVisible,
+  onDeleteAgent,
 }) => {
   const router = useRouter();
   const { data: defaultModel } = useGetDefaultModelQuery();
@@ -390,6 +393,8 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
       setIsLoading(false);
     }
   };
+
+
 
   const handleSelectAssignedAgent = (agent: AgentMetadata) => {
     // Aggressively reset everything first
@@ -911,42 +916,80 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                   display: 'flex',
                   flexDirection: 'row',
                   alignItems: 'center',
-                  gap: '12px',
+                  justifyContent: 'space-between',
                   marginBottom: '16px',
                 }}
               >
-                <Avatar
+                <div
                   style={{
-                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-                    backgroundColor: imageData[agent.agent_image_uri] ? '#b8d6ff' : '#78b2ff',
-                    minWidth: '24px',
-                    minHeight: '24px',
-                    width: '24px',
-                    height: '24px',
-                    flex: '0 0 24px',
-                    padding: imageData[agent.agent_image_uri] ? 4 : 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    minWidth: 0,
+                    flex: 1,
                   }}
-                  size={24}
-                  icon={
-                    imageData[agent.agent_image_uri] ? (
-                      <Image src={imageData[agent.agent_image_uri]} alt={agent.name} />
-                    ) : (
-                      <UserOutlined />
-                    )
-                  }
-                />
-                <Text
-                  style={{
-                    fontSize: '14px',
-                    fontWeight: 400,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                  title={agent.name}
                 >
-                  {agent.name}
-                </Text>
+                  <Avatar
+                    style={{
+                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+                      backgroundColor: imageData[agent.agent_image_uri] ? '#b8d6ff' : '#78b2ff',
+                      minWidth: '24px',
+                      minHeight: '24px',
+                      width: '24px',
+                      height: '24px',
+                      flex: '0 0 24px',
+                      padding: imageData[agent.agent_image_uri] ? 4 : 0,
+                    }}
+                    size={24}
+                    icon={
+                      imageData[agent.agent_image_uri] ? (
+                        <Image src={imageData[agent.agent_image_uri]} alt={agent.name} />
+                      ) : (
+                        <UserOutlined />
+                      )
+                    }
+                  />
+                  <Text
+                    style={{
+                      fontSize: '14px',
+                      fontWeight: 400,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      maxWidth: '150px',
+                    }}
+                    title={agent.name}
+                  >
+                    {agent.name}
+                  </Text>
+                </div>
+                {/* Delete Button - on the right side, same line as agent name */}
+                <Popconfirm
+                  title="Delete Agent"
+                  description="Are you sure you want to delete this agent?"
+                  onConfirm={(e) => {
+                    e?.stopPropagation();
+                    onDeleteAgent(agent.id, agent.name);
+                  }}
+                  onCancel={(e) => e?.stopPropagation()}
+                >
+                  <Button
+                    type="link"
+                    icon={<DeleteOutlined style={{ color: '#ff4d4f' }} />}
+                    onClick={(e) => e.stopPropagation()}
+                    disabled={isLoading}
+                    size="small"
+                    style={{
+                      width: '20px',
+                      height: '20px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: 0,
+                      minWidth: 'auto',
+                    }}
+                  />
+                </Popconfirm>
               </div>
               <Text
                 style={{
@@ -1512,6 +1555,7 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
   ]);
   const selectedAssignedAgent = useAppSelector(selectEditorAgentViewAgent);
   const [updateAgent] = useUpdateAgentMutation();
+  const [removeAgent] = useRemoveAgentMutation();
   const createAgentState = useSelector(selectEditorAgentViewCreateAgentState);
   const { data: defaultModel } = useGetDefaultModelQuery();
   const [isLoading, setIsLoading] = useState(false);
@@ -1531,6 +1575,61 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
       form.setFieldValue('llm_provider_model_id', selectedAssignedAgent.llm_provider_model_id);
     }
   }, [selectedAssignedAgent, form]);
+
+  const handleDeleteAgent = async (agentId: string, agentName: string) => {
+    try {
+      setIsLoading(true);
+
+      notificationApi.info({
+        message: 'Initiating Agent Removal',
+        description: `Starting to remove ${agentName} from the workflow...`,
+        placement: 'topRight',
+      });
+
+      await removeAgent({ agent_id: agentId }).unwrap();
+      
+      const updatedAgentIds = (workflowAgentIds ?? []).filter((id) => id !== agentId);
+      dispatch(updatedEditorWorkflowAgentIds(updatedAgentIds));
+
+      const updatedWorkflowState = {
+        ...workflowState,
+        workflowMetadata: {
+          ...workflowState.workflowMetadata,
+          agentIds: updatedAgentIds,
+        },
+      };
+
+      if (workflowState.workflowId) {
+        await updateWorkflow(createUpdateRequestFromEditor(updatedWorkflowState)).unwrap();
+      } else {
+        const workflowId = await addWorkflow(
+          createAddRequestFromEditor(updatedWorkflowState),
+        ).unwrap();
+        dispatch(updatedEditorWorkflowId(workflowId));
+      }
+
+      // Clear selection if the deleted agent was selected
+      if (selectedAssignedAgent?.id === agentId) {
+        dispatch(updatedEditorAgentViewAgent(undefined));
+        form.resetFields();
+      }
+
+      notificationApi.success({
+        message: 'Agent Removed',
+        description: `Agent ${agentName} has been successfully removed.`,
+        placement: 'topRight',
+      });
+    } catch (error: any) {
+      const errorMessage = error.data?.error || 'Failed to remove agent. Please try again.';
+      notificationApi.error({
+        message: 'Error Removing Agent',
+        description: errorMessage,
+        placement: 'topRight',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Add this effect to reset everything when modal closes
   useEffect(() => {
@@ -1757,6 +1856,7 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
             setIsLoading={setIsLoading}
             isGenerateAgentPropertiesModalVisible={isGenerateAgentPropertiesModalVisible}
             setIsGenerateAgentPropertiesModalVisible={setIsGenerateAgentPropertiesModalVisible}
+            onDeleteAgent={handleDeleteAgent}
           />
         </div>
       </div>

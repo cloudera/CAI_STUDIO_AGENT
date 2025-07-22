@@ -184,6 +184,7 @@ const WorkflowOverview: React.FC<WorkflowOverviewProps> = ({ workflowId }) => {
                 agents={agents}
                 tasks={tasks}
                 displayDiagnostics={false}
+                renderMode="workflow"
               />
             ) : (
               <div style={{ 

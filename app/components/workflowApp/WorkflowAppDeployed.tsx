@@ -1,10 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { WorkflowData } from '../../lib/types';
 import { Typography } from 'antd/lib';
 const { Text, Title } = Typography;
 import WorkflowApp from './WorkflowApp';
+import { useAppDispatch } from '../../lib/hooks/hooks';
+import { updatedEditorWorkflowFromExisting } from '../../workflows/editorSlice';
 
 interface WorkflowAppDeployedProps {
   workflowData: WorkflowData;
@@ -17,6 +19,15 @@ interface WorkflowAppDeployedProps {
  * is returned from the deployed workflow model directly.
  */
 const WorkflowAppDeployed: React.FC<WorkflowAppDeployedProps> = ({ workflowData }) => {
+  const dispatch = useAppDispatch();
+
+  // Initialize Redux workflow state for deployed workflows
+  useEffect(() => {
+    if (workflowData.workflow) {
+      dispatch(updatedEditorWorkflowFromExisting(workflowData.workflow));
+    }
+  }, [workflowData.workflow, dispatch]);
+
   return (
     <>
       <WorkflowApp

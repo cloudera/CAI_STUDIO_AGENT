@@ -634,6 +634,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
               agents={agents}
               events={currentEvents}
               displayDiagnostics={true}
+              renderMode={renderMode}
             />
 
             <Layout

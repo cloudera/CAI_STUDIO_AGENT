@@ -26,6 +26,7 @@ type AgentNode = Node<
     agentData?: AgentMetadata; // Add full agent data
     isDefaultManager?: boolean; // Add flag for default manager
     onEditManager?: (agent: AgentMetadata) => void; // Add callback for manager edit
+    showEditButton?: boolean; // Control whether to show edit button
   },
   'agent'
 >;
@@ -71,7 +72,7 @@ export default function AgentNode({ data }: NodeProps<AgentNode>) {
       }}
     >
       {/* Edit Button - Show for non-manager agents */}
-      {!data.manager && data.agentData && (
+      {!data.manager && data.agentData && data.showEditButton !== false && (
         <Tooltip title="Edit Agent">
           <Button
             type="text"
@@ -100,7 +101,7 @@ export default function AgentNode({ data }: NodeProps<AgentNode>) {
       )}
 
       {/* Edit Button - Show for custom manager agents (not default) */}
-      {data.manager && data.agentData && !data.isDefaultManager && (
+      {data.manager && data.agentData && !data.isDefaultManager && data.onEditManager && (
         <Tooltip title="Edit Manager Agent">
           <Button
             type="text"

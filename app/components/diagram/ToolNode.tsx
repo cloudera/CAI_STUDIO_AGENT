@@ -22,6 +22,7 @@ type ToolNode = Node<
     toolInstanceId: string;
     agentId: string;
     agentTools: any[]; // Added for passing tools to the modal
+    showEditButton?: boolean; // Control whether to show edit button
   },
   'task'
 >;
@@ -62,6 +63,7 @@ export default function ToolNode({ data }: NodeProps<ToolNode>) {
       }}
     >
       {/* Edit Tool Button */}
+      {data.showEditButton !== false && (
       <div
         style={{
           position: 'absolute',
@@ -91,6 +93,7 @@ export default function ToolNode({ data }: NodeProps<ToolNode>) {
           </button>
         </Tooltip>
       </div>
+      )}
       {data.info && (
         <>
           <NodeToolbar

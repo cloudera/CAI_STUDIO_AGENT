@@ -1,7 +1,7 @@
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { Alert, Card, Layout, Tabs, Tooltip, Typography, Checkbox } from 'antd';
 import { ReactFlowProvider } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { useLayoutEffect, useRef, useState } from 'react';
 import {
   AgentMetadata,
   CrewAITaskMetadata,
@@ -33,6 +33,7 @@ export interface WorkflowDiagramViewProps {
   tasks?: CrewAITaskMetadata[];
   events?: any[];
   displayDiagnostics?: boolean;
+  renderMode?: 'studio' | 'workflow';
 }
 
 const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
@@ -43,6 +44,7 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
   tasks,
   events,
   displayDiagnostics,
+  renderMode = 'studio',
 }) => {
   const currentEventIndex = useAppSelector(selectCurrentEventIndex);
   const { data: opsData } = useGetOpsDataQuery();
@@ -86,6 +88,8 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
     return true;
   });
 
+
+
   if (!displayDiagnostics) {
     return (
       <ReactFlowProvider>
@@ -97,6 +101,7 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
           agents={agents}
           tasks={tasks}
           events={events}
+          renderMode={renderMode}
         />
       </ReactFlowProvider>
     );
@@ -155,6 +160,7 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
                     agents={agents}
                     tasks={tasks}
                     events={events?.slice(0, currentEventIndex && currentEventIndex + 1)}
+                    renderMode={renderMode}
                   />
                 </ReactFlowProvider>
               </div>

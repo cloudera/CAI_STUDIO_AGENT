@@ -62,10 +62,10 @@ const ModelActionsDrawer: React.FC<ModelActionsDrawerProps> = ({
         });
       } else if (drawerMode === 'register') {
         form.resetFields();
-        form.setFieldsValue({ modelProvider: 'OPENAI' });
+        form.setFieldsValue({ modelProvider: 'CAII' });
         setChangedModel({
           model_name: '',
-          model_type: 'OPENAI',
+          model_type: 'CAII',
           provider_model: '',
           api_base: '',
           api_key: '',
@@ -260,7 +260,7 @@ const ModelActionsDrawer: React.FC<ModelActionsDrawerProps> = ({
           form={form}
           layout="vertical"
           onFinish={onSubmit}
-          initialValues={drawerMode === 'register' ? { modelProvider: 'OPENAI' } : undefined} // Pre-select OPENAI for new registrations
+          initialValues={drawerMode === 'register' ? { modelProvider: 'CAII' } : undefined} // Pre-select CAII for new registrations
         >
           {/* Model Provider */}
           <Form.Item
@@ -274,7 +274,7 @@ const ModelActionsDrawer: React.FC<ModelActionsDrawerProps> = ({
             }
             name="modelProvider"
             rules={[{ required: true, message: 'Model provider is required.' }]}
-            initialValue={drawerMode === 'edit' ? selectedModel?.model_type : 'OPENAI'}
+            initialValue={drawerMode === 'edit' ? selectedModel?.model_type : 'CAII'}
           >
             <Select
               disabled={drawerMode === 'edit'}
@@ -284,6 +284,16 @@ const ModelActionsDrawer: React.FC<ModelActionsDrawerProps> = ({
                 }
               }}
             >
+              <Option value="CAII">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <img
+                    src="/llm_providers/caii.svg"
+                    alt="Cloudera AI Inference"
+                    style={{ width: '16px', height: '16px' }}
+                  />
+                  Cloudera AI Inference
+                </div>
+              </Option>
               <Option value="OPENAI">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <img
@@ -332,16 +342,6 @@ const ModelActionsDrawer: React.FC<ModelActionsDrawerProps> = ({
                     style={{ width: '16px', height: '16px' }}
                   />
                   Anthropic
-                </div>
-              </Option>
-              <Option value="CAII">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <img
-                    src="/llm_providers/caii.svg"
-                    alt="Cloudera AI Inference"
-                    style={{ width: '16px', height: '16px' }}
-                  />
-                  Cloudera AI Inference
                 </div>
               </Option>
             </Select>
