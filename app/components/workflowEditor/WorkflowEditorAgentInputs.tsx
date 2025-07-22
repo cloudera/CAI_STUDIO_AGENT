@@ -45,7 +45,7 @@ import {
   UndoOutlined,
 } from '@ant-design/icons';
 import { useListAgentsQuery, useRemoveAgentMutation } from '../../agents/agentApi';
-import { McpInstance, ToolInstance } from '@/studio/proto/agent_studio';
+import { AgentMetadata, McpInstance, ToolInstance } from '@/studio/proto/agent_studio';
 import {
   useAddTaskMutation,
   useListTasksQuery,
@@ -111,6 +111,7 @@ const WorkflowAgentsComponent: React.FC<WorkflowAgentsComponentProps> = ({ workf
   const dispatch = useAppDispatch();
   const [toolInstancesMap, setToolInstancesMap] = useState<Record<string, any>>({});
   const [mcpInstancesMap, setMcpInstancesMap] = useState<Record<string, any>>({});
+  const [agentsInstancesMap, setAgentsInstancesMap] = useState<Record<string, any>>({});
   const [removeAgent] = useRemoveAgentMutation();
   const notificationApi = useGlobalNotification();
   const [updateWorkflow] = useUpdateWorkflowMutation();
@@ -123,12 +124,15 @@ const WorkflowAgentsComponent: React.FC<WorkflowAgentsComponentProps> = ({ workf
   const mcpImageUris = Object.values(mcpInstancesMap)
     .map((instance) => instance.image_uri)
     .filter((uri): uri is string => typeof uri === 'string' && uri.length > 0);
-  const { imageData } = useImageAssetsData(toolImageUris.concat(mcpImageUris));
+  const agentImageUris = Object.values(agentsInstancesMap)
+    .map((agent) => agent.agent_image_uri)
+    .filter((uri): uri is string => typeof uri === 'string' && uri.length > 0);
+  const { imageData } = useImageAssetsData(toolImageUris.concat(mcpImageUris, agentImageUris));
 
   // Add effect to refetch images when tool instances change
   // TODO: this should be middleware at the RTK level
   useEffect(() => {
-    if (!toolInstances || !mcpInstances) {
+    if (!toolInstances || !mcpInstances || !agents) {
       return;
     }
     const tiMap = toolInstances.reduce<Record<string, ToolInstance>>(
@@ -139,9 +143,14 @@ const WorkflowAgentsComponent: React.FC<WorkflowAgentsComponentProps> = ({ workf
       (acc, mi) => ({ ...acc, [mi.id]: mi }),
       {},
     );
+    const agMap = agents.reduce<Record<string, AgentMetadata>>(
+      (acc, ag) => ({ ...acc, [ag.id]: ag }),
+      {},
+    );
     setToolInstancesMap(tiMap);
     setMcpInstancesMap(miMap);
-  }, [toolInstances, mcpInstances]);
+    setAgentsInstancesMap(agMap);
+  }, [toolInstances, mcpInstances, agents]);
 
   const handleDeleteAgent = async (agentId: string, agentName: string) => {
     try {
@@ -290,8 +299,14 @@ const WorkflowAgentsComponent: React.FC<WorkflowAgentsComponentProps> = ({ workf
                             flex: '0 0 24px',
                           }}
                           size={24}
-                          icon={<UserOutlined />}
-                        />
+                          icon={
+                            imageData[agent.agent_image_uri] ? (
+                              <Image src={imageData[agent.agent_image_uri]} alt={agent.name} />
+                            ) : (
+                              <UserOutlined />
+                            )
+                          }
+                               />
                         <Text
                           style={{
                             fontSize: '14px',
@@ -870,7 +885,10 @@ const SettingsComponent: React.FC<SettingsComponentProps> = ({ workflowId }) => 
                           flex: '0 0 24px',
                         }}
                         size={24}
-                        icon={<UsergroupAddOutlined />}
+                        icon={
+                          agent.agent_image_uri ? (
+                            <Image src={agent.agent_image_uri} alt={agent.name} />) : (
+                            <UsergroupAddOutlined />)}
                       />
                       <Text
                         style={{

@@ -17,6 +17,8 @@ import {
   FormInstance,
   Select,
   Spin,
+  Upload,
+  message,
 } from 'antd';
 import {
   PlusOutlined,
@@ -28,6 +30,8 @@ import {
   UndoOutlined,
   CloseCircleOutlined,
   ClockCircleOutlined,
+  FileImageOutlined,
+  UploadOutlined,
 } from '@ant-design/icons';
 import {
   useAddAgentMutation,
@@ -77,6 +81,7 @@ import { useGetDefaultModelQuery, useListModelsQuery } from '../../models/models
 import { useListMcpInstancesQuery, useRemoveMcpInstanceMutation } from '@/app/mcp/mcpInstancesApi';
 import { useRouter } from 'next/navigation';
 import GenerateAgentPropertiesModal from './GenerateAgentPropertiesModal';
+import { uploadFile } from '@/app/lib/fileUpload';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -119,6 +124,7 @@ interface SelectAgentComponentProps {
   setIsLoading: (loading: boolean) => void;
   isGenerateAgentPropertiesModalVisible: boolean;
   setIsGenerateAgentPropertiesModalVisible: (visible: boolean) => void;
+  setUploadedFilePath: (path: string) => void;
   onDeleteAgent: (agentId: string, agentName: string) => Promise<void>;
 }
 
@@ -139,6 +145,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
   setIsLoading,
   isGenerateAgentPropertiesModalVisible,
   setIsGenerateAgentPropertiesModalVisible,
+  setUploadedFilePath,
   onDeleteAgent,
 }) => {
   const router = useRouter();
@@ -151,6 +158,8 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
   const [isAddToolModalVisible, setAddToolModalVisible] = useState(false);
   const [isAddMcpModalVisible, setAddMcpModalVisible] = useState(false);
   const [clickedToolInstanceId, setClickedToolInstanceId] = useState<string | undefined>(undefined);
+  const [isUploading, setUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [clickedMcpInstance, setClickedMcpInstance] = useState<McpInstance | undefined>(undefined);
   const notificationApi = useGlobalNotification();
   const [isCreateMode, setIsCreateMode] = useState(false);
@@ -429,6 +438,37 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
     );
   };
 
+
+  const handleFileUpload = async (file: File) => {
+      if (!file) return;
+  
+      // Validate file type
+      const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+      if (!validTypes.includes(file.type)) {
+        message.error('Please upload a PNG or JPEG image file');
+        return;
+      }
+  
+      // If file size is greater than 64KB, show a notification
+      if (file.size > 64 * 1024) {
+        notificationApi.warning({
+          message: 'File size should be less than 64KB',
+          placement: 'topRight',
+        });
+        return;
+      }
+  
+      try {
+        const fp = await uploadFile(file, setUploading);
+        console.log('File uploaded to:', fp);
+        setUploadedFilePath(fp);
+        setSelectedFile(file);
+      } catch (error) {
+        setSelectedFile(null);
+        console.error('Upload failed:', error);
+        message.error('Failed to upload file');
+      }
+    };
   const renderMcpList = () => {
     // Don't handle for Agent Templates
     const mcpInstanceIds = selectedAssignedAgent
@@ -1447,6 +1487,41 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                 ))}
               </Select>
             </Form.Item>
+            <Form.Item>
+              <Text strong>Agent Icon</Text>
+                 <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+                    <Upload
+                      accept=".png,.jpg,.jpeg"
+                      customRequest={({ file, onSuccess, onError }) => {
+                          handleFileUpload(file as File)
+                            .then(() => onSuccess?.('ok'))
+                            .catch((err) => onError?.(err));
+                          }}
+                        showUploadList={false}
+                        disabled={isUploading}
+                      >
+                      <Button
+                        icon={selectedFile ? <FileImageOutlined /> : <UploadOutlined />}
+                        loading={isUploading}
+                        style={{ marginTop: '8px' }}
+                        disabled={selectedFile !== null}
+                        >
+                        {selectedFile ? selectedFile.name : 'Upload File'}
+                      </Button>
+                      </Upload>
+                      {selectedFile && (
+                        <Button
+                          icon={<DeleteOutlined />}
+                          style={{ marginLeft: '8px', marginTop: '8px' }}
+                          onClick={() => {
+                            setSelectedFile(null);
+                            setUploadedFilePath('');
+                          }}
+                        />
+                      )}
+                    </div>
+                  <div style={{ margin: '16px 0' }} />
+                </Form.Item>
             {renderToolSection()}
           </Form>
         </Layout>
@@ -1510,6 +1585,7 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
   const [addWorkflow] = useAddWorkflowMutation();
   const workflowState = useAppSelector(selectEditorWorkflow);
   const notificationApi = useGlobalNotification();
+  const [uploadedFilePath, setUploadedFilePath] = useState<string>('');
   const [toolDetails, setToolDetails] = useState<{
     name: string;
     description: string;
@@ -1684,7 +1760,7 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
           mcp_instance_ids: selectedAssignedAgent.mcp_instance_ids || [],
           tool_template_ids: [],
           llm_provider_model_id: values.llm_provider_model_id,
-          tmp_agent_image_path: '',
+          tmp_agent_image_path: uploadedFilePath || '',
         }).unwrap();
 
         notificationApi.success({
@@ -1714,7 +1790,7 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
           mcp_instance_ids: createAgentState?.mcpInstances || [],
           llm_provider_model_id: values.llm_provider_model_id,
           tool_template_ids: toolTemplateIds,
-          tmp_agent_image_path: '',
+          tmp_agent_image_path: uploadedFilePath || '',
         }).unwrap();
 
         // Show workflow update notification
@@ -1856,6 +1932,7 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
             setIsLoading={setIsLoading}
             isGenerateAgentPropertiesModalVisible={isGenerateAgentPropertiesModalVisible}
             setIsGenerateAgentPropertiesModalVisible={setIsGenerateAgentPropertiesModalVisible}
+            setUploadedFilePath={setUploadedFilePath}
             onDeleteAgent={handleDeleteAgent}
           />
         </div>
