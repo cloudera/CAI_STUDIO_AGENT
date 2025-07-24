@@ -42,7 +42,7 @@ class TestCompareWorkbenchVersions:
 ])
 def test_is_custom_model_root_dir_feature_enabled(enable_ai_studios, git_sha, expected):
     # Patch environment so the code can form the correct URL
-    with patch.dict(os.environ, {"CDSW_DOMAIN": "mock-domain.example.com"}, clear=True):
+    with patch.dict(os.environ, {"CDSW_DOMAIN": "mock-domain.example.com", "AGENT_STUDIO_WORKBENCH_TLS_ENABLED": "true"}, clear=True):
         # Create a mock response for requests.get(...)
         mock_response = MagicMock()
         mock_response.json.return_value = {

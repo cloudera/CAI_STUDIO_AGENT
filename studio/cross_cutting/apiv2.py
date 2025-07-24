@@ -13,6 +13,7 @@ from studio.db.dao import AgentStudioDao
 from studio.proto.agent_studio_pb2 import CmlApiCheckResponse, RotateCmlApiResponse, DeployedWorkflow
 from studio.api import CmlApiCheckRequest, RotateCmlApiRequest
 from studio.db import model as db_model
+import studio.cross_cutting.utils as cc_utils
 
 
 def _encode_value(value: str) -> str:
@@ -209,7 +210,8 @@ def validate_api_key(key_id: str, key_value: str, cml: CMLServiceApi, logger: lo
             logger.error("CDSW_DOMAIN not found in environment")
             return False
 
-        base_url = f"https://{domain}"
+        scheme = cc_utils.get_url_scheme()
+        base_url = f"{scheme}://{domain}"
 
         # Create new client with the API key
         test_client = cmlapi.default_client(url=base_url, cml_api_key=key_value)

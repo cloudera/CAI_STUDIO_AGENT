@@ -1,6 +1,11 @@
 import os
 import cmlapi
 
+def get_url_scheme() -> str:
+    """
+    Get the URL scheme for the current workspace.
+    """
+    return "https" if os.getenv("AGENT_STUDIO_WORKBENCH_TLS_ENABLED", "false").lower() == "true" else "http"
 
 def get_application_by_name(cml: cmlapi.CMLServiceApi, name: str, only_running: bool = True) -> cmlapi.Application:
     """

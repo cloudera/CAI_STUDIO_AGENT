@@ -21,7 +21,9 @@ sys.path.append(WORKFLOW_DIRECTORY)
 
 # Install the cmlapi. This is a required dependency for cross-cutting util modules
 # and ops modules that are used in a workflow.
-subprocess.call(["pip", "install", f"https://{CDSW_DOMAIN}/api/v2/python.tar.gz"])
+from engine.utils import get_url_scheme
+scheme = get_url_scheme()
+subprocess.call(["pip", "install", f"{scheme}://{CDSW_DOMAIN}/api/v2/python.tar.gz"])
 
 # If we are in old workbenches, we cannot modify the model
 # root dir location. To get around this, we specify early what

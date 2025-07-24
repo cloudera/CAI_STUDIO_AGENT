@@ -10,6 +10,12 @@ from studio import consts
 from studio.db.dao import AgentStudioDao
 from studio.db import model as db_model
 
+def get_url_scheme() -> str:
+    """
+    Get the URL scheme for the current workspace.
+    """
+    return "https" if os.getenv("AGENT_STUDIO_WORKBENCH_TLS_ENABLED", "false").lower() == "true" else "http"
+
 
 def create_slug_from_name(name: str) -> str:
     """

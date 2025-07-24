@@ -112,7 +112,8 @@ def is_custom_model_root_dir_feature_enabled() -> bool:
     """
 
     # Grab the bootstrap data
-    bootstrap_data: dict = requests.get(f"https://{os.getenv('CDSW_DOMAIN')}/sense-bootstrap.json").json()
+    scheme = cc_utils.get_url_scheme()
+    bootstrap_data: dict = requests.get(f"{scheme}://{os.getenv('CDSW_DOMAIN')}/sense-bootstrap.json").json()
 
     # Return the result of the entitlement we are looking for
     # and default this to false (for older workbenches). "enable_ai_studios"

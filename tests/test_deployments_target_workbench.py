@@ -72,13 +72,21 @@ artifact = DeploymentArtifact(project_location="/tmp/deployment_artifacts/fake-a
 payload = DummyPayload()
 deployment = MagicMock(spec=DeployedWorkflowInstance)
 session = MagicMock(spec=Session)
-
-@patch("studio.deployments.targets.workbench.os.getenv", return_value="fake-project-id")
+@patch("studio.deployments.targets.workbench.os.getenv")
 @patch("studio.deployments.targets.workbench.get_ops_endpoint", return_value="https://ops.endpoint")
 @patch("studio.deployments.targets.workbench.get_workbench_model_config")
 @patch("studio.deployments.targets.workbench.validate_api_key", return_value=True)
 @patch("studio.deployments.targets.workbench.get_api_key_from_env", return_value=("key_id", "key_value"))
 def test_prepare_env_vars_for_workbench_success(mock_get_api_key, mock_validate, mock_get_config, mock_get_ops, mock_getenv):
+    def getenv_side_effect(key, default=None):
+        if key == "CDSW_PROJECT_ID":
+            return "fake-project-id"
+        elif key == "AGENT_STUDIO_WORKBENCH_TLS_ENABLED":
+            return "true"
+        return default
+    
+    mock_getenv.side_effect = getenv_side_effect
+    
     mock_get_config.return_value = {
         "workflow_artifact_location": "/home/cdsw/fake-artifact.tar.gz",
         "model_execution_dir": "/home/cdsw/exec",
@@ -102,6 +110,7 @@ def test_prepare_env_vars_for_workbench_success(mock_get_api_key, mock_validate,
         "CDSW_PROJECT_ID": "fake-project-id",
         "CUSTOM_ENV_VAR": "value",
         "CREWAI_DISABLE_TELEMETRY": "true",
+        "AGENT_STUDIO_WORKBENCH_TLS_ENABLED": "true",
     }
 
     assert result == expected

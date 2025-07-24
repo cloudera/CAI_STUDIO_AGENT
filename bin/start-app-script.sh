@@ -28,6 +28,14 @@ export AGENT_STUDIO_OPS_PROVIDER=phoenix
 # Number of agent studio workflow runners to spin up for workflow testing purposes.
 export AGENT_STUDIO_NUM_WORKFLOW_RUNNERS=${AGENT_STUDIO_NUM_WORKFLOW_RUNNERS:-5}
 
+# Export a variable indicating whether the parent workbench is TLS-enabled or not.
+# Check if CDSW_PROJECT_URL uses HTTPS scheme (same logic as pre_install_check.py)
+if [[ -n "$CDSW_PROJECT_URL" && "$CDSW_PROJECT_URL" == https://* ]]; then
+  export AGENT_STUDIO_WORKBENCH_TLS_ENABLED=true
+else
+  export AGENT_STUDIO_WORKBENCH_TLS_ENABLED=false
+fi
+
 # Array to hold runner process IDs.
 declare -a RUNNER_PIDS=()
 

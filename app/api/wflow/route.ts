@@ -9,11 +9,24 @@ import {
 } from '@/studio/proto/agent_studio';
 import fs from 'fs';
 import https from 'https';
+import http from 'http';
 import fetch from 'node-fetch';
 
-const agent = new https.Agent({
-  ca: fs.readFileSync('/etc/ssl/certs/ca-certificates.crt'),
-});
+const createAgent = () => {
+  const isTlsEnabled = process.env.AGENT_STUDIO_WORKBENCH_TLS_ENABLED === 'true';
+
+  if (isTlsEnabled) {
+    return new https.Agent({
+      ca: fs.readFileSync('/etc/ssl/certs/ca-certificates.crt'),
+    });
+  } else {
+    return new http.Agent();
+  }
+};
+
+const getUrlScheme = () => {
+  return process.env.AGENT_STUDIO_WORKBENCH_TLS_ENABLED === 'true' ? 'https' : 'http';
+};
 
 interface CMLModel {
   id: string;
@@ -35,8 +48,11 @@ const fetchModelUrl = async (cml_model_id: string): Promise<string | null> => {
     return null;
   }
 
+  const agent = createAgent();
+  const scheme = getUrlScheme();
+
   try {
-    const response = await fetch(`https://${CDSW_DOMAIN}/api/v2/models?page_size=1000`, {
+    const response = await fetch(`${scheme}://${CDSW_DOMAIN}/api/v2/models?page_size=1000`, {
       headers: {
         authorization: `Bearer ${CDSW_APIV2_KEY}`,
       },
@@ -51,7 +67,7 @@ const fetchModelUrl = async (cml_model_id: string): Promise<string | null> => {
       return null;
     }
 
-    const outputURL = `https://modelservice.${CDSW_DOMAIN}/model?accessKey=${model.access_key}`;
+    const outputURL = `${scheme}://modelservice.${CDSW_DOMAIN}/model?accessKey=${model.access_key}`;
     return outputURL;
   } catch (error) {
     console.error('Error fetching model URL:', error);
@@ -64,6 +80,8 @@ const fetchModelUrl = async (cml_model_id: string): Promise<string | null> => {
 // is determined by env vars that are passed in at
 // application start.
 export async function GET(request: NextRequest) {
+  const agent = createAgent();
+
   if (process.env.AGENT_STUDIO_RENDER_MODE === 'workflow') {
     const deployedModelId = process.env.AGENT_STUDIO_DEPLOYED_MODEL_ID;
     const modelUrl = await fetchModelUrl(deployedModelId as string);

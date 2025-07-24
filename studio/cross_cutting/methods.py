@@ -201,10 +201,11 @@ def get_asset_data(
 def get_parent_project_details(
     request: GetParentProjectDetailsRequest, cml: CMLServiceApi = None, dao: AgentStudioDao = None
 ) -> GetParentProjectDetailsResponse:
+    scheme = cc_utils.get_url_scheme()
     domain = os.getenv("CDSW_DOMAIN")
     project = os.getenv("CDSW_PROJECT")
     owner = os.getenv("PROJECT_OWNER")
-    project_base = f"http://{domain}/{owner}/{project}/"
+    project_base = f"{scheme}://{domain}/{owner}/{project}/"
     return GetParentProjectDetailsResponse(
         project_base=project_base, studio_subdirectory=cc_utils.get_studio_subdirectory()
     )

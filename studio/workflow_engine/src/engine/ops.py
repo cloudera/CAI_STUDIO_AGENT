@@ -3,7 +3,7 @@ import sys
 __import__("pysqlite3")
 sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
 
-from engine.utils import get_application_by_name
+from engine.utils import get_application_by_name, get_url_scheme
 from engine.consts import AGENT_STUDIO_OPS_APPLICATION_NAME
 from phoenix.otel import register
 import cmlapi
@@ -34,14 +34,15 @@ def get_ops_endpoint() -> str:
         raise ValueError("CDSW_APIV2_KEY environment variable not found")
 
     try:
-        base_url = f"https://{domain}"
+        scheme = get_url_scheme()
+        base_url = f"{scheme}://{domain}"
         cml = cmlapi.default_client(url=base_url, cml_api_key=api_key)
         application = get_application_by_name(cml, AGENT_STUDIO_OPS_APPLICATION_NAME)
         if not application:
             print(f"ERROR: Application {AGENT_STUDIO_OPS_APPLICATION_NAME} not found")
             raise ValueError(f"Application {AGENT_STUDIO_OPS_APPLICATION_NAME} not found")
 
-        ops_endpoint = f"https://{application.subdomain}.{domain}"
+        ops_endpoint = f"{scheme}://{application.subdomain}.{domain}"
         return ops_endpoint
     except Exception as e:
         print(f"ERROR: Failed to get ops endpoint: {str(e)}")

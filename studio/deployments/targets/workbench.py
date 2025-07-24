@@ -88,6 +88,7 @@ def prepare_env_vars_for_workbench(
             "CDSW_APIV2_KEY": key_value,  # Pass the validated API key
             "CDSW_PROJECT_ID": os.getenv("CDSW_PROJECT_ID"),  # Pass the project ID
             "CREWAI_DISABLE_TELEMETRY": "true",  # disable crewai telemetry for the workflow engine
+            "AGENT_STUDIO_WORKBENCH_TLS_ENABLED": os.getenv("AGENT_STUDIO_WORKBENCH_TLS_ENABLED", "true"),
         }
     )
 

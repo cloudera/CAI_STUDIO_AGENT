@@ -1,6 +1,7 @@
 import requests
 import os
 from studio.api import *
+import studio.cross_cutting.utils as cc_utils
 
 
 def get_deployed_workflow_endpoint(deployed_workflow: DeployedWorkflow):
@@ -24,7 +25,8 @@ def get_deployed_workflow_endpoint(deployed_workflow: DeployedWorkflow):
         # no search filter available on the cml model id, and the cml model name
         # is not being stored in our db. So this is very much not performant
         # but is sufficient for now to unblock workflow app development.
-        url = f"https://{CDSW_DOMAIN}/api/v2/models"
+        scheme = cc_utils.get_url_scheme()
+        url = f"{scheme}://{CDSW_DOMAIN}/api/v2/models"
         params = {"page_size": 10000}
         headers = {"authorization": f"Bearer {CDSW_APIV2_KEY}"}
 
@@ -41,7 +43,7 @@ def get_deployed_workflow_endpoint(deployed_workflow: DeployedWorkflow):
             return None
 
         # 3. Build the output URL
-        output_url = f"https://modelservice.{CDSW_DOMAIN}/model?accessKey={model['access_key']}"
+        output_url = f"{scheme}://modelservice.{CDSW_DOMAIN}/model?accessKey={model['access_key']}"
         return output_url
 
     except Exception as error:

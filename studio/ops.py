@@ -4,7 +4,7 @@ __import__("pysqlite3")
 sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
 
 from studio.consts import AGENT_STUDIO_OPS_APPLICATION_NAME
-from studio.cross_cutting.utils import get_application_by_name
+from studio.cross_cutting.utils import get_application_by_name, get_url_scheme
 from cmlapi import Application
 from phoenix.otel import register
 import cmlapi
@@ -32,7 +32,8 @@ def get_ops_endpoint() -> str:
 
     cml = cmlapi.default_client()
     application: Application = get_application_by_name(cml, AGENT_STUDIO_OPS_APPLICATION_NAME)
-    return f"https://{application.subdomain}.{os.getenv('CDSW_DOMAIN')}"
+    scheme = get_url_scheme()
+    return f"{scheme}://{application.subdomain}.{os.getenv('CDSW_DOMAIN')}"
 
 
 def get_ops_iframe_url() -> str:

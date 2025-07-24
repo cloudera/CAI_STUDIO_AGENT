@@ -1,6 +1,7 @@
 import { GraphQLClient } from 'graphql-request';
 import fetch from 'node-fetch';
 import https from 'https';
+import http from 'http';
 import fs from 'fs';
 
 interface Application {
@@ -13,6 +14,22 @@ interface ListApplicationsResponse {
   applications: Application[];
 }
 
+const createAgent = () => {
+  const isTlsEnabled = process.env.AGENT_STUDIO_WORKBENCH_TLS_ENABLED === 'true';
+
+  if (isTlsEnabled) {
+    return new https.Agent({
+      ca: fs.readFileSync('/etc/ssl/certs/ca-certificates.crt'),
+    });
+  } else {
+    return new http.Agent();
+  }
+};
+
+const getUrlScheme = () => {
+  return process.env.AGENT_STUDIO_WORKBENCH_TLS_ENABLED === 'true' ? 'https' : 'http';
+};
+
 export const fetchOpsUrl = async (): Promise<string | null> => {
   const CDSW_APIV2_KEY = process.env.CDSW_APIV2_KEY;
   const CDSW_DOMAIN = process.env.CDSW_DOMAIN;
@@ -23,14 +40,12 @@ export const fetchOpsUrl = async (): Promise<string | null> => {
     return null;
   }
 
-  // Use the CA bundle
-  const agent = new https.Agent({
-    ca: fs.readFileSync('/etc/ssl/certs/ca-certificates.crt'),
-  });
+  const agent = createAgent();
+  const scheme = getUrlScheme();
 
   try {
     const response = await fetch(
-      `https://${CDSW_DOMAIN}/api/v2/projects/${CDSW_PROJECT_ID}/applications?page_size=100`,
+      `${scheme}://${CDSW_DOMAIN}/api/v2/projects/${CDSW_PROJECT_ID}/applications?page_size=100`,
       {
         headers: {
           authorization: `Bearer ${CDSW_APIV2_KEY}`,
@@ -79,7 +94,7 @@ export const fetchOpsUrl = async (): Promise<string | null> => {
       return null;
     }
 
-    const outputURL = `https://${application.subdomain}.${CDSW_DOMAIN}`;
+    const outputURL = `${scheme}://${application.subdomain}.${CDSW_DOMAIN}`;
     return outputURL;
   } catch (error) {
     console.error('Error fetching applications:', error);
@@ -92,10 +107,7 @@ export const fetchOpsUrl = async (): Promise<string | null> => {
  * traceId is the "local" trace ID that was passed from the crew kickoff call.
  */
 export const getCrewEvents = async (traceId: string) => {
-  // Use the CA bundle
-  const agent = new https.Agent({
-    ca: fs.readFileSync('/etc/ssl/certs/ca-certificates.crt'),
-  });
+  const agent = createAgent();
   const opsUrl = await fetchOpsUrl();
   const response = await fetch(`${opsUrl}/events?trace_id=${traceId}`, {
     headers: {
