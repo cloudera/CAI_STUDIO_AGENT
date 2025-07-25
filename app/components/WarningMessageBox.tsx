@@ -10,7 +10,11 @@ interface WarningMessageBoxProps {
   onClose?: () => void;
 }
 
-const WarningMessageBox: React.FC<WarningMessageBoxProps> = ({ messageTrigger, message, onClose }) => {
+const WarningMessageBox: React.FC<WarningMessageBoxProps> = ({
+  messageTrigger,
+  message,
+  onClose,
+}) => {
   const [visible, setVisible] = useState(true);
 
   if (!messageTrigger || !visible) {

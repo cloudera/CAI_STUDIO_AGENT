@@ -16,7 +16,6 @@ import studio.cross_cutting.utils as cc_utils
 from studio.tools.utils import read_tool_instance_code, extract_tool_params_from_code
 from studio.workflow.runners import get_workflow_runners
 from studio.proto import agent_studio_pb2
-import time
 import requests
 
 # Import engine code manually. Eventually when this code becomes
@@ -501,8 +500,7 @@ def test_tool_instance(request, cml: CMLServiceApi = None, dao: AgentStudioDao =
         # 1. Fetch tool instance details
         try:
             tool_instance_resp = _get_tool_instance_impl(
-                agent_studio_pb2.GetToolInstanceRequest(tool_instance_id=request.tool_instance_id),
-                session
+                agent_studio_pb2.GetToolInstanceRequest(tool_instance_id=request.tool_instance_id), session
             )
             tool = tool_instance_resp.tool_instance
         except Exception as e:

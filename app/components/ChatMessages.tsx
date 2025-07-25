@@ -119,11 +119,17 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
       if (msg.role === 'user') {
         lastUser = msg.content;
       } else if (msg.role === 'assistant') {
-        chatPairsWithEvents.push({ User: lastUser, Assistant: msg.content, events: msg.events || [] });
+        chatPairsWithEvents.push({
+          User: lastUser,
+          Assistant: msg.content,
+          events: msg.events || [],
+        });
       }
     }
     const fileName = `${workflowName || 'chat_log'}.json`;
-    const blob = new Blob([JSON.stringify(chatPairsWithEvents, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(chatPairsWithEvents, null, 2)], {
+      type: 'application/json',
+    });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = fileName;
@@ -135,10 +141,12 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   const menu = (
     <Menu>
       <Menu.Item key="clear" onClick={clearMessages}>
-        <ClearOutlined style={{ marginRight: 8 }} />Clear Chat
+        <ClearOutlined style={{ marginRight: 8 }} />
+        Clear Chat
       </Menu.Item>
       <Menu.Item key="download" onClick={handleDownloadLogs}>
-        <DownloadOutlined style={{ marginRight: 8 }} />Log Bundle
+        <DownloadOutlined style={{ marginRight: 8 }} />
+        Log Bundle
       </Menu.Item>
     </Menu>
   );
@@ -280,7 +288,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
           disabled={isProcessing}
           style={{ marginRight: '8px' }}
         />
-        <Dropdown overlay={menu} trigger={["click"]} placement="bottomRight">
+        <Dropdown overlay={menu} trigger={['click']} placement="bottomRight">
           <Button icon={<MoreOutlined />} />
         </Dropdown>
       </div>

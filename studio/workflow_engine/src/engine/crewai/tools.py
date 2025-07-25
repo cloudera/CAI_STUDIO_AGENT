@@ -482,7 +482,7 @@ def get_venv_tool(
                 # Copy the entire existing environment and override specific variables
                 env = os.environ.copy()
                 env.update({"VIRTUAL_ENV": self.venv_dir})
-                
+
                 result = subprocess.run(
                     cmd,
                     capture_output=True,

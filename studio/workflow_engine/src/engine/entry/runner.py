@@ -184,6 +184,7 @@ async def test_tool_instance(payload: ToolTestPayload):
     if global_lock.locked():
         raise HTTPException(status_code=409, detail="Runner is busy")
     await global_lock.acquire()
+
     async def run_tool_test_background():
         try:
             loop = asyncio.get_running_loop()
@@ -199,5 +200,6 @@ async def test_tool_instance(payload: ToolTestPayload):
             )
         finally:
             global_lock.release()
+
     asyncio.create_task(run_tool_test_background())
     return {"status": "Tool test started", "trace_id": payload.trace_id}

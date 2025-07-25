@@ -10,6 +10,7 @@ from studio import consts
 from studio.db.dao import AgentStudioDao
 from studio.db import model as db_model
 
+
 def get_url_scheme() -> str:
     """
     Get the URL scheme for the current workspace.

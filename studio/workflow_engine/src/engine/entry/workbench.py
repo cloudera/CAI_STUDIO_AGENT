@@ -22,6 +22,7 @@ sys.path.append(WORKFLOW_DIRECTORY)
 # Install the cmlapi. This is a required dependency for cross-cutting util modules
 # and ops modules that are used in a workflow.
 from engine.utils import get_url_scheme
+
 scheme = get_url_scheme()
 subprocess.call(["pip", "install", f"{scheme}://{CDSW_DOMAIN}/api/v2/python.tar.gz"])
 

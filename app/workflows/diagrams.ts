@@ -28,10 +28,10 @@ export interface DiagramStateInput {
 
 /**
  * Creates diagram state from workflow data.
- * 
+ *
  * This function generates the initial diagram layout. Position persistence
  * is handled by the React component using Redux state.
- * 
+ *
  * @param workflowData - Contains workflow state, tool instances, agents, tasks
  * @returns DiagramState with nodes and edges using default positions
  */
@@ -56,7 +56,7 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
         : `${task.description.substring(0, 50)}...`);
     if (task) {
       const defaultPosition = { x: index * 300, y: yIndex };
-      
+
       initialNodes.push({
         type: 'task',
         id: `${task.task_id}`,

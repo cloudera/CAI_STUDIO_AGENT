@@ -128,27 +128,33 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
   ]);
 
   // Callback for editing manager agent - only in studio mode
-  const handleEditManager = useCallback((agent: AgentMetadata) => {
-    if (renderMode !== 'studio') return;
-    // Clear any existing task editing state to prevent conflicts
-    dispatch(clearEditorTaskEditingState());
-    // Clear any existing agent view state to prevent conflicts
-    dispatch(updatedEditorAgentViewOpen(false));
-    setIsManagerModalOpen(true);
-  }, [dispatch, renderMode]);
+  const handleEditManager = useCallback(
+    (agent: AgentMetadata) => {
+      if (renderMode !== 'studio') return;
+      // Clear any existing task editing state to prevent conflicts
+      dispatch(clearEditorTaskEditingState());
+      // Clear any existing agent view state to prevent conflicts
+      dispatch(updatedEditorAgentViewOpen(false));
+      setIsManagerModalOpen(true);
+    },
+    [dispatch, renderMode],
+  );
 
   // Callback for editing task - only in studio mode
-  const handleEditTask = useCallback((task: CrewAITaskMetadata) => {
-    if (renderMode !== 'studio') return;
-    // Clear any existing manager modal state to prevent conflicts
-    setIsManagerModalOpen(false);
-    // Set the editor step to Tasks
-    dispatch(updatedEditorStep('Tasks'));
-    // Set the editing task ID in Redux state
-    dispatch(updatedEditorTaskEditingId(task.task_id));
-    // Navigate to the workflow creation page
-    router.push(`/workflows/create?workflowId=${workflowState.workflowId}`);
-  }, [workflowState.workflowId, router, dispatch, renderMode]);
+  const handleEditTask = useCallback(
+    (task: CrewAITaskMetadata) => {
+      if (renderMode !== 'studio') return;
+      // Clear any existing manager modal state to prevent conflicts
+      setIsManagerModalOpen(false);
+      // Set the editor step to Tasks
+      dispatch(updatedEditorStep('Tasks'));
+      // Set the editing task ID in Redux state
+      dispatch(updatedEditorTaskEditingId(task.task_id));
+      // Navigate to the workflow creation page
+      router.push(`/workflows/create?workflowId=${workflowState.workflowId}`);
+    },
+    [workflowState.workflowId, router, dispatch, renderMode],
+  );
 
   // React Flow change handlers (update Redux)
   const onNodesChange = useCallback(
@@ -176,9 +182,9 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
       agents,
       tasks,
     });
-    
+
     // Add the onEditManager callback and showEditButton flag based on renderMode
-    const nodesWithCallbacks = freshDiagramState.nodes.map(node => {
+    const nodesWithCallbacks = freshDiagramState.nodes.map((node) => {
       if (node.type === 'agent' && node.data.manager && renderMode === 'studio') {
         return {
           ...node,
@@ -209,16 +215,30 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
       }
       return node;
     });
-    
-    dispatch(updatedDiagramState({
-      nodes: nodesWithCallbacks,
-      edges: freshDiagramState.edges,
-      hasCustomPositions: false,
-    }));
+
+    dispatch(
+      updatedDiagramState({
+        nodes: nodesWithCallbacks,
+        edges: freshDiagramState.edges,
+        hasCustomPositions: false,
+      }),
+    );
     setTimeout(() => {
       fitView({ padding: 0.1 });
     }, 100);
-  }, [workflowState, iconsData, toolInstances, mcpInstances, agents, tasks, dispatch, fitView, handleEditManager, handleEditTask, renderMode]);
+  }, [
+    workflowState,
+    iconsData,
+    toolInstances,
+    mcpInstances,
+    agents,
+    tasks,
+    dispatch,
+    fitView,
+    handleEditManager,
+    handleEditTask,
+    renderMode,
+  ]);
 
   // Generate initial diagram state if Redux state is empty
   useEffect(() => {
@@ -231,9 +251,9 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
         agents,
         tasks,
       });
-      
+
       // Add the onEditManager callback to manager agent nodes (only in studio mode)
-      const nodesWithCallbacks = freshDiagramState.nodes.map(node => {
+      const nodesWithCallbacks = freshDiagramState.nodes.map((node) => {
         if (node.type === 'agent' && node.data.manager && renderMode === 'studio') {
           return {
             ...node,
@@ -254,19 +274,39 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
         }
         return node;
       });
-      
-      dispatch(updatedDiagramState({
-        nodes: nodesWithCallbacks,
-        edges: freshDiagramState.edges,
-        hasCustomPositions: false,
-      }));
+
+      dispatch(
+        updatedDiagramState({
+          nodes: nodesWithCallbacks,
+          edges: freshDiagramState.edges,
+          hasCustomPositions: false,
+        }),
+      );
     }
-  }, [workflowState, iconsData, toolInstances, mcpInstances, agents, tasks, nodes.length, dispatch, handleEditManager, handleEditTask, renderMode]);
+  }, [
+    workflowState,
+    iconsData,
+    toolInstances,
+    mcpInstances,
+    agents,
+    tasks,
+    nodes.length,
+    dispatch,
+    handleEditManager,
+    handleEditTask,
+    renderMode,
+  ]);
 
   // Update diagram if any relevant agent/task/tool/mcp info changes
   useEffect(() => {
     if (!workflowState.workflowId) return;
-    const newSignature = getDiagramDataSignature({ agents, tasks, toolInstances, mcpInstances, workflowState });
+    const newSignature = getDiagramDataSignature({
+      agents,
+      tasks,
+      toolInstances,
+      mcpInstances,
+      workflowState,
+    });
     if (prevDiagramSignature.current !== newSignature) {
       prevDiagramSignature.current = newSignature;
       const freshDiagramState = createDiagramStateFromWorkflow({
@@ -277,31 +317,34 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
         agents,
         tasks,
       });
-      
+
       // Check if new nodes were added by comparing node IDs
-      const existingNodeIds = new Set(nodes.map(n => n.id));
-      const freshNodeIds = new Set(freshDiagramState.nodes.map(n => n.id));
-      const hasNewNodes = freshDiagramState.nodes.some(n => !existingNodeIds.has(n.id));
-      const hasRemovedNodes = nodes.some(n => !freshNodeIds.has(n.id));
-      
+      const existingNodeIds = new Set(nodes.map((n) => n.id));
+      const freshNodeIds = new Set(freshDiagramState.nodes.map((n) => n.id));
+      const hasNewNodes = freshDiagramState.nodes.some((n) => !existingNodeIds.has(n.id));
+      const hasRemovedNodes = nodes.some((n) => !freshNodeIds.has(n.id));
+
       // Determine if we should preserve positions
       const existingHasCustomPositions = diagramState.hasCustomPositions;
-      const shouldPreservePositions = existingHasCustomPositions && nodes.length > 0 && !hasNewNodes && !hasRemovedNodes;
+      const shouldPreservePositions =
+        existingHasCustomPositions && nodes.length > 0 && !hasNewNodes && !hasRemovedNodes;
       let nodesToUse = freshDiagramState.nodes;
-      
+
       if (shouldPreservePositions) {
         // Preserve existing positions by merging with fresh data (only for existing nodes)
-        nodesToUse = freshDiagramState.nodes.map(freshNode => {
-          const existingNode = nodes.find(n => n.id === freshNode.id);
-          return existingNode ? {
-            ...freshNode,
-            position: existingNode.position, // Keep existing position
-          } : freshNode;
+        nodesToUse = freshDiagramState.nodes.map((freshNode) => {
+          const existingNode = nodes.find((n) => n.id === freshNode.id);
+          return existingNode
+            ? {
+                ...freshNode,
+                position: existingNode.position, // Keep existing position
+              }
+            : freshNode;
         });
       }
-      
+
       // Add the onEditManager callback and showEditButton flag based on renderMode
-      const nodesWithCallbacks = nodesToUse.map(node => {
+      const nodesWithCallbacks = nodesToUse.map((node) => {
         if (node.type === 'agent' && node.data.manager && renderMode === 'studio') {
           return {
             ...node,
@@ -332,13 +375,28 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
         }
         return node;
       });
-      dispatch(updatedDiagramState({
-        nodes: nodesWithCallbacks,
-        edges: freshDiagramState.edges,
-        hasCustomPositions: shouldPreservePositions ? existingHasCustomPositions : false, // Reset flag when new nodes added
-      }));
+      dispatch(
+        updatedDiagramState({
+          nodes: nodesWithCallbacks,
+          edges: freshDiagramState.edges,
+          hasCustomPositions: shouldPreservePositions ? existingHasCustomPositions : false, // Reset flag when new nodes added
+        }),
+      );
     }
-  }, [workflowState, iconsData, toolInstances, mcpInstances, agents, tasks, dispatch, handleEditManager, handleEditTask, renderMode, diagramState.hasCustomPositions, nodes]);
+  }, [
+    workflowState,
+    iconsData,
+    toolInstances,
+    mcpInstances,
+    agents,
+    tasks,
+    dispatch,
+    handleEditManager,
+    handleEditTask,
+    renderMode,
+    diagramState.hasCustomPositions,
+    nodes,
+  ]);
 
   // Process events for active/highlight state
   const processedState = useMemo(() => {
@@ -356,8 +414,8 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
 
   // Overlay active state/info on nodes
   const nodesWithActiveStates = useMemo(() => {
-    return nodes.map(node => {
-      const activeNode = processedState.activeNodes.find(active => active.id === node.id);
+    return nodes.map((node) => {
+      const activeNode = processedState.activeNodes.find((active) => active.id === node.id);
       return {
         ...node,
         data: {
@@ -367,7 +425,10 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
           info: activeNode?.info,
           infoType: activeNode?.infoType,
           // Always use fresh callbacks to prevent stale references (only in studio mode)
-          onEditManager: node.type === 'agent' && node.data.manager && renderMode === 'studio' ? handleEditManager : undefined,
+          onEditManager:
+            node.type === 'agent' && node.data.manager && renderMode === 'studio'
+              ? handleEditManager
+              : undefined,
           onEditTask: node.type === 'task' && renderMode === 'studio' ? handleEditTask : undefined,
           showEditButton: renderMode === 'studio',
         },
@@ -391,7 +452,16 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
   }, []);
 
   return (
-    <Layout style={{ flexShrink: 0, flexGrow: 1, height: '100%', flexDirection: 'column', padding: 0, background: 'transparent' }}>
+    <Layout
+      style={{
+        flexShrink: 0,
+        flexGrow: 1,
+        height: '100%',
+        flexDirection: 'column',
+        padding: 0,
+        background: 'transparent',
+      }}
+    >
       <ReactFlow
         nodes={nodesWithActiveStates}
         edges={edges}
@@ -410,8 +480,8 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
         <Background />
       </ReactFlow>
       {workflowState.workflowId && renderMode === 'studio' && (
-        <SelectOrAddAgentModal 
-          workflowId={workflowState.workflowId} 
+        <SelectOrAddAgentModal
+          workflowId={workflowState.workflowId}
           onClose={() => {
             // Clear task editing state when agent modal is closed
             dispatch(clearEditorTaskEditingState());

@@ -9,7 +9,10 @@ import {
 } from '@/app/workflows/deployedWorkflowsApi';
 import WorkflowDetails from './WorkflowDetails';
 import { useAppDispatch, useAppSelector } from '../../lib/hooks/hooks';
-import { updatedEditorWorkflowFromExisting, selectEditorWorkflow } from '../../workflows/editorSlice';
+import {
+  updatedEditorWorkflowFromExisting,
+  selectEditorWorkflow,
+} from '../../workflows/editorSlice';
 import { DeployedWorkflow } from '@/studio/proto/agent_studio';
 import { useGlobalNotification } from '../Notifications';
 import ErrorBoundary from '../ErrorBoundary';
@@ -187,13 +190,15 @@ const WorkflowOverview: React.FC<WorkflowOverviewProps> = ({ workflowId }) => {
                 renderMode="workflow"
               />
             ) : (
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center', 
-                height: '100%',
-                background: '#f5f5f5'
-              }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  height: '100%',
+                  background: '#f5f5f5',
+                }}
+              >
                 <Spin size="large" />
               </div>
             )}

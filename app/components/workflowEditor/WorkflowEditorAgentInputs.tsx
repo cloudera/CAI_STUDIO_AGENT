@@ -306,7 +306,7 @@ const WorkflowAgentsComponent: React.FC<WorkflowAgentsComponentProps> = ({ workf
                               <UserOutlined />
                             )
                           }
-                               />
+                        />
                         <Text
                           style={{
                             fontSize: '14px',
@@ -887,8 +887,11 @@ const SettingsComponent: React.FC<SettingsComponentProps> = ({ workflowId }) => 
                         size={24}
                         icon={
                           agent.agent_image_uri ? (
-                            <Image src={agent.agent_image_uri} alt={agent.name} />) : (
-                            <UsergroupAddOutlined />)}
+                            <Image src={agent.agent_image_uri} alt={agent.name} />
+                          ) : (
+                            <UsergroupAddOutlined />
+                          )
+                        }
                       />
                       <Text
                         style={{

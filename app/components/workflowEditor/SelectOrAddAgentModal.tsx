@@ -403,8 +403,6 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
     }
   };
 
-
-
   const handleSelectAssignedAgent = (agent: AgentMetadata) => {
     // Aggressively reset everything first
     setIsCreateMode(false);
@@ -438,37 +436,36 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
     );
   };
 
-
   const handleFileUpload = async (file: File) => {
-      if (!file) return;
-  
-      // Validate file type
-      const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
-      if (!validTypes.includes(file.type)) {
-        message.error('Please upload a PNG or JPEG image file');
-        return;
-      }
-  
-      // If file size is greater than 64KB, show a notification
-      if (file.size > 64 * 1024) {
-        notificationApi.warning({
-          message: 'File size should be less than 64KB',
-          placement: 'topRight',
-        });
-        return;
-      }
-  
-      try {
-        const fp = await uploadFile(file, setUploading);
-        console.log('File uploaded to:', fp);
-        setUploadedFilePath(fp);
-        setSelectedFile(file);
-      } catch (error) {
-        setSelectedFile(null);
-        console.error('Upload failed:', error);
-        message.error('Failed to upload file');
-      }
-    };
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+    if (!validTypes.includes(file.type)) {
+      message.error('Please upload a PNG or JPEG image file');
+      return;
+    }
+
+    // If file size is greater than 64KB, show a notification
+    if (file.size > 64 * 1024) {
+      notificationApi.warning({
+        message: 'File size should be less than 64KB',
+        placement: 'topRight',
+      });
+      return;
+    }
+
+    try {
+      const fp = await uploadFile(file, setUploading);
+      console.log('File uploaded to:', fp);
+      setUploadedFilePath(fp);
+      setSelectedFile(file);
+    } catch (error) {
+      setSelectedFile(null);
+      console.error('Upload failed:', error);
+      message.error('Failed to upload file');
+    }
+  };
   const renderMcpList = () => {
     // Don't handle for Agent Templates
     const mcpInstanceIds = selectedAssignedAgent
@@ -1489,39 +1486,39 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
             </Form.Item>
             <Form.Item>
               <Text strong>Agent Icon</Text>
-                 <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-                    <Upload
-                      accept=".png,.jpg,.jpeg"
-                      customRequest={({ file, onSuccess, onError }) => {
-                          handleFileUpload(file as File)
-                            .then(() => onSuccess?.('ok'))
-                            .catch((err) => onError?.(err));
-                          }}
-                        showUploadList={false}
-                        disabled={isUploading}
-                      >
-                      <Button
-                        icon={selectedFile ? <FileImageOutlined /> : <UploadOutlined />}
-                        loading={isUploading}
-                        style={{ marginTop: '8px' }}
-                        disabled={selectedFile !== null}
-                        >
-                        {selectedFile ? selectedFile.name : 'Upload File'}
-                      </Button>
-                      </Upload>
-                      {selectedFile && (
-                        <Button
-                          icon={<DeleteOutlined />}
-                          style={{ marginLeft: '8px', marginTop: '8px' }}
-                          onClick={() => {
-                            setSelectedFile(null);
-                            setUploadedFilePath('');
-                          }}
-                        />
-                      )}
-                    </div>
-                  <div style={{ margin: '16px 0' }} />
-                </Form.Item>
+              <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+                <Upload
+                  accept=".png,.jpg,.jpeg"
+                  customRequest={({ file, onSuccess, onError }) => {
+                    handleFileUpload(file as File)
+                      .then(() => onSuccess?.('ok'))
+                      .catch((err) => onError?.(err));
+                  }}
+                  showUploadList={false}
+                  disabled={isUploading}
+                >
+                  <Button
+                    icon={selectedFile ? <FileImageOutlined /> : <UploadOutlined />}
+                    loading={isUploading}
+                    style={{ marginTop: '8px' }}
+                    disabled={selectedFile !== null}
+                  >
+                    {selectedFile ? selectedFile.name : 'Upload File'}
+                  </Button>
+                </Upload>
+                {selectedFile && (
+                  <Button
+                    icon={<DeleteOutlined />}
+                    style={{ marginLeft: '8px', marginTop: '8px' }}
+                    onClick={() => {
+                      setSelectedFile(null);
+                      setUploadedFilePath('');
+                    }}
+                  />
+                )}
+              </div>
+              <div style={{ margin: '16px 0' }} />
+            </Form.Item>
             {renderToolSection()}
           </Form>
         </Layout>
@@ -1663,7 +1660,7 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
       });
 
       await removeAgent({ agent_id: agentId }).unwrap();
-      
+
       const updatedAgentIds = (workflowAgentIds ?? []).filter((id) => id !== agentId);
       dispatch(updatedEditorWorkflowAgentIds(updatedAgentIds));
 
@@ -1878,10 +1875,13 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
       width="98%"
       style={{ height: '95vh' }}
       footer={[
-        <Button key="cancel" onClick={() => {
-          dispatch(updatedEditorAgentViewOpen(false));
-          onClose?.(); // Call onClose callback if provided
-        }}>
+        <Button
+          key="cancel"
+          onClick={() => {
+            dispatch(updatedEditorAgentViewOpen(false));
+            onClose?.(); // Call onClose callback if provided
+          }}
+        >
           Close
         </Button>,
         <Button

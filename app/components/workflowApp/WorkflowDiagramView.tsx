@@ -88,8 +88,6 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
     return true;
   });
 
-
-
   if (!displayDiagnostics) {
     return (
       <ReactFlowProvider>
@@ -198,50 +196,82 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
                 }}
               >
                 {/* Filter checkboxes */}
-                <div style={{ display: 'flex', gap: 12, marginBottom: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: 12,
+                    marginBottom: 8,
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                  }}
+                >
                   <span style={{ fontSize: 12, color: '#888' }}>Filter:</span>
                   <Checkbox
                     checked={eventTypeFilters.includes('error')}
-                    onChange={e => {
-                      setEventTypeFilters(f => e.target.checked ? [...f, 'error'] : f.filter(x => x !== 'error'));
+                    onChange={(e) => {
+                      setEventTypeFilters((f) =>
+                        e.target.checked ? [...f, 'error'] : f.filter((x) => x !== 'error'),
+                      );
                     }}
                     style={{ fontSize: 11, padding: 0 }}
-                  >Error</Checkbox>
+                  >
+                    Error
+                  </Checkbox>
                   <Checkbox
                     checked={categoryFilters.includes('workflow')}
-                    onChange={e => {
-                      setCategoryFilters(f => e.target.checked ? [...f, 'workflow'] : f.filter(x => x !== 'workflow'));
+                    onChange={(e) => {
+                      setCategoryFilters((f) =>
+                        e.target.checked ? [...f, 'workflow'] : f.filter((x) => x !== 'workflow'),
+                      );
                     }}
                     style={{ fontSize: 11, padding: 0 }}
-                  >Workflow</Checkbox>
+                  >
+                    Workflow
+                  </Checkbox>
                   <Checkbox
                     checked={categoryFilters.includes('task')}
-                    onChange={e => {
-                      setCategoryFilters(f => e.target.checked ? [...f, 'task'] : f.filter(x => x !== 'task'));
+                    onChange={(e) => {
+                      setCategoryFilters((f) =>
+                        e.target.checked ? [...f, 'task'] : f.filter((x) => x !== 'task'),
+                      );
                     }}
                     style={{ fontSize: 11, padding: 0 }}
-                  >Task</Checkbox>
+                  >
+                    Task
+                  </Checkbox>
                   <Checkbox
                     checked={categoryFilters.includes('agent')}
-                    onChange={e => {
-                      setCategoryFilters(f => e.target.checked ? [...f, 'agent'] : f.filter(x => x !== 'agent'));
+                    onChange={(e) => {
+                      setCategoryFilters((f) =>
+                        e.target.checked ? [...f, 'agent'] : f.filter((x) => x !== 'agent'),
+                      );
                     }}
                     style={{ fontSize: 11, padding: 0 }}
-                  >Agent</Checkbox>
+                  >
+                    Agent
+                  </Checkbox>
                   <Checkbox
                     checked={categoryFilters.includes('llm')}
-                    onChange={e => {
-                      setCategoryFilters(f => e.target.checked ? [...f, 'llm'] : f.filter(x => x !== 'llm'));
+                    onChange={(e) => {
+                      setCategoryFilters((f) =>
+                        e.target.checked ? [...f, 'llm'] : f.filter((x) => x !== 'llm'),
+                      );
                     }}
                     style={{ fontSize: 11, padding: 0 }}
-                  >LLM</Checkbox>
+                  >
+                    LLM
+                  </Checkbox>
                   <Checkbox
                     checked={categoryFilters.includes('tool')}
-                    onChange={e => {
-                      setCategoryFilters(f => e.target.checked ? [...f, 'tool'] : f.filter(x => x !== 'tool'));
+                    onChange={(e) => {
+                      setCategoryFilters((f) =>
+                        e.target.checked ? [...f, 'tool'] : f.filter((x) => x !== 'tool'),
+                      );
                     }}
                     style={{ fontSize: 11, padding: 0 }}
-                  >Tool</Checkbox>
+                  >
+                    Tool
+                  </Checkbox>
                 </div>
                 {!filteredEvents || filteredEvents.length === 0 ? (
                   <Alert message="No events yet" type="info" showIcon />
@@ -267,14 +297,13 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
                           title={event.type}
                           style={{
                             margin: 8,
-                            backgroundColor:
-                              isError
-                                ? '#ffeaea'
-                                : event.type === 'crew_kickoff_completed'
+                            backgroundColor: isError
+                              ? '#ffeaea'
+                              : event.type === 'crew_kickoff_completed'
                                 ? '#a2f5bf'
                                 : index === currentEventIndex
-                                ? '#8fe6ff'
-                                : 'white',
+                                  ? '#8fe6ff'
+                                  : 'white',
                             fontSize: '9px',
                             maxWidth: '100%',
                             overflow: 'hidden',

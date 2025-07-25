@@ -117,7 +117,7 @@ export const editorSlice = createSlice({
       const workflow: Workflow = action.payload;
       const prevWorkflowId = state.workflow.workflowId;
       const prevWorkflowState = JSON.stringify(state.workflow);
-      
+
       state.workflow = {
         workflowId: workflow.workflow_id,
         name: workflow.name,
@@ -130,9 +130,9 @@ export const editorSlice = createSlice({
           process: workflow.crew_ai_workflow_metadata?.process,
         },
       };
-      
+
       const newWorkflowState = JSON.stringify(state.workflow);
-      
+
       // Reset diagram state if workflowId changed OR workflow state changed (new nodes added/removed)
       if (prevWorkflowId !== workflow.workflow_id || prevWorkflowState !== newWorkflowState) {
         state.diagramState = {
@@ -316,9 +316,12 @@ export const editorSlice = createSlice({
       state.diagramState.edges = action.payload;
     },
 
-    updatedNodePosition: (state, action: PayloadAction<{ nodeId: string; position: { x: number; y: number } }>) => {
+    updatedNodePosition: (
+      state,
+      action: PayloadAction<{ nodeId: string; position: { x: number; y: number } }>,
+    ) => {
       const { nodeId, position } = action.payload;
-      const nodeIndex = state.diagramState.nodes.findIndex(node => node.id === nodeId);
+      const nodeIndex = state.diagramState.nodes.findIndex((node) => node.id === nodeId);
       if (nodeIndex !== -1) {
         state.diagramState.nodes[nodeIndex].position = position;
         state.diagramState.hasCustomPositions = true;
@@ -427,7 +430,7 @@ export const selectWorkflowGenerationConfig = (state: RootState): WorkflowGenera
 export const selectDiagramState = (state: RootState): DiagramState => state.editor.diagramState;
 export const selectDiagramNodes = (state: RootState): Node[] => state.editor.diagramState.nodes;
 export const selectDiagramEdges = (state: RootState): Edge[] => state.editor.diagramState.edges;
-export const selectDiagramHasCustomPositions = (state: RootState): boolean => 
+export const selectDiagramHasCustomPositions = (state: RootState): boolean =>
   state.editor.diagramState.hasCustomPositions;
 
 export default editorSlice.reducer;

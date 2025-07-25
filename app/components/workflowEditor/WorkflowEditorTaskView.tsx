@@ -1,7 +1,10 @@
 import WorkflowEditorTaskInputs from './WorkflowEditorTaskInputs';
 import { Divider, Layout } from 'antd';
 import { useAppSelector, useAppDispatch } from '../../lib/hooks/hooks';
-import { selectEditorWorkflow, updatedEditorWorkflowFromExisting } from '../../workflows/editorSlice';
+import {
+  selectEditorWorkflow,
+  updatedEditorWorkflowFromExisting,
+} from '../../workflows/editorSlice';
 import { useListToolInstancesQuery } from '../../tools/toolInstancesApi';
 import { useListMcpInstancesQuery } from '@/app/mcp/mcpInstancesApi';
 import { useListTasksQuery } from '../../tasks/tasksApi';

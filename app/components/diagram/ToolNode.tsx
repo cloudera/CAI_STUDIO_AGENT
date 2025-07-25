@@ -36,10 +36,12 @@ export default function ToolNode({ data }: NodeProps<ToolNode>) {
   const handleEditTool = (e: React.MouseEvent) => {
     e.stopPropagation();
     // Set the agent context in Redux so the modal shows the correct tool list
-    dispatch(updatedEditorAgentViewCreateAgentState({
-      agentId: data.agentId,
-      tools: data.agentTools, // agentTools should be passed in data
-    }));
+    dispatch(
+      updatedEditorAgentViewCreateAgentState({
+        agentId: data.agentId,
+        tools: data.agentTools, // agentTools should be passed in data
+      }),
+    );
     setIsToolModalOpen(true);
   };
 
@@ -64,35 +66,35 @@ export default function ToolNode({ data }: NodeProps<ToolNode>) {
     >
       {/* Edit Tool Button */}
       {data.showEditButton !== false && (
-      <div
-        style={{
-          position: 'absolute',
-          top: -10,
-          right: -10,
-          zIndex: 10,
-        }}
-      >
-        <Tooltip title="Edit Tool">
-          <button
-            onClick={handleEditTool}
-            style={{
-              width: 24,
-              height: 24,
-              borderRadius: '50%',
-              backgroundColor: 'white', // Match Avatar background
-              border: '2px solid #b8d6ff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-              padding: 0,
-              cursor: 'pointer',
-            }}
-          >
-            <EditOutlined style={{ color: '#1890ff', fontSize: 12 }} />
-          </button>
-        </Tooltip>
-      </div>
+        <div
+          style={{
+            position: 'absolute',
+            top: -10,
+            right: -10,
+            zIndex: 10,
+          }}
+        >
+          <Tooltip title="Edit Tool">
+            <button
+              onClick={handleEditTool}
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: '50%',
+                backgroundColor: 'white', // Match Avatar background
+                border: '2px solid #b8d6ff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+                padding: 0,
+                cursor: 'pointer',
+              }}
+            >
+              <EditOutlined style={{ color: '#1890ff', fontSize: 12 }} />
+            </button>
+          </Tooltip>
+        </div>
       )}
       {data.info && (
         <>

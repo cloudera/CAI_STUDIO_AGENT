@@ -151,7 +151,13 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
   // Fix: Only preselect first template if modal is open, no template is selected, and isCreateSelected is false
   useEffect(() => {
     // Don't auto-select template if we're in create mode or if a tool instance is selected
-    if (open && toolTemplates.length > 0 && !selectedToolTemplate && !isCreateSelected && !selectedToolInstance) {
+    if (
+      open &&
+      toolTemplates.length > 0 &&
+      !selectedToolTemplate &&
+      !isCreateSelected &&
+      !selectedToolInstance
+    ) {
       setSelectedToolTemplate(toolTemplates[0].id); // Preselect the first tool template
     }
   }, [open, toolTemplates, selectedToolTemplate, isCreateSelected, selectedToolInstance]);
@@ -403,7 +409,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
       }
 
       // Only update code/requirements, keep all other state as is
-      setToolInstancesMap(prev => {
+      setToolInstancesMap((prev) => {
         if (!prev[selectedToolInstance]) return prev; // Defensive: don't update if not present
         return {
           ...prev,
@@ -412,7 +418,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
             python_code: response.tool_instance!.python_code,
             python_requirements: response.tool_instance!.python_requirements,
             // Optionally update other fields if you want them refreshed
-          }
+          },
         };
       });
       setEditorKey((prev) => prev + 1);
@@ -452,9 +458,10 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
         user_params_metadata?: Record<string, { required: boolean }>;
         tool_params_metadata?: Record<string, { required: boolean }>;
         [key: string]: any;
-      } = typeof toolInstance.tool_metadata === 'string'
-        ? JSON.parse(toolInstance.tool_metadata)
-        : toolInstance.tool_metadata || {};
+      } =
+        typeof toolInstance.tool_metadata === 'string'
+          ? JSON.parse(toolInstance.tool_metadata)
+          : toolInstance.tool_metadata || {};
 
       await updateToolInstance({
         tool_instance_id: selectedToolInstance,
@@ -672,7 +679,14 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
             e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', justifyContent: 'space-between' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              marginBottom: '8px',
+              justifyContent: 'space-between',
+            }}
+          >
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <div
                 style={{
@@ -717,7 +731,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                 >
                   {toolInstance.name}
                 </Text>
-                              <Tooltip
+                <Tooltip
                   title={
                     toolInstance.is_valid
                       ? 'Tool is valid'
@@ -808,9 +822,10 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
       user_params_metadata?: Record<string, { required: boolean }>;
       tool_params_metadata?: Record<string, { required: boolean }>;
       [key: string]: any;
-    } = typeof toolInstance.tool_metadata === 'string'
-      ? JSON.parse(toolInstance.tool_metadata)
-      : toolInstance.tool_metadata || {};
+    } =
+      typeof toolInstance.tool_metadata === 'string'
+        ? JSON.parse(toolInstance.tool_metadata)
+        : toolInstance.tool_metadata || {};
 
     return (
       <Layout style={{ flex: 1, backgroundColor: '#fff', padding: '0px', overflowY: 'auto' }}>
@@ -969,7 +984,9 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
             <>
               <Divider style={{ margin: '8px 0 11px 0' }} />
               {Object.keys(toolMetadata.user_params_metadata || {}).length > 0 && (
-                <Typography.Text style={{ fontWeight: 600, fontSize: 14, marginBottom: 8, display: 'block' }}>
+                <Typography.Text
+                  style={{ fontWeight: 600, fontSize: 14, marginBottom: 8, display: 'block' }}
+                >
                   User Parameters
                 </Typography.Text>
               )}
@@ -979,7 +996,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                     <Form.Item label={key} required={meta.required}>
                       <Input.Password
                         value={userParams[key] || ''}
-                        onChange={e => setUserParams({ ...userParams, [key]: e.target.value })}
+                        onChange={(e) => setUserParams({ ...userParams, [key]: e.target.value })}
                         visibilityToggle={true}
                       />
                     </Form.Item>
@@ -988,7 +1005,9 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
               </Row>
 
               {Object.keys(toolMetadata.tool_params_metadata || {}).length > 0 && (
-                <Typography.Text style={{ fontWeight: 600, fontSize: 14, marginBottom: 8, display: 'block' }}>
+                <Typography.Text
+                  style={{ fontWeight: 600, fontSize: 14, marginBottom: 8, display: 'block' }}
+                >
                   Tool Parameters
                 </Typography.Text>
               )}
@@ -998,7 +1017,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                     <Form.Item label={key} required={meta.required}>
                       <Input
                         value={toolParams[key] || ''}
-                        onChange={e => setToolParams({ ...toolParams, [key]: e.target.value })}
+                        onChange={(e) => setToolParams({ ...toolParams, [key]: e.target.value })}
                       />
                     </Form.Item>
                   </Col>
@@ -1030,7 +1049,9 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                       // Start polling for events
                       intervalRef.current = setInterval(async () => {
                         try {
-                          const { events: newEvents } = await getEvents({ traceId: resp.trace_id }).unwrap();
+                          const { events: newEvents } = await getEvents({
+                            traceId: resp.trace_id,
+                          }).unwrap();
 
                           // Always deduplicate by a unique key (timestamp+type+output+error)
                           const makeKey = (e: any) =>
@@ -1040,7 +1061,9 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                           const seenKeys = new Set(allEventsRef.current.map(makeKey));
 
                           // Only add truly new events
-                          const trulyNewEvents = (newEvents || []).filter(e => !seenKeys.has(makeKey(e)));
+                          const trulyNewEvents = (newEvents || []).filter(
+                            (e) => !seenKeys.has(makeKey(e)),
+                          );
 
                           if (trulyNewEvents.length > 0) {
                             allEventsRef.current = [...allEventsRef.current, ...trulyNewEvents];
@@ -1048,14 +1071,18 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                           }
 
                           // Always update logs even if only a single event arrives
-                          if (allEventsRef.current.length === 0 && (newEvents && newEvents.length > 0)) {
+                          if (
+                            allEventsRef.current.length === 0 &&
+                            newEvents &&
+                            newEvents.length > 0
+                          ) {
                             allEventsRef.current = [...newEvents];
                             setLogs([...allEventsRef.current]);
                           }
 
                           // Check for final event in the accumulated list
                           const hasFinalEvent = allEventsRef.current.some(
-                            e => e.type === 'ToolTestCompleted' || e.type === 'ToolTestFailed'
+                            (e) => e.type === 'ToolTestCompleted' || e.type === 'ToolTestFailed',
                           );
                           if (hasFinalEvent) {
                             if (intervalRef.current) {
@@ -1070,14 +1097,17 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                       }, 1000);
                     } catch (err: any) {
                       setIsTesting(false);
-                      let errorMsg = "Failed to test tool.";
+                      let errorMsg = 'Failed to test tool.';
                       if (err?.data?.detail) {
-                        errorMsg = typeof err.data.detail === "string" ? err.data.detail : JSON.stringify(err.data.detail);
+                        errorMsg =
+                          typeof err.data.detail === 'string'
+                            ? err.data.detail
+                            : JSON.stringify(err.data.detail);
                       } else if (err?.error) {
                         errorMsg = err.error;
                       } else if (err?.message) {
                         errorMsg = err.message;
-                      } else if (typeof err === "string") {
+                      } else if (typeof err === 'string') {
                         errorMsg = err;
                       } else {
                         errorMsg = JSON.stringify(err);
@@ -1098,10 +1128,9 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                       key={idx}
                       title={event.type}
                       style={{
-                        backgroundColor:
-                          /error|fail/i.test(event.type)
-                            ? '#ffeaea'
-                            : event.type === 'ToolTestCompleted'
+                        backgroundColor: /error|fail/i.test(event.type)
+                          ? '#ffeaea'
+                          : event.type === 'ToolTestCompleted'
                             ? '#a2f5bf'
                             : 'white',
                         fontSize: '9px',

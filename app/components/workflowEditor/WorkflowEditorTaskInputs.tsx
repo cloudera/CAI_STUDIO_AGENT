@@ -347,7 +347,7 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
         add_crew_ai_task_request: {
           description,
           expected_output: expectedOutput,
-          assigned_agent_id: shouldClearAssignedAgent ? '' : (selectedAgentId || ''),
+          assigned_agent_id: shouldClearAssignedAgent ? '' : selectedAgentId || '',
         },
         workflow_id: workflowState.workflowId || '',
         template_id: '',
@@ -449,7 +449,7 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
         UpdateCrewAITaskRequest: {
           description,
           expected_output: expectedOutput,
-          assigned_agent_id: shouldClearAssignedAgent ? '' : (selectedAgentId || ''),
+          assigned_agent_id: shouldClearAssignedAgent ? '' : selectedAgentId || '',
         },
       }).unwrap();
 

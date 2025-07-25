@@ -6,8 +6,10 @@
     "dev": "next dev --turbo -p $CDSW_APP_PORT -H 127.0.0.1",
     "build": "next build",
     "start": "next start -p $CDSW_APP_PORT -H 127.0.0.1",
-    "lint": "next lint --fix",
-    "format": "prettier --write ./app/"
+    "lint-fix": "next lint --fix",
+    "lint-check": "next lint",
+    "format-fix": "prettier --write ./app/",
+    "format-check": "prettier --check ./app/"
   },
   "dependencies": {
     "@ant-design/icons": "^5.5.2",

@@ -322,7 +322,7 @@ const MessageBoxes: React.FC = () => {
             message={warningMessage.message}
             messageTrigger={warningMessage.messageTrigger}
             onClose={() => {
-              setClosedWarnings(prev => new Set(prev).add(index));
+              setClosedWarnings((prev) => new Set(prev).add(index));
             }}
           />
         ) : null,

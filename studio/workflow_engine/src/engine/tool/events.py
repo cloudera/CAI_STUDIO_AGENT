@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import Dict, Any
 
+
 # Tool test event classes
 class ToolTestStartedEvent(BaseModel):
     timestamp: datetime
@@ -9,17 +10,20 @@ class ToolTestStartedEvent(BaseModel):
     tool_instance_id: str
     params: Dict[str, Any]
 
+
 class ToolTestCompletedEvent(BaseModel):
     timestamp: datetime
     type: str = "ToolTestCompleted"
     tool_instance_id: str
     output: Any
 
+
 class ToolTestFailedEvent(BaseModel):
     timestamp: datetime
     type: str = "ToolTestFailed"
     tool_instance_id: str
     error: str
+
 
 # New event for venv creation start
 class ToolVenvCreationStartedEvent(BaseModel):
@@ -28,6 +32,7 @@ class ToolVenvCreationStartedEvent(BaseModel):
     tool_instance_id: str
     tool_dir: str
     requirements_file: str = "requirements.txt"
+
 
 # New event for venv creation finished
 class ToolVenvCreationFinishedEvent(BaseModel):
@@ -39,6 +44,7 @@ class ToolVenvCreationFinishedEvent(BaseModel):
     pip_output: str = ""
     pip_error: str = ""
 
+
 # New event for venv creation failed
 class ToolVenvCreationFailedEvent(BaseModel):
     timestamp: datetime
@@ -49,6 +55,7 @@ class ToolVenvCreationFailedEvent(BaseModel):
     error: str
     pip_output: str = ""
     pip_error: str = ""
+
 
 # Event processor for tool test events
 TOOL_EVENT_PROCESSORS = {
@@ -86,8 +93,9 @@ TOOL_EVENT_PROCESSORS = {
     },
 }
 
+
 def process_tool_event(event):
     processed_event = {}
     if event.__class__ in list(TOOL_EVENT_PROCESSORS.keys()):
         processed_event.update(TOOL_EVENT_PROCESSORS[event.__class__](event))
-    return processed_event 
+    return processed_event
