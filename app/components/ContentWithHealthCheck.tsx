@@ -3,10 +3,8 @@
 import React, { useEffect } from 'react';
 import 'antd/dist/reset.css';
 import { Content } from 'antd/lib/layout/layout';
-import { Spin, Typography } from 'antd';
 import { useHealthCheckQuery } from '../lib/crossCuttingApi';
-
-const { Text } = Typography;
+import LargeCenterSpin from './common/LargeCenterSpin';
 
 type ContentWithHealthCheckProps = {
   children: React.ReactNode;
@@ -28,20 +26,7 @@ const ContentWithHealthCheck: React.FC<ContentWithHealthCheckProps> = ({ childre
   }, [isHealthy, refetchHeathStatus]);
 
   if (!isHealthy) {
-    return (
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100%',
-          flexDirection: 'column',
-        }}
-      >
-        <Spin size="large" />
-        <Text>Agent Studio is starting. Please wait...</Text>
-      </div>
-    );
+    return <LargeCenterSpin message="Agent Studio is starting. Please wait..." />;
   }
 
   return (
