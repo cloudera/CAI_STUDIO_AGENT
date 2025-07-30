@@ -1,5 +1,6 @@
 import os
 import shutil
+import re
 from uuid import uuid4
 from typing import Optional
 from studio.db.dao import AgentStudioDao
@@ -62,6 +63,11 @@ def _create_mcp_instance_impl(request: CreateMcpInstanceRequest, session: DbSess
 
     instance_uuid = str(uuid4())
     mcp_instance_name = request.name or (associated_mcp_template.name if associated_mcp_template else "MCP Instance")
+
+    # Validate instance name if provided
+    if request.name and not re.match(r"^[a-zA-Z0-9 _-]+$", request.name):
+        raise ValueError("MCP instance name must only contain alphabets, numbers, spaces, underscores, and hyphens.")
+
     activated_tools = list(request.activated_tools)
 
     # ICON HANDLING: from MCP template
@@ -119,6 +125,11 @@ def _update_mcp_instance_impl(request: UpdateMcpInstanceRequest, session: DbSess
         raise ValueError(f"MCP Instance with id {request.mcp_instance_id} not found")
 
     if request.name:
+        # Validate instance name
+        if not re.match(r"^[a-zA-Z0-9 _-]+$", request.name):
+            raise ValueError(
+                "MCP instance name must only contain alphabets, numbers, spaces, underscores, and hyphens."
+            )
         mcp_instance.name = request.name
     if request.tmp_mcp_image_path:
         if not os.path.exists(request.tmp_mcp_image_path):

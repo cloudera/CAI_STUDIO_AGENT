@@ -28,10 +28,8 @@ def add_mcp_template(request: AddMcpTemplateRequest, cml: CMLServiceApi, dao: Ag
     """
     mcp_uuid = str(uuid4())
     # Validations
-    if not re.match(r"^[a-zA-Z0-9 ]+$", request.name):
-        raise ValueError(
-            "MCP name must only contain alphabets, numbers, and spaces, and must not contain special characters."
-        )
+    if not re.match(r"^[a-zA-Z0-9 _-]+$", request.name):
+        raise ValueError("MCP name must only contain alphabets, numbers, spaces, underscores, and hyphens.")
     if request.type not in [t.value for t in consts.SupportedMCPTypes]:
         raise ValueError(
             "MCP type must be one of the following: " + ", ".join([t.value for t in consts.SupportedMCPTypes])
@@ -94,10 +92,8 @@ def update_mcp_template(
                 raise ValueError(f"MCP template with ID '{request.mcp_template_id}' not found.")
 
             if request.name:
-                if not re.match(r"^[a-zA-Z0-9 ]+$", request.name):
-                    raise ValueError(
-                        "MCP name must only contain alphabets, numbers, and spaces, and must not contain special characters."
-                    )
+                if not re.match(r"^[a-zA-Z0-9 _-]+$", request.name):
+                    raise ValueError("MCP name must only contain alphabets, numbers, spaces, underscores, and hyphens.")
                 mcp_template.name = request.name
             if request.type:
                 if request.type not in [t.value for t in consts.SupportedMCPTypes]:

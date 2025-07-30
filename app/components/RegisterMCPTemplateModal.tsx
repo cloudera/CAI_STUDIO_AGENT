@@ -136,9 +136,9 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
       }
 
       // Validate server name format (same as backend validation)
-      if (!/^[a-zA-Z0-9 ]+$/.test(serverName)) {
+      if (!/^[a-zA-Z0-9 _-]+$/.test(serverName)) {
         setValidationError(
-          'MCP name must only contain alphabets, numbers, and spaces, and must not contain special characters.',
+          'MCP name must only contain alphabets, numbers, spaces, underscores, and hyphens.',
         );
         setServerNameInfo('');
         setIsValid(false);

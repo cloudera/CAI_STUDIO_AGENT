@@ -82,6 +82,7 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
   const [selectedMcpInstanceTools, setSelectedMcpInstanceTools] = useState<string[]>([]);
   const [noToolsSelected, setNoToolsSelected] = useState<boolean>(false);
   const [editedMcpInstanceName, setEditedMcpInstanceName] = useState<string>('');
+  const [mcpInstanceNameError, setMcpInstanceNameError] = useState<string>('');
   const createAgentState = useSelector(selectEditorAgentViewCreateAgentState);
   const [createMcpInstance] = useCreateMcpInstanceMutation();
   const [getMcpInstance] = useGetMcpInstanceMutation();
@@ -241,6 +242,14 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
       return;
     }
 
+    // Validate MCP instance name before updating
+    if (editedMcpInstanceName && !/^[a-zA-Z0-9 _-]+$/.test(editedMcpInstanceName)) {
+      setMcpInstanceNameError(
+        'MCP name must only contain alphabets, numbers, spaces, underscores, and hyphens.',
+      );
+      return;
+    }
+
     try {
       setIsLoading(true);
 
@@ -372,6 +381,7 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
     setSelectedMcpTemplate(null);
     setSelectedMcpInstanceTools(mcpInstance.activated_tools || []);
     setEditedMcpInstanceName(mcpInstance.name || '');
+    setMcpInstanceNameError(''); // Clear any previous validation error
     setNoToolsSelected(false);
   };
 
@@ -625,10 +635,31 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
           </Typography.Text>
           <Input
             value={editedMcpInstanceName}
-            onChange={(e) => setEditedMcpInstanceName(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setEditedMcpInstanceName(value);
+
+              // Validate on change
+              if (value && !/^[a-zA-Z0-9 _-]+$/.test(value)) {
+                setMcpInstanceNameError(
+                  'MCP name must only contain alphabets, numbers, spaces, underscores, and hyphens.',
+                );
+              } else {
+                setMcpInstanceNameError('');
+              }
+            }}
             placeholder="[Name]"
             style={{ width: '100%' }}
+            status={mcpInstanceNameError ? 'error' : ''}
           />
+          {mcpInstanceNameError && (
+            <Typography.Text
+              type="danger"
+              style={{ fontSize: '12px', marginTop: '4px', display: 'block' }}
+            >
+              {mcpInstanceNameError}
+            </Typography.Text>
+          )}
         </div>
 
         <div style={{ marginBottom: '16px' }}>

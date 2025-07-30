@@ -1,6 +1,6 @@
 # No top level studio.db imports allowed to support wokrflow model deployment
 
-import asyncio
+import asyncio, os
 from typing import Dict
 from datetime import timedelta
 
@@ -19,10 +19,12 @@ _mcp_type_to_command = {
 
 
 def get_mcp_tools_for_crewai(mcp_instance: Input__MCPInstance, env_vars: Dict[str, str]) -> input_types.MCPObjects:
+    env_to_pass = os.environ.copy()
+    env_to_pass.update(env_vars)
     server_params = StdioServerParameters(
         command=_mcp_type_to_command[mcp_instance.type],
         args=mcp_instance.args,
-        env=env_vars,
+        env=env_to_pass,
     )
     adapter = MCPServerAdapter(server_params)
     tool_list = adapter.tools
@@ -36,10 +38,12 @@ def get_mcp_tools_for_crewai(mcp_instance: Input__MCPInstance, env_vars: Dict[st
 
 async def get_mcp_tool_definitions(mcp_instance: Input__MCPInstance, env_vars: Dict[str, str]) -> List[mcp_types.Tool]:
     timeout = timedelta(seconds=60)  # 60 seconds
+    env_to_pass = os.environ.copy()
+    env_to_pass.update(env_vars)
     server_params = StdioServerParameters(
         command=_mcp_type_to_command[mcp_instance.type],
         args=mcp_instance.args,
-        env=env_vars,
+        env=env_to_pass,
     )
     try:
         async with stdio_client(server_params) as (read, write):

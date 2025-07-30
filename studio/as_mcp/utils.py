@@ -1,5 +1,5 @@
 from datetime import timedelta
-import asyncio
+import asyncio, os
 from typing import List, Type, Union, Optional, Dict
 from mcp import ClientSession, StdioServerParameters, types as mcp_types
 from mcp.client.stdio import stdio_client
@@ -46,7 +46,8 @@ def _update_mcp_tools(
         print(f"MCP Name: {mcp_obj.name}")
 
         env_vars = env_vars or {}
-        env_to_pass = {k: (env_vars[k] if k in env_vars else "dummy") for k in mcp_obj.env_names}
+        env_to_pass = os.environ.copy()
+        env_to_pass.update({k: (env_vars[k] if k in env_vars else "dummy") for k in mcp_obj.env_names})
         command = _get_runtime_command(mcp_obj.type)
         mcp_server_params = StdioServerParameters(
             command=command,

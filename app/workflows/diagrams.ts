@@ -247,6 +247,12 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
             console.error('Failed to parse MCP tools:', error);
           }
 
+          if (mcpInstance.activated_tools && mcpInstance.activated_tools.length > 0) {
+            mcpTools = mcpTools.filter((toolName) =>
+              mcpInstance.activated_tools.includes(toolName),
+            );
+          }
+
           // Now add the MCP node
           initialNodes.push({
             type: 'mcp',
