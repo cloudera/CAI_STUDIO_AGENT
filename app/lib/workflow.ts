@@ -8,6 +8,7 @@ import {
   UpdateWorkflowRequest,
 } from '@/studio/proto/agent_studio';
 import { WorkflowState } from '../workflows/editorSlice';
+import AgentNode from '../components/diagram/AgentNode';
 
 export interface ActiveNodeState {
   id: string;
@@ -21,205 +22,180 @@ type ProcessedState = {
   activeNodes: ActiveNodeState[]; // IDs of nodes currently "in work"
 };
 
-const extractThought = (completion: string) => {
+// This function is not currently used but kept for future implementation
+const _extractThought = (completion: string) => {
   return completion;
 };
+
+// Event type constants to avoid string literals
+export enum EventType {
+  TASK_STARTED = 'task_started',
+  TASK_COMPLETED = 'task_completed',
+  AGENT_EXECUTION_STARTED = 'agent_execution_started',
+  AGENT_EXECUTION_COMPLETED = 'agent_execution_completed',
+  AGENT_EXECUTION_ERROR = 'agent_execution_error',
+  TOOL_USAGE_STARTED = 'tool_usage_started',
+  TOOL_USAGE_FINISHED = 'tool_usage_finished',
+  TOOL_USAGE_ERROR = 'tool_usage_error',
+  LLM_CALL_STARTED = 'llm_call_started',
+  LLM_CALL_COMPLETED = 'llm_call_completed',
+  LLM_CALL_FAILED = 'llm_call_failed',
+}
+
+// Info type constants
+export enum InfoType {
+  TASK_START = 'TaskStart',
+  DELEGATE = 'Delegate',
+  ASK_COWORKER = 'AskCoworker',
+  TOOL_INPUT = 'ToolInput',
+  END_DELEGATE = 'EndDelegate',
+  END_ASK_COWORKER = 'EndAskCoworker',
+  TOOL_OUTPUT = 'ToolOutput',
+  LLM_CALL = 'LLMCall',
+  COMPLETION = 'Completion',
+  FAILED_COMPLETION = 'FailedCompletion',
+}
+
+// Common tool names
+export const DELEGATE_TOOL = 'Delegate work to coworker';
+export const ASK_COWORKER_TOOL = 'Ask question to coworker';
 
 export const processEvents = (
   events: any[],
   agents: AgentMetadata[],
   tasks: CrewAITaskMetadata[],
   toolInstances: ToolInstance[],
-  mcpInstances: McpInstance[],
-  manager_agent_id: string | undefined,
-  process: string | undefined,
+  _mcpInstances: McpInstance[], // Prefixed with underscore as it's unused
+  _manager_agent_id: string | undefined, // Prefixed with underscore as it's unused
+  _process: string | undefined, // Prefixed with underscore as it's unused
 ): ProcessedState => {
-  let activeNodes: ActiveNodeState[] = [];
-  const nodeStack: string[] = [];
-
+  const activeNodes: Map<string, ActiveNodeState> = new Map();
+  const agentStack: string[] = [];
   events.forEach((event) => {
-    switch (event.type) {
-      case 'task_started': {
-        if (event.agent_studio_id) {
-          activeNodes.push({
-            id: event.agent_studio_id,
-          });
-          nodeStack.push(event.agent_studio_id);
+    switch (event.type as string) {
+      case EventType.TASK_STARTED: {
+        if (event?.agent_studio_id) {
+          activeNodes.set(event.agent_studio_id, { id: event.agent_studio_id });
         }
         break;
       }
 
-      case 'task_completed': {
-        if (event.agent_studio_id) {
-          activeNodes = activeNodes.filter((node) => node.id !== event.agent_studio_id);
-          nodeStack.pop();
+      case EventType.TASK_COMPLETED: {
+        if (event?.agent_studio_id) {
+          activeNodes.delete(event.agent_studio_id);
         }
         break;
       }
 
-      case 'agent_execution_started': {
+      case EventType.AGENT_EXECUTION_STARTED: {
         // There are some cases where a tool usage error will lead to re-triggering
         // an agent execution start without a corresponding agent execution error. to
         // compensate for this, we need to make sure we don't duplicate agent nodes
         // on top of the active node stack.
         const nodeId = event.agent_studio_id || 'manager-agent';
-        activeNodes = activeNodes.filter((node) => node.id !== nodeId);
-        activeNodes.push({
+        agentStack.push(nodeId);
+        activeNodes.set(nodeId, {
           id: nodeId,
-          info: `I am starting a task: "${event.task.description}"`,
-          infoType: 'TaskStart',
+          info: `I am starting an agent: "${event.agent_studio_name}"`,
+          infoType: InfoType.TASK_START,
         });
-
-        if (nodeStack.at(-1) !== nodeId) {
-          nodeStack.push(nodeId);
-        }
-
         break;
       }
 
-      case 'tool_usage_started': {
+      case EventType.TOOL_USAGE_STARTED: {
         // For manager agent, this is a delegation.
-        if (event.tool_name === 'Delegate work to coworker') {
-          const nodeId = nodeStack.at(-1);
-          nodeId && (activeNodes = activeNodes.filter((node) => node.id !== nodeId));
-          nodeId &&
-            activeNodes.push({
-              id: nodeId,
-              info: `${event.tool_args}`,
-              infoType: 'Delegate',
-            });
-        } else if (event.tool_name === 'Ask question to coworker') {
-          const nodeId = nodeStack.at(-1);
-          nodeId && (activeNodes = activeNodes.filter((node) => node.id !== nodeId));
-          nodeId &&
-            activeNodes.push({
-              id: nodeId,
-              info: `${event.tool_args}`,
-              infoType: 'AskCoworker',
-            });
-        } else {
-          const agentId = nodeStack.at(-1);
-          const agent = agents.find((a) => a.id === agentId);
-          const possibleToolInstances = toolInstances.filter((ti) =>
-            agent?.tools_id.includes(ti.id),
-          );
-          const possibleMcpInstances = mcpInstances.filter((mi) =>
-            agent?.mcp_instance_ids.includes(mi.id),
-          );
-          const toolInstance = possibleToolInstances.find((t) => t.name === event.tool_name);
-          const mcpInstance = possibleMcpInstances.find((m) =>
-            JSON.parse(m.tools || '[]')
-              .map((t: any) => t.name)
-              .includes(event.tool_name),
-          );
-          if (toolInstance || mcpInstance) {
-            // Update the agent node
-            activeNodes = activeNodes.filter((node) => node.id !== agentId);
-            activeNodes.push({
-              id: agentId!,
-              info: `${event.tool_args}`,
-              infoType: 'ToolInput',
-            });
-          }
-          if (toolInstance) {
-            // Add the tool node to the stack
-            activeNodes.push({
-              id: toolInstance.id,
-              info: `${event.tool_args}`,
-              infoType: 'ToolInput',
-            });
-            nodeStack.push(toolInstance.id);
-          } else if (mcpInstance) {
-            // Add the MCP node to the stack
-            activeNodes.push({
-              id: mcpInstance.id,
+        if (event?.tool_name == DELEGATE_TOOL || event?.tool_name == ASK_COWORKER_TOOL) {
+          const agentNodeId = agentStack.at(-1);
+          agentNodeId &&
+            activeNodes.set(agentNodeId, {
+              id: agentNodeId,
               activeTool: event.tool_name,
               info: `${event.tool_args}`,
-              infoType: 'ToolInput',
+              infoType:
+                event?.tool_name === DELEGATE_TOOL ? InfoType.DELEGATE : InfoType.ASK_COWORKER,
             });
-            nodeStack.push(mcpInstance.id);
-          }
+        } else if (event?.agent_studio_id) {
+          const toolId = event?.agent_studio_id;
+          activeNodes.set(toolId, {
+            id: toolId,
+            activeTool: event.tool_name,
+            info: `${event.tool_args}`,
+            infoType: InfoType.TOOL_INPUT,
+          });
         }
         break;
       }
 
-      case 'tool_usage_finished':
-      case 'tool_usage_error': {
+      case EventType.TOOL_USAGE_FINISHED:
+      case EventType.TOOL_USAGE_ERROR: {
         // For manager agent, this is a delegation.
-        if (event.tool_name === 'Delegate work to coworker') {
-          // update the corresponding agent node
-          activeNodes = activeNodes.filter((node) => node.id !== nodeStack.at(-1));
-          activeNodes.push({
-            id: nodeStack.at(-1)!,
-            info: `${JSON.stringify(event)}`,
-            infoType: 'EndDelegate',
-          });
-        } else if (event.tool_name === 'Ask question to coworker') {
-          // update the corresponding agent node
-          activeNodes = activeNodes.filter((node) => node.id !== nodeStack.at(-1));
-          activeNodes.push({
-            id: nodeStack.at(-1)!,
-            info: `${JSON.stringify(event)}`,
-            infoType: 'EndAskCoworker',
-          });
-        } else {
-          // pop the tool node
-          activeNodes = activeNodes.filter((node) => node.id !== nodeStack.at(-1));
-          nodeStack.pop();
+        const agentNodeId = agentStack.at(-1);
+        if (event?.tool_name == DELEGATE_TOOL || event?.tool_name == ASK_COWORKER_TOOL) {
+          agentNodeId &&
+            activeNodes.set(agentNodeId, {
+              id: agentNodeId,
+              activeTool: event.tool_name,
+              info: `${JSON.stringify(event)}`,
+              infoType:
+                event?.tool_name === DELEGATE_TOOL
+                  ? InfoType.END_DELEGATE
+                  : InfoType.END_ASK_COWORKER,
+            });
+        } else if (event?.agent_studio_id) {
+          activeNodes.delete(event?.agent_studio_id);
+          agentNodeId &&
+            activeNodes.set(agentNodeId, {
+              id: agentNodeId,
+              activeTool: event.tool_name,
+              info: `${JSON.stringify(event)}`,
+              infoType: InfoType.TOOL_OUTPUT,
+            });
+        }
+        break;
+      }
 
-          // update the corresponding agent node
-          activeNodes = activeNodes.filter((node) => node.id !== nodeStack.at(-1));
-          activeNodes.push({
-            id: nodeStack.at(-1)!,
+      case EventType.LLM_CALL_STARTED: {
+        // find the most recent node in the stack which will be the node of
+        // the calling agent
+        const agentNodeId = agentStack.at(-1) || '';
+        if (activeNodes.has(agentNodeId)) {
+          activeNodes.set(agentNodeId, {
+            id: agentNodeId,
             info: `${JSON.stringify(event)}`,
-            infoType: 'ToolOutput',
+            infoType: InfoType.LLM_CALL,
           });
         }
         break;
       }
 
-      case 'llm_call_started': {
+      case EventType.LLM_CALL_COMPLETED:
+      case EventType.LLM_CALL_FAILED: {
         // find the most recent node in the stack which will be the node of
         // the calling agent
-        const nodeId = nodeStack.at(-1);
-        if (nodeId) {
-          activeNodes = activeNodes.filter((node) => node.id !== nodeId);
-          activeNodes.push({
-            id: nodeId,
-            info: `${JSON.stringify(event)}`,
-            infoType: 'LLMCall',
-          });
-        }
-        break;
-      }
-
-      case 'llm_call_completed':
-      case 'llm_call_failed': {
-        // find the most recent node in the stack which will be the node of
-        // the calling agent
-        const nodeId = nodeStack.at(-1);
-        if (nodeId) {
-          activeNodes = activeNodes.filter((node) => node.id !== nodeId);
-          activeNodes.push({
-            id: nodeId,
+        const agentNodeId = agentStack.at(-1) || '';
+        if (activeNodes.has(agentNodeId)) {
+          activeNodes.set(agentNodeId, {
+            id: agentNodeId,
             info: `${event.response || event.error}`,
-            infoType: event.type === 'llm_call_completed' ? 'Completion' : 'FailedCompletion',
+            infoType:
+              event.type === EventType.LLM_CALL_COMPLETED
+                ? InfoType.COMPLETION
+                : InfoType.FAILED_COMPLETION,
           });
         }
         break;
       }
 
-      case 'agent_execution_completed':
-      case 'agent_execution_error': {
+      case EventType.AGENT_EXECUTION_COMPLETED:
+      case EventType.AGENT_EXECUTION_ERROR: {
         const nodeId = event.agent_studio_id || 'manager-agent';
-        activeNodes = activeNodes.filter((node) => node.id !== nodeId);
-        nodeStack.pop();
+        activeNodes.delete(nodeId);
+        agentStack.pop();
         break;
       }
     }
   });
-
-  return { activeNodes };
+  return { activeNodes: Array.from(activeNodes.values()) };
 };
 
 export const getWorkflowInputs = (

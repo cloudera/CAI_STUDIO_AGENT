@@ -120,6 +120,9 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
   const [deleteToolInstance] = useRemoveToolInstanceMutation();
   const [testError, setTestError] = useState<string | null>(null);
   const allEventsRef = useRef<any[]>([]);
+  const [form] = Form.useForm<{
+    toolname: string;
+  }>();
 
   // Create a map of tool instances
   const [toolInstancesMap, setToolInstancesMap] = useState<Record<string, any>>(() => {
@@ -171,14 +174,20 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
 
   // Handle pre-selected tool instance
   useEffect(() => {
-    if (!selectedToolInstance) {
-      if (preSelectedToolInstanceId && toolInstancesMap[preSelectedToolInstanceId] && open) {
-        handleSelectToolInstance(preSelectedToolInstanceId);
+    if (selectedToolInstance) {
+      if (toolInstancesMap[selectedToolInstance] && open) {
+        handleSelectToolInstance(selectedToolInstance);
       } else if (open) {
         handleCreateCardSelect();
       }
     }
-  }, [preSelectedToolInstanceId, toolInstancesMap, open, selectedToolInstance]);
+  }, [toolInstancesMap, open, selectedToolInstance]);
+
+  React.useMemo(() => {
+    if (preSelectedToolInstanceId) {
+      setSelectedToolInstance(preSelectedToolInstanceId);
+    }
+  }, [preSelectedToolInstanceId]);
 
   // Add a useRef to track the last mode (create/template/instance)
   const lastModeRef = useRef<string>('');
@@ -240,7 +249,10 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
 
     try {
       setIsLoading(true); // Set loading state before starting
-
+      const values = await form.validateFields();
+      if (!values) {
+        throw new Error('input validation error');
+      }
       // Show initiating notification
       notificationApi.info({
         message: 'Creating Tool',
@@ -248,7 +260,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
         placement: 'topRight',
       });
 
-      let toolName = 'New Tool';
+      let toolName = values.toolname || 'New Tool'; // Default name if not provided
       if (isCreateSelected) {
         toolName = newToolName || `${workflowName || 'Workflow'} Tool`;
       } else {
@@ -869,115 +881,54 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
             </div>
           )}
 
-          <Form.Item label="Tool Icon">
-            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-              <Upload
-                accept=".png,.jpg,.jpeg"
-                customRequest={({ file, onSuccess, onError }) => {
-                  handleFileUpload(file as File)
-                    .then(() => onSuccess?.('ok'))
-                    .catch((err) => onError?.(err));
-                }}
-                showUploadList={false}
-                disabled={isUploading}
-              >
-                <Button
-                  icon={selectedFile ? <FileImageOutlined /> : <UploadOutlined />}
-                  loading={isUploading}
-                  disabled={selectedFile !== null}
-                >
-                  {selectedFile ? selectedFile.name : 'Upload File'}
-                </Button>
-              </Upload>
-              {selectedFile && (
-                <Button
-                  icon={<DeleteOutlined />}
-                  style={{ marginLeft: '8px' }}
-                  onClick={() => {
-                    setSelectedFile(null);
-                    setUploadedFilePath('');
+          <Form.Item>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}>
+                <div style={{ minWidth: '80px' }}>Playground</div>
+                <Switch
+                  checked={playgroundEnabled}
+                  onChange={(checked) => {
+                    if (!checked) {
+                      resetPlaygroundState();
+                    }
+                    setPlaygroundEnabled(checked);
                   }}
                 />
-              )}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+                <div style={{ minWidth: '80px' }}>Tool Icon</div>
+                <div>
+                  <Upload
+                    accept=".png,.jpg,.jpeg"
+                    customRequest={({ file, onSuccess, onError }) => {
+                      handleFileUpload(file as File)
+                        .then(() => onSuccess?.('ok'))
+                        .catch((err) => onError?.(err));
+                    }}
+                    showUploadList={false}
+                    disabled={isUploading}
+                  >
+                    <Button
+                      icon={selectedFile ? <FileImageOutlined /> : <UploadOutlined />}
+                      loading={isUploading}
+                      disabled={selectedFile !== null}
+                    >
+                      {selectedFile ? selectedFile.name : 'Upload File'}
+                    </Button>
+                  </Upload>
+                  {selectedFile && (
+                    <Button
+                      icon={<DeleteOutlined />}
+                      style={{ marginLeft: '8px' }}
+                      onClick={() => {
+                        setSelectedFile(null);
+                        setUploadedFilePath('');
+                      }}
+                    />
+                  )}
+                </div>
+              </div>
             </div>
-          </Form.Item>
-
-          {/* <div style={{ marginBottom: '24px' }}>
-            <div
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '8px',
-              }}
-            >
-              <Space>
-                <Text style={{ fontWeight: 'normal' }}>tool.py</Text>
-                <Tooltip title="The Python code that defines the tool's functionality and interface">
-                  <QuestionCircleOutlined style={{ color: '#666' }} />
-                </Tooltip>
-              </Space>
-              <Space>
-                <Button
-                  type="text"
-                  icon={<ExportOutlined />}
-                  onClick={handleEditToolFile}
-                  size="small"
-                >
-                  Edit
-                </Button>
-                <Button
-                  type="text"
-                  icon={isRefreshing ? <SyncOutlined spin /> : <ReloadOutlined />}
-                  onClick={handleRefresh}
-                  disabled={isRefreshing}
-                  size="small"
-                >
-                  Refresh
-                </Button>
-              </Space>
-            </div>
-            <Editor
-              key={`python-${editorKey}`}
-              height="400px"
-              defaultLanguage="python"
-              value={toolInstance.python_code || 'N/A'}
-              options={{ readOnly: true }}
-              theme="vs-dark"
-            />
-          </div> */}
-
-          {/* <Form.Item
-            label={
-              <Space>
-                requirements.txt
-                <Tooltip title="Python package dependencies required by this tool">
-                  <QuestionCircleOutlined style={{ color: '#666' }} />
-                </Tooltip>
-              </Space>
-            }
-          >
-            <Editor
-              key={`requirements-${editorKey}`}
-              height="150px"
-              defaultLanguage="plaintext"
-              value={toolInstance.python_requirements || 'N/A'}
-              options={{ readOnly: true }}
-              theme="vs-dark"
-            />
-          </Form.Item> */}
-
-          <Form.Item label="Playground">
-            <Switch
-              checked={playgroundEnabled}
-              onChange={(checked) => {
-                if (!checked) {
-                  resetPlaygroundState();
-                }
-                setPlaygroundEnabled(checked);
-              }}
-            />
           </Form.Item>
 
           {playgroundEnabled ? (
@@ -1248,7 +1199,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
 
   const renderCreateNewToolForm = () => (
     <Layout style={{ flex: 1, backgroundColor: '#fff', padding: '0px', overflowY: 'auto' }}>
-      <Form layout="vertical">
+      <Form form={form} layout="vertical">
         <Form.Item
           label={
             <Space>
@@ -1258,10 +1209,13 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
               </Tooltip>
             </Space>
           }
+          name="toolname"
+          required
+          rules={[{ required: true, message: 'Please enter a tool name' }]}
         >
           <Input
-            value={newToolName}
-            onChange={(e) => setNewToolName(e.target.value)}
+            value={form.getFieldValue('toolname')}
+            onChange={(e) => form.setFieldValue('toolname', e.target.value)}
             placeholder="Enter tool name"
           />
         </Form.Item>
@@ -1285,9 +1239,8 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                 </Text>
               </Layout>
               <Text style={{ fontSize: 13, fontWeight: 400, background: 'transparent' }}>
-                Right now, the tool will be created with these default codes. You will need to
-                create the tool first to let us generate necessary artifacts, after which you can
-                update the tool code.
+                Every new tool will be initialized with this default code. You can modify the tool's
+                code or other properties after it has been created.
               </Text>
             </Layout>
           }
@@ -1460,6 +1413,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
           </Button>
         ) : selectedToolTemplate && !selectedToolInstance ? (
           <Tooltip
+            key="create-from-template"
             title={
               !selectedTool?.is_valid
                 ? selectedTool?.tool_metadata
@@ -1673,7 +1627,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                       style={{ marginTop: '8px' }}
                       grid={{ gutter: 16, column: 1 }}
                       dataSource={filterToolTemplates(toolTemplates)}
-                      renderItem={renderToolTemplate}
+                      renderItem={(item) => renderToolTemplate(item)}
                     />
                   </Layout>
                 </Layout>

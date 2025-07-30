@@ -16,6 +16,7 @@ import venv
 
 import engine.types as input_types
 from engine.types import *
+from engine.crewai.wrappers import AgentStudioCrewAITool
 
 
 def extract_tool_class_name(code: str) -> str:
@@ -239,8 +240,7 @@ def get_tool_instance_proxy(
 
     _tool: BaseTool = run_code_in_thread(proxy_code + f"\n\nresult = {tool_class_name}()")
 
-    class EmbeddedCrewAITool(BaseTool):
-        agent_studio_id: str = tool_instance.id
+    class EmbeddedCrewAITool(AgentStudioCrewAITool):
         name: str = _tool.name
         description: str = _tool.description
         args_schema: Type[BaseModel] = _tool.args_schema
@@ -248,8 +248,7 @@ def get_tool_instance_proxy(
         def _run(self, *args, **kwargs):
             return _tool._run(*args, **kwargs)
 
-    crewai_tool: BaseTool = EmbeddedCrewAITool()
-    print(str(crewai_tool))
+    crewai_tool: BaseTool = EmbeddedCrewAITool(agent_studio_id=tool_instance.id)
 
     crewai_tool.name = tool_instance.name
     crewai_tool._generate_description()
@@ -271,7 +270,6 @@ def create_virtual_env(source_folder_path: str, with_: Literal["venv", "uv"]):
     # If .venv/ exists but .venv/bin/python doesn't exist, remove .venv/ because
     # it's an invalid venv and has been corrupted.
     if os.path.exists(venv_dir) and not os.path.exists(os.path.join(venv_dir, "bin", "python")):
-        print(f"Removing invalid venv directory {venv_dir} and recreating it because it's missing .venv/bin/python")
         shutil.rmtree(venv_dir)
 
     uv_bin = shutil.which("uv")
@@ -295,7 +293,6 @@ def create_virtual_env(source_folder_path: str, with_: Literal["venv", "uv"]):
             error_msg += f"STDOUT:\n{result.stdout}\n"
         if result.stderr:
             error_msg += f"STDERR:\n{result.stderr}\n"
-        print(error_msg)
         raise RuntimeError(f"COULD NOT CREATE VENV: {error_msg}")
 
 
@@ -340,7 +337,6 @@ def _prepare_virtual_env_for_tool_impl(
             error_msg += f"STDOUT:\n{e.stdout}\n"
         if e.stderr:
             error_msg += f"STDERR:\n{e.stderr}\n"
-        print(error_msg)
         raise RuntimeError(f"COULD NOT INSTALL REQUIREMENTS: {error_msg}")
 
 
@@ -457,8 +453,7 @@ def get_venv_tool(
         tool_code = code_file.read()
     user_params = user_params_kv
 
-    class AgentStudioCrewAIVenvTool(BaseTool):
-        agent_studio_id: str = tool_instance.id
+    class AgentStudioCrewAIVenvTool(AgentStudioCrewAITool):
         output_key: Optional[str] = get_venv_tool_output_key(tool_code)
         python_executable: str = get_venv_tool_python_executable(workflow_directory, tool_instance)
         python_file: str = os.path.join(
@@ -504,7 +499,7 @@ def get_venv_tool(
                 return f"stderr: {result.stderr or 'No error details found'}\n\n\nstdout: {result.stdout}"
             return f"Error running tool - no output"
 
-    tool = AgentStudioCrewAIVenvTool()
+    tool = AgentStudioCrewAIVenvTool(agent_studio_id=tool_instance.id)
 
     return tool
 

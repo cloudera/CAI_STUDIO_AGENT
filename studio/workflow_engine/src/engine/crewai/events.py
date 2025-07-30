@@ -6,6 +6,53 @@ from crewai.utilities.events import *
 from engine.crewai.trace_context import get_trace_id
 from engine.ops import get_ops_endpoint
 
+# Global mapping from (agent_key, tool_name) to tool_instance_id
+_AGENT_TOOL_TO_INSTANCE_ID = {}
+
+
+def _extract_tool_instance_id(event):
+    """
+    Extract tool instance ID from a tool event.
+    Uses agent_key + tool_name mapping since agent is None in finished events.
+    """
+    try:
+        # Create a key from agent_key and tool_name
+        agent_key = getattr(event, "agent_key", None)
+        tool_name = getattr(event, "tool_name", None)
+
+        if not agent_key or not tool_name:
+            return None
+
+        # Skip delegation tools
+        if tool_name in ["Delegate work to coworker", "Ask question to coworker"]:
+            return None
+
+        cache_key = (agent_key, tool_name)
+
+        # For ToolUsageStartedEvent, extract from agent and cache it
+        if hasattr(event, "agent") and event.agent and hasattr(event.agent, "tools"):
+            agent_tools = getattr(event.agent, "tools", [])
+            for tool in agent_tools:
+                if (
+                    hasattr(tool, "name")
+                    and tool.name == tool_name
+                    and hasattr(tool, "agent_studio_id")
+                    and tool.agent_studio_id
+                ):
+                    tool_instance_id = tool.agent_studio_id
+                    _AGENT_TOOL_TO_INSTANCE_ID[cache_key] = tool_instance_id
+                    return tool_instance_id
+
+        # For ToolUsageFinishedEvent or if not found above, use cached mapping
+        if cache_key in _AGENT_TOOL_TO_INSTANCE_ID:
+            tool_instance_id = _AGENT_TOOL_TO_INSTANCE_ID[cache_key]
+            return tool_instance_id
+
+        return None
+
+    except Exception as e:
+        return None
+
 
 # List of event processors. These are lambdas that
 # can add individual fields to CrewAI events, which are
@@ -56,6 +103,7 @@ EVENT_PROCESSORS = {
         "delegations": x.delegations,
         "started_at": str(x.started_at),
         "finished_at": str(x.finished_at),
+        "agent_studio_id": _extract_tool_instance_id(x),
     },
     ToolUsageErrorEvent: lambda x: {
         "tool_name": x.tool_name,
@@ -64,6 +112,7 @@ EVENT_PROCESSORS = {
         "tool_args": x.tool_args,
         "run_attempts": x.run_attempts,
         "delegations": x.delegations,
+        "agent_studio_id": _extract_tool_instance_id(x),
     },
     ToolUsageStartedEvent: lambda x: {
         "tool_name": x.tool_name,
@@ -71,6 +120,7 @@ EVENT_PROCESSORS = {
         "tool_args": x.tool_args,
         "run_attempts": x.run_attempts,
         "delegations": x.delegations,
+        "agent_studio_id": _extract_tool_instance_id(x),
     },
     ToolExecutionErrorEvent: lambda x: {},
     ToolSelectionErrorEvent: lambda x: {},
@@ -101,6 +151,12 @@ def post_event(source, event):
     context variable set specifically for the async workflow task.
     """
     trace_id = get_trace_id()
+    processed_event_data = process_event(event)
+
+    # Extract agent_studio_id with priority:
+    # 1. From processed event data (for tool events)
+    # 2. From source object (for other events)
+    agent_studio_id = processed_event_data.get("agent_studio_id") or getattr(source, "agent_studio_id", None)
 
     # Maintain baseline event information
     # across all event types. Optionally, many of our crewAI classes
@@ -110,11 +166,11 @@ def post_event(source, event):
     event_dict = {
         "timestamp": str(event.timestamp),
         "type": str(event.type),
-        "agent_studio_id": getattr(source, "agent_studio_id", None),
+        "agent_studio_id": agent_studio_id,
     }
 
     # Process the event given the specific event type
-    event_dict.update(process_event(event))
+    event_dict.update(processed_event_data)
 
     requests.post(
         url=f"{get_ops_endpoint()}/events",
