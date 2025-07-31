@@ -61,7 +61,7 @@ def add_workflow_template_from_workflow(
         # Create a baseline workflow template
         workflow_template: db_model.WorkflowTemplate = db_model.WorkflowTemplate(id=workflow_template_id)
         # TODO: might want to override name with the request in some way
-        workflow_template.name = f"Template: {workflow.name}"
+        workflow_template.name = f"{workflow.name}"
         workflow_template.description = workflow.description
         workflow_template.is_conversational = workflow.is_conversational
         workflow_template.process = workflow.crew_ai_process

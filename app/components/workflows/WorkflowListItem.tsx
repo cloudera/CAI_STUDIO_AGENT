@@ -501,7 +501,7 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
       e.stopPropagation();
       const workflowId = await addWorkflow({
         workflow_template_id: workflowTemplate!.id,
-        name: `Copy of ${workflowTemplate?.name}`,
+        name: `${workflowTemplate?.name}`,
       }).unwrap();
       dispatch(resetEditor());
       dispatch(clearedWorkflowApp());

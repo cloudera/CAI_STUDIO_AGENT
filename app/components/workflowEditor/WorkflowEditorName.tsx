@@ -1,5 +1,7 @@
+'use client';
+
 import React, { useState } from 'react';
-import { Button, Input } from 'antd';
+import { Button, Input, Tooltip } from 'antd';
 import { Typography } from 'antd/lib';
 import { useAppSelector, useAppDispatch } from '@/app/lib/hooks/hooks';
 import {
@@ -11,6 +13,9 @@ import { useUpdateWorkflowMutation, useGetWorkflowByIdQuery } from '@/app/workfl
 import { EditOutlined, SaveOutlined } from '@ant-design/icons';
 import { useGlobalNotification } from '@/app/components/Notifications';
 import { createUpdateRequestFromEditor } from '@/app/lib/workflow';
+import { useGetParentProjectDetailsQuery } from '@/app/lib/crossCuttingApi';
+import { FolderOpenOutlined } from '@ant-design/icons';
+
 const { Title } = Typography;
 
 export interface WorkflowEditorNameProps {
@@ -19,6 +24,8 @@ export interface WorkflowEditorNameProps {
 
 const WorkflowEditorName: React.FC<WorkflowEditorNameProps> = ({ workflowId }) => {
   const [preEditName, setPreEditName] = useState<string | undefined>('');
+  const { data: workflow } = useGetWorkflowByIdQuery(workflowId);
+  const { data: parentProjectDetails } = useGetParentProjectDetailsQuery({});
   const workflowName = useAppSelector(selectEditorWorkflowName);
   const workflowState = useAppSelector(selectEditorWorkflow);
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -56,6 +63,22 @@ const WorkflowEditorName: React.FC<WorkflowEditorNameProps> = ({ workflowId }) =
       notificationApi.error({
         message: 'Error Updating Workflow',
         description: 'Failed to update workflow name. Please try again.',
+        placement: 'topRight',
+      });
+    }
+  };
+
+  const handleOpenWorkflowDirectory = () => {
+    if (workflow?.directory) {
+      const fileUrl = new URL(
+        `files/${parentProjectDetails?.studio_subdirectory && parentProjectDetails?.studio_subdirectory.length > 0 ? parentProjectDetails?.studio_subdirectory + '/' : ''}${workflow.directory}/`,
+        parentProjectDetails?.project_base,
+      );
+      window.open(fileUrl, '_blank');
+    } else {
+      notificationApi.error({
+        message: 'Error Editing Workflow',
+        description: 'Failed to edit workflow name. Please try again.',
         placement: 'topRight',
       });
     }
@@ -106,6 +129,14 @@ const WorkflowEditorName: React.FC<WorkflowEditorNameProps> = ({ workflowId }) =
                 setPreEditName(workflowName);
               }}
             />
+            <Tooltip title="Go to Workflow Directory">
+              <Button
+                icon={<FolderOpenOutlined />}
+                type="text"
+                style={{ marginLeft: '8px' }}
+                onClick={handleOpenWorkflowDirectory}
+              />
+            </Tooltip>
           </>
         )}
       </div>

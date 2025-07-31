@@ -421,6 +421,96 @@
       "is_venv_tool": true,
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/partners.png",
       "workflow_template_id": "6eccbfa6-66f9-418a-bc6c-74516ac8219d"
+    },
+    {
+      "id": "0a71fdad-933b-455c-a333-1a08d0dde7a0",
+      "name": "CDW SQL Query Tool",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/cdw_sql_query",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/file_db.png"
+    },
+    {
+      "id": "ddf7db42-6d21-4020-8d67-d8ac3f51531d",
+      "name": "CSV Reader",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/csv_reader",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/csv_reader.png"
+    },
+    {
+      "id": "d1356d7d-09bb-4088-8a7b-3e529f2d607d",
+      "name": "File DB Reader",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/file_db",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/file_db.png"
+    },
+    {
+      "id": "b150fd12-b68a-4378-a126-f48e6049c159",
+      "name": "JSON Reader",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/json_reader",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/json_reader.png"
+    },
+    {
+      "id": "fbf6ee91-eafb-4bc7-bb61-67d428874483",
+      "name": "Read Shared PDF",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/read_shared_pdf",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/pdf.png"
+    },
+    {
+      "id": "4db72c73-0d96-425f-a0da-7b03428b1f42",
+      "name": "Read Shared CSV",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/shared_csv_reader",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/csv_reader.png"
+    },
+    {
+      "id": "7c43a63b-c1ae-49e7-ade8-cb42cb42423d",
+      "name": "Shared File Reader",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/shared_fileread_tool",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/google-docs.png"
+    },
+    {
+      "id": "c1a40fd8-e12d-4fed-b74a-a921e2c68c97",
+      "name": "Read Shared JSON",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/shared_json_reader",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/json_reader.png"
+    },
+    {
+      "id": "fac262d4-d1ad-4edd-bd35-b959da48a9a6",
+      "name": "Write to Shared PDF",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/write_to_shared_pdf",
+      "pre_built": true,
+      "is_venv_tool": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/pdf.png"
     }
   ],
   "task_templates": [
@@ -530,6 +620,38 @@
       "expected_output": "Full blog post of at least 4 paragraphs",
       "assigned_agent_template_id": "",
       "workflow_template_id": "a77aed0a-7d43-48ec-9495-8728dd97e66d"
+    },
+    {
+      "id": "efd00077-578b-4ca9-a170-36a70412e2ff",
+      "name": "Write Hello World to Shared PDF",
+      "description": "Write 'Hello World' to a shared PDF file named 'hello_world.pdf'.",
+      "expected_output": "Hello World written to a shared PDF file named 'hello_world.pdf'.",
+      "assigned_agent_template_id": "a9f7b3d9-8c4f-4302-8357-711b6df8561e",
+      "workflow_template_id": "6717a073-57fb-40df-85f8-02e48d50cfd1"
+    },
+    {
+      "id": "65dd419d-ce34-4536-b056-a21d005d674c",
+      "name": "Read PDF",
+      "description": "Read the content of the previously created PDF file.",
+      "expected_output": "Content of the previously created PDF file.",
+      "assigned_agent_template_id": "a9f7b3d9-8c4f-4302-8357-711b6df8561e",
+      "workflow_template_id": "6717a073-57fb-40df-85f8-02e48d50cfd1"
+    },
+    {
+      "id": "50b56563-8579-4eb4-9a49-2095e47b029f",
+      "name": "Update PDF",
+      "description": "Update the content of the PDF replacing O's with 0's, E's with 3's, and R's with 4's",
+      "expected_output": "Newly created PDF file named 'updated_pdf.pdf' with the updated content, and output the name of the updated PDF file.",
+      "assigned_agent_template_id": "a9f7b3d9-8c4f-4302-8357-711b6df8561e",
+      "workflow_template_id": "6717a073-57fb-40df-85f8-02e48d50cfd1"
+    },
+    {
+      "id": "e66c1f73-e23e-441a-9e03-0a3a2a918eca",
+      "name": "Read updated PDF",
+      "description": "Read the content of the newly created PDF file.",
+      "expected_output": "Content of the newly created PDF file.",
+      "assigned_agent_template_id": "a9f7b3d9-8c4f-4302-8357-711b6df8561e",
+      "workflow_template_id": "6717a073-57fb-40df-85f8-02e48d50cfd1"
     }
   ],
   "agent_templates": [
@@ -1007,6 +1129,26 @@
       "pre_packaged": false,
       "agent_image_path": "studio-data/dynamic_assets/agent_template_icons/history-agent.png",
       "workflow_template_id": "6eccbfa6-66f9-418a-bc6c-74516ac8219d"
+    },
+    {
+      "id": "a9f7b3d9-8c4f-4302-8357-711b6df8561e",
+      "name": "PDF File Agent",
+      "description": "PDF File Agent",
+      "tool_template_ids": [
+        "fbf6ee91-eafb-4bc7-bb61-67d428874483",
+        "fac262d4-d1ad-4edd-bd35-b959da48a9a6"
+      ],
+      "role": "PDF File Agent",
+      "backstory": "An esteemed file manipulator agent who can read, write, and update PDF files.",
+      "goal": "Perform all file operations assigned to you.",
+      "allow_delegation": false,
+      "verbose": false,
+      "cache": false,
+      "temperature": 0.100000001490116,
+      "max_iter": 0,
+      "pre_packaged": true,
+      "agent_image_path": "studio-data/dynamic_assets/agent_template_icons/research-agent.png",
+      "workflow_template_id": ""
     }
   ],
   "workflow_templates": [
@@ -1163,6 +1305,23 @@
       "manager_agent_template_id": "3616ba1a-b05c-47b0-a79b-c1a6ba7cea8d",
       "use_default_manager": false,
       "is_conversational": true,
+      "pre_packaged": true
+    },
+    {
+      "id": "6717a073-57fb-40df-85f8-02e48d50cfd1",
+      "name": "PDF File Manipulation Workflow",
+      "description": "This workflow enables a PDF File Agent to read, write, and update PDF files.",
+      "process": "sequential",
+      "agent_template_ids": [
+        "a9f7b3d9-8c4f-4302-8357-711b6df8561e"
+      ],
+      "task_template_ids": [
+        "efd00077-578b-4ca9-a170-36a70412e2ff",
+        "65dd419d-ce34-4536-b056-a21d005d674c",
+        "50b56563-8579-4eb4-9a49-2095e47b029f",
+        "e66c1f73-e23e-441a-9e03-0a3a2a918eca"
+      ],
+      "is_conversational": false,
       "pre_packaged": true
     }
   ],

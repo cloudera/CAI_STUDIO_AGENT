@@ -1,5 +1,6 @@
 """
-Reads and extracts content from the given file relative to the tool's directory.
+Reads and extracts content from the given file relative to the shared workflow directory. The workflow
+directory is located at (agent_studio_root)/studio-data/workflows/<my_workflow>/*.
 """
 
 from textwrap import dedent
@@ -22,8 +23,8 @@ from striprtf.striprtf import rtf_to_text
 from pydantic import BaseModel as StudioBaseTool
 import argparse 
 
-# Our tool is stored in .../<workflow>/tools/<tool_name>/tool.py. So we need to go up 1 level to get to the root of the tool directory.
-ROOT_DIR = Path(__file__).parent
+# Our tool is stored in .../<workflow>/tools/<tool_name>/tool.py. So we need to go up 3 levels to get to the root of the workflow.
+ROOT_DIR = Path(__file__).parent.parent.parent
 sys.path.append(str(ROOT_DIR))
 os.chdir(ROOT_DIR)
 
@@ -32,7 +33,7 @@ class UserParameters(BaseModel):
     pass
 
 class ToolParameters(BaseModel):
-    file_path: str = Field(description="Path to the file to be read and processed, relative to the tool's directory.")
+    file_path: str = Field(description="Path to the file to be read and processed, relative to the workflow directory.")
 
 
 def run_tool(

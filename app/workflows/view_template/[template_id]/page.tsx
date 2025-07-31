@@ -94,7 +94,7 @@ const WorkflowTemplateContent: React.FC<WorkflowTemplateContentProps> = ({ templ
         try {
           const workflowId = await addWorkflow({
             workflow_template_id: templateId,
-            name: `Copy of ${templateName}`,
+            name: `${templateName}`,
           }).unwrap();
           dispatch(resetEditor());
           router.push(`/workflows/create?workflowId=${workflowId}`);

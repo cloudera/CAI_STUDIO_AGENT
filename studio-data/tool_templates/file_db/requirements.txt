@@ -1,0 +1,6 @@
+# https://pip.pypa.io/en/stable/reference/requirements-file-format/
+pydantic
+duckdb
+pandas
+pyarrow 
+
