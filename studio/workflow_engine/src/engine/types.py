@@ -5,7 +5,7 @@ from crewai import Agent, Crew, Task, Process
 from crewai.tools import BaseTool
 from crewai.tools.base_tool import BaseTool
 from crewai import LLM as CrewAILLM
-from crewai_tools import MCPServerAdapter
+from mcpadapt.core import MCPAdapt
 from engine.consts import SupportedModelTypes
 
 
@@ -130,7 +130,7 @@ class CollatedInput(BaseModel):
 class MCPObjects(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    local_session: MCPServerAdapter
+    local_session: MCPAdapt
     tools: List[BaseTool]
 
 

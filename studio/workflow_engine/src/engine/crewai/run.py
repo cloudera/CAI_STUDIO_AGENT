@@ -39,7 +39,7 @@ def run_workflow(
         detach(token)
         for mcp_object in crewai_objects.mcps.values():
             try:
-                mcp_object.local_session.stop()
+                mcp_object.local_session.__exit__(None, None, None)
             except Exception as e:
                 print(f"Error stopping MCP: {e}")
 

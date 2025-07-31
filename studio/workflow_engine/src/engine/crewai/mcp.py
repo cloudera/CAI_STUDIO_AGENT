@@ -6,7 +6,8 @@ from datetime import timedelta
 
 from mcp import StdioServerParameters, ClientSession, types as mcp_types
 from mcp.client.stdio import stdio_client
-from crewai_tools import MCPServerAdapter
+from mcpadapt.core import MCPAdapt
+from mcpadapt.crewai_adapter import CrewAIAdapter
 
 
 import engine.types as input_types
@@ -26,13 +27,12 @@ def get_mcp_tools_for_crewai(mcp_instance: Input__MCPInstance, env_vars: Dict[st
         args=mcp_instance.args,
         env=env_to_pass,
     )
-    adapter = MCPServerAdapter(server_params)
-    tool_list = adapter.tools
-    if mcp_instance.tools:  # Filter tools if specified
-        tool_list = [_t for _t in tool_list if _t.name in mcp_instance.tools]
+    adapter = MCPAdapt(server_params, CrewAIAdapter(), connect_timeout=60)
+    adapter.__enter__()
+    tools: list[BaseTool] = adapter.tools()
     return input_types.MCPObjects(
         local_session=adapter,
-        tools=tool_list,
+        tools=tools,
     )
 
 
