@@ -93,3 +93,75 @@ export const API_KEY_ROTATION_NEEDED = (onRotateClick: () => void): React.ReactN
     to address this issue.
   </>
 );
+
+export const MODEL_IDENTIFIER_OPTIONS: Record<string, { value: string; label: string }[]> = {
+  OPENAI: [
+    { value: 'gpt-4.1', label: 'gpt-4.1' },
+    { value: 'gpt-4.1-mini', label: 'gpt-4.1-mini' },
+    { value: 'gpt-4.1-nano', label: 'gpt-4.1-nano' },
+    { value: 'gpt-4o', label: 'gpt-4o' },
+    { value: 'gpt-4o-mini', label: 'gpt-4o-mini' },
+    { value: 'gpt-4', label: 'gpt-4' },
+    { value: 'o4-mini', label: 'o4-mini' },
+    { value: 'o3-mini', label: 'o3-mini' },
+    { value: 'o1-mini', label: 'o1-mini' },
+  ],
+  GEMINI: [
+    { value: 'gemini-2.0-flash', label: 'gemini-2.0-flash' },
+    { value: 'gemini-2.5-flash-preview-05-20', label: 'gemini-2.5-flash-preview-05-20' },
+    { value: 'gemini-2.5-pro-preview-05-06', label: 'gemini-2.5-pro-preview-05-06' },
+  ],
+  ANTHROPIC: [
+    { value: 'claude-opus-4-0', label: 'claude-opus-4-0' },
+    { value: 'claude-sonnet-4-0', label: 'claude-sonnet-4-0' },
+    { value: 'claude-3-7-sonnet-latest', label: 'claude-3-7-sonnet-latest' },
+    { value: 'claude-3-5-sonnet-latest', label: 'claude-3-5-sonnet-latest' },
+    { value: 'claude-3-5-haiku-latest', label: 'claude-3-5-haiku-latest' },
+  ],
+};
+
+export const DEFAULT_MODEL_TEST_MESSAGE = 'Greet me in 5 different languages.';
+
+export const GENERATE_AGENT_BACKGROUND_PROMPT = (description: string) => {
+  return `
+Given a user's description of an AI agent, generate appropriate role, goal, and backstory for the agent. 
+  
+## Role: The Agent's Specialized Function
+The role defines what the agent does and their area of expertise. When crafting roles:
+- Be specific and specialized: Instead of “Writer,” use “Technical Documentation Specialist” or “Creative Storyteller”
+- Align with real-world professions: Base roles on recognizable professional archetypes
+- Include domain expertise: Specify the agents field of knowledge (e.g., “Financial Analyst”)
+Examples of effective roles:
+* role: "Senior UX Researcher"
+* role: "Full-Stack Software Architect"
+* role: "Corporate Communications Director"
+
+
+## Goal: The Agent's Purpose and Motivation
+The goal directs the agent's efforts and shapes their decision-making process. Effective goals should:
+- Be clear and outcome-focused: Define what the agent is trying to achieve
+- Emphasize quality standards: Include expectations about the quality of work
+- Incorporate success criteria: Help the agent understand what “good” looks like
+Examples of effective goals:
+* goal: "Uncover actionable user insights by analyzing interview data and identifying recurring patterns, unmet needs, and improvement opportunities"
+* goal: "Design robust, scalable system architectures that balance performance, maintainability, and cost-effectiveness"
+* goal: "Craft clear, empathetic crisis communications that address stakeholder concerns while protecting organizational reputation"
+
+
+## Backstory: The Agent's Experience and Perspective
+The backstory gives depth to the agent, influencing how they approach problems and interact with others. Good backstories:
+- Establish expertise and experience: Explain how the agent gained their skills
+- Define working style and values: Describe how the agent approaches their work
+- Create a cohesive persona: Ensure all elements of the backstory align with the role and goal
+Examples of effective backstories:
+* backstory: "You have spent 15 years conducting and analyzing user research for top tech companies. You have a talent for reading between the lines and identifying patterns that others miss. You believe that good UX is invisible and that the best insights come from listening to what users don't say as much as what they do say."
+* backstory: "With 20+ years of experience building distributed systems at scale, you've developed a pragmatic approach to software architecture. You've seen both successful and failed systems and have learned valuable lessons from each. You balance theoretical best practices with practical constraints and always consider the maintenance and operational aspects of your designs."
+* backstory: "As a seasoned communications professional who has guided multiple organizations through high-profile crises, you understand the importance of transparency, speed, and empathy in crisis response. You have a methodical approach to crafting messages that address concerns while maintaining organizational credibility."
+
+  
+Please generate the agent properties in the following XML format:<agent><role>Role</role><goal>Goal</goal><backstory>Backstory</backstory></agent>
+If the user's description is not clear, just do not generate the requested XML. Instead give a short error message.
+
+USER DESCRIPTION: ${description.replace(/\n/g, ' ')}
+`;
+};

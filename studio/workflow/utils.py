@@ -13,7 +13,7 @@ from studio.db.model import Workflow, Model, Agent, ToolInstance
 from studio.api.types import ToolInstanceStatus
 from sqlalchemy.orm.session import Session
 
-from studio.models.utils import get_model_api_key_from_env
+from studio.models.utils import get_model_api_key_from_env, get_model_extra_headers_from_env
 from studio.tools.tool_instance import prepare_tool_instance
 
 
@@ -55,11 +55,15 @@ def get_llm_config_for_workflow(workflow: Workflow, session: Session, cml: CMLSe
                 f"({language_model_db_model.model_id}). Please configure the API key in project environment variables."
             )
 
+        # Get extra headers from environment
+        extra_headers = get_model_extra_headers_from_env(language_model_db_model.model_id, cml)
+
         model_config[lm_id] = {
             "provider_model": language_model_db_model.provider_model,
             "model_type": language_model_db_model.model_type,
             "api_base": language_model_db_model.api_base or None,
             "api_key": api_key,
+            "extra_headers": extra_headers or None,
         }
 
     return model_config

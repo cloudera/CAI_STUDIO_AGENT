@@ -39,6 +39,8 @@ export interface Model {
   api_base: string;
   /** Is the model default model for the studio */
   is_studio_default: boolean;
+  /** Serialized dict of extra headers to pass to the LLM provider */
+  extra_headers: string;
 }
 
 /** Model Messages */
@@ -71,6 +73,8 @@ export interface AddModelRequest {
   api_base: string;
   /** API Key for the model */
   api_key: string;
+  /** Serialized dict of extra headers to pass to the LLM provider */
+  extra_headers?: string | undefined;
 }
 
 export interface AddModelResponse {
@@ -97,6 +101,8 @@ export interface UpdateModelRequest {
   api_base: string;
   /** API Key for the model */
   api_key: string;
+  /** Serialized dict of extra headers to pass to the LLM provider */
+  extra_headers?: string | undefined;
 }
 
 export interface UpdateModelResponse {
@@ -1297,7 +1303,15 @@ export interface TestToolInstanceResponse {
 }
 
 function createBaseModel(): Model {
-  return { model_id: "", model_name: "", provider_model: "", model_type: "", api_base: "", is_studio_default: false };
+  return {
+    model_id: "",
+    model_name: "",
+    provider_model: "",
+    model_type: "",
+    api_base: "",
+    is_studio_default: false,
+    extra_headers: "",
+  };
 }
 
 export const Model: MessageFns<Model> = {
@@ -1319,6 +1333,9 @@ export const Model: MessageFns<Model> = {
     }
     if (message.is_studio_default !== false) {
       writer.uint32(48).bool(message.is_studio_default);
+    }
+    if (message.extra_headers !== "") {
+      writer.uint32(58).string(message.extra_headers);
     }
     return writer;
   },
@@ -1378,6 +1395,14 @@ export const Model: MessageFns<Model> = {
           message.is_studio_default = reader.bool();
           continue;
         }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.extra_headers = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1395,6 +1420,7 @@ export const Model: MessageFns<Model> = {
       model_type: isSet(object.model_type) ? globalThis.String(object.model_type) : "",
       api_base: isSet(object.api_base) ? globalThis.String(object.api_base) : "",
       is_studio_default: isSet(object.is_studio_default) ? globalThis.Boolean(object.is_studio_default) : false,
+      extra_headers: isSet(object.extra_headers) ? globalThis.String(object.extra_headers) : "",
     };
   },
 
@@ -1418,6 +1444,9 @@ export const Model: MessageFns<Model> = {
     if (message.is_studio_default !== false) {
       obj.is_studio_default = message.is_studio_default;
     }
+    if (message.extra_headers !== "") {
+      obj.extra_headers = message.extra_headers;
+    }
     return obj;
   },
 
@@ -1432,6 +1461,7 @@ export const Model: MessageFns<Model> = {
     message.model_type = object.model_type ?? "";
     message.api_base = object.api_base ?? "";
     message.is_studio_default = object.is_studio_default ?? false;
+    message.extra_headers = object.extra_headers ?? "";
     return message;
   },
 };
@@ -1660,7 +1690,7 @@ export const GetModelResponse: MessageFns<GetModelResponse> = {
 };
 
 function createBaseAddModelRequest(): AddModelRequest {
-  return { model_name: "", provider_model: "", model_type: "", api_base: "", api_key: "" };
+  return { model_name: "", provider_model: "", model_type: "", api_base: "", api_key: "", extra_headers: undefined };
 }
 
 export const AddModelRequest: MessageFns<AddModelRequest> = {
@@ -1679,6 +1709,9 @@ export const AddModelRequest: MessageFns<AddModelRequest> = {
     }
     if (message.api_key !== "") {
       writer.uint32(42).string(message.api_key);
+    }
+    if (message.extra_headers !== undefined) {
+      writer.uint32(50).string(message.extra_headers);
     }
     return writer;
   },
@@ -1730,6 +1763,14 @@ export const AddModelRequest: MessageFns<AddModelRequest> = {
           message.api_key = reader.string();
           continue;
         }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.extra_headers = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1746,6 +1787,7 @@ export const AddModelRequest: MessageFns<AddModelRequest> = {
       model_type: isSet(object.model_type) ? globalThis.String(object.model_type) : "",
       api_base: isSet(object.api_base) ? globalThis.String(object.api_base) : "",
       api_key: isSet(object.api_key) ? globalThis.String(object.api_key) : "",
+      extra_headers: isSet(object.extra_headers) ? globalThis.String(object.extra_headers) : undefined,
     };
   },
 
@@ -1766,6 +1808,9 @@ export const AddModelRequest: MessageFns<AddModelRequest> = {
     if (message.api_key !== "") {
       obj.api_key = message.api_key;
     }
+    if (message.extra_headers !== undefined) {
+      obj.extra_headers = message.extra_headers;
+    }
     return obj;
   },
 
@@ -1779,6 +1824,7 @@ export const AddModelRequest: MessageFns<AddModelRequest> = {
     message.model_type = object.model_type ?? "";
     message.api_base = object.api_base ?? "";
     message.api_key = object.api_key ?? "";
+    message.extra_headers = object.extra_headers ?? undefined;
     return message;
   },
 };
@@ -1943,7 +1989,7 @@ export const RemoveModelResponse: MessageFns<RemoveModelResponse> = {
 };
 
 function createBaseUpdateModelRequest(): UpdateModelRequest {
-  return { model_id: "", model_name: "", provider_model: "", api_base: "", api_key: "" };
+  return { model_id: "", model_name: "", provider_model: "", api_base: "", api_key: "", extra_headers: undefined };
 }
 
 export const UpdateModelRequest: MessageFns<UpdateModelRequest> = {
@@ -1962,6 +2008,9 @@ export const UpdateModelRequest: MessageFns<UpdateModelRequest> = {
     }
     if (message.api_key !== "") {
       writer.uint32(42).string(message.api_key);
+    }
+    if (message.extra_headers !== undefined) {
+      writer.uint32(50).string(message.extra_headers);
     }
     return writer;
   },
@@ -2013,6 +2062,14 @@ export const UpdateModelRequest: MessageFns<UpdateModelRequest> = {
           message.api_key = reader.string();
           continue;
         }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.extra_headers = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -2029,6 +2086,7 @@ export const UpdateModelRequest: MessageFns<UpdateModelRequest> = {
       provider_model: isSet(object.provider_model) ? globalThis.String(object.provider_model) : "",
       api_base: isSet(object.api_base) ? globalThis.String(object.api_base) : "",
       api_key: isSet(object.api_key) ? globalThis.String(object.api_key) : "",
+      extra_headers: isSet(object.extra_headers) ? globalThis.String(object.extra_headers) : undefined,
     };
   },
 
@@ -2049,6 +2107,9 @@ export const UpdateModelRequest: MessageFns<UpdateModelRequest> = {
     if (message.api_key !== "") {
       obj.api_key = message.api_key;
     }
+    if (message.extra_headers !== undefined) {
+      obj.extra_headers = message.extra_headers;
+    }
     return obj;
   },
 
@@ -2062,6 +2123,7 @@ export const UpdateModelRequest: MessageFns<UpdateModelRequest> = {
     message.provider_model = object.provider_model ?? "";
     message.api_base = object.api_base ?? "";
     message.api_key = object.api_key ?? "";
+    message.extra_headers = object.extra_headers ?? undefined;
     return message;
   },
 };

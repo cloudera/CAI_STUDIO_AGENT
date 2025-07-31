@@ -27,7 +27,7 @@ export const modelsApi = apiSlice.injectEndpoints({
       transformResponse: (response: ListModelsResponse) => {
         return response.model_details;
       },
-      providesTags: ['Model'],
+      providesTags: [{ type: 'Model', id: 'LIST' }],
     }),
     getModel: builder.mutation<Model, GetModelRequest>({
       query: (request) => ({
@@ -48,7 +48,7 @@ export const modelsApi = apiSlice.injectEndpoints({
       transformResponse: (response: ListModelsResponse) => {
         return response.model_details.find((model) => model.is_studio_default);
       },
-      providesTags: ['Model'],
+      providesTags: [{ type: 'Model', id: 'LIST' }],
     }),
     setDefaultModel: builder.mutation<void, SetStudioDefaultModelRequest>({
       query: (request) => ({
@@ -56,7 +56,7 @@ export const modelsApi = apiSlice.injectEndpoints({
         method: 'POST',
         body: request,
       }),
-      invalidatesTags: ['Model'],
+      invalidatesTags: [{ type: 'Model', id: 'LIST' }],
     }),
     addModel: builder.mutation<string, AddModelRequest>({
       query: (request) => ({
@@ -67,7 +67,7 @@ export const modelsApi = apiSlice.injectEndpoints({
       transformResponse: (response: AddModelResponse) => {
         return response.model_id;
       },
-      invalidatesTags: ['Model'],
+      invalidatesTags: [{ type: 'Model', id: 'LIST' }],
     }),
     updateModel: builder.mutation<string, UpdateModelRequest>({
       query: (request) => ({
@@ -78,7 +78,10 @@ export const modelsApi = apiSlice.injectEndpoints({
       transformResponse: (response: UpdateModelResponse) => {
         return response.model_id;
       },
-      invalidatesTags: ['Model'],
+      invalidatesTags: (result, error, { model_id }) => [
+        { type: 'Model', id: 'LIST' },
+        { type: 'Model', id: model_id },
+      ],
     }),
     testModel: builder.mutation<string, TestModelRequest>({
       query: (request) => ({
@@ -96,7 +99,10 @@ export const modelsApi = apiSlice.injectEndpoints({
         method: 'POST',
         body: request,
       }),
-      invalidatesTags: ['Model'],
+      invalidatesTags: (result, error, { model_id }) => [
+        { type: 'Model', id: 'LIST' },
+        { type: 'Model', id: model_id },
+      ],
     }),
   }),
 });

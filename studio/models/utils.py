@@ -1,6 +1,6 @@
 # No top level studio.db imports allowed to support wokrflow model deployment
 
-from typing import Tuple, Annotated, Union
+from typing import Tuple, Annotated, Union, Dict, Any
 from pydantic import Field
 from cmlapi import CMLServiceApi
 import os
@@ -130,3 +130,99 @@ def remove_model_api_key_from_env(model_id: str, cml: CMLServiceApi) -> None:
 
     except Exception as e:
         raise ValueError(f"Failed to remove API key for model {model_id}: {str(e)}")
+
+
+def _get_extra_headers_env_key(model_id: str) -> str:
+    """Generate environment variable key for model extra headers"""
+    encoded_id = _encode_value(model_id)
+    return f"MODEL_EXTRA_HEADERS_{encoded_id}"
+
+
+def get_model_extra_headers_from_env(model_id: str, cml: CMLServiceApi) -> Dict[str, Any]:
+    """Get model extra headers from project environment variables"""
+    try:
+        project_id = os.getenv("CDSW_PROJECT_ID")
+        if not project_id:
+            raise ValueError("CDSW_PROJECT_ID environment variable not found")
+
+        # Get project details
+        project = cml.get_project(project_id)
+        try:
+            environment = json.loads(project.environment) if project.environment else {}
+        except (json.JSONDecodeError, TypeError):
+            environment = {}
+
+        # Use encoded model ID for environment variable
+        env_key = _get_extra_headers_env_key(model_id)
+        encoded_headers = environment.get(env_key)
+        if not encoded_headers:
+            return {}
+
+        decoded_headers_str = _decode_value(encoded_headers)
+        if not decoded_headers_str:
+            return {}
+
+        try:
+            return json.loads(decoded_headers_str)
+        except json.JSONDecodeError:
+            logger.warning(f"Failed to parse extra headers for model {model_id}")
+            return {}
+
+    except Exception as e:
+        raise ValueError(f"Failed to get extra headers for model {model_id}: {str(e)}")
+
+
+def update_model_extra_headers_in_env(model_id: str, extra_headers: Dict[str, Any], cml: CMLServiceApi) -> None:
+    """Update/Store model extra headers in project environment variables"""
+    try:
+        project_id = os.getenv("CDSW_PROJECT_ID")
+        if not project_id:
+            raise ValueError("CDSW_PROJECT_ID environment variable not found")
+
+        # Get current project
+        project = cml.get_project(project_id)
+        try:
+            environment = json.loads(project.environment) if project.environment else {}
+        except (json.JSONDecodeError, TypeError):
+            environment = {}
+
+        # Use encoded model ID and serialize extra headers
+        env_key = _get_extra_headers_env_key(model_id)
+        if extra_headers:
+            headers_json = json.dumps(extra_headers)
+            environment[env_key] = _encode_value(headers_json)
+        else:
+            # Remove the key if extra_headers is empty
+            if env_key in environment:
+                del environment[env_key]
+
+        # Update project with new environment
+        update_body = {"environment": json.dumps(environment)}
+        cml.update_project(update_body, project_id)
+
+    except Exception as e:
+        raise ValueError(f"Failed to update extra headers for model {model_id}: {str(e)}")
+
+
+def remove_model_extra_headers_from_env(model_id: str, cml: CMLServiceApi) -> None:
+    """Remove model extra headers from project environment variables"""
+    try:
+        project_id = os.getenv("CDSW_PROJECT_ID")
+        if not project_id:
+            raise ValueError("CDSW_PROJECT_ID environment variable not found")
+
+        # Get current project
+        project = cml.get_project(project_id)
+        try:
+            environment = json.loads(project.environment) if project.environment else {}
+            env_key = _get_extra_headers_env_key(model_id)
+            if env_key in environment:
+                del environment[env_key]
+                # Update project with new environment
+                update_body = {"environment": json.dumps(environment)}
+                cml.update_project(update_body, project_id)
+        except (json.JSONDecodeError, TypeError):
+            pass  # Ignore if environment parsing fails
+
+    except Exception as e:
+        raise ValueError(f"Failed to remove extra headers for model {model_id}: {str(e)}")

@@ -51,6 +51,7 @@ class Input__LanguageModelConfig(BaseModel):
     model_type: SupportedModelTypes
     api_base: Optional[str] = None
     api_key: Optional[str] = None
+    extra_headers: Optional[Dict[str, str]] = None
 
 
 class Input__LanguageModel(BaseModel):

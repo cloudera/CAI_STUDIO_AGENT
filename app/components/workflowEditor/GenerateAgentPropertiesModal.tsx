@@ -16,6 +16,7 @@ import {
   selectEditorAgentViewAgent,
   selectEditorAgentViewCreateAgentState,
 } from '../../workflows/editorSlice';
+import { GENERATE_AGENT_BACKGROUND_PROMPT } from '@/app/lib/constants';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -74,11 +75,7 @@ const GenerateAgentPropertiesModal: React.FC<GenerateAgentPropertiesModalProps> 
   }, [open]);
 
   const generatePrompt = (description: string, tools: ToolInstance[]) => {
-    const toolsDescription = tools
-      .map((tool) => ` - ${tool.name}: ${tool.tool_description.replace(/\n/g, ' ')}`)
-      .join('\n');
-
-    return `Given a user's description of an AI agent and the tools available to it, generate appropriate role, goal, and backstory for the agent. Tools are used by agents to perform computation or connect to external systems, which might be difficult to do using just a traditional LLM.\n\nUser's Description: ${description.replace(/\n/g, ' ')}\n\nAvailable Tools:\n${toolsDescription}\n\nPlease generate the agent properties in the following XML format:\n<agent>\n  <role>Defines the agent's function and expertise. It should be very concise, akin to a job title.</role>\n  <goal>The individual objective that guides the agent's decision-making.</goal>\n  <backstory>A brief background that explains the agent's expertise. Provides context and personality to the agent, enriching interactions.</backstory>\n</agent>\n\nKeep the responses concise but meaningful. The role should be professional, the goal should be task driven(like objectives the agent can complete), and the backstory should provide context for the agent's expertise.\nIf the user's description is not clear, just do not generate the requested XML. Instead give a short error message.`;
+    return GENERATE_AGENT_BACKGROUND_PROMPT(description);
   };
 
   const parseXMLResponse = (

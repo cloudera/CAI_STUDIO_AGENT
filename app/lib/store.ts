@@ -13,6 +13,7 @@ import { mcpTemplatesApi } from '../mcp/mcpTemplatesApi';
 import { mcpInstancesApi } from '../mcp/mcpInstancesApi';
 import editorReducer from '../workflows/editorSlice';
 import workflowAppReducer from '../workflows/workflowAppSlice';
+import modelsReducer from '../models/modelsSlice';
 
 export const makeStore = () => {
   return configureStore({
@@ -20,6 +21,7 @@ export const makeStore = () => {
       [apiSlice.reducerPath]: apiSlice.reducer,
       editor: editorReducer,
       workflowApp: workflowAppReducer,
+      models: modelsReducer,
     },
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware()

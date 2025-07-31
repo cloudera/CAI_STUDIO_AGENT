@@ -1,3 +1,4 @@
+import json
 from uuid import uuid4
 from typing import List
 from cmlapi import CMLServiceApi
@@ -18,9 +19,30 @@ from engine.crewai.llms import get_crewai_llm
 from engine.types import Input__LanguageModel
 from engine.consts import SupportedModelTypes
 
-from .utils import get_model_api_key_from_env, update_model_api_key_in_env, remove_model_api_key_from_env
+from .utils import (
+    get_model_api_key_from_env,
+    update_model_api_key_in_env,
+    remove_model_api_key_from_env,
+    get_model_extra_headers_from_env,
+    update_model_extra_headers_in_env,
+    remove_model_extra_headers_from_env,
+)
 
 logger = logging.getLogger(__name__)
+
+
+def _add_extra_headers_to_model_protobuf(model_protobuf: Model, cml: CMLServiceApi) -> Model:
+    """Helper function to add extra_headers from environment to model protobuf"""
+    try:
+        extra_headers = get_model_extra_headers_from_env(model_protobuf.model_id, cml)
+        if extra_headers:
+            model_protobuf.extra_headers = json.dumps(extra_headers)
+        else:
+            model_protobuf.extra_headers = ""
+    except Exception as e:
+        logger.warning(f"Failed to get extra headers for model {model_protobuf.model_id}: {str(e)}")
+        model_protobuf.extra_headers = ""
+    return model_protobuf
 
 
 def list_models(
@@ -31,7 +53,12 @@ def list_models(
     """
     with dao.get_session() as session:
         models: List[db_model.Model] = session.query(db_model.Model).all()
-        return ListModelsResponse(model_details=[model.to_protobuf(Model) for model in models])
+        model_details = []
+        for model in models:
+            model_proto = model.to_protobuf(Model)
+            model_proto = _add_extra_headers_to_model_protobuf(model_proto, cml)
+            model_details.append(model_proto)
+        return ListModelsResponse(model_details=model_details)
 
 
 def get_model(request: GetModelRequest, cml: CMLServiceApi = None, dao: AgentStudioDao = None) -> GetModelResponse:
@@ -43,7 +70,9 @@ def get_model(request: GetModelRequest, cml: CMLServiceApi = None, dao: AgentStu
         if not model:
             raise ValueError(f"Model with ID '{request.model_id}' not found.")
 
-        return GetModelResponse(model_details=model.to_protobuf(Model))
+        model_proto = model.to_protobuf(Model)
+        model_proto = _add_extra_headers_to_model_protobuf(model_proto, cml)
+        return GetModelResponse(model_details=model_proto)
 
 
 def add_model(request: AddModelRequest, cml: CMLServiceApi = None, dao: AgentStudioDao = None) -> AddModelResponse:
@@ -67,16 +96,41 @@ def add_model(request: AddModelRequest, cml: CMLServiceApi = None, dao: AgentStu
         except Exception as e:
             raise ValueError(f"Failed to store API key in environment: {str(e)}")
 
+    # Store extra headers in project environment if provided
+    if request.extra_headers:
+        try:
+            # Parse extra_headers if it's a string, otherwise use as-is
+            if isinstance(request.extra_headers, str):
+                extra_headers_dict = json.loads(request.extra_headers)
+            else:
+                extra_headers_dict = request.extra_headers
+            update_model_extra_headers_in_env(model_id, extra_headers_dict, cml)
+        except Exception as e:
+            # Clean up API key if it was stored
+            if request.api_key:
+                try:
+                    remove_model_api_key_from_env(model_id, cml)
+                except Exception as cleanup_e:
+                    logger.warning(f"Failed to clean up API key during extra headers error: {str(cleanup_e)}")
+            raise ValueError(f"Failed to store extra headers in environment: {str(e)}")
+
     with dao.get_session() as session:
         # Validate if a model with the same name already exists
         if session.query(db_model.Model).filter_by(model_name=request.model_name).first():
-            # Clean up API key if it was stored
+            # Clean up API key and extra headers if they were stored
             if request.api_key:
                 try:
                     remove_model_api_key_from_env(model_id, cml)
                 except Exception as e:
                     logger.warning(
                         f"Failed to clean up API key for model {model_id} after duplicate name error: {str(e)}"
+                    )
+            if request.extra_headers:
+                try:
+                    remove_model_extra_headers_from_env(model_id, cml)
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to clean up extra headers for model {model_id} after duplicate name error: {str(e)}"
                     )
             raise ValueError(f"Model with name '{request.model_name}' already exists.")
 
@@ -133,6 +187,12 @@ def remove_model(
         except Exception as e:
             logger.warning(f"Failed to remove API key for model {request.model_id} during deletion: {str(e)}")
 
+        try:
+            # Remove extra headers from project environment
+            remove_model_extra_headers_from_env(request.model_id, cml)
+        except Exception as e:
+            logger.warning(f"Failed to remove extra headers for model {request.model_id} during deletion: {str(e)}")
+
         session.commit()
 
     return RemoveModelResponse()
@@ -156,6 +216,13 @@ def update_model(
             m_.provider_model = request.provider_model
         if request.api_base:
             m_.api_base = request.api_base
+        if request.extra_headers:
+            # Parse extra_headers if it's a string, otherwise use as-is
+            if isinstance(request.extra_headers, str):
+                extra_headers_dict = json.loads(request.extra_headers)
+            else:
+                extra_headers_dict = request.extra_headers
+            update_model_extra_headers_in_env(m_.model_id, extra_headers_dict, cml)
         if request.api_key:
             update_model_api_key_in_env(m_.model_id, request.api_key, cml)
         model_id = m_.model_id
@@ -178,6 +245,10 @@ def model_test(request: TestModelRequest, cml: CMLServiceApi = None, dao: AgentS
                 f"API key is required but not found for model {model.model_name} "
                 f"({model.model_id}). Please configure the API key in project environment variables."
             )
+
+        # Get extra headers from environment instead of database
+        extra_headers = get_model_extra_headers_from_env(model.model_id, cml)
+
         llm = get_crewai_llm(
             Input__LanguageModel(
                 model_id=model.model_id,
@@ -192,6 +263,7 @@ def model_test(request: TestModelRequest, cml: CMLServiceApi = None, dao: AgentS
                 "model_type": model.model_type,
                 "api_base": model.api_base or None,
                 "api_key": api_key,
+                "extra_headers": extra_headers or None,
             },
         )
 
@@ -232,7 +304,9 @@ def get_studio_default_model(
             return GetStudioDefaultModelResponse(
                 is_default_model_configured=False,
             )
+        model_proto = m_.to_protobuf(Model)
+        model_proto = _add_extra_headers_to_model_protobuf(model_proto, cml)
         return GetStudioDefaultModelResponse(
             is_default_model_configured=True,
-            model_details=m_.to_protobuf(Model),
+            model_details=model_proto,
         )

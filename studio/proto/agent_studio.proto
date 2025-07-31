@@ -146,6 +146,9 @@ message Model {
 
   // Is the model default model for the studio
   bool is_studio_default = 6;
+
+  // Serialized dict of extra headers to pass to the LLM provider
+  string extra_headers = 7;
 }
 
 // Model Messages
@@ -181,6 +184,9 @@ message AddModelRequest {
 
   // API Key for the model
   string api_key = 5;
+
+  // Serialized dict of extra headers to pass to the LLM provider
+  optional string extra_headers = 6;
 }
 
 message AddModelResponse {
@@ -210,6 +216,9 @@ message UpdateModelRequest {
 
   // API Key for the model
   string api_key = 5;
+
+  // Serialized dict of extra headers to pass to the LLM provider
+  optional string extra_headers = 6;
 }
 
 message UpdateModelResponse {

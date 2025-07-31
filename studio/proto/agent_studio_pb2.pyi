@@ -12,19 +12,29 @@ from typing import (
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class Model(_message.Message):
-    __slots__ = ("model_id", "model_name", "provider_model", "model_type", "api_base", "is_studio_default")
+    __slots__ = (
+        "model_id",
+        "model_name",
+        "provider_model",
+        "model_type",
+        "api_base",
+        "is_studio_default",
+        "extra_headers",
+    )
     MODEL_ID_FIELD_NUMBER: _ClassVar[int]
     MODEL_NAME_FIELD_NUMBER: _ClassVar[int]
     PROVIDER_MODEL_FIELD_NUMBER: _ClassVar[int]
     MODEL_TYPE_FIELD_NUMBER: _ClassVar[int]
     API_BASE_FIELD_NUMBER: _ClassVar[int]
     IS_STUDIO_DEFAULT_FIELD_NUMBER: _ClassVar[int]
+    EXTRA_HEADERS_FIELD_NUMBER: _ClassVar[int]
     model_id: str
     model_name: str
     provider_model: str
     model_type: str
     api_base: str
     is_studio_default: bool
+    extra_headers: str
     def __init__(
         self,
         model_id: _Optional[str] = ...,
@@ -33,6 +43,7 @@ class Model(_message.Message):
         model_type: _Optional[str] = ...,
         api_base: _Optional[str] = ...,
         is_studio_default: bool = ...,
+        extra_headers: _Optional[str] = ...,
     ) -> None: ...
 
 class ListModelsRequest(_message.Message):
@@ -58,17 +69,19 @@ class GetModelResponse(_message.Message):
     def __init__(self, model_details: _Optional[_Union[Model, _Mapping]] = ...) -> None: ...
 
 class AddModelRequest(_message.Message):
-    __slots__ = ("model_name", "provider_model", "model_type", "api_base", "api_key")
+    __slots__ = ("model_name", "provider_model", "model_type", "api_base", "api_key", "extra_headers")
     MODEL_NAME_FIELD_NUMBER: _ClassVar[int]
     PROVIDER_MODEL_FIELD_NUMBER: _ClassVar[int]
     MODEL_TYPE_FIELD_NUMBER: _ClassVar[int]
     API_BASE_FIELD_NUMBER: _ClassVar[int]
     API_KEY_FIELD_NUMBER: _ClassVar[int]
+    EXTRA_HEADERS_FIELD_NUMBER: _ClassVar[int]
     model_name: str
     provider_model: str
     model_type: str
     api_base: str
     api_key: str
+    extra_headers: str
     def __init__(
         self,
         model_name: _Optional[str] = ...,
@@ -76,6 +89,7 @@ class AddModelRequest(_message.Message):
         model_type: _Optional[str] = ...,
         api_base: _Optional[str] = ...,
         api_key: _Optional[str] = ...,
+        extra_headers: _Optional[str] = ...,
     ) -> None: ...
 
 class AddModelResponse(_message.Message):
@@ -95,17 +109,19 @@ class RemoveModelResponse(_message.Message):
     def __init__(self) -> None: ...
 
 class UpdateModelRequest(_message.Message):
-    __slots__ = ("model_id", "model_name", "provider_model", "api_base", "api_key")
+    __slots__ = ("model_id", "model_name", "provider_model", "api_base", "api_key", "extra_headers")
     MODEL_ID_FIELD_NUMBER: _ClassVar[int]
     MODEL_NAME_FIELD_NUMBER: _ClassVar[int]
     PROVIDER_MODEL_FIELD_NUMBER: _ClassVar[int]
     API_BASE_FIELD_NUMBER: _ClassVar[int]
     API_KEY_FIELD_NUMBER: _ClassVar[int]
+    EXTRA_HEADERS_FIELD_NUMBER: _ClassVar[int]
     model_id: str
     model_name: str
     provider_model: str
     api_base: str
     api_key: str
+    extra_headers: str
     def __init__(
         self,
         model_id: _Optional[str] = ...,
@@ -113,6 +129,7 @@ class UpdateModelRequest(_message.Message):
         provider_model: _Optional[str] = ...,
         api_base: _Optional[str] = ...,
         api_key: _Optional[str] = ...,
+        extra_headers: _Optional[str] = ...,
     ) -> None: ...
 
 class UpdateModelResponse(_message.Message):
