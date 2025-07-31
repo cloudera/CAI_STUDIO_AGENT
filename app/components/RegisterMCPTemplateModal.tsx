@@ -260,7 +260,7 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
 
     try {
       const fp = await uploadFile(file, setIsUploading);
-      console.log('File uploaded to:', fp);
+
       setUploadedFilePath(fp);
       setSelectedFile(file);
     } catch (error) {

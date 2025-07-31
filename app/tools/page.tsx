@@ -53,7 +53,6 @@ const ToolsTabContent = () => {
 
       // Extract tool_template_id from the response
       const tool_template_id = response;
-      console.log(response);
 
       // Notify success and close the modal
       notificationApi.success({
@@ -246,7 +245,6 @@ const MCPTabContent = () => {
 
       // Extract tool_template_id from the response
       const mcp_template_id = response;
-      console.log(response);
 
       // Notify success and close the modal
       notificationApi.success({

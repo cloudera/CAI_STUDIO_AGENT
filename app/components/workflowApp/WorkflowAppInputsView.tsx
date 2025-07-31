@@ -163,7 +163,6 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
 
     if (traceId) {
       if (traceId.length === 31) {
-        console.log('Trace Hex started with a 0! Add a 0!');
         traceId = '0' + traceId;
       }
       dispatch(updatedCurrentTraceId(traceId));
@@ -171,7 +170,6 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
       allEventsRef.current = [];
       setLastRun(null);
     } else {
-      console.log('ERROR: could not start the crew!');
       dispatch(updatedIsRunning(false));
     }
   };

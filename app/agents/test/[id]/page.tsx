@@ -99,8 +99,6 @@ const TestAgentPage: React.FC = () => {
         user_input: userInput,
         context: context,
       }).unwrap();
-      console.log(result);
-      console.log(result.response);
 
       const agentResponse = result.response || 'No response from agent.';
       setMessages((prev) => [...prev, { role: 'assistant', content: agentResponse }]);

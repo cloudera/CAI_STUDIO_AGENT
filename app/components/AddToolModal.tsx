@@ -58,7 +58,6 @@ const AddToolModal: React.FC<AddToolModalProps> = ({
   }, [toolTemplates, selectedToolTemplate]);
 
   const handleSelectTool = (tool: ToolTemplate) => {
-    console.log('Selected Tool:', tool);
     const isDuplicate = configuredTools.some((t) => t.toolTemplateId === tool.id);
 
     if (isDuplicate) {

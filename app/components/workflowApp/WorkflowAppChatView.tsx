@@ -112,13 +112,6 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow, tas
         return;
       }
     } else {
-      console.log({
-        action_type: 'kickoff',
-        kickoff_inputs: {
-          user_input: userInput || '',
-          context: JSON.stringify(context),
-        },
-      });
       const kickoffResponse = await fetch(`${workflowModelUrl}`, {
         method: 'POST',
         headers: {
@@ -140,7 +133,6 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow, tas
 
     if (traceId) {
       if (traceId.length === 31) {
-        console.log('Trace Hex started with a 0! Add a 0!');
         traceId = '0' + traceId;
       }
       dispatch(updatedCurrentTraceId(traceId));
@@ -155,7 +147,6 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow, tas
       );
       dispatch(updatedChatUserInput(''));
     } else {
-      console.log('ERROR: could not start the crew!');
       dispatch(updatedIsRunning(false));
     }
   };

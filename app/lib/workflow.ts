@@ -241,7 +241,6 @@ export const createAddRequestFromEditor = (workflowState: WorkflowState) => {
   const managerAgentId = workflowState.workflowMetadata.managerAgentId;
   const process = workflowState.workflowMetadata.process || 'sequential';
 
-  console.log(workflowState);
   const addRequest: AddWorkflowRequest = {
     name: workflowState.name!,
     is_conversational: workflowState.isConversational!,

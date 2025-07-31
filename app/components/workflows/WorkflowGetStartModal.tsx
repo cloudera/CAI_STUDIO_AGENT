@@ -50,7 +50,6 @@ const WorkflowTemplateDetails: React.FC<WorkflowTemplateDetailsProps> = ({ templ
   // Create a map of tool template id to tool template data
   const toolTemplatesMap = useMemo(() => {
     if (!toolTemplates || toolTemplates.length === 0) {
-      console.log('No tool templates available');
       return {};
     }
 

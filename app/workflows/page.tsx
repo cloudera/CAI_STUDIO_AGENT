@@ -125,22 +125,14 @@ const WorkflowsPageContent: React.FC = () => {
 
     try {
       if (selectedWorkflow) {
-        console.log('Checking for deployments:', {
-          deployedWorkflowInstances,
-          selectedWorkflowId: selectedWorkflow.workflow_id,
-        });
-
         // Delete deployments first if they exist
         if (
           deployedWorkflowInstances?.some((dw) => dw.workflow_id === selectedWorkflow.workflow_id)
         ) {
-          console.log('Found deployments to delete');
           try {
             const deploymentsToDelete = deployedWorkflowInstances.filter(
               (dw) => dw.workflow_id === selectedWorkflow.workflow_id,
             );
-
-            console.log('Deployments to delete:', deploymentsToDelete);
 
             // Delete deployments one by one
             for (const deployment of deploymentsToDelete) {
@@ -149,8 +141,6 @@ const WorkflowsPageContent: React.FC = () => {
               }).unwrap();
             }
 
-            console.log('Successfully deleted deployments');
-
             notificationApi.success({
               message: 'Success',
               description: 'Workflow deployments deleted successfully.',
@@ -158,7 +148,7 @@ const WorkflowsPageContent: React.FC = () => {
             });
 
             // Only proceed to delete workflow if deployments were successfully deleted
-            console.log('Proceeding to delete workflow');
+
             await removeWorkflow({ workflow_id: selectedWorkflow.workflow_id }).unwrap();
             notificationApi.success({
               message: 'Success',
@@ -177,7 +167,7 @@ const WorkflowsPageContent: React.FC = () => {
           }
         } else {
           // No deployments - just delete the workflow
-          console.log('No deployments found for workflow');
+
           await removeWorkflow({ workflow_id: selectedWorkflow.workflow_id }).unwrap();
           notificationApi.success({
             message: 'Success',

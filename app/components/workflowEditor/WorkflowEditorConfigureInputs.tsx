@@ -763,31 +763,20 @@ export const hasValidToolConfiguration = (
   toolInstances: ToolInstance[] | undefined,
   workflowConfiguration: WorkflowConfiguration,
 ): boolean => {
-  console.log('hasValidToolConfiguration called with:', {
-    workflowId,
-    agentsCount: agents?.length,
-    toolInstancesCount: toolInstances?.length,
-    workflowConfiguration,
-  });
-
   if (!agents || !toolInstances) {
-    console.log('No agents or toolInstances, returning true');
     return true;
   }
 
   const filteredAgents = agents.filter((agent) => agent.workflow_id === workflowId);
-  console.log('Filtered agents:', filteredAgents);
 
   return filteredAgents.every((agent) => {
     const toolInstanceIds = agent.tools_id;
     const workflowTools = toolInstances.filter((toolInstance) =>
       toolInstanceIds.includes(toolInstance.id),
     );
-    console.log('Agent tools:', { agentId: agent.id, tools: workflowTools });
 
     return workflowTools.every((toolInstance) => {
       const metadata: ToolInstanceMetadataProps = JSON.parse(toolInstance.tool_metadata);
-      console.log('Tool metadata:', { toolId: toolInstance.id, metadata });
 
       if (!metadata.user_params_metadata) return true;
 
@@ -799,13 +788,12 @@ export const hasValidToolConfiguration = (
         if (meta.required) {
           const value = toolConfig.parameters[param];
           const isValid = value !== undefined && value !== '';
-          console.log('Parameter validation:', { param, required: true, value, isValid });
+
           return isValid;
         }
         return true;
       });
 
-      console.log('Tool validation result:', { toolId: toolInstance.id, valid: validParams });
       return validParams;
     });
   });

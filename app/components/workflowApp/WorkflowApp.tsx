@@ -224,7 +224,6 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
         timeout: 10,
       }).unwrap();
 
-      console.log('Generated Description:', response);
       handleDescriptionChange(response.trim());
     } catch (error) {
       console.error('Error generating description:', error);

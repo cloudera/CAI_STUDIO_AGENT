@@ -92,13 +92,6 @@ const WorkflowNavigation: React.FC<WorkflowNavigationProps> = ({ workflowId }) =
       toolInstances,
       workflowConfiguration,
     );
-    console.log('Validation Debug:', {
-      workflowId: workflowState.workflowId,
-      agents,
-      toolInstances,
-      workflowConfiguration,
-      isValid: result,
-    });
     return result;
   }, [workflowState.workflowId, agents, toolInstances, workflowConfiguration]);
 

@@ -457,7 +457,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
 
     try {
       const fp = await uploadFile(file, setUploading);
-      console.log('File uploaded to:', fp);
+
       setUploadedFilePath(fp);
       setSelectedFile(file);
     } catch (error) {

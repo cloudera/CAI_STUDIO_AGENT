@@ -127,7 +127,6 @@ const AgentTemplateForm = ({ agentTemplateId }: { agentTemplateId?: string }) =>
 
   const handleViewToolDetails = (toolTemplateId: string) => {
     // Implement tool details view logic here
-    console.log('View details for tool:', toolTemplateId);
   };
 
   const handleFormSubmit = async (values: any) => {

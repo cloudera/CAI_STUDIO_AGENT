@@ -565,8 +565,6 @@ const ManagerAgentCheckComponent: React.FC<ManagerAgentComponentProps> = ({
   const hasManagerAgent = workflowState.workflowMetadata.process === 'hierarchical';
 
   const handleManagerAgentChange = async (checked: boolean) => {
-    console.log('Switch changed:', checked);
-
     try {
       // When checked, update tasks and set default model
       if (checked) {

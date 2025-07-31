@@ -45,7 +45,6 @@ export const workflowAppSlice = createSlice({
   initialState,
   reducers: {
     updatedCurrentTraceId: (state, action: PayloadAction<string>) => {
-      console.log('Redux: traceId updated', action.payload);
       state.currentTraceId = action.payload;
     },
     updatedChatUserInput: (state, action: PayloadAction<string>) => {

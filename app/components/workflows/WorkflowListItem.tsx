@@ -523,7 +523,7 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
       const tmp_file_path = await exportWorkflowTemplate({
         id: workflowTemplate!.id,
       }).unwrap();
-      console.log('tmp_file_path', tmp_file_path);
+
       await downloadAndSaveFile(tmp_file_path);
       setDownloadingTemplate(false);
     } catch (error) {
@@ -552,7 +552,6 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
       matchingDeployedWorkflow?.application_url &&
       matchingDeployedWorkflow.application_url.length > 0
     ) {
-      console.log('opening deployment', matchingDeployedWorkflow.application_url);
       window.open(matchingDeployedWorkflow.application_url, '_blank');
     } else {
       const currentStatus = getStatusDisplay(matchingDeployedWorkflow?.application_status || '');
