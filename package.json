@@ -14,9 +14,6 @@
   "dependencies": {
     "@ant-design/icons": "^5.5.2",
     "@ant-design/nextjs-registry": "^1.0.2",
-    "@eslint/compat": "^1.2.5",
-    "@eslint/eslintrc": "^3.2.0",
-    "@eslint/js": "^9.18.0",
     "@grpc/grpc-js": "^1.12.4",
     "@monaco-editor/react": "^4.6.0",
     "@reduxjs/toolkit": "^2.5.0",
@@ -31,11 +28,8 @@
     "jspdf": "^2.5.2",
     "lucide-react": "^0.469.0",
     "markdown-it": "^14.1.0",
-    "marked": "^15.0.6",
     "next": "^15.1.6",
     "node-fetch": "^3.3.2",
-    "prettier": "^3.4.2",
-    "protoc": "^1.1.3",
     "react": "^18",
     "react-dom": "^18",
     "react-markdown": "^9.0.3",
@@ -50,6 +44,9 @@
     "ts-proto": "^2.6.0"
   },
   "devDependencies": {
+    "@eslint/compat": "^1.2.5",
+    "@eslint/eslintrc": "^3.2.0",
+    "@eslint/js": "^9.18.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
@@ -64,6 +61,8 @@
     "eslint-plugin-react": "^7.37.4",
     "eslint-plugin-react-hooks": "^5.1.0",
     "postcss": "^8.4.49",
+    "prettier": "^3.4.2",
+    "protoc": "^1.1.3",
     "tailwindcss": "^3.4.17",
     "typescript": "^5"
   }

@@ -1,4 +1,5 @@
 import json
+import os
 from uuid import uuid4
 from typing import List
 from cmlapi import CMLServiceApi
@@ -12,8 +13,12 @@ from studio.api import *
 # a separate git repo, or a custom runtime image, this path call
 # will go away and workflow engine features will be available already.
 import sys
+import os
 
-sys.path.append("studio/workflow_engine/src/")
+app_dir = os.getenv("APP_DIR")
+if not app_dir:
+    raise EnvironmentError("APP_DIR environment variable is not set.")
+sys.path.append(os.path.join(app_dir, "studio", "workflow_engine", "src"))
 
 from engine.crewai.llms import get_crewai_llm
 from engine.types import Input__LanguageModel

@@ -1,3 +1,4 @@
+export APP_DIR="$(pwd)"
 # Run pytest and generate coverage.
 uv run pytest -v \
   --cov=studio \

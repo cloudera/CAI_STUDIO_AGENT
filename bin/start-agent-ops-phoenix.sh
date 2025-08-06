@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Start up the Arize Phoeniz observability platform on a specified port. 
+# Start up the Arize Phoenix observability platform on a specified port. 
 # We do not inherently serve the ops platform on $CDSW_APP_PORT because this
 # port MAY be proxied with authentication, which affects both our /v1/trace calls
 # and the /graphql calls to this endpoint. Instead, we serve on a dedicated

@@ -376,7 +376,9 @@ def test_copy_workflow_engine(mock_copytree):
     args, kwargs = mock_copytree.call_args
 
     # Validate arguments
-    assert args[0] == os.path.join("studio", "workflow_engine")
+    app_dir = os.getenv("APP_DIR")
+    assert app_dir is not None, "APP_DIR environment variable must be set"
+    assert args[0] == os.path.join(app_dir, "studio", "workflow_engine")
     assert args[1] == target_dir
     assert kwargs["dirs_exist_ok"] is True
 

@@ -7,6 +7,7 @@ import tarfile
 
 from cmlapi import CMLServiceApi
 
+from studio import consts
 from studio.deployments.types import DeploymentArtifact, DeploymentPayload
 from studio.deployments.package.collated_input import create_collated_input
 
@@ -19,7 +20,11 @@ from studio.db.model import DeployedWorkflowInstance, Workflow
 # will go away and workflow engine features will be available already.
 import sys
 
-sys.path.append("studio/workflow_engine/src")
+app_dir = os.getenv("APP_DIR")
+if not app_dir:
+    raise EnvironmentError("APP_DIR environment variable is not set.")
+sys.path.append(os.path.join(app_dir, "studio", "workflow_engine", "src"))
+
 import engine.types as input_types
 
 
@@ -58,8 +63,7 @@ def package_workflow_for_deployment(
 
     # Ignore logic for copying over our studio-data/ directory
     ignore_fn = studio_data_workflow_ignore_factory(os.path.basename(workflow.directory))
-    shutil.copytree("studio-data", os.path.join(packaging_directory, "studio-data"), ignore=ignore_fn)
-
+    shutil.copytree(consts.ALL_STUDIO_DATA_LOCATION, os.path.join(packaging_directory, "studio-data"), ignore=ignore_fn)
     # Create the collated input.
     collated_input: input_types.CollatedInput = create_collated_input(workflow, session)
 

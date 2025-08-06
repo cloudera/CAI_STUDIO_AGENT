@@ -13,7 +13,10 @@ import studio.cross_cutting.utils as cc_utils
 # will go away and workflow engine features will be available already.
 import sys
 
-sys.path.append("studio/workflow_engine/src")
+app_dir = os.getenv("APP_DIR")
+if not app_dir:
+    raise EnvironmentError("APP_DIR environment variable is not set.")
+sys.path.append(os.path.join(app_dir, "studio", "workflow_engine", "src"))
 
 
 def cleanup_deployed_workflow_application(cml: CMLServiceApi, application: cmlapi.Application):
@@ -73,28 +76,35 @@ def create_application_for_deployed_workflow(
         or deployment_metadata.get("cml_model_id")
         or "",
     }
-
     # Right now, creating an application through CML APIv2 will manually copy over the project
     # environment variables into the application env vars, which is undesirable. Every time the observability server or the
     # gRPC server changes, we need to reach out to all deployed workflows and deployed applications
     # and update the respective environment variables. We shouldn't have to do this once we
     # fix the env var copying issue.
-    application: cmlapi.Application = cml.create_application(
-        cmlapi.CreateApplicationRequest(
-            name=get_application_name_for_deployed_workflow(deployment),
-            subdomain=f"workflow-{deployment.id}",
-            description=f"Workflow UI for workflow {deployment.name}",
-            script=os.path.join(cc_utils.get_studio_subdirectory(), "startup_scripts", "run-app.py"),
-            cpu=2,
-            memory=4,
-            nvidia_gpu=0,
-            environment=env_vars_for_app,
-            bypass_authentication=bypass_authentication,
-            runtime_identifier=cc_utils.get_deployed_workflow_runtime_identifier(cml),
-        ),
-        project_id=os.environ.get("CDSW_PROJECT_ID"),
-    )
-
+    if os.getenv("AGENT_STUDIO_DEPLOY_MODE", "amp").lower() == "runtime":
+        basepath = os.getenv("APP_DIR")
+    else:
+        basepath = cc_utils.get_studio_subdirectory()
+    try:
+        application: cmlapi.Application = cml.create_application(
+            cmlapi.CreateApplicationRequest(
+                name=get_application_name_for_deployed_workflow(deployment),
+                subdomain=f"workflow-{deployment.id}",
+                description=f"Workflow UI for workflow {deployment.name}",
+                script=os.path.join(basepath, "startup_scripts", "run-app.py"),
+                cpu=2,
+                memory=4,
+                nvidia_gpu=0,
+                environment=env_vars_for_app,
+                bypass_authentication=bypass_authentication,
+                runtime_identifier=cc_utils.get_deployed_workflow_runtime_identifier(cml),
+                cdv_app=True,  # This flag is required to bypass the script path check, as APIV2 does not support absolute path. https://cloudera.atlassian.net/browse/DSE-46329
+            ),
+            project_id=os.environ.get("CDSW_PROJECT_ID"),
+        )
+    except Exception as e:
+        print(f"Error creating application: {e}")
+        raise e
     return application
 
 

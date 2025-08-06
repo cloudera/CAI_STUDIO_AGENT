@@ -1,0 +1,72 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+docs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage
+coverage/
+.nyc_output
+
+# Build outputs
+.next/
+dist/
+build/
+
+# Dependencies (will be installed in container)
+node_modules/
+.venv/
+studio/workflow_engine/.venv/
+
+# Testing
+.pytest_cache/
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Environment files
+.env*
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Images (keep only necessary ones)
+images/for_docs/

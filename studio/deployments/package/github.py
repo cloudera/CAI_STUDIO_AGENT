@@ -17,7 +17,10 @@ from studio.db.model import DeployedWorkflowInstance
 # will go away and workflow engine features will be available already.
 import sys
 
-sys.path.append("studio/workflow_engine/src")
+app_dir = os.getenv("APP_DIR")
+if not app_dir:
+    raise EnvironmentError("APP_DIR environment variable is not set.")
+sys.path.append(os.path.join(app_dir, "studio", "workflow_engine", "src"))
 
 
 def package_github_for_deployment(
