@@ -115,9 +115,9 @@ export const processEvents = (
                 event?.tool_name === DELEGATE_TOOL ? InfoType.DELEGATE : InfoType.ASK_COWORKER,
             });
         } else if (event?.agent_studio_id) {
-          const toolId = event?.agent_studio_id;
-          activeNodes.set(toolId, {
-            id: toolId,
+          const toolOrMcpId = event?.agent_studio_id;
+          activeNodes.set(toolOrMcpId, {
+            id: toolOrMcpId,
             activeTool: event.tool_name,
             info: `${event.tool_args}`,
             infoType: InfoType.TOOL_INPUT,
