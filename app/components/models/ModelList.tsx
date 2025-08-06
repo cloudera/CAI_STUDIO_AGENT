@@ -137,14 +137,16 @@ const ModelList: React.FC<ModelListProps> = ({}) => {
           GEMINI: 'Google Gemini',
           ANTHROPIC: 'Anthropic',
           CAII: 'Cloudera AI Inference',
+          BEDROCK: 'AWS Bedrock',
         };
         const iconMap: Record<string, string> = {
-          OPENAI: '/llm_providers/openai.svg',
-          AZURE_OPENAI: '/llm_providers/azure-openai.svg',
-          OPENAI_COMPATIBLE: '/llm_providers/generic-llm.svg',
-          GEMINI: '/llm_providers/gemini.svg',
-          ANTHROPIC: '/llm_providers/anthropic.svg',
-          CAII: '/llm_providers/caii.svg',
+                  OPENAI: '/llm_providers/openai.svg',
+        AZURE_OPENAI: '/llm_providers/azure-openai.svg',
+        OPENAI_COMPATIBLE: '/llm_providers/generic-llm.svg',
+        GEMINI: '/llm_providers/gemini.svg',
+        ANTHROPIC: '/llm_providers/anthropic.svg',
+        CAII: '/llm_providers/caii.svg',
+        BEDROCK: '/llm_providers/bedrock.svg',
         };
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

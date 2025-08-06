@@ -118,6 +118,29 @@ export const MODEL_IDENTIFIER_OPTIONS: Record<string, { value: string; label: st
     { value: 'claude-3-5-sonnet-latest', label: 'claude-3-5-sonnet-latest' },
     { value: 'claude-3-5-haiku-latest', label: 'claude-3-5-haiku-latest' },
   ],
+  BEDROCK: [
+    // Anthropic Claude Models
+    { value: 'anthropic.claude-3-5-sonnet-20240620-v1:0', label: 'Claude 3.5 Sonnet' },
+    { value: 'anthropic.claude-3-5-haiku-20241022-v1:0', label: 'Claude 3.5 Haiku' },
+    { value: 'anthropic.claude-3-sonnet-20240229-v1:0', label: 'Claude 3 Sonnet' },
+    { value: 'anthropic.claude-3-haiku-20240307-v1:0', label: 'Claude 3 Haiku' },
+    { value: 'anthropic.claude-3-opus-20240229-v1:0', label: 'Claude 3 Opus' },
+    // Amazon Nova Models
+    { value: 'amazon.nova-pro-v1:0', label: 'Amazon Nova Pro' },
+    { value: 'amazon.nova-lite-v1:0', label: 'Amazon Nova Lite' },
+    { value: 'amazon.nova-micro-v1:0', label: 'Amazon Nova Micro' },
+    // Meta Llama Models
+    { value: 'meta.llama3-2-90b-instruct-v1:0', label: 'Llama 3.2 90B Instruct' },
+    { value: 'meta.llama3-2-11b-instruct-v1:0', label: 'Llama 3.2 11B Instruct' },
+    { value: 'meta.llama3-1-70b-instruct-v1:0', label: 'Llama 3.1 70B Instruct' },
+    { value: 'meta.llama3-1-8b-instruct-v1:0', label: 'Llama 3.1 8B Instruct' },
+    // Mistral Models
+    { value: 'mistral.mistral-large-2407-v1:0', label: 'Mistral Large 2407' },
+    { value: 'mistral.mistral-small-2402-v1:0', label: 'Mistral Small 2402' },
+    // Cohere Models
+    { value: 'cohere.command-r-plus-v1:0', label: 'Command R+' },
+    { value: 'cohere.command-r-v1:0', label: 'Command R' },
+  ],
 };
 
 export const DEFAULT_MODEL_TEST_MESSAGE = 'Greet me in 5 different languages.';

@@ -226,3 +226,101 @@ def remove_model_extra_headers_from_env(model_id: str, cml: CMLServiceApi) -> No
 
     except Exception as e:
         raise ValueError(f"Failed to remove extra headers for model {model_id}: {str(e)}")
+
+
+# AWS Credentials Management Functions
+
+def _get_aws_credentials_env_key(model_id: str) -> str:
+    """Generate environment variable key for model AWS credentials"""
+    encoded_id = _encode_value(model_id)
+    return f"MODEL_AWS_CREDENTIALS_{encoded_id}"
+
+
+def get_model_aws_credentials_from_env(model_id: str, cml: CMLServiceApi) -> Dict[str, str]:
+    """Get model AWS credentials from project environment variables"""
+    try:
+        project_id = os.getenv("CDSW_PROJECT_ID")
+        if not project_id:
+            raise ValueError("CDSW_PROJECT_ID environment variable not found")
+
+        # Get project details
+        project = cml.get_project(project_id)
+        try:
+            environment = json.loads(project.environment) if project.environment else {}
+        except (json.JSONDecodeError, TypeError):
+            environment = {}
+
+        # Use encoded model ID for environment variable
+        env_key = _get_aws_credentials_env_key(model_id)
+        encoded_credentials = environment.get(env_key)
+        if not encoded_credentials:
+            return {}
+
+        decoded_credentials_str = _decode_value(encoded_credentials)
+        if not decoded_credentials_str:
+            return {}
+
+        try:
+            return json.loads(decoded_credentials_str)
+        except json.JSONDecodeError:
+            logger.warning(f"Failed to parse AWS credentials for model {model_id}")
+            return {}
+
+    except Exception as e:
+        raise ValueError(f"Failed to get AWS credentials for model {model_id}: {str(e)}")
+
+
+def update_model_aws_credentials_in_env(model_id: str, aws_credentials: Dict[str, str], cml: CMLServiceApi) -> None:
+    """Update/Store model AWS credentials in project environment variables"""
+    try:
+        project_id = os.getenv("CDSW_PROJECT_ID")
+        if not project_id:
+            raise ValueError("CDSW_PROJECT_ID environment variable not found")
+
+        # Get current project
+        project = cml.get_project(project_id)
+        try:
+            environment = json.loads(project.environment) if project.environment else {}
+        except (json.JSONDecodeError, TypeError):
+            environment = {}
+
+        # Use encoded model ID and serialize AWS credentials
+        env_key = _get_aws_credentials_env_key(model_id)
+        if aws_credentials:
+            credentials_json = json.dumps(aws_credentials)
+            environment[env_key] = _encode_value(credentials_json)
+        else:
+            # Remove the key if aws_credentials is empty
+            if env_key in environment:
+                del environment[env_key]
+
+        # Update project with new environment
+        update_body = {"environment": json.dumps(environment)}
+        cml.update_project(update_body, project_id)
+
+    except Exception as e:
+        raise ValueError(f"Failed to update AWS credentials for model {model_id}: {str(e)}")
+
+
+def remove_model_aws_credentials_from_env(model_id: str, cml: CMLServiceApi) -> None:
+    """Remove model AWS credentials from project environment variables"""
+    try:
+        project_id = os.getenv("CDSW_PROJECT_ID")
+        if not project_id:
+            raise ValueError("CDSW_PROJECT_ID environment variable not found")
+
+        # Get current project
+        project = cml.get_project(project_id)
+        try:
+            environment = json.loads(project.environment) if project.environment else {}
+            env_key = _get_aws_credentials_env_key(model_id)
+            if env_key in environment:
+                del environment[env_key]
+                # Update project with new environment
+                update_body = {"environment": json.dumps(environment)}
+                cml.update_project(update_body, project_id)
+        except (json.JSONDecodeError, TypeError):
+            pass  # Ignore if environment parsing fails
+
+    except Exception as e:
+        raise ValueError(f"Failed to remove AWS credentials for model {model_id}: {str(e)}")

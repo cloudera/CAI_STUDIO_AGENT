@@ -26,6 +26,9 @@ from .utils import (
     get_model_extra_headers_from_env,
     update_model_extra_headers_in_env,
     remove_model_extra_headers_from_env,
+    get_model_aws_credentials_from_env,
+    update_model_aws_credentials_in_env,
+    remove_model_aws_credentials_from_env,
 )
 
 logger = logging.getLogger(__name__)
@@ -248,6 +251,25 @@ def model_test(request: TestModelRequest, cml: CMLServiceApi = None, dao: AgentS
 
         # Get extra headers from environment instead of database
         extra_headers = get_model_extra_headers_from_env(model.model_id, cml)
+        
+        # Build LLM config dict
+        llm_config_dict = {
+            "provider_model": model.provider_model,
+            "model_type": model.model_type,
+            "api_base": model.api_base or None,
+            "api_key": api_key,
+            "extra_headers": extra_headers or None,
+        }
+        
+        # Add AWS credentials for Bedrock models
+        if model.model_type == SupportedModelTypes.BEDROCK.value:
+            aws_credentials = get_model_aws_credentials_from_env(model.model_id, cml)
+            llm_config_dict.update({
+                "aws_access_key_id": aws_credentials.get("aws_access_key_id"),
+                "aws_secret_access_key": aws_credentials.get("aws_secret_access_key"),
+                "aws_region_name": aws_credentials.get("aws_region_name"),
+                "aws_session_token": aws_credentials.get("aws_session_token"),
+            })
 
         llm = get_crewai_llm(
             Input__LanguageModel(
@@ -258,13 +280,7 @@ def model_test(request: TestModelRequest, cml: CMLServiceApi = None, dao: AgentS
                     "max_new_tokens": request.max_tokens or None,
                 },
             ),
-            llm_config_dict={
-                "provider_model": model.provider_model,
-                "model_type": model.model_type,
-                "api_base": model.api_base or None,
-                "api_key": api_key,
-                "extra_headers": extra_headers or None,
-            },
+            llm_config_dict,
         )
 
         try:
