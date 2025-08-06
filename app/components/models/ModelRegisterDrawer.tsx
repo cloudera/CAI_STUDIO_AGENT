@@ -367,6 +367,16 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
             Anthropic
           </div>
         </Option>
+        <Option value="BEDROCK">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <img
+              src="/llm_providers/bedrock.svg"
+              alt="AWS Bedrock"
+              style={{ width: '16px', height: '16px' }}
+            />
+            AWS Bedrock
+          </div>
+        </Option>
       </Select>
 
       {/* Model Alias */}
@@ -439,16 +449,52 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
         </>
       )}
 
+      {/* AWS Region for Bedrock */}
+      {modelRegisterType === 'BEDROCK' && (
+        <>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              paddingTop: '16px',
+              paddingBottom: '8px',
+            }}
+          >
+            AWS Region
+            <Tooltip title="Select the AWS region where your Bedrock models are available (e.g., us-east-1, us-west-2)">
+              <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+            </Tooltip>
+          </div>
+          <Select
+            style={{ width: '100%' }}
+            placeholder="Select AWS region"
+            value={modelRegisterApiBase}
+            onChange={(value) => dispatch(setModelRegisterApiBase(value))}
+          >
+            <Option value="us-east-1">US East (N. Virginia) - us-east-1</Option>
+            <Option value="us-west-2">US West (Oregon) - us-west-2</Option>
+            <Option value="us-east-2">US East (Ohio) - us-east-2</Option>
+            <Option value="us-west-1">US West (N. California) - us-west-1</Option>
+            <Option value="eu-west-1">Europe (Ireland) - eu-west-1</Option>
+            <Option value="eu-central-1">Europe (Frankfurt) - eu-central-1</Option>
+            <Option value="ap-southeast-1">Asia Pacific (Singapore) - ap-southeast-1</Option>
+            <Option value="ap-northeast-1">Asia Pacific (Tokyo) - ap-northeast-1</Option>
+          </Select>
+        </>
+      )}
+
       {/* API Key */}
       <div
         style={{ display: 'flex', alignItems: 'center', paddingTop: '16px', paddingBottom: '8px' }}
       >
-        API Key
+        {modelRegisterType === 'BEDROCK' ? 'AWS Access Key ID' : 'API Key'}
         <Tooltip
           title={
-            modelRegisterType === 'CAII'
-              ? 'Generate a long-lived JWT token on the Knox Gateway Server in the Data Lake environment. Copy the CDP Token from the Cloudera AI Model Endpoint Code Sample page'
-              : "Provide the API key for accessing the model's service."
+            modelRegisterType === 'BEDROCK'
+              ? 'Your AWS Access Key ID. You can also use IAM roles or environment variables for authentication.'
+              : modelRegisterType === 'CAII'
+                ? 'Generate a long-lived JWT token on the Knox Gateway Server in the Data Lake environment. Copy the CDP Token from the Cloudera AI Model Endpoint Code Sample page'
+                : "Provide the API key for accessing the model's service."
           }
         >
           <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
@@ -456,17 +502,49 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
       </div>
       <Input.Password
         placeholder={
-          modelRegisterType === 'CAII'
-            ? 'Enter JWT token'
-            : drawerMode === 'register'
-              ? 'Enter API key'
-              : 'Enter new API key (optional)'
+          modelRegisterType === 'BEDROCK'
+            ? 'Enter AWS Access Key ID'
+            : modelRegisterType === 'CAII'
+              ? 'Enter JWT token'
+              : drawerMode === 'register'
+                ? 'Enter API key'
+                : 'Enter new API key (optional)'
         }
         value={modelRegisterApiKey}
         onChange={(e) => {
           dispatch(setModelRegisterApiKey(e.target.value));
         }}
       />
+
+      {/* AWS Secret Access Key for Bedrock */}
+      {modelRegisterType === 'BEDROCK' && (
+        <>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              paddingTop: '16px',
+              paddingBottom: '8px',
+            }}
+          >
+            AWS Secret Access Key
+            <Tooltip title="Your AWS Secret Access Key (will be stored securely)">
+              <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+            </Tooltip>
+          </div>
+          <Input.Password
+            placeholder="Enter AWS Secret Access Key"
+            value={modelRegisterExtraHeaders?.aws_secret_access_key || ''}
+            onChange={(e) => {
+              const currentHeaders = modelRegisterExtraHeaders || {};
+              dispatch(setModelRegisterExtraHeaders({
+                ...currentHeaders,
+                aws_secret_access_key: e.target.value
+              }));
+            }}
+          />
+        </>
+      )}
 
       {/* Set as default toggle (Only in case of new model registration) */}
       {drawerMode === 'register' && (
