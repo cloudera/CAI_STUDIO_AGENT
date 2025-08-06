@@ -160,7 +160,10 @@ Examples of effective backstories:
 
   
 Please generate the agent properties in the following XML format:<agent><role>Role</role><goal>Goal</goal><backstory>Backstory</backstory></agent>
-If the user's description is not clear, just do not generate the requested XML. Instead give a short error message.
+Always make sure that you generate the proper XML, even if the user's description is not clear or is lacking in details. Never mention that the user's description is too vague; instead, make sure you always generate 
+the XML to the best of your ability.
+
+### 
 
 USER DESCRIPTION: ${description.replace(/\n/g, ' ')}
 `;

@@ -12,11 +12,43 @@ from mcpadapt.crewai_adapter import CrewAIAdapter
 
 import engine.types as input_types
 from engine.types import *
+from engine.crewai.wrappers import AgentStudioCrewAITool
 
 _mcp_type_to_command = {
     "PYTHON": "uvx",
     "NODE": "npx",
 }
+
+
+def _wrap_mcp_tool_with_agent_studio_wrapper(base_tool, mcp_instance_id: str) -> AgentStudioCrewAITool:
+    """
+    Wrap a BaseTool from MCP with AgentStudioCrewAITool to add agent_studio_mcp_id tracking.
+    """
+
+    class MCPWrappedTool(AgentStudioCrewAITool):
+        # Define required Pydantic fields as class attributes
+        name: str = ""
+        description: str = ""
+
+        def __init__(self, base_tool, mcp_instance_id: str):
+            # Pass required fields to parent constructor
+            super().__init__(
+                name=base_tool.name,
+                description=base_tool.description,
+                agent_studio_id=mcp_instance_id,
+            )
+            self.args_schema = getattr(base_tool, "args_schema", None)
+            self._base_tool = base_tool
+
+        def _run(self, *args, **kwargs):
+            return self._base_tool._run(*args, **kwargs)
+
+        def _arun(self, *args, **kwargs):
+            if hasattr(self._base_tool, "_arun"):
+                return self._base_tool._arun(*args, **kwargs)
+            return super()._arun(*args, **kwargs)
+
+    return MCPWrappedTool(base_tool, mcp_instance_id)
 
 
 def get_mcp_tools_for_crewai(mcp_instance: Input__MCPInstance, env_vars: Dict[str, str]) -> input_types.MCPObjects:
@@ -29,10 +61,14 @@ def get_mcp_tools_for_crewai(mcp_instance: Input__MCPInstance, env_vars: Dict[st
     )
     adapter = MCPAdapt(server_params, CrewAIAdapter(), connect_timeout=60)
     adapter.__enter__()
-    tools: list[BaseTool] = adapter.tools()
+    base_tools: list[BaseTool] = adapter.tools()
+
+    # Wrap each tool with AgentStudioCrewAITool to add MCP tracking
+    wrapped_tools = [_wrap_mcp_tool_with_agent_studio_wrapper(tool, mcp_instance.id) for tool in base_tools]
+
     return input_types.MCPObjects(
         local_session=adapter,
-        tools=tools,
+        tools=wrapped_tools,
     )
 
 
