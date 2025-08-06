@@ -1,5 +1,6 @@
 import json
 import json
+import os
 
 from studio.db import model as db_model
 from studio.models.utils import get_studio_default_model_id
@@ -14,7 +15,10 @@ from sqlalchemy.orm.session import Session
 # will go away and workflow engine features will be available already.
 import sys
 
-sys.path.append("studio/workflow_engine/src")
+app_dir = os.getenv("APP_DIR")
+if not app_dir:
+    raise EnvironmentError("APP_DIR environment variable is not set.")
+sys.path.append(os.path.join(app_dir, "studio", "workflow_engine", "src"))
 
 import engine.types as input_types
 

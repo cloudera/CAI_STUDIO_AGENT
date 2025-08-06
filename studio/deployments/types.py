@@ -1,3 +1,4 @@
+import os
 from pydantic import BaseModel
 from enum import Enum
 from typing import Optional
@@ -7,7 +8,10 @@ from typing import Optional
 # will go away and workflow engine features will be available already.
 import sys
 
-sys.path.append("studio/workflow_engine/src")
+app_dir = os.getenv("APP_DIR")
+if not app_dir:
+    raise EnvironmentError("APP_DIR environment variable is not set.")
+sys.path.append(os.path.join(app_dir, "studio", "workflow_engine", "src"))
 from engine.types import DeploymentConfig
 
 

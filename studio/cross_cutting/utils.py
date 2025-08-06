@@ -87,8 +87,9 @@ def deploy_cml_model(
                 auto_deployment_config=deployment_config,
                 auto_deploy_model=True,
             )
-
+        print(f"Creating model build with body: {create_model_build_body}")
         create_build_resp = cml.create_model_build(create_model_build_body, project_id=project_id, model_id=model_id)
+        print(f"Model build created with response: {create_build_resp}")
     except cmlapi.rest.ApiException as e:
         raise RuntimeError(f"Failed to create model build: {e.body}") from e
     except Exception as e:
@@ -312,13 +313,15 @@ def get_studio_subdirectory() -> str:
     """
     Get the subdirectory for the studio (if installed in IS_COMPOSABLE mode).
     """
-    if os.getenv("IS_COMPOSABLE", "false").lower() != "true":
+    if os.getenv("IS_COMPOSABLE", "false").lower() != "true" or os.getcwd() == "/home/cdsw":
         return ""
     relative_path = os.path.relpath(os.path.abspath(os.getcwd()), "/home/cdsw")
     if relative_path.startswith("/"):
         relative_path = relative_path[1:]
     if relative_path.endswith("/"):
         relative_path = relative_path[:-1]
+    if relative_path == ".":
+        relative_path = ""
     return relative_path
 
 

@@ -39,7 +39,10 @@ def start_phoenix_server():
     """
     
     print("Starting up the Phoenix ops platform server...")
-    out = subprocess.run([f"bash ./bin/start-agent-ops-phoenix.sh"], shell=True, check=True)
+    app_dir = os.getenv("APP_DIR")
+    if app_dir is None:
+        raise ValueError("APP_DIR environment variable must be set.")
+    out = subprocess.run([f"bash {os.path.join(app_dir, 'bin/start-agent-ops-phoenix.sh')}"], shell=True, check=True)
 
 
 def set_ops_server_discovery():

@@ -22,7 +22,10 @@ from studio.db.model import DeployedWorkflowInstance, Workflow
 # will go away and workflow engine features will be available already.
 import sys
 
-sys.path.append("studio/workflow_engine/src")
+app_dir = os.getenv("APP_DIR")
+if not app_dir:
+    raise EnvironmentError("APP_DIR environment variable is not set.")
+sys.path.append(os.path.join(app_dir, "studio", "workflow_engine", "src"))
 
 
 def copy_workflow_engine(target_dir: str) -> None:
@@ -41,7 +44,7 @@ def copy_workflow_engine(target_dir: str) -> None:
         return {".venv", ".ruff_cache", "__pycache__"}
 
     shutil.copytree(
-        os.path.join("studio", "workflow_engine"),
+        os.path.join(os.getenv("APP_DIR"), "studio", "workflow_engine"),
         target_dir,
         dirs_exist_ok=True,
         ignore=workflow_engine_ignore,

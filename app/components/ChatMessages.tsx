@@ -11,7 +11,6 @@ import {
   ClearOutlined,
   MoreOutlined,
 } from '@ant-design/icons';
-import { jsPDF } from 'jspdf';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -20,7 +19,6 @@ import {
   selectWorkflowAppChatUserInput,
   updatedChatUserInput,
 } from '../workflows/workflowAppSlice';
-import { marked } from 'marked';
 import showdown from 'showdown';
 
 const { TextArea } = Input;

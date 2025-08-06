@@ -1,7 +1,9 @@
 #!/bin/bash
 
+# Get the app directory from environment
+APP_DIR=${APP_DIR:-$(pwd)}
 # Ensure proper node usage
-export NVM_DIR="$(pwd)/.nvm"
+export NVM_DIR="$APP_DIR/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 nvm use 22
 
@@ -45,10 +47,10 @@ export CREWAI_DISABLE_TELEMETRY=true
 # Function to clean up background processes
 cleanup() {
   echo "Shutting down services..."
-  pkill -f "bin/start-grpc-server.py"
-  pkill -f "bin/start-ops-proxy.py"
-  pkill -f "npm run dev"
-  pkill -f "npm run start"
+  pkill -f "$APP_DIR/bin/start-grpc-server.py"
+  pkill -f "$APP_DIR/bin/start-ops-proxy.py"
+  pkill -f "npm run dev --prefix $APP_DIR"
+  pkill -f "npm run start --prefix $APP_DIR"
 
   # Kill our workflow runner processes.
   if [ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]; then
@@ -78,7 +80,7 @@ if [ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]; then
     echo "Starting workflow runner on port $PORT_NUM..."
     
     # Launch the runner using the virtual environment's python
-    studio/workflow_engine/.venv/bin/python -m uvicorn \
+    $APP_DIR/studio/workflow_engine/.venv/bin/python -m uvicorn \
       studio.workflow_engine.src.engine.entry.runner:app \
       --port "$PORT_NUM" &
     
@@ -103,10 +105,10 @@ if [ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]; then
 
       if [ "$AGENT_STUDIO_DEPLOYMENT_CONFIG" = "dev" ]; then
         echo "Starting up the gRPC server with a debug port at 5678..."
-        uv run -m debugpy --listen 5678 bin/start-grpc-server.py &
+        uv run -m debugpy --listen 5678 $APP_DIR/bin/start-grpc-server.py &
       else 
         echo "Starting up the gRPC server..."
-        PYTHONUNBUFFERED=1 uv run bin/start-grpc-server.py & 
+        PYTHONUNBUFFERED=1 uv run $APP_DIR/bin/start-grpc-server.py &
       fi
     } || {
       echo "gRPC server initialization script failed. Is there already a local server running in the pod?"
@@ -136,15 +138,15 @@ fi
 # In production CML application, we need to get the full application URL.
 if [ "$AGENT_STUDIO_DEPLOYMENT_CONFIG" = "dev" ]; then
   echo "Starting ops proxy server..."
-  PYTHONUNBUFFERED=1 uv run bin/start-ops-proxy.py &
+  PYTHONUNBUFFERED=1 uv run $APP_DIR/bin/start-ops-proxy.py &
 fi
 
 # If running in development mode, run the dev server so we get live
 # updates. If in production mode, build the optimized server and serve it.
 if [ "$AGENT_STUDIO_DEPLOYMENT_CONFIG" = "dev" ]; then
   echo "Starting up Next.js development server..."
-  npm run dev
+  npm run dev --prefix $APP_DIR
 else 
   echo "Running production server..."
-  npm run start
+  npm run start --prefix $APP_DIR
 fi

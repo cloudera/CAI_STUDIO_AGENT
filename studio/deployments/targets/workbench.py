@@ -25,7 +25,11 @@ from studio.deployments.utils import update_deployment_metadata
 # will go away and workflow engine features will be available already.
 import sys
 
-sys.path.append("studio/workflow_engine/src")
+app_dir = os.getenv("APP_DIR")
+if not app_dir:
+    raise EnvironmentError("APP_DIR environment variable is not set.")
+sys.path.append(os.path.join(app_dir, "studio", "workflow_engine", "src"))
+
 from engine.ops import get_ops_endpoint
 
 
