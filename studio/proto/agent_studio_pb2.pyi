@@ -1034,7 +1034,14 @@ class TestWorkflowMCPInstanceEnvVars(_message.Message):
     def __init__(self, env_vars: _Optional[_Mapping[str, str]] = ...) -> None: ...
 
 class TestWorkflowRequest(_message.Message):
-    __slots__ = ("workflow_id", "inputs", "tool_user_parameters", "mcp_instance_env_vars", "generation_config")
+    __slots__ = (
+        "workflow_id",
+        "inputs",
+        "tool_user_parameters",
+        "mcp_instance_env_vars",
+        "generation_config",
+        "session_id",
+    )
     class InputsEntry(_message.Message):
         __slots__ = ("key", "value")
         KEY_FIELD_NUMBER: _ClassVar[int]
@@ -1068,11 +1075,13 @@ class TestWorkflowRequest(_message.Message):
     TOOL_USER_PARAMETERS_FIELD_NUMBER: _ClassVar[int]
     MCP_INSTANCE_ENV_VARS_FIELD_NUMBER: _ClassVar[int]
     GENERATION_CONFIG_FIELD_NUMBER: _ClassVar[int]
+    SESSION_ID_FIELD_NUMBER: _ClassVar[int]
     workflow_id: str
     inputs: _containers.ScalarMap[str, str]
     tool_user_parameters: _containers.MessageMap[str, TestWorkflowToolUserParameters]
     mcp_instance_env_vars: _containers.MessageMap[str, TestWorkflowMCPInstanceEnvVars]
     generation_config: str
+    session_id: str
     def __init__(
         self,
         workflow_id: _Optional[str] = ...,
@@ -1080,15 +1089,20 @@ class TestWorkflowRequest(_message.Message):
         tool_user_parameters: _Optional[_Mapping[str, TestWorkflowToolUserParameters]] = ...,
         mcp_instance_env_vars: _Optional[_Mapping[str, TestWorkflowMCPInstanceEnvVars]] = ...,
         generation_config: _Optional[str] = ...,
+        session_id: _Optional[str] = ...,
     ) -> None: ...
 
 class TestWorkflowResponse(_message.Message):
-    __slots__ = ("message", "trace_id")
+    __slots__ = ("message", "trace_id", "session_id")
     MESSAGE_FIELD_NUMBER: _ClassVar[int]
     TRACE_ID_FIELD_NUMBER: _ClassVar[int]
+    SESSION_ID_FIELD_NUMBER: _ClassVar[int]
     message: str
     trace_id: str
-    def __init__(self, message: _Optional[str] = ..., trace_id: _Optional[str] = ...) -> None: ...
+    session_id: str
+    def __init__(
+        self, message: _Optional[str] = ..., trace_id: _Optional[str] = ..., session_id: _Optional[str] = ...
+    ) -> None: ...
 
 class DeployWorkflowRequest(_message.Message):
     __slots__ = (

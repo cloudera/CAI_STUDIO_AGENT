@@ -2,6 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 
 import grpc
+import warnings
 
 from studio.proto import agent_studio_pb2 as studio_dot_proto_dot_agent__studio__pb2
 

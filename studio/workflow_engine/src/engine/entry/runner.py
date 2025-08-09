@@ -8,7 +8,7 @@ import requests
 from datetime import datetime
 from opentelemetry.context import get_current
 import subprocess
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 # Disable CrewAI telemetry.
 os.environ["CREWAI_DISABLE_TELEMETRY"] = "true"
@@ -46,6 +46,7 @@ running_workflow = None
 # Pydantic model for the incoming JSON payload.
 class KickoffPayload(BaseModel):
     workflow_directory: str
+    workflow_root_directory: Optional[str] = None
     workflow_name: str
     collated_input: dict
     tool_config: dict
@@ -53,6 +54,7 @@ class KickoffPayload(BaseModel):
     llm_config: dict
     inputs: dict
     events_trace_id: str
+    session_id: Optional[str] = None
 
 
 class ToolTestPayload(BaseModel):
@@ -105,6 +107,8 @@ def run_workflow_task(payload: KickoffPayload) -> None:
             payload.inputs,
             parent_context,
             payload.events_trace_id,
+            payload.session_id,
+            payload.workflow_root_directory,
         )
 
         print("Workflow finished successfully")

@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { Input, Button, Avatar, Layout, Spin, Tooltip, Menu, Dropdown } from 'antd';
+import React, { useMemo, useState } from 'react';
+import { Input, Button, Avatar, Layout, Spin, Tooltip, Menu, Dropdown, Tag } from 'antd';
 import {
   UserOutlined,
   RobotOutlined,
@@ -19,17 +19,25 @@ import {
   selectWorkflowAppChatUserInput,
   updatedChatUserInput,
 } from '../workflows/workflowAppSlice';
+import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
+import { getWorkflowDirectory } from '@/app/lib/workflowFileUpload';
+import { selectWorkflowAppSessionFiles, removedSessionFile, addedSessionFile, setSessionFiles } from '@/app/workflows/workflowAppSlice';
+import { selectWorkflowSessionId } from '@/app/workflows/editorSlice';
 import showdown from 'showdown';
+import FileUploadButton from './FileUploadButton';
 
 const { TextArea } = Input;
 
 interface ChatMessagesProps {
-  messages: { role: 'user' | 'assistant'; content: string; events?: any[] }[];
+  messages: { role: 'user' | 'assistant'; content: string; events?: any[]; attachments?: { name: string; size?: number }[] }[];
   handleTestWorkflow: () => void;
   isProcessing: boolean;
   messagesEndRef: React.RefObject<HTMLDivElement>;
   clearMessages: () => void;
   workflowName: string;
+  workflow?: any;
+  renderMode?: 'studio' | 'workflow';
+  onOpenArtifacts?: () => void;
 }
 
 const ChatMessages: React.FC<ChatMessagesProps> = ({
@@ -39,9 +47,26 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   messagesEndRef,
   clearMessages,
   workflowName,
+  workflow,
+  renderMode = 'studio',
+  onOpenArtifacts,
 }) => {
   const userInput = useAppSelector(selectWorkflowAppChatUserInput);
+  const sessionFiles = useAppSelector(selectWorkflowAppSessionFiles);
+  const sessionId = useAppSelector(selectWorkflowSessionId);
+  const { data: workflowData } = useGetWorkflowDataQuery();
   const dispatch = useAppDispatch();
+
+  // Local attachment state for conversational view with individual file tracking
+  const [fileStates, setFileStates] = useState<{ 
+    [fileName: string]: { 
+      name: string; 
+      size: number; 
+      status: 'pending' | 'uploading' | 'completed' | 'failed' 
+    } 
+  }>({});
+  // Track files user canceled while uploading to prevent re-adding on completion
+  const canceledUploadsRef = React.useRef<Set<string>>(new Set());
 
   const handleDownloadPdf = async (content: string) => {
     try {
@@ -149,6 +174,33 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     </Menu>
   );
 
+  const getAttachmentMeta = (name: string) => {
+    const lower = name.toLowerCase();
+    if (lower.endsWith('.csv') || lower.endsWith('.xlsx') || lower.endsWith('.xls')) {
+      return { label: 'Spreadsheet', emoji: '🟩' };
+    }
+    if (lower.endsWith('.ppt') || lower.endsWith('.pptx')) {
+      return { label: 'Presentation', emoji: '🟧' };
+    }
+    if (lower.endsWith('.pdf')) {
+      return { label: 'PDF', emoji: '🟥' };
+    }
+    if (lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.gif')) {
+      return { label: 'Image', emoji: '🖼️' };
+    }
+    return { label: 'File', emoji: '📄' };
+  };
+
+  const handleSend = async () => {
+    try {
+      await Promise.resolve(handleTestWorkflow());
+    } finally {
+      // Move attachments into the message; clear the composer chips
+      setFileStates({});
+      dispatch(setSessionFiles([]));
+    }
+  };
+
   return (
     <>
       <div
@@ -255,13 +307,124 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                   position: 'relative',
                 }}
               >
-                {message.content}
+                <div style={{ padding: '12px' }}>{message.content}</div>
+                {message.attachments && message.attachments.length > 0 && (
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: '0 12px 12px 12px' }}>
+                    {message.attachments.map((f, i) => {
+                      const meta = getAttachmentMeta(f.name);
+                      return (
+                        <Tag key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span>{meta.emoji}</span>
+                          <span style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.name}</span>
+                          {typeof f.size === 'number' && (
+                            <span style={{ opacity: 0.8 }}>{(f.size / 1024).toFixed(1)} KB</span>
+                          )}
+                          <span style={{ opacity: 0.7 }}>{meta.label}</span>
+                        </Tag>
+                      );
+                    })}
+                  </div>
+                )}
               </Layout>
             )}
           </div>
         ))}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Attachment chips just above the message box */}
+      {(Object.keys(fileStates).length > 0 || (sessionFiles && sessionFiles.length > 0)) && (
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '0 0 8px 0' }}>
+          {Object.values(fileStates)
+            .filter((fs) => fs.status !== 'completed')
+            .map((fileState) => (
+            <Tag
+              key={fileState.name}
+              color={fileState.status === 'uploading' ? 'blue' : fileState.status === 'failed' ? 'red' : 'default'}
+              closable={true}
+              onClose={async (e) => {
+                e.preventDefault();
+                // Remove from UI immediately
+                setFileStates(prev => {
+                  const newStates = { ...prev };
+                  delete newStates[fileState.name];
+                  return newStates;
+                });
+
+                // Mark as canceled if still uploading to prevent re-adding on completion
+                if (fileState.status === 'uploading') {
+                  canceledUploadsRef.current.add(fileState.name);
+                  // Try to cancel the in-flight request via upload hook if available
+                  try {
+                    // Soft import to avoid tight coupling
+                    // @ts-ignore
+                    if (typeof window !== 'undefined' && window.__cancelUpload) {
+                      // @ts-ignore
+                      window.__cancelUpload(fileState.name);
+                    }
+                  } catch {}
+                }
+
+                // Background deletion for completed files
+                if (fileState.status === 'completed') {
+                  const workflowDirectory = getWorkflowDirectory(renderMode, workflow, workflowData);
+                  if (sessionId && workflowDirectory) {
+                    const filePath = `${workflowDirectory}/session/${sessionId}/${fileState.name}`;
+                    try {
+                      await fetch('/api/file/delete', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ filePath }),
+                      });
+                    } catch (err) {
+                      console.error('Background delete error:', err);
+                    }
+                  }
+                  dispatch(removedSessionFile(fileState.name));
+                }
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              <span role="img" aria-label="file">📄</span>
+              <span style={{ maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis' }}>{fileState.name}</span>
+              <span style={{ opacity: 0.8 }}>{(fileState.size / 1024).toFixed(1)} KB</span>
+              {fileState.status === 'uploading' && <Spin size="small" style={{ marginLeft: 4 }} />}
+              {fileState.status === 'failed' && <span style={{ color: 'red', marginLeft: 4 }}>✗</span>}
+            </Tag>
+          ))}
+          {sessionFiles?.map((f, idx) => (
+            <Tag
+              key={`uploaded-${idx}`}
+              closable
+              onClose={async (e) => {
+                e.preventDefault();
+                // Remove from UI immediately
+                dispatch(removedSessionFile(f.name));
+
+                // Background deletion
+                const workflowDirectory = getWorkflowDirectory(renderMode, workflow, workflowData);
+                if (sessionId && workflowDirectory) {
+                  const filePath = `${workflowDirectory}/session/${sessionId}/${f.name}`;
+                  try {
+                    await fetch('/api/file/delete', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ filePath }),
+                    });
+                  } catch (err) {
+                    console.error('Background delete error:', err);
+                  }
+                }
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              <span role="img" aria-label="file">📄</span>
+              <span style={{ maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.name}</span>
+              <span style={{ opacity: 0.8 }}>{(f.size / 1024).toFixed(1)} KB</span>
+            </Tag>
+          ))}
+        </div>
+      )}
 
       <div
         style={{
@@ -279,10 +442,58 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
           style={{ flex: 1, marginRight: '8px' }}
           disabled={isProcessing}
         />
+        <FileUploadButton
+          workflow={workflow}
+          renderMode={renderMode}
+          buttonType="chat"
+          disabled={isProcessing}
+          onUploadSuccess={onOpenArtifacts}
+          onFilesAdded={(files) => {
+            // Add files to pending state
+            setFileStates(prev => {
+              const newStates = { ...prev };
+              files.forEach(f => {
+                newStates[f.name] = { name: f.name, size: f.size, status: 'uploading' };
+              });
+              return newStates;
+            });
+          }}
+          onFileUploaded={(file, success) => {
+            const wasCanceled = canceledUploadsRef.current.has(file.name);
+            setFileStates(prev => {
+              const newStates = { ...prev };
+              if (newStates[file.name]) {
+                if (success) {
+                  // On success, remove from local state to avoid duplicate with sessionFiles
+                  delete newStates[file.name];
+                } else {
+                  newStates[file.name].status = 'failed';
+                }
+              }
+              return newStates;
+            });
+            if (wasCanceled) {
+              canceledUploadsRef.current.delete(file.name);
+              // If upload eventually succeeded but user canceled, delete on server in background
+              const workflowDirectory = getWorkflowDirectory(renderMode, workflow, workflowData);
+              if (success && sessionId && workflowDirectory) {
+                const filePath = `${workflowDirectory}/session/${sessionId}/${file.name}`;
+                fetch('/api/file/delete', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ filePath }),
+                }).catch(() => {});
+              }
+              return;
+            }
+            if (success) dispatch(addedSessionFile({ name: file.name, size: file.size }));
+          }}
+          style={{ marginRight: '8px' }}
+        />
         <Button
           type="primary"
           icon={isProcessing ? <Spin size="small" /> : <SendOutlined />}
-          onClick={handleTestWorkflow}
+          onClick={handleSend}
           disabled={isProcessing}
           style={{ marginRight: '8px' }}
         />

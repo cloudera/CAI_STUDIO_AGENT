@@ -46,6 +46,7 @@ from datetime import datetime
 from typing import List, Dict, Union, Optional
 import json
 import base64
+from uuid import uuid4
 
 import engine.types as input_types
 from engine.crewai.mcp import get_mcp_tools_definitions
@@ -83,7 +84,12 @@ async def _set_mcp_tool_definitions():
         deployment_config: input_types.DeploymentConfig = input_types.DeploymentConfig.model_validate(
             json.loads(WORKFLOW_DEPLOYMENT_CONFIG)
         )
-        result = await get_mcp_tools_definitions(collated_input.mcp_instances, deployment_config.mcp_config)
+        # Calculate session directory for MCP tool definitions (session_id not available at startup)
+        session_directory = None
+        # Note: At startup, we don't have session_id yet, so MCP tools won't have SESSION_DIRECTORY env var
+        # This will be set properly during actual workflow execution
+        
+        result = await get_mcp_tools_definitions(collated_input.mcp_instances, deployment_config.mcp_config, session_directory)
         _mcp_tool_defintions = {mcp_id: [t.model_dump() for t in tool_list] for mcp_id, tool_list in result.items()}
         print(f"MCP tool definitions are set")
 
@@ -121,6 +127,11 @@ def api_wrapper(args: Union[dict, str]) -> str:
         inputs = (
             base64_decode(serve_workflow_parameters.kickoff_inputs) if serve_workflow_parameters.kickoff_inputs else {}
         )
+        
+        # Check if session_id is provided in inputs, if not generate a 6-character UUID
+        session_id = inputs.get('session_id')
+        if not session_id:
+            session_id = str(uuid4())[:6]
 
         # LangGraph workflow
         if LANGGRAPH_CALLABLES:
@@ -134,7 +145,7 @@ def api_wrapper(args: Union[dict, str]) -> str:
                 await run_workflow_langgraph_instance(graph_callable, inputs)
 
             asyncio.create_task(run_langgraph_workflow())
-            return {"trace_id": "n/a"}
+            return {"trace_id": "n/a", "session_id": session_id}
 
         # CrewAI workflow
         else:
@@ -142,6 +153,12 @@ def api_wrapper(args: Union[dict, str]) -> str:
             current_time = datetime.now()
             formatted_time = current_time.strftime("%b %d, %H:%M:%S.%f")[:-3]
             span_name = f"Workflow Run: {formatted_time}"
+
+            # Prepare workflow root directory from MODEL_EXECUTION_DIR
+            workflow_root_directory = MODEL_EXECUTION_DIR
+            # Remove /home/cdsw prefix if present
+            if workflow_root_directory and workflow_root_directory.startswith("/home/cdsw/"):
+                workflow_root_directory = workflow_root_directory[len("/home/cdsw/"):]
 
             with tracer.start_as_current_span(span_name) as parent_span:
                 decimal_trace_id = parent_span.get_span_context().trace_id
@@ -158,13 +175,25 @@ def api_wrapper(args: Union[dict, str]) -> str:
                         inputs,
                         parent_context,
                         trace_id,
+                        session_id,
+                        workflow_root_directory,
                     )
                 )
-            return {"trace_id": str(trace_id)}
+            return {"trace_id": str(trace_id), "session_id": session_id}
 
         return {"trace_id": str(trace_id)}
     elif serve_workflow_parameters.action_type == input_types.DeployedWorkflowActions.GET_CONFIGURATION.value:
-        return {"configuration": collated_input.model_dump()}
+        # Prepare workflow root directory from MODEL_EXECUTION_DIR
+        workflow_root_directory = MODEL_EXECUTION_DIR
+        # Remove /home/cdsw prefix if present
+        if workflow_root_directory and workflow_root_directory.startswith("/home/cdsw/"):
+            workflow_root_directory = workflow_root_directory[len("/home/cdsw/"):]
+        
+        # Get the base configuration and add workflow_directory
+        configuration = collated_input.model_dump()
+        configuration["workflow_directory"] = workflow_root_directory
+        
+        return {"configuration": configuration}
     elif serve_workflow_parameters.action_type == input_types.DeployedWorkflowActions.GET_ASSET_DATA.value:
         unavailable_assets = list()
         asset_data: Dict[str, str] = dict()

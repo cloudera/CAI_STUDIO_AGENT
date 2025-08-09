@@ -1,12 +1,96 @@
 # No top level studio.db imports allowed to support wokrflow model deployment
 import asyncio
 from contextvars import Context
+import os
+import cmlapi
+from cmlapi.rest import ApiException
+from datetime import datetime
+from uuid import uuid4
 
 from typing import Dict, Any
 from opentelemetry.context import attach, detach
 
 from engine.crewai.trace_context import set_trace_id
 from engine.crewai.crew import create_crewai_objects
+from engine.crewai.autosync import AutoSyncService
+
+
+def ensure_session_directory(workflow_root_directory: str, session_id: str, inputs: dict) -> bool:
+    """
+    Ensure session directory exists and upload inputs.txt using CML API.
+    Creates directory structure: workflow_root_directory/session/session_id/inputs.txt
+    
+    Args:
+        workflow_root_directory: Base workflow root directory
+        session_id: Session ID for the workflow run
+        inputs: Input dictionary to save as inputs.txt
+    
+    Returns:
+        bool: True if upload successful, False otherwise
+    """
+    if not session_id:
+        return True  # No session_id provided, skip directory creation
+    
+    # DEBUG: Print the workflow_root_directory value to find root cause
+    print(f"🔍 DEBUG: workflow_root_directory parameter = '{workflow_root_directory}'")
+    print(f"🔍 DEBUG: session_id parameter = '{session_id}'")
+    
+    try:
+        # Initialize CML client
+        client = cmlapi.default_client()
+        project_id = os.getenv('CDSW_PROJECT_ID')
+        
+        if not project_id:
+            print(f"Warning: CDSW_PROJECT_ID not set, cannot upload inputs file")
+            return False
+        
+        # Target path for inputs.txt
+        target_inputs_path = f"{workflow_root_directory}/session/{session_id}/inputs.txt"
+        print(f"🔍 DEBUG: Constructed target_inputs_path = '{target_inputs_path}'")
+        
+        # Step 1: Try to delete existing file at target path (ignore failures)
+        try:
+            client.delete_project_file(project_id=project_id, path=target_inputs_path)
+            print(f"🗑️  Deleted existing file: {target_inputs_path}")
+        except:
+            print(f"ℹ️  No existing file to delete or deletion failed (continuing anyway): {target_inputs_path}")
+        
+        # Step 2: Create local inputs.txt file
+        import json
+        inputs_content = json.dumps(inputs, indent=2, ensure_ascii=False)
+        local_inputs_file = f"/tmp/inputs_{session_id}_{str(uuid4())[:8]}.txt"
+        
+        with open(local_inputs_file, "w", encoding="utf-8") as f:
+            f.write(inputs_content)
+        
+        print(f"📝 Created local inputs file with {len(inputs)} entries")
+        
+        # Step 3: Upload directly to target location using call_api
+        print(f"⬆️  Uploading inputs directly to {target_inputs_path}...")
+        
+        header_params = {'Content-Type': 'multipart/form-data'}
+        files_payload = {
+            target_inputs_path: local_inputs_file
+        }
+        
+        client.api_client.call_api(
+            f'/api/v2/projects/{project_id}/files',
+            'POST',
+            path_params={'project_id': project_id},
+            header_params=header_params,
+            files=files_payload,
+            response_type=None
+        )
+        
+        # Step 4: Clean up local file
+        os.remove(local_inputs_file)
+        
+        print(f"✅ Successfully uploaded inputs.txt to {target_inputs_path}")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error uploading inputs file: {e}")
+        return False
 
 
 def run_workflow(
@@ -18,6 +102,8 @@ def run_workflow(
     inputs: Dict[str, Any],
     parent_context: Context,
     events_trace_id: str,
+    session_id: str = None,
+    workflow_root_directory: str = None,
 ) -> None:
     """
     Runs a CrewAI workflow inside the given context.
@@ -25,16 +111,64 @@ def run_workflow(
     """
     token = attach(parent_context)
     try:
+        # Handle session_id: create directory and upload inputs file
+        if session_id:
+            # Ensure session directory exists and upload inputs.txt using CML API
+            # Use workflow_root_directory if provided, otherwise fall back to workflow_directory
+            directory_to_use = workflow_root_directory if workflow_root_directory else workflow_directory
+            if not ensure_session_directory(directory_to_use, session_id, inputs):
+                print(f"Failed to upload inputs file for session_id: {session_id}")
+        
+        # Determine deployment mode and compute session directory path (local and remote target)
+        base_dir = workflow_root_directory if workflow_root_directory else workflow_directory
+        is_deployment_mode = bool(base_dir and 'deployable_workflow' in base_dir)
+
+        autosync_service = None
+        if is_deployment_mode:
+            # Use the session directory as both local and remote target root
+            def to_abs(path_str: str) -> str:
+                return path_str if path_str.startswith("/home/cdsw/") or path_str == "/home/cdsw" else f"/home/cdsw/{path_str.lstrip('/')}"
+
+            if session_id:
+                session_dir_for_sync = f"{base_dir}/session/{session_id}"
+            else:
+                session_dir_for_sync = base_dir
+            # Ensure absolute local path for autosync (remote path still derived internally)
+            session_dir_for_sync = to_abs(session_dir_for_sync)
+            try:
+                autosync_service = AutoSyncService(session_dir_for_sync, interval_sec=int(os.environ.get('INTERVAL_SEC', '10')))
+                autosync_service.start()
+                print(f"[AutoSync] Started for {session_dir_for_sync}")
+            except Exception as e:
+                print(f"[AutoSync] Failed to start: {e}")
+
         set_trace_id(events_trace_id)
+        
+        # Create session directory path if session_id is provided
+        session_directory = None
+        if session_id:
+            directory_to_use = workflow_root_directory if workflow_root_directory else workflow_directory
+            session_directory = f"{directory_to_use}/session/{session_id}"
+            print(f"Using session directory: {session_directory}")
+        
         crewai_objects = create_crewai_objects(
             workflow_directory,
             collated_input,
             tool_config,
             mcp_config,
             llm_config,
+            session_directory,
         )
         crew = crewai_objects.crews[collated_input.workflow.id]
         crew.kickoff(inputs=dict(inputs))
+
+        # After kickoff completes, stop autosync after ensuring a final drain
+        if autosync_service:
+            try:
+                print("[AutoSync] Draining and stopping...")
+                autosync_service.drain_and_stop()
+            except Exception as e:
+                print(f"[AutoSync] Error during drain/stop: {e}")
     finally:
         detach(token)
         for mcp_object in crewai_objects.mcps.values():
@@ -53,6 +187,8 @@ async def run_workflow_async(
     inputs: Dict[str, Any],
     parent_context: Any,  # Use the parent context
     events_trace_id,
+    session_id: str = None,
+    workflow_root_directory: str = None,
 ) -> None:
     """
     Run the workflow task in the background using the parent context.
@@ -72,4 +208,6 @@ async def run_workflow_async(
         inputs,
         parent_context,
         events_trace_id,
+        session_id,
+        workflow_root_directory,
     )

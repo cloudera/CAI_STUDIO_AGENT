@@ -33,6 +33,7 @@ import {
   selectEditorWorkflowDescription,
   selectWorkflowConfiguration,
   selectEditorWorkflow,
+  selectWorkflowSessionId,
 } from '@/app/workflows/editorSlice';
 import WorkflowDiagramView from './WorkflowDiagramView';
 import {
@@ -52,6 +53,7 @@ import { useGlobalNotification } from '../Notifications';
 import { renderAlert } from '@/app/lib/alertUtils';
 import { hasValidToolConfiguration } from '@/app/components/workflowEditor/WorkflowEditorConfigureInputs';
 import { TOOL_PARAMS_ALERT } from '@/app/lib/constants';
+import { selectWorkflowAppSessionFiles } from '@/app/workflows/workflowAppSlice';
 
 const { Title, Text } = Typography;
 
@@ -81,6 +83,8 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
   const dispatch = useAppDispatch();
   const currentEvents = useAppSelector(selectCurrentEvents);
   const workflowState = useAppSelector(selectEditorWorkflow);
+  const sessionId = useAppSelector(selectWorkflowSessionId);
+  const sessionFiles = useAppSelector(selectWorkflowAppSessionFiles);
 
   const [getEvents] = useGetEventsMutation();
 
@@ -97,6 +101,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
   const notificationApi = useGlobalNotification();
   const [sliderValue, setSliderValue] = useState<number>(0);
   const [showMonitoring, setShowMonitoring] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('1');
   const [updateWorkflow] = useUpdateWorkflowMutation();
   const workflowDescription = useAppSelector(selectEditorWorkflowDescription);
   const [testModel] = useTestModelMutation();
@@ -113,6 +118,11 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
   const handleSliderChange = (value: number) => {
     setSliderValue(value);
     dispatch(updatedCurrentEventIndex(value));
+  };
+
+  const handleOpenArtifacts = () => {
+    setShowMonitoring(true);
+    setActiveTab('4'); // Switch to artifacts tab
   };
 
   const handleDescriptionChange = async (value: string) => {
@@ -279,6 +289,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
                   role: 'assistant',
                   content: crewCompleteEvent.output || crewCompleteEvent.error,
                   events: allEventsRef.current,
+                  attachments: sessionFiles && sessionFiles.length > 0 ? sessionFiles : undefined,
                 }),
               );
             }
@@ -554,9 +565,9 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
           ) : !hasValidTools ? (
             renderAlert(TOOL_PARAMS_ALERT.message, TOOL_PARAMS_ALERT.description, 'warning')
           ) : workflow.is_conversational ? (
-            <WorkflowAppChatView workflow={workflow} tasks={tasks} />
+            <WorkflowAppChatView workflow={workflow} tasks={tasks} onOpenArtifacts={handleOpenArtifacts} />
           ) : (
-            <WorkflowAppInputsView workflow={workflow} tasks={tasks} />
+            <WorkflowAppInputsView workflow={workflow} tasks={tasks} onOpenArtifacts={handleOpenArtifacts} />
           )}
         </Layout>
 
@@ -634,6 +645,10 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
               events={currentEvents}
               displayDiagnostics={true}
               renderMode={renderMode}
+              workflow={workflow}
+              sessionId={sessionId}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
             />
 
             <Layout

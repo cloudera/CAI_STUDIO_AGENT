@@ -689,6 +689,8 @@ message TestWorkflowRequest {
   // Serialized JSON generation config parameters for all LLM calls in this workflow.
   // In the future, users may want to customize temperatures/max_new_tokens for each agent.
   string generation_config = 5;
+  // Optional session ID for workflow testing
+  optional string session_id = 6;
 }
 
 message TestWorkflowResponse {
@@ -696,6 +698,8 @@ message TestWorkflowResponse {
   string message = 1;
   // Trace ID of the test
   string trace_id = 2;
+  // Session ID for the workflow test
+  string session_id = 3;
 }
 
 // Messages for deploying workflows

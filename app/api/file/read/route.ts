@@ -28,41 +28,48 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const filePath = request.nextUrl.searchParams.get('filePath');
 
   if (!filePath) {
-    return NextResponse.json({ exists: false }, { status: 200 });
+    return NextResponse.json({ error: 'File path is required' }, { status: 400 });
+  }
+
+  if (!CDSW_APIV2_KEY || !CDSW_DOMAIN || !CDSW_PROJECT_ID) {
+    return NextResponse.json({ error: 'Missing CML configuration' }, { status: 500 });
   }
 
   const agent = createAgent();
   const scheme = getUrlScheme();
 
   const encodedFilePath = encodeURIComponent(filePath);
-  const apiUrl = `${scheme}://${CDSW_DOMAIN}/api/v2/projects/${CDSW_PROJECT_ID}/files/${encodedFilePath}`;
+  // CML uses a specific download endpoint with POST method
+  const apiUrl = `${scheme}://${CDSW_DOMAIN}/api/v2/projects/${CDSW_PROJECT_ID}/files/${encodedFilePath}:download`;
 
   try {
     const response = await fetch(apiUrl, {
+      method: 'POST', // CML download endpoint requires POST
       headers: {
         Authorization: `Bearer ${CDSW_APIV2_KEY}`,
       },
       agent,
     });
-    const responseData = (await response.json()) as any;
-
+    
     if (response.status === 200) {
-      if (
-        responseData.files &&
-        responseData.files.length === 1 &&
-        responseData.files[0].is_dir === false
-      ) {
-        const fileInfo = responseData.files[0];
-        return NextResponse.json({ 
-          exists: true, 
-          size: fileInfo.size || 0,
-          lastModified: fileInfo.last_modified || null
-        }, { status: 200 });
-      }
+      const content = await response.text();
+      return NextResponse.json({ 
+        content,
+        filePath 
+      }, { status: 200 });
+    } else {
+      const errorData = await response.text();
+      console.error(`Error reading file ${filePath}:`, errorData);
+      return NextResponse.json({ 
+        error: `Failed to read file: ${response.status}`,
+        filePath 
+      }, { status: response.status });
     }
-
-    return NextResponse.json({ exists: false }, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ exists: false }, { status: 200 });
+    console.error('Error reading file:', error);
+    return NextResponse.json({ 
+      error: 'Failed to read file',
+      filePath 
+    }, { status: 500 });
   }
 }

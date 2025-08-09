@@ -691,6 +691,8 @@ export interface TestWorkflowRequest {
    * In the future, users may want to customize temperatures/max_new_tokens for each agent.
    */
   generation_config: string;
+  /** Optional session ID for workflow testing */
+  session_id?: string | undefined;
 }
 
 export interface TestWorkflowRequest_InputsEntry {
@@ -713,6 +715,8 @@ export interface TestWorkflowResponse {
   message: string;
   /** Trace ID of the test */
   trace_id: string;
+  /** Session ID for the workflow test */
+  session_id: string;
 }
 
 /** Messages for deploying workflows */
@@ -8575,7 +8579,14 @@ export const TestWorkflowMCPInstanceEnvVars_EnvVarsEntry: MessageFns<TestWorkflo
 };
 
 function createBaseTestWorkflowRequest(): TestWorkflowRequest {
-  return { workflow_id: "", inputs: {}, tool_user_parameters: {}, mcp_instance_env_vars: {}, generation_config: "" };
+  return {
+    workflow_id: "",
+    inputs: {},
+    tool_user_parameters: {},
+    mcp_instance_env_vars: {},
+    generation_config: "",
+    session_id: undefined,
+  };
 }
 
 export const TestWorkflowRequest: MessageFns<TestWorkflowRequest> = {
@@ -8594,6 +8605,9 @@ export const TestWorkflowRequest: MessageFns<TestWorkflowRequest> = {
     });
     if (message.generation_config !== "") {
       writer.uint32(42).string(message.generation_config);
+    }
+    if (message.session_id !== undefined) {
+      writer.uint32(50).string(message.session_id);
     }
     return writer;
   },
@@ -8654,6 +8668,14 @@ export const TestWorkflowRequest: MessageFns<TestWorkflowRequest> = {
           message.generation_config = reader.string();
           continue;
         }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.session_id = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -8691,6 +8713,7 @@ export const TestWorkflowRequest: MessageFns<TestWorkflowRequest> = {
         )
         : {},
       generation_config: isSet(object.generation_config) ? globalThis.String(object.generation_config) : "",
+      session_id: isSet(object.session_id) ? globalThis.String(object.session_id) : undefined,
     };
   },
 
@@ -8729,6 +8752,9 @@ export const TestWorkflowRequest: MessageFns<TestWorkflowRequest> = {
     if (message.generation_config !== "") {
       obj.generation_config = message.generation_config;
     }
+    if (message.session_id !== undefined) {
+      obj.session_id = message.session_id;
+    }
     return obj;
   },
 
@@ -8761,6 +8787,7 @@ export const TestWorkflowRequest: MessageFns<TestWorkflowRequest> = {
       return acc;
     }, {});
     message.generation_config = object.generation_config ?? "";
+    message.session_id = object.session_id ?? undefined;
     return message;
   },
 };
@@ -9008,7 +9035,7 @@ export const TestWorkflowRequest_McpInstanceEnvVarsEntry: MessageFns<TestWorkflo
 };
 
 function createBaseTestWorkflowResponse(): TestWorkflowResponse {
-  return { message: "", trace_id: "" };
+  return { message: "", trace_id: "", session_id: "" };
 }
 
 export const TestWorkflowResponse: MessageFns<TestWorkflowResponse> = {
@@ -9018,6 +9045,9 @@ export const TestWorkflowResponse: MessageFns<TestWorkflowResponse> = {
     }
     if (message.trace_id !== "") {
       writer.uint32(18).string(message.trace_id);
+    }
+    if (message.session_id !== "") {
+      writer.uint32(26).string(message.session_id);
     }
     return writer;
   },
@@ -9045,6 +9075,14 @@ export const TestWorkflowResponse: MessageFns<TestWorkflowResponse> = {
           message.trace_id = reader.string();
           continue;
         }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.session_id = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -9058,6 +9096,7 @@ export const TestWorkflowResponse: MessageFns<TestWorkflowResponse> = {
     return {
       message: isSet(object.message) ? globalThis.String(object.message) : "",
       trace_id: isSet(object.trace_id) ? globalThis.String(object.trace_id) : "",
+      session_id: isSet(object.session_id) ? globalThis.String(object.session_id) : "",
     };
   },
 
@@ -9069,6 +9108,9 @@ export const TestWorkflowResponse: MessageFns<TestWorkflowResponse> = {
     if (message.trace_id !== "") {
       obj.trace_id = message.trace_id;
     }
+    if (message.session_id !== "") {
+      obj.session_id = message.session_id;
+    }
     return obj;
   },
 
@@ -9079,6 +9121,7 @@ export const TestWorkflowResponse: MessageFns<TestWorkflowResponse> = {
     const message = createBaseTestWorkflowResponse();
     message.message = object.message ?? "";
     message.trace_id = object.trace_id ?? "";
+    message.session_id = object.session_id ?? "";
     return message;
   },
 };

@@ -247,7 +247,7 @@ export async function GET(request: NextRequest) {
       is_draft: false,
     };
 
-    const deployedWorkflow: DeployedWorkflow = {
+    const deployedWorkflow: DeployedWorkflow & { workflow_directory?: string } = {
       deployed_workflow_id: configuration.workflow.deployment_id,
       workflow_id: configuration.workflow.id,
       workflow_name: configuration.workflow.name,
@@ -258,6 +258,7 @@ export async function GET(request: NextRequest) {
       application_status: '',
       application_deep_link: '',
       model_deep_link: '',
+      workflow_directory: configuration.workflow_directory,
     };
 
     return NextResponse.json({

@@ -61,11 +61,30 @@ def test_workflow(
 
         collated_input = None
         llm_config = {}
+        workflow_root_directory = None
         with dao.get_session() as session:
             workflow: db_model.Workflow = session.query(db_model.Workflow).filter_by(id=request.workflow_id).one()
 
             if not is_workflow_ready(workflow.id, session):
                 raise RuntimeError(f"Workflow '{workflow.name}' is not ready for testing!")
+
+            # Extract workflow root directory from database
+            workflow_root_directory = workflow.directory
+            
+            # Remove /home/cdsw prefix if present
+            if workflow_root_directory and workflow_root_directory.startswith("/home/cdsw/"):
+                workflow_root_directory = workflow_root_directory[len("/home/cdsw/"):]
+            
+            # Verify the cleaned directory path exists
+            if workflow_root_directory:
+                # Convert to absolute path for verification
+                abs_workflow_path = os.path.abspath(workflow_root_directory)
+                if not os.path.exists(abs_workflow_path):
+                    raise RuntimeError(f"Workflow root directory does not exist: {abs_workflow_path} (cleaned from: {workflow.directory})")
+                if not os.path.isdir(abs_workflow_path):
+                    raise RuntimeError(f"Workflow root directory path is not a directory: {abs_workflow_path}")
+            else:
+                raise RuntimeError("Workflow root directory is empty or None")
 
             collated_input: input_types.CollatedInput = create_collated_input(workflow, session)
 
@@ -86,6 +105,12 @@ def test_workflow(
             for mcp_instance_id, env_vars in request.mcp_instance_env_vars.items()
         }
         events_trace_id = str(uuid4())
+        
+        # Check if session_id is provided, if not generate a 6-character UUID
+        if hasattr(request, 'session_id') and request.session_id:
+            session_id = request.session_id
+        else:
+            session_id = str(uuid4())[:6]
 
         workflow_runners = get_workflow_runners()
         available_workflow_runners = list(filter(lambda x: not x["busy"], workflow_runners))
@@ -99,6 +124,7 @@ def test_workflow(
             url=f"{workflow_runner['endpoint']}/kickoff",
             json={
                 "workflow_directory": os.path.abspath(os.curdir),  # for testing, everything is in studio-data/
+                "workflow_root_directory": workflow_root_directory,
                 "workflow_name": f"Test Workflow - {collated_input.workflow.name}",
                 "collated_input": collated_input.model_dump(),
                 "tool_config": tool_user_params_kv,
@@ -106,12 +132,14 @@ def test_workflow(
                 "llm_config": llm_config,
                 "inputs": dict(request.inputs),
                 "events_trace_id": events_trace_id,
+                "session_id": session_id,
             },
         )
 
         return TestWorkflowResponse(
             message="",  # Return empty message since execution is async
             trace_id=events_trace_id,
+            session_id=session_id,
         )
 
     except ValueError as e:
