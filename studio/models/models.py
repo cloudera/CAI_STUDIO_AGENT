@@ -104,7 +104,8 @@ def add_model(request: AddModelRequest, cml: CMLServiceApi = None, dao: AgentStu
         except Exception as e:
             raise ValueError(f"Failed to store API key in environment: {str(e)}")
 
-    # Store extra headers in project environment if provided
+    # Prepare parsed extra headers
+    extra_headers_dict = {}
     if request.extra_headers:
         try:
             # Parse extra_headers if it's a string, otherwise use as-is
@@ -112,7 +113,6 @@ def add_model(request: AddModelRequest, cml: CMLServiceApi = None, dao: AgentStu
                 extra_headers_dict = json.loads(request.extra_headers)
             else:
                 extra_headers_dict = request.extra_headers
-            update_model_extra_headers_in_env(model_id, extra_headers_dict, cml)
         except Exception as e:
             # Clean up API key if it was stored
             if request.api_key:
@@ -120,7 +120,53 @@ def add_model(request: AddModelRequest, cml: CMLServiceApi = None, dao: AgentStu
                     remove_model_api_key_from_env(model_id, cml)
                 except Exception as cleanup_e:
                     logger.warning(f"Failed to clean up API key during extra headers error: {str(cleanup_e)}")
-            raise ValueError(f"Failed to store extra headers in environment: {str(e)}")
+            raise ValueError(f"Failed to parse extra headers: {str(e)}")
+
+    # If Bedrock, also store AWS credentials (access key id, secret, region, optional session token)
+    if request.model_type == SupportedModelTypes.BEDROCK.value:
+        try:
+            aws_credentials = {
+                "aws_access_key_id": request.api_key or None,
+                "aws_secret_access_key": extra_headers_dict.get("aws_secret_access_key"),
+                "aws_region_name": request.api_base or None,
+                "aws_session_token": extra_headers_dict.get("aws_session_token"),
+            }
+            update_model_aws_credentials_in_env(model_id, aws_credentials, cml)
+        except Exception as e:
+            # Clean up what we stored so far
+            try:
+                remove_model_api_key_from_env(model_id, cml)
+            except Exception:
+                pass
+            try:
+                remove_model_extra_headers_from_env(model_id, cml)
+            except Exception:
+                pass
+            raise ValueError(f"Failed to store AWS credentials in environment: {str(e)}")
+
+        # Filter out any AWS keys from extra headers and store filtered headers
+        filtered_extra_headers = {
+            k: v
+            for k, v in extra_headers_dict.items()
+            if k not in {"aws_secret_access_key", "aws_access_key_id", "aws_region_name", "aws_session_token"}
+        }
+        if filtered_extra_headers:
+            update_model_extra_headers_in_env(model_id, filtered_extra_headers, cml)
+    else:
+        # Non-Bedrock: store extra headers as provided (if any)
+        if extra_headers_dict:
+            try:
+                update_model_extra_headers_in_env(model_id, extra_headers_dict, cml)
+            except Exception as e:
+                # Clean up API key if it was stored
+                if request.api_key:
+                    try:
+                        remove_model_api_key_from_env(model_id, cml)
+                    except Exception as cleanup_e:
+                        logger.warning(
+                            f"Failed to clean up API key during extra headers error: {str(cleanup_e)}"
+                        )
+                raise ValueError(f"Failed to store extra headers in environment: {str(e)}")
 
     with dao.get_session() as session:
         # Validate if a model with the same name already exists
@@ -139,6 +185,13 @@ def add_model(request: AddModelRequest, cml: CMLServiceApi = None, dao: AgentStu
                 except Exception as e:
                     logger.warning(
                         f"Failed to clean up extra headers for model {model_id} after duplicate name error: {str(e)}"
+                    )
+            if request.model_type == SupportedModelTypes.BEDROCK.value:
+                try:
+                    remove_model_aws_credentials_from_env(model_id, cml)
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to clean up AWS credentials for model {model_id} after duplicate name error: {str(e)}"
                     )
             raise ValueError(f"Model with name '{request.model_name}' already exists.")
 
@@ -201,6 +254,12 @@ def remove_model(
         except Exception as e:
             logger.warning(f"Failed to remove extra headers for model {request.model_id} during deletion: {str(e)}")
 
+        try:
+            # Remove AWS credentials from project environment (if any)
+            remove_model_aws_credentials_from_env(request.model_id, cml)
+        except Exception as e:
+            logger.warning(f"Failed to remove AWS credentials for model {request.model_id} during deletion: {str(e)}")
+
         session.commit()
 
     return RemoveModelResponse()
@@ -224,16 +283,49 @@ def update_model(
             m_.provider_model = request.provider_model
         if request.api_base:
             m_.api_base = request.api_base
+        parsed_extra_headers_dict = None
         if request.extra_headers:
             # Parse extra_headers if it's a string, otherwise use as-is
             if isinstance(request.extra_headers, str):
-                extra_headers_dict = json.loads(request.extra_headers)
+                parsed_extra_headers_dict = json.loads(request.extra_headers)
             else:
-                extra_headers_dict = request.extra_headers
-            update_model_extra_headers_in_env(m_.model_id, extra_headers_dict, cml)
+                parsed_extra_headers_dict = request.extra_headers
         if request.api_key:
             update_model_api_key_in_env(m_.model_id, request.api_key, cml)
         model_id = m_.model_id
+
+        # If Bedrock, update AWS credentials using the provided values (merge with existing)
+        if m_.model_type == SupportedModelTypes.BEDROCK.value:
+            existing_creds = {}
+            try:
+                existing_creds = get_model_aws_credentials_from_env(m_.model_id, cml) or {}
+            except Exception:
+                existing_creds = {}
+
+            if request.api_key:
+                existing_creds["aws_access_key_id"] = request.api_key
+            if request.api_base:
+                existing_creds["aws_region_name"] = request.api_base
+            if parsed_extra_headers_dict:
+                if "aws_secret_access_key" in parsed_extra_headers_dict:
+                    existing_creds["aws_secret_access_key"] = parsed_extra_headers_dict.get("aws_secret_access_key")
+                if "aws_session_token" in parsed_extra_headers_dict:
+                    existing_creds["aws_session_token"] = parsed_extra_headers_dict.get("aws_session_token")
+
+            update_model_aws_credentials_in_env(m_.model_id, existing_creds, cml)
+
+            # Filter out AWS keys from extra headers before storing
+            if parsed_extra_headers_dict:
+                filtered_extra_headers = {
+                    k: v
+                    for k, v in parsed_extra_headers_dict.items()
+                    if k not in {"aws_secret_access_key", "aws_access_key_id", "aws_region_name", "aws_session_token"}
+                }
+                update_model_extra_headers_in_env(m_.model_id, filtered_extra_headers, cml)
+        else:
+            # Non-Bedrock: if user provided extra headers, store them as-is
+            if parsed_extra_headers_dict:
+                update_model_extra_headers_in_env(m_.model_id, parsed_extra_headers_dict, cml)
         session.commit()
 
     return UpdateModelResponse(model_id=model_id)
@@ -256,6 +348,13 @@ def model_test(request: TestModelRequest, cml: CMLServiceApi = None, dao: AgentS
 
         # Get extra headers from environment instead of database
         extra_headers = get_model_extra_headers_from_env(model.model_id, cml)
+        # For Bedrock, ensure we do NOT pass AWS credentials as HTTP headers
+        if model.model_type == SupportedModelTypes.BEDROCK.value and extra_headers:
+            extra_headers = {
+                k: v
+                for k, v in extra_headers.items()
+                if k not in {"aws_secret_access_key", "aws_access_key_id", "aws_region_name", "aws_session_token"}
+            }
         
         # Build LLM config dict
         llm_config_dict = {

@@ -34,10 +34,11 @@ import {
   setModelRegisterName,
   setModelRegisterApiBase,
   setModelRegisterApiKey,
+  setModelRegisterExtraHeaders,
   setModelRegisterSetAsDefault,
   updateModelStatus,
 } from '@/app/models/modelsSlice';
-import { MODEL_IDENTIFIER_OPTIONS } from '@/app/lib/constants';
+import { MODEL_IDENTIFIER_OPTIONS, BEDROCK_REGIONS } from '@/app/lib/constants';
 import { asyncTestModelWithRetry } from '@/app/models/utils';
 
 const { Option } = Select;
@@ -470,15 +471,14 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
             placeholder="Select AWS region"
             value={modelRegisterApiBase}
             onChange={(value) => dispatch(setModelRegisterApiBase(value))}
+            showSearch
+            optionFilterProp="label"
           >
-            <Option value="us-east-1">US East (N. Virginia) - us-east-1</Option>
-            <Option value="us-west-2">US West (Oregon) - us-west-2</Option>
-            <Option value="us-east-2">US East (Ohio) - us-east-2</Option>
-            <Option value="us-west-1">US West (N. California) - us-west-1</Option>
-            <Option value="eu-west-1">Europe (Ireland) - eu-west-1</Option>
-            <Option value="eu-central-1">Europe (Frankfurt) - eu-central-1</Option>
-            <Option value="ap-southeast-1">Asia Pacific (Singapore) - ap-southeast-1</Option>
-            <Option value="ap-northeast-1">Asia Pacific (Tokyo) - ap-northeast-1</Option>
+            {BEDROCK_REGIONS.map((r) => (
+              <Option key={r.value} value={r.value} label={r.label}>
+                {r.label}
+              </Option>
+            ))}
           </Select>
         </>
       )}

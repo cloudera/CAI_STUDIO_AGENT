@@ -121,7 +121,8 @@ def run_workflow(
         
         # Determine deployment mode and compute session directory path (local and remote target)
         base_dir = workflow_root_directory if workflow_root_directory else workflow_directory
-        is_deployment_mode = bool(base_dir and 'deployable_workflow' in base_dir)
+        # Detect deployable workflows (plural). This was previously checking a singular path suffix.
+        is_deployment_mode = bool(base_dir and 'deployable_workflows' in base_dir)
 
         autosync_service = None
         if is_deployment_mode:
@@ -149,6 +150,10 @@ def run_workflow(
         if session_id:
             directory_to_use = workflow_root_directory if workflow_root_directory else workflow_directory
             session_directory = f"{directory_to_use}/session/{session_id}"
+            # For tool execution, ensure SESSION_DIRECTORY is an absolute filesystem path so it
+            # does not get resolved relative to the workflow cwd (e.g., /home/cdsw/workflow)
+            if not session_directory.startswith("/home/cdsw/"):
+                session_directory = f"/home/cdsw/{session_directory.lstrip('/')}"
             print(f"Using session directory: {session_directory}")
         
         crewai_objects = create_crewai_objects(

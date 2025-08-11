@@ -13,7 +13,11 @@ from studio.db.model import Workflow, Model, Agent, ToolInstance
 from studio.api.types import ToolInstanceStatus
 from sqlalchemy.orm.session import Session
 
-from studio.models.utils import get_model_api_key_from_env, get_model_extra_headers_from_env
+from studio.models.utils import (
+    get_model_api_key_from_env,
+    get_model_extra_headers_from_env,
+    get_model_aws_credentials_from_env,
+)
 from studio.tools.tool_instance import prepare_tool_instance
 
 
@@ -57,14 +61,41 @@ def get_llm_config_for_workflow(workflow: Workflow, session: Session, cml: CMLSe
 
         # Get extra headers from environment
         extra_headers = get_model_extra_headers_from_env(language_model_db_model.model_id, cml)
+        # For Bedrock, ensure we do NOT pass AWS credentials as HTTP headers
+        if language_model_db_model.model_type == "BEDROCK" and extra_headers:
+            extra_headers = {
+                k: v
+                for k, v in extra_headers.items()
+                if k not in {"aws_secret_access_key", "aws_access_key_id", "aws_region_name", "aws_session_token"}
+            }
 
-        model_config[lm_id] = {
+        # Construct base model config
+        config_entry = {
             "provider_model": language_model_db_model.provider_model,
             "model_type": language_model_db_model.model_type,
             "api_base": language_model_db_model.api_base or None,
             "api_key": api_key,
             "extra_headers": extra_headers or None,
         }
+
+        # For Bedrock, include AWS credentials from environment so LiteLLM can authenticate
+        if language_model_db_model.model_type == "BEDROCK":
+            try:
+                aws_credentials = get_model_aws_credentials_from_env(language_model_db_model.model_id, cml) or {}
+                if aws_credentials:
+                    config_entry.update(
+                        {
+                            "aws_access_key_id": aws_credentials.get("aws_access_key_id"),
+                            "aws_secret_access_key": aws_credentials.get("aws_secret_access_key"),
+                            "aws_region_name": aws_credentials.get("aws_region_name"),
+                            "aws_session_token": aws_credentials.get("aws_session_token"),
+                        }
+                    )
+            except Exception:
+                # If fetching AWS creds fails, leave them unset so caller gets a clear auth error
+                pass
+
+        model_config[lm_id] = config_entry
 
     return model_config
 

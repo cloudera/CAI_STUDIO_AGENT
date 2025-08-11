@@ -12,41 +12,74 @@ from engine.utils import get_url_scheme
 from uuid import uuid4
 import logging
 import sys
+import concurrent.futures
 
 
 def _configure_logging():
-    log_path = os.getenv("AUTOSYNC_LOG_FILE", "/home/cdsw/test.log")
-    try:
-        os.makedirs(os.path.dirname(log_path), exist_ok=True)
-    except Exception:
-        pass
-    root = logging.getLogger()
-    root.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s %(levelname)s [%(name)s] %(message)s')
-    # Avoid duplicate handlers
-    exists = False
-    for h in root.handlers:
-        if isinstance(h, logging.FileHandler) and getattr(h, 'baseFilename', None) == log_path:
-            exists = True
-            break
-    if not exists:
-        fh = logging.FileHandler(log_path, mode='a', encoding='utf-8')
-        fh.setLevel(logging.DEBUG)
-        fh.setFormatter(formatter)
-        root.addHandler(fh)
-    logging.getLogger('cmlapi').setLevel(logging.DEBUG)
-    logging.getLogger('urllib3').setLevel(logging.DEBUG)
-    logging.getLogger('engine').setLevel(logging.DEBUG)
+    # Logging disabled for autosync. Keeping code commented for potential future re-enable.
+    # log_path = os.getenv("AUTOSYNC_LOG_FILE", "/home/cdsw/test.log")
+    # try:
+    #     os.makedirs(os.path.dirname(log_path), exist_ok=True)
+    # except Exception:
+    #     pass
+    # root = logging.getLogger()
+    # root.setLevel(logging.DEBUG)
+    # formatter = logging.Formatter('%(asctime)s %(levelname)s [%(name)s] %(message)s')
+    # # Avoid duplicate handlers
+    # exists = False
+    # for h in root.handlers:
+    #     if isinstance(h, logging.FileHandler) and getattr(h, 'baseFilename', None) == log_path:
+    #         exists = True
+    #         break
+    # if not exists:
+    #     fh = logging.FileHandler(log_path, mode='a', encoding='utf-8')
+    #     fh.setLevel(logging.DEBUG)
+    #     fh.setFormatter(formatter)
+    #     root.addHandler(fh)
+    # logging.getLogger('cmlapi').setLevel(logging.DEBUG)
+    # logging.getLogger('urllib3').setLevel(logging.DEBUG)
+    # logging.getLogger('engine').setLevel(logging.DEBUG)
 
-    def _excepthook(exc_type, exc_value, exc_traceback):
-        if issubclass(exc_type, KeyboardInterrupt):
-            sys.__excepthook__(exc_type, exc_value, exc_traceback)
-            return
-        logging.critical("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
-    sys.excepthook = _excepthook
+    # def _excepthook(exc_type, exc_value, exc_traceback):
+    #     if issubclass(exc_type, KeyboardInterrupt):
+    #         sys.__excepthook__(exc_type, exc_value, exc_traceback)
+    #         return
+    #     logging.critical("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+    # sys.excepthook = _excepthook
+    pass
 
 
-_configure_logging()
+# _configure_logging()
+
+# Performance and behavior tunables
+MAX_WORKERS = int(os.getenv("AUTOSYNC_MAX_WORKERS", "8"))
+DOWNLOAD_CHUNK = int(os.getenv("AUTOSYNC_DOWNLOAD_CHUNK", str(1024 * 1024)))  # 1 MB
+
+# Always ignore these directories from both local and remote sync
+ALWAYS_IGNORE_DIRS = {".venv"}
+
+# Comma-separated names (not globs) to ignore in local scan (in addition to ALWAYS_IGNORE_DIRS)
+IGNORE_DIRS = set(
+    x for x in os.getenv(
+        "AUTOSYNC_IGNORE_DIRS",
+        ".git,.venv,node_modules,__pycache__,.mypy_cache,.pytest_cache,.ipynb_checkpoints",
+    ).split(",") if x
+)
+
+# Comma-separated file names to ignore in local scan
+IGNORE_FILES = set(
+    x for x in os.getenv("AUTOSYNC_IGNORE_FILES", "").split(",") if x
+)
+
+
+def _path_has_ignored_segment(path_value: str) -> bool:
+    # Normalize to forward slashes and test each segment
+    normalized = normalize_rel_path(path_value)
+    parts = [p for p in normalized.split("/") if p]
+    for part in parts:
+        if part in ALWAYS_IGNORE_DIRS:
+            return True
+    return False
 
 
 def normalize_rel_path(path_value: str) -> str:
@@ -63,13 +96,23 @@ def compute_local_signature(path: Path) -> str:
 
 def scan_local(base_dir: Path) -> Dict[str, Tuple[int, str, str]]:
     index: Dict[str, Tuple[int, str, str]] = {}
-    for p in base_dir.rglob("*"):
-        if p.is_file():
+    base_dir = base_dir.resolve()
+    effective_ignored_dirs = set(IGNORE_DIRS) | ALWAYS_IGNORE_DIRS
+    for root, dirs, files in os.walk(base_dir, topdown=True):
+        # prune directories in-place
+        dirs[:] = [d for d in dirs if d not in effective_ignored_dirs]
+        for name in files:
+            if name in IGNORE_FILES:
+                continue
+            p = Path(root) / name
             try:
                 st = p.stat()
             except FileNotFoundError:
                 continue
             rel = normalize_rel_path(str(p.relative_to(base_dir)))
+            # Skip any path that contains an always-ignored segment (defensive)
+            if _path_has_ignored_segment(rel):
+                continue
             sig = f"{st.st_size}:{int(st.st_mtime)}"
             index[rel] = (st.st_size, sig, str(p))
     logging.debug(f"[AutoSync] scan_local base={base_dir} files={len(index)}")
@@ -96,9 +139,13 @@ def list_remote_recursive(client, project_id: str, base_prefix: str) -> Dict[str
         for f in files:
             child_rel = normalize_rel_path(f"{current}/{f.path}") if current else normalize_rel_path(f.path)
             if getattr(f, "is_dir", False):
-                dq.append(child_rel)
+                # Avoid traversing into ignored directories (e.g., .venv)
+                if not _path_has_ignored_segment(child_rel):
+                    dq.append(child_rel)
             else:
                 rel = child_rel[len(base_prefix):].strip("/") if base_prefix else child_rel
+                if _path_has_ignored_segment(rel):
+                    continue
                 try:
                     size = int(getattr(f, "file_size", 0) or 0)
                 except Exception:
@@ -113,7 +160,7 @@ def download_to_local(client, project_id: str, remote_rel_path: str, local_abs_p
     resp = client.download_project_file(project_id, remote_rel_path, _preload_content=False)
     os.makedirs(os.path.dirname(local_abs_path), exist_ok=True)
     with open(local_abs_path, "wb") as f:
-        for chunk in resp.stream(65536):
+        for chunk in resp.stream(DOWNLOAD_CHUNK):
             f.write(chunk)
 
 
@@ -241,88 +288,106 @@ def sync_once(local_base: Path, remote_prefix: str, client, project_id: str, con
 
     local_keys = set(local_map.keys())
     remote_keys = set(remote_map.keys())
-    all_keys = local_keys | remote_keys
+    all_keys = sorted(local_keys | remote_keys)
 
-    for rel_path in sorted(all_keys):
-        state = get_state(conn, rel_path)
-        local_entry = local_map.get(rel_path)
-        remote_size = remote_map.get(rel_path)
+    conflict_policy = os.getenv("SYNC_CONFLICT_POLICY", "local").lower()
 
-        local_exists = local_entry is not None
-        remote_exists = remote_size is not None
+    def do_push(rel_path: str, abs_path: str, sig: str, size: int, action: str):
+        upload_direct_to_target(client, project_id, f"{remote_prefix}/{rel_path}", abs_path)
+        return ("upsert", rel_path, sig, size, action)
 
-        if local_exists and not remote_exists:
-            if state is None:
-                size, sig, abs_path = local_entry  # type: ignore
-                try:
-                    upload_direct_to_target(client, project_id, f"{remote_prefix}/{rel_path}", abs_path)
-                    upsert_state(conn, rel_path, sig, size, "push")
-                except Exception:
-                    logging.exception("[AutoSync] sync loop iteration error")
-            else:
-                try:
-                    lp = local_base.joinpath(rel_path)
-                    os.remove(lp)
-                except IsADirectoryError:
-                    try:
-                        os.rmdir(lp)
-                    except Exception:
-                        pass
-                except FileNotFoundError:
-                    pass
-                delete_state(conn, rel_path)
-            continue
+    def do_pull(rel_path: str, expected_remote_size: int, action: str):
+        dest = str(local_base.joinpath(rel_path))
+        download_to_local(client, project_id, f"{remote_prefix}/{rel_path}", dest)
+        new_sig = compute_local_signature(Path(dest))
+        return ("upsert", rel_path, new_sig, expected_remote_size or 0, action)
 
-        if remote_exists and not local_exists:
-            if state is None:
-                dest = str(local_base.joinpath(rel_path))
-                try:
-                    download_to_local(client, project_id, f"{remote_prefix}/{rel_path}", dest)
-                    new_sig = compute_local_signature(Path(dest))
-                    upsert_state(conn, rel_path, new_sig, remote_size or 0, "pull")
-                except Exception:
-                    traceback.print_exc()
-            else:
-                try:
-                    client.delete_project_file(project_id, f"{remote_prefix}/{rel_path}")
-                except Exception:
-                    pass
-                delete_state(conn, rel_path)
-            continue
-
-        if not local_exists and not remote_exists:
-            if state:
-                delete_state(conn, rel_path)
-            continue
-
-        size, sig, abs_path = local_entry  # type: ignore
-        prev_local_sig = state[0] if state else None
-        prev_remote_size = state[1] if state else None
-
-        local_changed = (sig != prev_local_sig)
-        remote_changed = (remote_size != prev_remote_size)
-
+    def do_delete_local(rel_path: str):
+        lp = local_base.joinpath(rel_path)
         try:
-            if local_changed and not remote_changed:
-                upload_direct_to_target(client, project_id, f"{remote_prefix}/{rel_path}", abs_path)
-                upsert_state(conn, rel_path, sig, size, "push")
-            elif remote_changed and not local_changed:
-                dest = str(local_base.joinpath(rel_path))
-                download_to_local(client, project_id, f"{remote_prefix}/{rel_path}", dest)
-                new_sig = compute_local_signature(Path(dest))
-                upsert_state(conn, rel_path, new_sig, remote_size or 0, "pull")
-            elif local_changed and remote_changed:
-                policy = os.getenv("SYNC_CONFLICT_POLICY", "local").lower()
-                if policy == "remote":
-                    dest = str(local_base.joinpath(rel_path))
-                    download_to_local(client, project_id, f"{remote_prefix}/{rel_path}", dest)
-                    new_sig = compute_local_signature(Path(dest))
-                    upsert_state(conn, rel_path, new_sig, remote_size or 0, "pull_conflict")
-                else:
-                    upload_direct_to_target(client, project_id, f"{remote_prefix}/{rel_path}", abs_path)
-                    upsert_state(conn, rel_path, sig, size, "push_conflict")
+            os.remove(lp)
+        except IsADirectoryError:
+            try:
+                os.rmdir(lp)
+            except Exception:
+                pass
+        except FileNotFoundError:
+            pass
+        return ("delete", rel_path)
+
+    def do_delete_remote(rel_path: str):
+        try:
+            client.delete_project_file(project_id, f"{remote_prefix}/{rel_path}")
         except Exception:
-            traceback.print_exc()
+            pass
+        return ("delete", rel_path)
+
+    tasks = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
+        for rel_path in all_keys:
+            # Skip any path that contains an always-ignored segment
+            if _path_has_ignored_segment(rel_path):
+                continue
+
+            state = get_state(conn, rel_path)
+            local_entry = local_map.get(rel_path)
+            remote_size = remote_map.get(rel_path)
+
+            local_exists = local_entry is not None
+            remote_exists = remote_size is not None
+
+            if local_exists and not remote_exists:
+                if state is None:
+                    size, sig, abs_path = local_entry  # type: ignore
+                    tasks.append(ex.submit(do_push, rel_path, abs_path, sig, size, "push"))
+                else:
+                    tasks.append(ex.submit(do_delete_local, rel_path))
+                continue
+
+            if remote_exists and not local_exists:
+                if state is None:
+                    tasks.append(ex.submit(do_pull, rel_path, remote_size or 0, "pull"))
+                else:
+                    tasks.append(ex.submit(do_delete_remote, rel_path))
+                continue
+
+            if not local_exists and not remote_exists:
+                if state:
+                    tasks.append(ex.submit(lambda rp=rel_path: ("delete", rp)))
+                continue
+
+            # both exist
+            size, sig, abs_path = local_entry  # type: ignore
+            prev_local_sig = state[0] if state else None
+            prev_remote_size = state[1] if state else None
+
+            local_changed = (sig != prev_local_sig)
+            remote_changed = (remote_size != prev_remote_size)
+
+            if local_changed and not remote_changed:
+                tasks.append(ex.submit(do_push, rel_path, abs_path, sig, size, "push"))
+            elif remote_changed and not local_changed:
+                tasks.append(ex.submit(do_pull, rel_path, remote_size or 0, "pull"))
+            elif local_changed and remote_changed:
+                if conflict_policy == "remote":
+                    tasks.append(ex.submit(do_pull, rel_path, remote_size or 0, "pull_conflict"))
+                else:
+                    tasks.append(ex.submit(do_push, rel_path, abs_path, sig, size, "push_conflict"))
+
+        # Collect results and update DB in main thread
+        for fut in concurrent.futures.as_completed(tasks):
+            try:
+                result = fut.result()
+                if not result:
+                    continue
+                kind, rel_path, *rest = result
+                if kind == "upsert":
+                    sig, rsize, action = rest  # type: ignore
+                    upsert_state(conn, rel_path, sig, rsize, action)
+                elif kind == "delete":
+                    delete_state(conn, rel_path)
+            except Exception:
+                traceback.print_exc()
 
 
 class AutoSyncService:
