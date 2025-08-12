@@ -53,7 +53,8 @@ def get_llm_config_for_workflow(workflow: Workflow, session: Session, cml: CMLSe
 
         # Get API key from environment with error handling
         api_key = get_model_api_key_from_env(language_model_db_model.model_id, cml)
-        if not api_key:
+        # For Bedrock, API key is not required as we use AWS credentials/role
+        if not api_key and language_model_db_model.model_type != "BEDROCK":
             raise ValueError(
                 f"API key is required but not found for model {language_model_db_model.model_name} "
                 f"({language_model_db_model.model_id}). Please configure the API key in project environment variables."
@@ -73,8 +74,9 @@ def get_llm_config_for_workflow(workflow: Workflow, session: Session, cml: CMLSe
         config_entry = {
             "provider_model": language_model_db_model.provider_model,
             "model_type": language_model_db_model.model_type,
-            "api_base": language_model_db_model.api_base or None,
-            "api_key": api_key,
+            # For Bedrock we no longer misuse api_base; leave None
+            "api_base": (language_model_db_model.api_base or None) if language_model_db_model.model_type != "BEDROCK" else None,
+            "api_key": api_key if language_model_db_model.model_type != "BEDROCK" else None,
             "extra_headers": extra_headers or None,
         }
 
@@ -91,6 +93,11 @@ def get_llm_config_for_workflow(workflow: Workflow, session: Session, cml: CMLSe
                             "aws_session_token": aws_credentials.get("aws_session_token"),
                         }
                     )
+                else:
+                    # Fallback: use global env if set (IAM role case)
+                    fallback_region = os.getenv("AWS_REGION_NAME") or os.getenv("AWS_REGION")
+                    if fallback_region:
+                        config_entry["aws_region_name"] = fallback_region
             except Exception:
                 # If fetching AWS creds fails, leave them unset so caller gets a clear auth error
                 pass

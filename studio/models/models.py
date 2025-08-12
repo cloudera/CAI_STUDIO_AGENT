@@ -65,6 +65,17 @@ def list_models(
         for model in models:
             model_proto = model.to_protobuf(Model)
             model_proto = _add_extra_headers_to_model_protobuf(model_proto, cml)
+            # Populate aws_region_name from env for Bedrock models
+            try:
+                if model.model_type == SupportedModelTypes.BEDROCK.value:
+                    aws_credentials = get_model_aws_credentials_from_env(model.model_id, cml) or {}
+                    region = aws_credentials.get("aws_region_name") or None
+                    # Fallback to legacy stored api_base if env not set
+                    if not region and model.api_base:
+                        region = model.api_base
+                    model_proto.aws_region_name = region or ""
+            except Exception:
+                pass
             model_details.append(model_proto)
         return ListModelsResponse(model_details=model_details)
 
@@ -80,6 +91,16 @@ def get_model(request: GetModelRequest, cml: CMLServiceApi = None, dao: AgentStu
 
         model_proto = model.to_protobuf(Model)
         model_proto = _add_extra_headers_to_model_protobuf(model_proto, cml)
+        # Populate aws_region_name from env for Bedrock models
+        try:
+            if model.model_type == SupportedModelTypes.BEDROCK.value:
+                aws_credentials = get_model_aws_credentials_from_env(model.model_id, cml) or {}
+                region = aws_credentials.get("aws_region_name") or None
+                if not region and model.api_base:
+                    region = model.api_base
+                model_proto.aws_region_name = region or ""
+        except Exception:
+            pass
         return GetModelResponse(model_details=model_proto)
 
 
@@ -97,8 +118,8 @@ def add_model(request: AddModelRequest, cml: CMLServiceApi = None, dao: AgentStu
     if request.model_type not in [m_.value for m_ in SupportedModelTypes]:
         raise ValueError(f"Invalid model type: {request.model_type}. Supported model types are: {SupportedModelTypes}")
 
-    # Store API key in project environment if provided
-    if request.api_key:
+    # Store API key in project environment if provided (non-Bedrock only)
+    if request.model_type != SupportedModelTypes.BEDROCK.value and request.api_key:
         try:
             update_model_api_key_in_env(model_id, request.api_key, cml)
         except Exception as e:
@@ -126,16 +147,18 @@ def add_model(request: AddModelRequest, cml: CMLServiceApi = None, dao: AgentStu
     if request.model_type == SupportedModelTypes.BEDROCK.value:
         try:
             aws_credentials = {
-                "aws_access_key_id": request.api_key or None,
-                "aws_secret_access_key": extra_headers_dict.get("aws_secret_access_key"),
-                "aws_region_name": request.api_base or None,
-                "aws_session_token": extra_headers_dict.get("aws_session_token"),
+                "aws_access_key_id": getattr(request, "aws_access_key_id", None) or None,
+                "aws_secret_access_key": getattr(request, "aws_secret_access_key", None) or None,
+                "aws_region_name": getattr(request, "aws_region_name", None) or None,
+                "aws_session_token": getattr(request, "aws_session_token", None) or None,
             }
             update_model_aws_credentials_in_env(model_id, aws_credentials, cml)
         except Exception as e:
             # Clean up what we stored so far
             try:
-                remove_model_api_key_from_env(model_id, cml)
+                # Only remove generic API key if we stored it (non-Bedrock path)
+                if request.model_type != SupportedModelTypes.BEDROCK.value and request.api_key:
+                    remove_model_api_key_from_env(model_id, cml)
             except Exception:
                 pass
             try:
@@ -204,7 +227,8 @@ def add_model(request: AddModelRequest, cml: CMLServiceApi = None, dao: AgentStu
             model_name=request.model_name,
             provider_model=request.provider_model,
             model_type=request.model_type,
-            api_base=request.api_base,
+            # api_base is not used for Bedrock anymore; keep empty for Bedrock
+            api_base=(request.api_base if request.model_type != SupportedModelTypes.BEDROCK.value else None),
             is_studio_default=(existing_model_count == 0),
         )
         session.add(m_)
@@ -290,7 +314,7 @@ def update_model(
                 parsed_extra_headers_dict = json.loads(request.extra_headers)
             else:
                 parsed_extra_headers_dict = request.extra_headers
-        if request.api_key:
+        if request.api_key and m_.model_type != SupportedModelTypes.BEDROCK.value:
             update_model_api_key_in_env(m_.model_id, request.api_key, cml)
         model_id = m_.model_id
 
@@ -302,15 +326,15 @@ def update_model(
             except Exception:
                 existing_creds = {}
 
-            if request.api_key:
-                existing_creds["aws_access_key_id"] = request.api_key
-            if request.api_base:
-                existing_creds["aws_region_name"] = request.api_base
-            if parsed_extra_headers_dict:
-                if "aws_secret_access_key" in parsed_extra_headers_dict:
-                    existing_creds["aws_secret_access_key"] = parsed_extra_headers_dict.get("aws_secret_access_key")
-                if "aws_session_token" in parsed_extra_headers_dict:
-                    existing_creds["aws_session_token"] = parsed_extra_headers_dict.get("aws_session_token")
+            # Use explicit Bedrock fields when provided on request
+            if hasattr(request, "aws_access_key_id") and request.aws_access_key_id:
+                existing_creds["aws_access_key_id"] = request.aws_access_key_id
+            if hasattr(request, "aws_region_name") and request.aws_region_name:
+                existing_creds["aws_region_name"] = request.aws_region_name
+            if hasattr(request, "aws_secret_access_key") and request.aws_secret_access_key:
+                existing_creds["aws_secret_access_key"] = request.aws_secret_access_key
+            if hasattr(request, "aws_session_token") and request.aws_session_token:
+                existing_creds["aws_session_token"] = request.aws_session_token
 
             update_model_aws_credentials_in_env(m_.model_id, existing_creds, cml)
 
@@ -340,7 +364,8 @@ def model_test(request: TestModelRequest, cml: CMLServiceApi = None, dao: AgentS
 
         # Get API key from environment instead of database
         api_key = get_model_api_key_from_env(model.model_id, cml)
-        if not api_key:
+        # For Bedrock, API key is not required; credentials are separate
+        if not api_key and model.model_type != SupportedModelTypes.BEDROCK.value:
             raise ValueError(
                 f"API key is required but not found for model {model.model_name} "
                 f"({model.model_id}). Please configure the API key in project environment variables."
@@ -361,7 +386,8 @@ def model_test(request: TestModelRequest, cml: CMLServiceApi = None, dao: AgentS
             "provider_model": model.provider_model,
             "model_type": model.model_type,
             "api_base": model.api_base or None,
-            "api_key": api_key,
+            # For Bedrock, don't pass generic api_key; else pass api_key
+            "api_key": api_key if model.model_type != SupportedModelTypes.BEDROCK.value else None,
             "extra_headers": extra_headers or None,
         }
         
