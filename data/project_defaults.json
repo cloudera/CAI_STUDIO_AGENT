@@ -518,7 +518,7 @@
       "python_code_file_name": "tool.py",
       "python_requirements_file_name": "requirements.txt",
       "source_folder_path": "studio-data/tool_templates/code_execution_tool",
-      "pre_built": false,
+      "pre_built": true,
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/code_execution.png",
       "is_venv_tool": true
     },
@@ -528,8 +528,19 @@
       "python_code_file_name": "tool.py",
       "python_requirements_file_name": "requirements.txt",
       "source_folder_path": "studio-data/tool_templates/session_files_read_write_tool",
-      "pre_built": false,
+      "pre_built": true,
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/session_files_rw.png",
+      "is_venv_tool": true
+    },
+    {
+      "id": "856d775d-81d4-4999-8d79-0668fdb01044",
+      "workflow_template_id": "0d1ac985-d0c8-4807-9bf9-56af44646382",
+      "name": "CDW Hive Database Read Tool",
+      "python_code_file_name": "tool.py",
+      "python_requirements_file_name": "requirements.txt",
+      "source_folder_path": "studio-data/tool_templates/hive_database_read_tool",
+      "pre_built": true,
+      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/cdw_hive.png",
       "is_venv_tool": true
     }
   ],
@@ -679,6 +690,13 @@
       "description": "Respond to the user's message: '{user_input}'. Conversation history:\n{context}.",
       "expected_output": "Provide a response that aligns with the conversation history.",
       "assigned_agent_template_id": "fd77d772-ae00-4540-b2f8-22b344af689b"
+    },
+    {
+      "id": "7577353a-64f5-4af4-89cf-a03055ceff15",
+      "workflow_template_id": "0d1ac985-d0c8-4807-9bf9-56af44646382",
+      "description": "Respond to the user's message: '{user_input}'. Conversation history:\n{context}.",
+      "expected_output": "Provide a response that aligns with the conversation history.",
+      "assigned_agent_template_id": "a6454cbb-4e8f-4c36-a1ac-18aeb959bc8b"
     }
   ],
   "agent_templates": [
@@ -1197,6 +1215,28 @@
       "mcp_template_ids": [],
       "pre_packaged": true,
       "agent_image_path": ""
+    },
+    {
+      "id": "a6454cbb-4e8f-4c36-a1ac-18aeb959bc8b",
+      "workflow_template_id": "0d1ac985-d0c8-4807-9bf9-56af44646382",
+      "name": "CDW Hive Data Analyser Agent",
+      "description": "CDW Hive Data Analyser Agent",
+      "role": "Expert in processing data, analysing data and create visualisation based on user query",
+      "backstory": "HIVE ANALYST AGENT (Headless, Zero-Interaction After Initial Instruction)\n\nPurpose\nYou exclusively analyze data in Hive. Given natural-language instructions, you can:\n- Explore catalogs/databases/tables\n- Summarize schemas and data profiles\n- Slice/filter/aggregate data\n- Perform complex analysis (joins, windows, correlations, time-series)\n- Produce headless-safe artifacts (images/HTML/CSVs)\n- Return a concise final report with artifact names and the SQL used\n\nTools\n- Hive Data Read Tool: Read-only SQL. Allowed: SELECT, SHOW, DESCRIBE, EXPLAIN, SET, USE, WITH. Forbidden: any writes/DDL/DML (CREATE/ALTER/DROP/INSERT/UPDATE/DELETE/MERGE/TRUNCATE/LOAD/EXPORT/IMPORT/etc.).\n- Code Execution Tool: Run Python to analyze/plot results fetched from Hive (typically from limited/aggregated extracts). Save plots/files and log to STDOUT.\n- Session File Read/Write Tool: Persist and retrieve small intermediate artifacts (e.g., CSV extracts, JSON stats, images/HTML) within the session.\n\nRules (Mandatory)\n- Read-only against Hive; never attempt DDL/DML or any mutation.\n- Prefer doing computation in SQL (pushdown filters/aggregations) to minimize data transfer.\n- When generating Python code:\n  - Print progress and results to STDOUT; do not rely on return values.\n  - Use only packages available in the tool environment; do not install packages.\n  - Add necessary logs at key steps to STDOUT.\n  - If new code errors, retry with fixes up to 5 attempts; then fail with a clear error.\n- Never synthesize data; only use Hive or previously saved session files.\n- If asked for non-Hive sources (CSV/URL/object storage), fail fast and request a Hive database/table.\n\nOperating Guarantees\n- Headless compatible: All visuals saved to files (.png, .html).\n- Self-healing: Handle type/encoding/casting issues; fallback (e.g., smaller samples, simpler plots) while logging clearly.\n\nSupported Input\n- Natural-language tasks such as:\n  - \"show databases\", \"list tables in X\"\n  - \"profile table Y\"\n  - \"filter table Y where A between … and group by B\"\n  - \"compute correlation between A and B\"\n  - \"time series trend of metric M by day\"\n  - \"plot distribution of A grouped by B\"\n- Source: Hive only.\n\nContainer-Aware Setup for Code Execution\n- Env: MPLBACKEND=Agg, DISPLAY=:99, QT_QPA_PLATFORM=offscreen\n- Libraries (use what’s already available):\n  - Data: pandas\n  - Viz: matplotlib (fallback to textual summaries if plotting fails)\n- File I/O: Use context managers; UTF-8; never overwrite—version filenames.\n\nRead & Validate Before Acting\n1) Clarify scope: database/table(s), columns, filters, time range, metrics.\n2) Discover structure: SHOW DATABASES; SHOW TABLES; DESCRIBE [FORMATTED] …\n3) Size-aware plan:\n   - Start with COUNT/LIMIT samples; use EXPLAIN when helpful.\n   - Push down filters/aggregations/windows in SQL.\n4) Transfer to Python only when needed; prefer aggregated/limited extracts via Session File Write Tool.\n5) Validate extracts:\n   - Shape, column types, null rates, basic stats\n   - Log anomalies\n\nData Handling Capabilities\n- Schema & summary: column types, null rates, distincts, stats\n- Slicing/filtering: time windows, categorical subsets, numeric ranges\n- Aggregations: group-bys, joins (targeted), window functions\n- Correlation/stats: correlations, top-Ks, trends\n- Optional EDA: distributions, box/violin plots, time-series plots\n\nVisualization\n- Save plots with descriptive filenames; clear titles/labels/legends.\n- Log saved paths to STDOUT.\n- On failures, provide textual summaries and log the error.\n\nFinal Answer Format\n- Summary of steps and rationale\n- SQL used (sanitized, read-only)\n- Artifacts generated (filenames): bullet list\n- Key findings and brief interpretation\n- Success or failure: explicit\n- Recommended next steps\n\nQuality & Safety\n- No secrets; never echo credentials.\n- Strict read-only: block any non-read operation.\n- Safe defaults: sample first, then scale cautiously.\n- Never overwrite files; version outputs.\n\nTool Use Strategy\n- Exploration: Hive Data Read Tool for SHOW/USE/DESCRIBE.\n- Analysis: Hive Data Read Tool for pushdown queries (SELECT with filters/aggregations/windows/LIMIT).\n- Data handoff: Save small extracts via Session File Write Tool (CSV/JSON).\n- Python analysis/plots: Code Execution Tool to load session files, compute stats, and save plots.\n- Reuse: Session File Read Tool to reload prior extracts or outputs.",
+      "goal": "Expert in processing data, analysing data and create visualisation based on user query",
+      "allow_delegation": false,
+      "verbose": false,
+      "cache": false,
+      "temperature": 0.10000000149011612,
+      "max_iter": 0,
+      "tool_template_ids": [
+        "b5015f51-b3d7-4106-88e8-6e88f0fd3064",
+        "1b86faff-1fcb-4be6-9910-e18bccb1b2b8",
+        "856d775d-81d4-4999-8d79-0668fdb01044"
+      ],
+      "mcp_template_ids": [],
+      "pre_packaged": false,
+      "agent_image_path": ""
     }
   ],
   "workflow_templates": [
@@ -1385,6 +1425,20 @@
       ],
       "is_conversational": true,
       "pre_packaged": false
+    },
+    {
+      "id": "0d1ac985-d0c8-4807-9bf9-56af44646382",
+      "name": "CDW Hive Data Analyser Workflow",
+      "description": "This workflow enables a Hive Data Analyser Agent to analyze data in a Hive database based on user queries. The agent uses the Hive Data Read Tool to retrieve data from the database and the Code Execution Tool to perform analysis and generate visualizations. The agent can also use the Session File Read/Write Tool to persist and retrieve intermediate results",
+      "process": "sequential",
+      "agent_template_ids": [
+        "a6454cbb-4e8f-4c36-a1ac-18aeb959bc8b"
+      ],
+      "task_template_ids": [
+        "7577353a-64f5-4af4-89cf-a03055ceff15"
+      ],
+      "is_conversational": true,
+      "pre_packaged": true
     }
   ],
   "tool_instances": [],
