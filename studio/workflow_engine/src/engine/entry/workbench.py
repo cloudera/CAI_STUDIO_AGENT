@@ -13,6 +13,7 @@ sys.stderr = sys.__stderr__
 WORFKLOW_ARTIFACT = os.environ.get("AGENT_STUDIO_WORKFLOW_ARTIFACT", "/home/cdsw/workflow/artifact.tar.gz")
 WORKFLOW_DEPLOYMENT_CONFIG = os.environ.get("AGENT_STUDIO_WORKFLOW_DEPLOYMENT_CONFIG", "{}")
 MODEL_EXECUTION_DIR = os.environ.get("AGENT_STUDIO_MODEL_EXECUTION_DIR", "/home/cdsw")
+WORKFLOW_PROJECT_FILE_DIR = os.environ.get("AGENT_STUDIO_WORKFLOW_PROJECT_FILE_DIR")
 CDSW_DOMAIN = os.getenv("CDSW_DOMAIN")
 
 # Specify where our workflows will be extracted to
@@ -160,6 +161,11 @@ def api_wrapper(args: Union[dict, str]) -> str:
             if workflow_root_directory and workflow_root_directory.startswith("/home/cdsw/"):
                 workflow_root_directory = workflow_root_directory[len("/home/cdsw/"):]
 
+            # Prepare workflow project file directory from env
+            workflow_project_file_directory = WORKFLOW_PROJECT_FILE_DIR
+            if workflow_project_file_directory and workflow_project_file_directory.startswith("/home/cdsw/"):
+                workflow_project_file_directory = workflow_project_file_directory[len("/home/cdsw/"):]
+
             with tracer.start_as_current_span(span_name) as parent_span:
                 decimal_trace_id = parent_span.get_span_context().trace_id
                 trace_id = f"{decimal_trace_id:032x}"
@@ -177,22 +183,24 @@ def api_wrapper(args: Union[dict, str]) -> str:
                         trace_id,
                         session_id,
                         workflow_root_directory,
+                        workflow_project_file_directory,
+                        "DEPLOYMENT",
                     )
                 )
             return {"trace_id": str(trace_id), "session_id": session_id}
 
         return {"trace_id": str(trace_id)}
     elif serve_workflow_parameters.action_type == input_types.DeployedWorkflowActions.GET_CONFIGURATION.value:
-        # Prepare workflow root directory from MODEL_EXECUTION_DIR
-        workflow_root_directory = MODEL_EXECUTION_DIR
+        # Prepare workflow project file directory from env
+        workflow_project_file_directory = WORKFLOW_PROJECT_FILE_DIR
         # Remove /home/cdsw prefix if present
-        if workflow_root_directory and workflow_root_directory.startswith("/home/cdsw/"):
-            workflow_root_directory = workflow_root_directory[len("/home/cdsw/"):]
-        
+        if workflow_project_file_directory and workflow_project_file_directory.startswith("/home/cdsw/"):
+            workflow_project_file_directory = workflow_project_file_directory[len("/home/cdsw/"):]
+
         # Get the base configuration and add workflow_directory
         configuration = collated_input.model_dump()
-        configuration["workflow_directory"] = workflow_root_directory
-        
+        configuration["workflow_directory"] = workflow_project_file_directory
+
         return {"configuration": configuration}
     elif serve_workflow_parameters.action_type == input_types.DeployedWorkflowActions.GET_ASSET_DATA.value:
         unavailable_assets = list()

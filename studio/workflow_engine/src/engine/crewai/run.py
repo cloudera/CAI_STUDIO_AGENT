@@ -15,7 +15,7 @@ from engine.crewai.crew import create_crewai_objects
 from engine.crewai.autosync import AutoSyncService
 
 
-def ensure_session_directory(workflow_root_directory: str, session_id: str, inputs: dict) -> bool:
+def ensure_session_directory(workflow_project_file_directory: str, session_id: str, inputs: dict) -> bool:
     """
     Ensure session directory exists and upload inputs.txt using CML API.
     Creates directory structure: workflow_root_directory/session/session_id/inputs.txt
@@ -32,7 +32,7 @@ def ensure_session_directory(workflow_root_directory: str, session_id: str, inpu
         return True  # No session_id provided, skip directory creation
     
     # DEBUG: Print the workflow_root_directory value to find root cause
-    print(f"🔍 DEBUG: workflow_root_directory parameter = '{workflow_root_directory}'")
+    print(f"🔍 DEBUG: workflow_project_file_directory parameter = '{workflow_project_file_directory}'")
     print(f"🔍 DEBUG: session_id parameter = '{session_id}'")
     
     try:
@@ -45,7 +45,7 @@ def ensure_session_directory(workflow_root_directory: str, session_id: str, inpu
             return False
         
         # Target path for inputs.txt
-        target_inputs_path = f"{workflow_root_directory}/session/{session_id}/inputs.txt"
+        target_inputs_path = f"{workflow_project_file_directory}/session/{session_id}/inputs.txt"
         print(f"🔍 DEBUG: Constructed target_inputs_path = '{target_inputs_path}'")
         
         # Step 1: Try to delete existing file at target path (ignore failures)
@@ -104,6 +104,8 @@ def run_workflow(
     events_trace_id: str,
     session_id: str = None,
     workflow_root_directory: str = None,
+    workflow_project_file_directory: str = None,
+    mode: str = None,
 ) -> None:
     """
     Runs a CrewAI workflow inside the given context.
@@ -114,32 +116,42 @@ def run_workflow(
         # Handle session_id: create directory and upload inputs file
         if session_id:
             # Ensure session directory exists and upload inputs.txt using CML API
-            # Use workflow_root_directory if provided, otherwise fall back to workflow_directory
-            directory_to_use = workflow_root_directory if workflow_root_directory else workflow_directory
-            if not ensure_session_directory(directory_to_use, session_id, inputs):
+            # Use workflow_project_file_directory if provided, otherwise fall back to workflow_root_directory/workflow_directory
+            directory_for_project_files = (
+                workflow_project_file_directory
+                if workflow_project_file_directory
+                else (workflow_root_directory if workflow_root_directory else workflow_directory)
+            )
+            if not ensure_session_directory(directory_for_project_files, session_id, inputs):
                 print(f"Failed to upload inputs file for session_id: {session_id}")
         
         # Determine deployment mode and compute session directory path (local and remote target)
         base_dir = workflow_root_directory if workflow_root_directory else workflow_directory
-        # Detect deployable workflows (plural). This was previously checking a singular path suffix.
-        is_deployment_mode = bool(base_dir and 'deployable_workflows' in base_dir)
+        # Determine autosync based on explicit mode
+        mode_upper = (mode or "").upper()
+        is_deployment_mode = (mode_upper == "DEPLOYMENT")
 
         autosync_service = None
+        # Start autosync only in TESTING mode
         if is_deployment_mode:
-            # Use the session directory as both local and remote target root
             def to_abs(path_str: str) -> str:
                 return path_str if path_str.startswith("/home/cdsw/") or path_str == "/home/cdsw" else f"/home/cdsw/{path_str.lstrip('/')}"
 
+            # Compute local and project files directories, appending session if provided
+            local_root = base_dir
+            project_files_root = workflow_project_file_directory if workflow_project_file_directory else base_dir
+
             if session_id:
-                session_dir_for_sync = f"{base_dir}/session/{session_id}"
-            else:
-                session_dir_for_sync = base_dir
-            # Ensure absolute local path for autosync (remote path still derived internally)
-            session_dir_for_sync = to_abs(session_dir_for_sync)
+                local_root = f"{local_root}/session/{session_id}"
+                project_files_root = f"{project_files_root}/session/{session_id}"
+
+            local_root_abs = to_abs(local_root)
+            project_files_root_abs = to_abs(project_files_root)
+
             try:
-                autosync_service = AutoSyncService(session_dir_for_sync, interval_sec=int(os.environ.get('INTERVAL_SEC', '10')))
+                autosync_service = AutoSyncService(local_root_abs, interval_sec=int(os.environ.get('INTERVAL_SEC', '10')), project_file_directory=project_files_root_abs)
                 autosync_service.start()
-                print(f"[AutoSync] Started for {session_dir_for_sync}")
+                print(f"[AutoSync] Started for local={local_root_abs} -> remote_base={project_files_root_abs}")
             except Exception as e:
                 print(f"[AutoSync] Failed to start: {e}")
 
@@ -194,6 +206,8 @@ async def run_workflow_async(
     events_trace_id,
     session_id: str = None,
     workflow_root_directory: str = None,
+    workflow_project_file_directory: str = None,
+    mode: str = None,
 ) -> None:
     """
     Run the workflow task in the background using the parent context.
@@ -215,4 +229,6 @@ async def run_workflow_async(
         events_trace_id,
         session_id,
         workflow_root_directory,
+        workflow_project_file_directory,
+        mode,
     )

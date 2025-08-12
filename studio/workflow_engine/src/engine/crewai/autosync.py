@@ -391,7 +391,7 @@ def sync_once(local_base: Path, remote_prefix: str, client, project_id: str, con
 
 
 class AutoSyncService:
-    def __init__(self, workflow_root_directory: str, interval_sec: int = 10):
+    def __init__(self, workflow_root_directory: str, interval_sec: int = 10, project_file_directory: Optional[str] = None):
         self.workflow_root_directory = str(Path(workflow_root_directory).resolve())
         self.interval_sec = interval_sec
         self._stop_event = threading.Event()
@@ -431,9 +431,18 @@ class AutoSyncService:
             self.remote_prefix = normalize_rel_path(str(wf_path.relative_to(base_root)))
         except Exception:
             self.remote_prefix = normalize_rel_path(wf_path.name)
+
+        # If a separate project files directory is provided, compute remote_prefix from it instead
+        if project_file_directory:
+            pf_path = Path(project_file_directory)
+            try:
+                self.remote_prefix = normalize_rel_path(str(pf_path.relative_to(base_root)))
+            except Exception:
+                self.remote_prefix = normalize_rel_path(pf_path.name)
         # Ensure local root matches exactly base_root + remote_prefix to avoid accidental duplication
         expected_root = str(Path(base_root) / self.remote_prefix)
-        if self.workflow_root_directory != expected_root:
+        # Only correct the local root to align with remote_prefix when no explicit project_file_directory was provided
+        if project_file_directory is None and self.workflow_root_directory != expected_root:
             logging.warning(
                 f"[AutoSync] Correcting workflow_root_directory from {self.workflow_root_directory} to {expected_root}"
             )

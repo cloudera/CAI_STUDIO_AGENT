@@ -125,6 +125,7 @@ def test_workflow(
             json={
                 "workflow_directory": os.path.abspath(os.curdir),  # for testing, everything is in studio-data/
                 "workflow_root_directory": workflow_root_directory,
+                "workflow_project_file_directory": workflow_root_directory,
                 "workflow_name": f"Test Workflow - {collated_input.workflow.name}",
                 "collated_input": collated_input.model_dump(),
                 "tool_config": tool_user_params_kv,
@@ -133,6 +134,7 @@ def test_workflow(
                 "inputs": dict(request.inputs),
                 "events_trace_id": events_trace_id,
                 "session_id": session_id,
+                "mode": "TESTING",
             },
         )
 
