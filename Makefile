@@ -10,7 +10,7 @@ VERSION ?= latest
 # Dockerfile build arguments
 RT_SHORT_VERSION ?= 1.0.0
 RT_GIT_HASH ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
-RT_GBN ?= $(shell curl http://gbn.infra.cloudera.com/)
+RT_GBN ?=
 
 # Build arguments for Docker
 BUILD_ARGS = --build-arg RT_SHORT_VERSION=$(RT_SHORT_VERSION) \
