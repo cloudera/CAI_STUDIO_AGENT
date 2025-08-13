@@ -1143,16 +1143,36 @@ class TestWorkflowRequest(_message.Message):
     ) -> None: ...
 
 class TestWorkflowResponse(_message.Message):
-    __slots__ = ("message", "trace_id", "session_id")
+    __slots__ = ("message", "trace_id", "session_id", "session_directory")
     MESSAGE_FIELD_NUMBER: _ClassVar[int]
     TRACE_ID_FIELD_NUMBER: _ClassVar[int]
     SESSION_ID_FIELD_NUMBER: _ClassVar[int]
+    SESSION_DIRECTORY_FIELD_NUMBER: _ClassVar[int]
     message: str
     trace_id: str
     session_id: str
+    session_directory: str
     def __init__(
-        self, message: _Optional[str] = ..., trace_id: _Optional[str] = ..., session_id: _Optional[str] = ...
+        self,
+        message: _Optional[str] = ...,
+        trace_id: _Optional[str] = ...,
+        session_id: _Optional[str] = ...,
+        session_directory: _Optional[str] = ...,
     ) -> None: ...
+
+class CreateSessionRequest(_message.Message):
+    __slots__ = ("workflow_id",)
+    WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
+    workflow_id: str
+    def __init__(self, workflow_id: _Optional[str] = ...) -> None: ...
+
+class CreateSessionResponse(_message.Message):
+    __slots__ = ("session_id", "session_directory")
+    SESSION_ID_FIELD_NUMBER: _ClassVar[int]
+    SESSION_DIRECTORY_FIELD_NUMBER: _ClassVar[int]
+    session_id: str
+    session_directory: str
+    def __init__(self, session_id: _Optional[str] = ..., session_directory: _Optional[str] = ...) -> None: ...
 
 class DeployWorkflowRequest(_message.Message):
     __slots__ = (

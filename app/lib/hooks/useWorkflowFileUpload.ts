@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { useAppDispatch, useAppSelector } from './hooks';
 import { 
-  selectWorkflowSessionId, 
-  updatedWorkflowSessionId 
+  selectWorkflowSessionId,
+  selectWorkflowSessionDirectory,
+  updatedWorkflowSessionId,
+  updatedWorkflowSessionDirectory,
 } from '@/app/workflows/editorSlice';
 import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
 import { 
-  generateSessionId, 
   getWorkflowDirectory, 
   uploadFileToWorkflowSession 
 } from '../workflowFileUpload';
 import { useGlobalNotification } from '@/app/components/Notifications';
+import { createSessionForWorkflow } from '@/app/lib/session';
 
 export interface UseWorkflowFileUploadOptions {
   workflow?: any;
@@ -24,37 +26,29 @@ export const useWorkflowFileUpload = (options: UseWorkflowFileUploadOptions) => 
   const abortControllersRef = useState<Record<string, AbortController>>({})[0];
   const dispatch = useAppDispatch();
   const sessionId = useAppSelector(selectWorkflowSessionId);
+  const sessionDirectory = useAppSelector(selectWorkflowSessionDirectory);
   const { data: workflowData } = useGetWorkflowDataQuery();
   const notificationApi = useGlobalNotification();
 
-  const ensureSessionId = (): string => {
-    let currentSessionId = sessionId;
-    if (!currentSessionId) {
-      currentSessionId = generateSessionId();
-      dispatch(updatedWorkflowSessionId(currentSessionId));
+  const ensureSession = async (): Promise<{ session_id: string; session_directory: string }> => {
+    if (sessionId && sessionDirectory) {
+      return { session_id: sessionId, session_directory: sessionDirectory };
     }
-    return currentSessionId;
+    const data = await createSessionForWorkflow({ renderMode, workflow, workflowData });
+    dispatch(updatedWorkflowSessionId(data.session_id));
+    if (data.session_directory) {
+      dispatch(updatedWorkflowSessionDirectory(data.session_directory));
+    }
+    return { session_id: data.session_id, session_directory: data.session_directory };
   };
 
-  const uploadFile = async (file: File, providedSessionId?: string): Promise<boolean> => {
+  const uploadFile = async (file: File, _providedSessionId?: string): Promise<boolean> => {
     try {
       setUploadingCount(prev => prev + 1);
       setUploading(true);
 
-      // Use provided session ID or ensure one exists
-      const currentSessionId = providedSessionId || ensureSessionId();
-
-      // Get workflow directory
-      const workflowDirectory = getWorkflowDirectory(renderMode, workflow, workflowData);
-      
-      if (!workflowDirectory) {
-        notificationApi.error({
-          message: 'Upload Failed',
-          description: 'Unable to determine workflow directory',
-          placement: 'topRight',
-        });
-        return false;
-      }
+      // Ensure session exists and get directory
+      const ensured = await ensureSession();
 
       // Upload file
       const controller = new AbortController();
@@ -62,8 +56,7 @@ export const useWorkflowFileUpload = (options: UseWorkflowFileUploadOptions) => 
 
       const success = await uploadFileToWorkflowSession({
         file,
-        sessionId: currentSessionId,
-        workflowDirectory,
+        sessionDirectory: ensured.session_directory,
         renderMode,
         workflowData,
         signal: controller.signal,
@@ -107,11 +100,10 @@ export const useWorkflowFileUpload = (options: UseWorkflowFileUploadOptions) => 
   };
 
   const uploadMultipleFiles = async (files: File[]): Promise<boolean[]> => {
-    // Ensure session ID is generated once before all uploads
-    const sharedSessionId = ensureSessionId();
-    
-    // Upload files in parallel with shared session ID
-    const promises = files.map(file => uploadFile(file, sharedSessionId));
+    // Ensure session is created before all uploads
+    await ensureSession();
+    // Upload files in parallel
+    const promises = files.map((file) => uploadFile(file));
     return Promise.all(promises);
   };
 
@@ -120,7 +112,7 @@ export const useWorkflowFileUpload = (options: UseWorkflowFileUploadOptions) => 
     uploadMultipleFiles,
     uploading,
     sessionId,
-    ensureSessionId,
+    ensureSession,
     cancelUpload: (fileName: string) => {
       const controller = abortControllersRef[fileName];
       if (controller) {

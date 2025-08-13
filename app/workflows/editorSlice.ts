@@ -69,6 +69,7 @@ interface EditorState {
   diagramState: DiagramState;
   editingTaskId?: string | null; // Add task editing state
   sessionId?: string | null; // Add session ID tracking
+  sessionDirectory?: string | null; // Track session directory path
 }
 
 const initialState: EditorState = {
@@ -94,6 +95,7 @@ const initialState: EditorState = {
   },
   editingTaskId: null, // Initialize task editing state
   sessionId: null, // Initialize session ID
+  sessionDirectory: null, // Initialize session directory
 };
 
 export interface UpdateWorkflowParameters {
@@ -345,6 +347,9 @@ export const editorSlice = createSlice({
     updatedWorkflowSessionId: (state, action: PayloadAction<string | null>) => {
       state.sessionId = action.payload;
     },
+    updatedWorkflowSessionDirectory: (state, action: PayloadAction<string | null>) => {
+      state.sessionDirectory = action.payload;
+    },
   },
 });
 
@@ -384,6 +389,7 @@ export const {
   resetDiagramCustomPositions,
   resetDiagramToDefaults,
   updatedWorkflowSessionId,
+  updatedWorkflowSessionDirectory,
 } = editorSlice.actions;
 
 export const selectEditor = (state: RootState) => state.editor;
@@ -441,5 +447,6 @@ export const selectDiagramHasCustomPositions = (state: RootState): boolean =>
   state.editor.diagramState.hasCustomPositions;
 
 export const selectWorkflowSessionId = (state: RootState) => state.editor.sessionId;
+export const selectWorkflowSessionDirectory = (state: RootState) => state.editor.sessionDirectory;
 
 export default editorSlice.reducer;

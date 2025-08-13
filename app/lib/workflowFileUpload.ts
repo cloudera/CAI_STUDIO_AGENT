@@ -1,20 +1,10 @@
 export interface WorkflowUploadFileOptions {
   file: File;
-  sessionId: string;
-  workflowDirectory: string;
+  sessionDirectory: string;
   renderMode: 'studio' | 'workflow';
   workflowData?: any;
   signal?: AbortSignal;
 }
-
-export const generateSessionId = (): string => {
-  // Generate a 6-character random string using crypto.randomUUID or fallback
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID().substring(0, 6);
-  }
-  // Fallback for environments without crypto.randomUUID
-  return Math.random().toString(36).substring(2, 8);
-};
 
 export const getWorkflowDirectory = (
   renderMode: 'studio' | 'workflow',
@@ -29,11 +19,11 @@ export const getWorkflowDirectory = (
 };
 
 export const uploadFileToWorkflowSession = async (options: WorkflowUploadFileOptions): Promise<boolean> => {
-  const { file, sessionId, workflowDirectory, signal } = options;
+  const { file, sessionDirectory, signal } = options;
   
   try {
     // Construct target path
-    const targetPath = `${workflowDirectory}/session/${sessionId}/${file.name}`;
+    const targetPath = `${sessionDirectory}/${file.name}`;
     
     // console.log(`🔍 DEBUG: Uploading file to: ${targetPath}`);
     

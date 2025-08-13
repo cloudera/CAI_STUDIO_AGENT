@@ -757,6 +757,21 @@ export interface TestWorkflowResponse {
   trace_id: string;
   /** Session ID for the workflow test */
   session_id: string;
+  /** Optional session directory for artifacts */
+  session_directory?: string | undefined;
+}
+
+/** Create session messages */
+export interface CreateSessionRequest {
+  /** ID of the workflow to create a session for */
+  workflow_id: string;
+}
+
+export interface CreateSessionResponse {
+  /** Session ID */
+  session_id: string;
+  /** Session directory (relative to project root) */
+  session_directory: string;
 }
 
 /** Messages for deploying workflows */
@@ -9246,7 +9261,7 @@ export const TestWorkflowRequest_McpInstanceEnvVarsEntry: MessageFns<TestWorkflo
 };
 
 function createBaseTestWorkflowResponse(): TestWorkflowResponse {
-  return { message: "", trace_id: "", session_id: "" };
+  return { message: "", trace_id: "", session_id: "", session_directory: undefined };
 }
 
 export const TestWorkflowResponse: MessageFns<TestWorkflowResponse> = {
@@ -9259,6 +9274,9 @@ export const TestWorkflowResponse: MessageFns<TestWorkflowResponse> = {
     }
     if (message.session_id !== "") {
       writer.uint32(26).string(message.session_id);
+    }
+    if (message.session_directory !== undefined) {
+      writer.uint32(34).string(message.session_directory);
     }
     return writer;
   },
@@ -9294,6 +9312,14 @@ export const TestWorkflowResponse: MessageFns<TestWorkflowResponse> = {
           message.session_id = reader.string();
           continue;
         }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.session_directory = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -9308,6 +9334,7 @@ export const TestWorkflowResponse: MessageFns<TestWorkflowResponse> = {
       message: isSet(object.message) ? globalThis.String(object.message) : "",
       trace_id: isSet(object.trace_id) ? globalThis.String(object.trace_id) : "",
       session_id: isSet(object.session_id) ? globalThis.String(object.session_id) : "",
+      session_directory: isSet(object.session_directory) ? globalThis.String(object.session_directory) : undefined,
     };
   },
 
@@ -9322,6 +9349,9 @@ export const TestWorkflowResponse: MessageFns<TestWorkflowResponse> = {
     if (message.session_id !== "") {
       obj.session_id = message.session_id;
     }
+    if (message.session_directory !== undefined) {
+      obj.session_directory = message.session_directory;
+    }
     return obj;
   },
 
@@ -9333,6 +9363,141 @@ export const TestWorkflowResponse: MessageFns<TestWorkflowResponse> = {
     message.message = object.message ?? "";
     message.trace_id = object.trace_id ?? "";
     message.session_id = object.session_id ?? "";
+    message.session_directory = object.session_directory ?? undefined;
+    return message;
+  },
+};
+
+function createBaseCreateSessionRequest(): CreateSessionRequest {
+  return { workflow_id: "" };
+}
+
+export const CreateSessionRequest: MessageFns<CreateSessionRequest> = {
+  encode(message: CreateSessionRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.workflow_id !== "") {
+      writer.uint32(10).string(message.workflow_id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateSessionRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateSessionRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.workflow_id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateSessionRequest {
+    return { workflow_id: isSet(object.workflow_id) ? globalThis.String(object.workflow_id) : "" };
+  },
+
+  toJSON(message: CreateSessionRequest): unknown {
+    const obj: any = {};
+    if (message.workflow_id !== "") {
+      obj.workflow_id = message.workflow_id;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<CreateSessionRequest>): CreateSessionRequest {
+    return CreateSessionRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<CreateSessionRequest>): CreateSessionRequest {
+    const message = createBaseCreateSessionRequest();
+    message.workflow_id = object.workflow_id ?? "";
+    return message;
+  },
+};
+
+function createBaseCreateSessionResponse(): CreateSessionResponse {
+  return { session_id: "", session_directory: "" };
+}
+
+export const CreateSessionResponse: MessageFns<CreateSessionResponse> = {
+  encode(message: CreateSessionResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.session_id !== "") {
+      writer.uint32(10).string(message.session_id);
+    }
+    if (message.session_directory !== "") {
+      writer.uint32(18).string(message.session_directory);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateSessionResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateSessionResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.session_id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.session_directory = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateSessionResponse {
+    return {
+      session_id: isSet(object.session_id) ? globalThis.String(object.session_id) : "",
+      session_directory: isSet(object.session_directory) ? globalThis.String(object.session_directory) : "",
+    };
+  },
+
+  toJSON(message: CreateSessionResponse): unknown {
+    const obj: any = {};
+    if (message.session_id !== "") {
+      obj.session_id = message.session_id;
+    }
+    if (message.session_directory !== "") {
+      obj.session_directory = message.session_directory;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<CreateSessionResponse>): CreateSessionResponse {
+    return CreateSessionResponse.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<CreateSessionResponse>): CreateSessionResponse {
+    const message = createBaseCreateSessionResponse();
+    message.session_id = object.session_id ?? "";
+    message.session_directory = object.session_directory ?? "";
     return message;
   },
 };
@@ -16791,6 +16956,16 @@ export const AgentStudioService = {
     responseSerialize: (value: TestWorkflowResponse) => Buffer.from(TestWorkflowResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer) => TestWorkflowResponse.decode(value),
   },
+  /** Create a new session for a workflow */
+  createSession: {
+    path: "/agent_studio.AgentStudio/CreateSession",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateSessionRequest) => Buffer.from(CreateSessionRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => CreateSessionRequest.decode(value),
+    responseSerialize: (value: CreateSessionResponse) => Buffer.from(CreateSessionResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => CreateSessionResponse.decode(value),
+  },
   removeWorkflow: {
     path: "/agent_studio.AgentStudio/RemoveWorkflow",
     requestStream: false,
@@ -17146,6 +17321,8 @@ export interface AgentStudioServer extends UntypedServiceImplementation {
   addWorkflow: handleUnaryCall<AddWorkflowRequest, AddWorkflowResponse>;
   updateWorkflow: handleUnaryCall<UpdateWorkflowRequest, UpdateWorkflowResponse>;
   testWorkflow: handleUnaryCall<TestWorkflowRequest, TestWorkflowResponse>;
+  /** Create a new session for a workflow */
+  createSession: handleUnaryCall<CreateSessionRequest, CreateSessionResponse>;
   removeWorkflow: handleUnaryCall<RemoveWorkflowRequest, RemoveWorkflowResponse>;
   /** Deployed Workflow Operations */
   deployWorkflow: handleUnaryCall<DeployWorkflowRequest, DeployWorkflowResponse>;
@@ -17866,6 +18043,22 @@ export interface AgentStudioClient extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: TestWorkflowResponse) => void,
+  ): ClientUnaryCall;
+  /** Create a new session for a workflow */
+  createSession(
+    request: CreateSessionRequest,
+    callback: (error: ServiceError | null, response: CreateSessionResponse) => void,
+  ): ClientUnaryCall;
+  createSession(
+    request: CreateSessionRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CreateSessionResponse) => void,
+  ): ClientUnaryCall;
+  createSession(
+    request: CreateSessionRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CreateSessionResponse) => void,
   ): ClientUnaryCall;
   removeWorkflow(
     request: RemoveWorkflowRequest,

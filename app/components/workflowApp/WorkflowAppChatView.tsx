@@ -29,6 +29,7 @@ import {
   selectWorkflowGenerationConfig,
   selectWorkflowSessionId,
   updatedWorkflowSessionId,
+  updatedWorkflowSessionDirectory,
 } from '@/app/workflows/editorSlice';
 import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
 import { useGlobalNotification } from '../Notifications';
@@ -117,13 +118,16 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow, tas
             ),
           ),
           generation_config: JSON.stringify(workflowGenerationConfig),
-          session_id: sessionId || '', // Send empty string if no session_id
+          session_id: sessionId || '',
         }).unwrap();
         traceId = response.trace_id;
         
-        // Update session_id from response
+        // Update session info from response
         if (response.session_id) {
           dispatch(updatedWorkflowSessionId(response.session_id));
+        }
+        if ((response as any).session_directory) {
+          dispatch(updatedWorkflowSessionDirectory((response as any).session_directory));
         }
       } catch (error) {
         notificationApi.error({
@@ -145,7 +149,7 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow, tas
             kickoff_inputs: base64Encode({
               user_input: userInputForApi,
               context: JSON.stringify(context),
-              session_id: sessionId || '', // Send empty string if no session_id
+              session_id: sessionId || '',
             }),
           },
         }),
@@ -153,9 +157,12 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow, tas
       const kickoffResponseData = (await kickoffResponse.json()) as any;
       traceId = kickoffResponseData.response.trace_id;
       
-      // Extract session_id from response if available
+      // Extract session info from response if available
       if (kickoffResponseData.response.session_id) {
         dispatch(updatedWorkflowSessionId(kickoffResponseData.response.session_id));
+      }
+      if (kickoffResponseData.response.session_directory) {
+        dispatch(updatedWorkflowSessionDirectory(kickoffResponseData.response.session_directory));
       }
     }
 

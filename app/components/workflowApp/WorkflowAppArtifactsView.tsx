@@ -24,6 +24,8 @@ import {
 } from '@ant-design/icons';
 import { Workflow } from '@/studio/proto/agent_studio';
 import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
+import { useAppSelector } from '@/app/lib/hooks/hooks';
+import { selectWorkflowSessionDirectory } from '@/app/workflows/editorSlice';
 
 const { Text } = Typography;
 
@@ -77,18 +79,7 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
     error: null,
   });
 
-  // Calculate session directory path
-  const getSessionDirectory = () => {
-    // In workflow mode, use the workflow directory from deployedWorkflow
-    if (workflowData?.renderMode === 'workflow') {
-      if (!workflowData.deployedWorkflow?.workflow_directory || !sessionId) return null;
-      return `${workflowData.deployedWorkflow.workflow_directory}/session/${sessionId}`;
-    } else {
-      // In studio mode, use simple logic
-      if (!workflow?.directory || !sessionId) return null;
-      return `${workflow.directory}/session/${sessionId}`;
-    }
-  };
+  const sessionDirectory = useAppSelector(selectWorkflowSessionDirectory);
 
   // Fetch project URL info
   const fetchProjectUrlInfo = async () => {
@@ -105,7 +96,7 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
 
   // Get CML Files URL
   const getCMLFilesUrl = () => {
-    const sessionDir = getSessionDirectory();
+    const sessionDir = sessionDirectory || null;
     if (!sessionDir || !projectUrlInfo) return null;
     
     // Construct the CML files URL using the project info
@@ -114,7 +105,7 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
 
   // Fetch files from session directory
   const fetchFiles = async (showLoading = true) => {
-    const sessionDir = getSessionDirectory();
+    const sessionDir = sessionDirectory || null;
     if (!sessionDir) return;
 
     if (showLoading) {
@@ -178,23 +169,23 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
 
   // Fetch files when component mounts or dependencies change
   useEffect(() => {
-    if (sessionId && (workflow || workflowData?.deployedWorkflow?.workflow_directory)) {
+    if (sessionDirectory) {
       fetchFiles();
     } else {
       setFiles([]);
     }
-  }, [workflow?.directory, workflowData?.deployedWorkflow?.workflow_directory, workflowData?.renderMode, sessionId]);
+  }, [sessionDirectory]);
 
   // Auto-refresh files every 5 seconds
   useEffect(() => {
-    if (!sessionId || !(workflow || workflowData?.deployedWorkflow?.workflow_directory)) return;
+    if (!sessionDirectory) return;
 
     const interval = setInterval(() => {
       fetchFiles(false); // Auto-refresh without showing loading spinner
     }, 5000); // 5 seconds
 
     return () => clearInterval(interval);
-  }, [workflow?.directory, workflowData?.deployedWorkflow?.workflow_directory, workflowData?.renderMode, sessionId]);
+  }, [sessionDirectory]);
 
   // Get file icon based on file type
   const getFileIcon = (fileName: string | undefined | null) => {
@@ -604,7 +595,7 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
   const cmlFilesUrl = getCMLFilesUrl();
 
   // Check if we have workflow data in either studio mode (workflow prop) or workflow mode (workflowData)
-  const hasWorkflowData = workflow || (workflowData?.renderMode === 'workflow' && workflowData?.deployedWorkflow?.workflow_directory);
+  const hasWorkflowData = Boolean(workflow || workflowData?.renderMode === 'workflow');
 
   if (!hasWorkflowData) {
     return (
@@ -617,7 +608,7 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
     );
   }
 
-  if (!sessionId) {
+  if (!sessionId || !sessionDirectory) {
     return (
       <div style={{ textAlign: 'center', padding: '24px' }}>
         <FolderOutlined style={{ fontSize: '48px', color: '#d9d9d9', marginBottom: '16px' }} />

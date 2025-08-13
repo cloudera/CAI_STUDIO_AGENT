@@ -155,9 +155,11 @@ class DeployedWorkflowActions(str, Enum):
     GET_CONFIGURATION = "get-configuration"
     GET_ASSET_DATA = "get-asset-data"
     GET_MCP_TOOL_DEFINITIONS = "get-mcp-tool-definitions"
+    CREATE_SESSION = "create-session"
 
 
 class ServeWorkflowParameters(BaseModel):
     action_type: DeployedWorkflowActions
     kickoff_inputs: Optional[str] = None
     get_asset_data_inputs: List[str] = list()
+    create_session_inputs: Optional[str] = None

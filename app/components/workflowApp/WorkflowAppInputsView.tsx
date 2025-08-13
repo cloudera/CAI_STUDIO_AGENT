@@ -36,6 +36,8 @@ import {
   selectWorkflowGenerationConfig,
   selectWorkflowSessionId,
   updatedWorkflowSessionId,
+  updatedWorkflowSessionDirectory,
+  selectWorkflowSessionDirectory,
 } from '@/app/workflows/editorSlice';
 import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
 import { useGlobalNotification } from '../Notifications';
@@ -69,6 +71,7 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
   const workflowGenerationConfig = useAppSelector(selectWorkflowGenerationConfig);
   const workflowConfiguration = useAppSelector(selectWorkflowConfiguration);
   const sessionId = useAppSelector(selectWorkflowSessionId);
+  const sessionDirectory = useAppSelector(selectWorkflowSessionDirectory);
   const notificationApi = useGlobalNotification();
   // If we haven't determined our application render type, then we don't render yet!
   const { data: workflowData, isLoading } = useGetWorkflowDataQuery();
@@ -162,13 +165,16 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
             ),
           ),
           generation_config: JSON.stringify(workflowGenerationConfig),
-          session_id: sessionId || '', // Send empty string if no session_id
+          session_id: sessionId || '',
         }).unwrap();
         traceId = response.trace_id;
         
-        // Update session_id from response
+        // Update session info from response
         if (response.session_id) {
           dispatch(updatedWorkflowSessionId(response.session_id));
+        }
+        if ((response as any).session_directory) {
+          dispatch(updatedWorkflowSessionDirectory((response as any).session_directory));
         }
       } catch (error) {
         notificationApi.error({
@@ -182,7 +188,7 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
       // For workflow mode, include session_id in kickoff inputs
       const kickoffInputsWithSession = {
         ...finalInputs,
-        session_id: sessionId || '', // Send empty string if no session_id
+        session_id: sessionId || '',
       };
       
       const kickoffResponse = await fetch(`${workflowModelUrl}`, {
@@ -200,9 +206,12 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
       const kickoffResponseData = (await kickoffResponse.json()) as any;
       traceId = kickoffResponseData.response.trace_id;
       
-      // Extract session_id from response if available
+      // Extract session info from response if available
       if (kickoffResponseData.response.session_id) {
         dispatch(updatedWorkflowSessionId(kickoffResponseData.response.session_id));
+      }
+      if (kickoffResponseData.response.session_directory) {
+        dispatch(updatedWorkflowSessionDirectory(kickoffResponseData.response.session_directory));
       }
     }
 
@@ -378,9 +387,8 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
 
                     // Background deletion for completed files
                     if (fileState.status === 'completed') {
-                      const workflowDirectory = getWorkflowDirectory(renderMode || 'studio', workflow, workflowData);
-                      if (sessionId && workflowDirectory) {
-                        const filePath = `${workflowDirectory}/session/${sessionId}/${fileState.name}`;
+                      if (sessionDirectory) {
+                        const filePath = `${sessionDirectory}/${fileState.name}`;
                         try {
                           await fetch('/api/file/delete', {
                             method: 'POST',

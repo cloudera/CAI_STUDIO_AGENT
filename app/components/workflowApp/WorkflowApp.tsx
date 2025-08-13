@@ -54,6 +54,9 @@ import { renderAlert } from '@/app/lib/alertUtils';
 import { hasValidToolConfiguration } from '@/app/components/workflowEditor/WorkflowEditorConfigureInputs';
 import { TOOL_PARAMS_ALERT } from '@/app/lib/constants';
 import { selectWorkflowAppSessionFiles } from '@/app/workflows/workflowAppSlice';
+import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
+import { updatedWorkflowSessionDirectory, updatedWorkflowSessionId } from '@/app/workflows/editorSlice';
+import { createSessionForWorkflow } from '@/app/lib/session';
 
 const { Title, Text } = Typography;
 
@@ -84,7 +87,9 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
   const currentEvents = useAppSelector(selectCurrentEvents);
   const workflowState = useAppSelector(selectEditorWorkflow);
   const sessionId = useAppSelector(selectWorkflowSessionId);
+  const sessionDirectory = useAppSelector((state: any) => state.editor.sessionDirectory);
   const sessionFiles = useAppSelector(selectWorkflowAppSessionFiles);
+  const { data: workflowData } = useGetWorkflowDataQuery();
 
   const [getEvents] = useGetEventsMutation();
 
@@ -114,6 +119,22 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
   useEffect(() => {
     setShowMonitoring(renderMode === 'studio');
   }, [renderMode]);
+
+  // Ensure session exists on load
+  useEffect(() => {
+    const initSession = async () => {
+      try {
+        if (!sessionId || !sessionDirectory) {
+          const data = await createSessionForWorkflow({ renderMode, workflow, workflowData });
+          dispatch(updatedWorkflowSessionId(data.session_id));
+          dispatch(updatedWorkflowSessionDirectory(data.session_directory));
+        }
+      } catch (e) {
+        console.error('Failed to initialize session', e);
+      }
+    };
+    void initSession();
+  }, [workflow?.workflow_id, renderMode]);
 
   const handleSliderChange = (value: number) => {
     setSliderValue(value);
@@ -564,6 +585,12 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
             )
           ) : !hasValidTools ? (
             renderAlert(TOOL_PARAMS_ALERT.message, TOOL_PARAMS_ALERT.description, 'warning')
+          ) : !sessionId || !sessionDirectory ? (
+            renderAlert(
+              'Initializing session',
+              'Preparing a session for this workflow. Please wait a moment...',
+              'loading',
+            )
           ) : workflow.is_conversational ? (
             <WorkflowAppChatView workflow={workflow} tasks={tasks} onOpenArtifacts={handleOpenArtifacts} />
           ) : (

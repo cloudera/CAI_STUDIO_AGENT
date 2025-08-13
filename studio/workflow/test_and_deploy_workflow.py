@@ -142,6 +142,7 @@ def test_workflow(
             message="",  # Return empty message since execution is async
             trace_id=events_trace_id,
             session_id=session_id,
+            session_directory=f"{workflow_root_directory}/session/{session_id}",
         )
 
     except ValueError as e:
@@ -152,6 +153,35 @@ def test_workflow(
         raise RuntimeError(f"Unexpected error while testing workflow: {e}")
 
     return
+
+
+def create_session(request: CreateSessionRequest, cml: CMLServiceApi = None, dao: AgentStudioDao = None) -> CreateSessionResponse:
+    """
+    Create a session for a given workflow id and return session id and session directory.
+    Mirrors the session logic used in test_workflow.
+    """
+    try:
+        with dao.get_session() as session:
+            workflow: db_model.Workflow = session.query(db_model.Workflow).filter_by(id=request.workflow_id).one()
+
+            # Extract workflow root directory from database
+            workflow_root_directory = workflow.directory
+
+            # Remove /home/cdsw prefix if present
+            if workflow_root_directory and workflow_root_directory.startswith("/home/cdsw/"):
+                workflow_root_directory = workflow_root_directory[len("/home/cdsw/"):]
+
+            if not workflow_root_directory:
+                raise RuntimeError("Workflow root directory is empty or None")
+
+        # Generate 6-char session id
+        session_id = str(uuid4())[:6]
+
+        session_directory = f"{workflow_root_directory}/session/{session_id}"
+
+        return CreateSessionResponse(session_id=session_id, session_directory=session_directory)
+    except Exception as e:
+        raise RuntimeError(f"Failed to create session: {str(e)}")
 
 
 def deploy_workflow(request: DeployWorkflowRequest, cml: CMLServiceApi, dao: AgentStudioDao) -> DeployWorkflowResponse:

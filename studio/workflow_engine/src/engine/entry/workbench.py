@@ -146,7 +146,15 @@ def api_wrapper(args: Union[dict, str]) -> str:
                 await run_workflow_langgraph_instance(graph_callable, inputs)
 
             asyncio.create_task(run_langgraph_workflow())
-            return {"trace_id": "n/a", "session_id": session_id}
+
+            # Build session directory from workflow_project_file_directory (strip /home/cdsw/ only in session dir)
+            workflow_project_file_directory = WORKFLOW_PROJECT_FILE_DIR
+            session_dir_base = workflow_project_file_directory or ""
+            if session_dir_base.startswith("/home/cdsw/"):
+                session_dir_base = session_dir_base[len("/home/cdsw/"):]
+            session_directory = f"{session_dir_base}/session/{session_id}"
+
+            return {"trace_id": "n/a", "session_id": session_id, "session_directory": session_directory}
 
         # CrewAI workflow
         else:
@@ -161,7 +169,7 @@ def api_wrapper(args: Union[dict, str]) -> str:
             if workflow_root_directory and workflow_root_directory.startswith("/home/cdsw/"):
                 workflow_root_directory = workflow_root_directory[len("/home/cdsw/"):]
 
-            # Prepare workflow project file directory from env
+            # Prepare workflow project file directory from env (do not strip prefix here)
             workflow_project_file_directory = WORKFLOW_PROJECT_FILE_DIR
             if workflow_project_file_directory and workflow_project_file_directory.startswith("/home/cdsw/"):
                 workflow_project_file_directory = workflow_project_file_directory[len("/home/cdsw/"):]
@@ -187,11 +195,14 @@ def api_wrapper(args: Union[dict, str]) -> str:
                         "DEPLOYMENT",
                     )
                 )
-            return {"trace_id": str(trace_id), "session_id": session_id}
+            # Build session directory (strip /home/cdsw/ only in session dir)
+            session_dir_base = workflow_project_file_directory or ""
+            session_directory = f"{session_dir_base}/session/{session_id}"
+            return {"trace_id": str(trace_id), "session_id": session_id, "session_directory": session_directory}
 
         return {"trace_id": str(trace_id)}
     elif serve_workflow_parameters.action_type == input_types.DeployedWorkflowActions.GET_CONFIGURATION.value:
-        # Prepare workflow project file directory from env
+        # Prepare workflow project file directory from env (do not strip prefix)
         workflow_project_file_directory = WORKFLOW_PROJECT_FILE_DIR
         # Remove /home/cdsw prefix if present
         if workflow_project_file_directory and workflow_project_file_directory.startswith("/home/cdsw/"):
@@ -202,6 +213,16 @@ def api_wrapper(args: Union[dict, str]) -> str:
         configuration["workflow_directory"] = workflow_project_file_directory
 
         return {"configuration": configuration}
+    elif serve_workflow_parameters.action_type == input_types.DeployedWorkflowActions.CREATE_SESSION.value:
+        # For create-session, just compute session id and session directory
+        # using WORKFLOW_PROJECT_FILE_DIR, strip /home/cdsw/ only for session_directory
+        session_id = str(uuid4())[:6]
+        workflow_project_file_directory = WORKFLOW_PROJECT_FILE_DIR
+        session_dir_base = workflow_project_file_directory or ""
+        if session_dir_base.startswith("/home/cdsw/"):
+            session_dir_base = session_dir_base[len("/home/cdsw/"):]
+        session_directory = f"{session_dir_base}/session/{session_id}"
+        return {"session_id": session_id, "session_directory": session_directory}
     elif serve_workflow_parameters.action_type == input_types.DeployedWorkflowActions.GET_ASSET_DATA.value:
         unavailable_assets = list()
         asset_data: Dict[str, str] = dict()

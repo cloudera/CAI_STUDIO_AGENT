@@ -80,6 +80,8 @@ service AgentStudio {
   rpc AddWorkflow (AddWorkflowRequest) returns (AddWorkflowResponse) {}
   rpc UpdateWorkflow (UpdateWorkflowRequest) returns (UpdateWorkflowResponse) {}
   rpc TestWorkflow (TestWorkflowRequest) returns (TestWorkflowResponse) {}
+  // Create a new session for a workflow
+  rpc CreateSession (CreateSessionRequest) returns (CreateSessionResponse) {}
   rpc RemoveWorkflow (RemoveWorkflowRequest) returns (RemoveWorkflowResponse) {}
   
   // Deployed Workflow Operations
@@ -723,6 +725,21 @@ message TestWorkflowResponse {
   string trace_id = 2;
   // Session ID for the workflow test
   string session_id = 3;
+  // Optional session directory for artifacts
+  optional string session_directory = 4;
+}
+
+// Create session messages
+message CreateSessionRequest {
+  // ID of the workflow to create a session for
+  string workflow_id = 1;
+}
+
+message CreateSessionResponse {
+  // Session ID
+  string session_id = 1;
+  // Session directory (relative to project root)
+  string session_directory = 2;
 }
 
 // Messages for deploying workflows

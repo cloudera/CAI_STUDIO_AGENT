@@ -229,13 +229,13 @@ def estimate_token_count(text: str) -> int:
     return len(text) // 4
 
 
-def truncate_content_for_llm(content: str, max_tokens: int = 10000) -> tuple[str, bool, dict]:
+def truncate_content_for_llm(content: str, max_tokens: int = 25000) -> tuple[str, bool, dict]:
     """
     Truncate content based on estimated token count to prevent LLM API failures.
     
     Args:
         content: The content to check and potentially truncate
-        max_tokens: Maximum number of tokens allowed (default: 10000 for safe LLM processing)
+        max_tokens: Maximum number of tokens allowed (default: 25000)
         
     Returns:
         Tuple of (truncated_content, was_truncated, truncation_info)
@@ -252,16 +252,16 @@ def truncate_content_for_llm(content: str, max_tokens: int = 10000) -> tuple[str
     # Calculate target character count for truncation
     target_chars = max_tokens * 4  # 4 chars per token approximation
     
-    # Truncate to target character count from the END, but try to start at word boundary
+    # Truncate to target character count from the BEGINNING, and try to end at a word boundary
     if len(content) <= target_chars:
         truncated_content = content
     else:
-        # Take the last portion of the content
-        truncated_content = content[-target_chars:]
-        # Try to start at first complete word (remove partial word at beginning)
-        first_space = truncated_content.find(' ')
-        if first_space != -1 and first_space < target_chars * 0.2:  # If we can find a space in the first 20%
-            truncated_content = truncated_content[first_space + 1:]
+        # Take the first portion of the content
+        truncated_content = content[:target_chars]
+        # Try to end at last complete word (avoid cutting the last word)
+        last_space = truncated_content.rfind(' ')
+        if last_space != -1 and last_space > target_chars * 0.8:  # If a space exists in the last 20%
+            truncated_content = truncated_content[:last_space]
     
     # Calculate stats
     words = content.split()
@@ -395,7 +395,7 @@ def handle_read_operation(file_path: str, file_name: str, workspace_path: str) -
     if was_truncated:
         result.update({
             "content_truncated": True,
-            "truncation_warning": f"⚠️ Content too long for LLM processing! Showing LAST ~{truncation_info['tokens_shown']} tokens out of ~{truncation_info['total_estimated_tokens']} total tokens ({truncation_info['reduction_percentage']}% reduced from beginning).",
+            "truncation_warning": f"⚠️ Content too long for LLM processing! Showing FIRST ~{truncation_info['tokens_shown']} tokens out of ~{truncation_info['total_estimated_tokens']} total tokens ({truncation_info['reduction_percentage']}% reduced from end).",
             "full_content_message": "💡 Large file detected. Use file processing tools or chunking strategies to analyze the complete content programmatically.",
             "truncation_details": truncation_info,
             "llm_safety_note": "Content truncated to prevent LLM API failures and ensure reliable processing."

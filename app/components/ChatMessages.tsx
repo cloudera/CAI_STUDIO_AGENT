@@ -20,9 +20,8 @@ import {
   updatedChatUserInput,
 } from '../workflows/workflowAppSlice';
 import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
-import { getWorkflowDirectory } from '@/app/lib/workflowFileUpload';
 import { selectWorkflowAppSessionFiles, removedSessionFile, addedSessionFile, setSessionFiles } from '@/app/workflows/workflowAppSlice';
-import { selectWorkflowSessionId } from '@/app/workflows/editorSlice';
+import { selectWorkflowSessionId, selectWorkflowSessionDirectory } from '@/app/workflows/editorSlice';
 import showdown from 'showdown';
 import FileUploadButton from './FileUploadButton';
 
@@ -54,6 +53,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   const userInput = useAppSelector(selectWorkflowAppChatUserInput);
   const sessionFiles = useAppSelector(selectWorkflowAppSessionFiles);
   const sessionId = useAppSelector(selectWorkflowSessionId);
+  const sessionDirectory = useAppSelector(selectWorkflowSessionDirectory);
   const { data: workflowData } = useGetWorkflowDataQuery();
   const dispatch = useAppDispatch();
 
@@ -367,9 +367,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
 
                 // Background deletion for completed files
                 if (fileState.status === 'completed') {
-                  const workflowDirectory = getWorkflowDirectory(renderMode, workflow, workflowData);
-                  if (sessionId && workflowDirectory) {
-                    const filePath = `${workflowDirectory}/session/${sessionId}/${fileState.name}`;
+                  if (sessionDirectory) {
+                    const filePath = `${sessionDirectory}/${fileState.name}`;
                     try {
                       await fetch('/api/file/delete', {
                         method: 'POST',
@@ -402,9 +401,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                 dispatch(removedSessionFile(f.name));
 
                 // Background deletion
-                const workflowDirectory = getWorkflowDirectory(renderMode, workflow, workflowData);
-                if (sessionId && workflowDirectory) {
-                  const filePath = `${workflowDirectory}/session/${sessionId}/${f.name}`;
+                if (sessionDirectory) {
+                  const filePath = `${sessionDirectory}/${f.name}`;
                   try {
                     await fetch('/api/file/delete', {
                       method: 'POST',
@@ -475,9 +473,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             if (wasCanceled) {
               canceledUploadsRef.current.delete(file.name);
               // If upload eventually succeeded but user canceled, delete on server in background
-              const workflowDirectory = getWorkflowDirectory(renderMode, workflow, workflowData);
-              if (success && sessionId && workflowDirectory) {
-                const filePath = `${workflowDirectory}/session/${sessionId}/${file.name}`;
+              if (success && sessionDirectory) {
+                const filePath = `${sessionDirectory}/${file.name}`;
                 fetch('/api/file/delete', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
