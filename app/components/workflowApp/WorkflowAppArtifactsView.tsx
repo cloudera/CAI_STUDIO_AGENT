@@ -1,13 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { List, Empty, Spin, Alert, Button, Tooltip, Typography, Row, Col, Badge, Modal } from 'antd';
-import { 
-  FileOutlined, 
-  DownloadOutlined, 
-  EyeOutlined, 
-  FolderOutlined, 
-  ReloadOutlined, 
-  ExportOutlined, 
-  ClockCircleOutlined, 
+import {
+  List,
+  Empty,
+  Spin,
+  Alert,
+  Button,
+  Tooltip,
+  Typography,
+  Row,
+  Col,
+  Badge,
+  Modal,
+} from 'antd';
+import {
+  FileOutlined,
+  DownloadOutlined,
+  EyeOutlined,
+  FolderOutlined,
+  ReloadOutlined,
+  ExportOutlined,
+  ClockCircleOutlined,
   CloseOutlined,
   FilePdfOutlined,
   FileImageOutlined,
@@ -20,7 +32,7 @@ import {
   VideoCameraOutlined,
   AudioOutlined,
   DatabaseOutlined,
-  BugOutlined
+  BugOutlined,
 } from '@ant-design/icons';
 import { Workflow } from '@/studio/proto/agent_studio';
 import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
@@ -50,15 +62,15 @@ interface ProjectUrlInfo {
   filesUrlBase: string;
 }
 
-const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({ 
-  workflow, 
-  sessionId 
+const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
+  workflow,
+  sessionId,
 }) => {
   const [files, setFiles] = useState<FileInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [projectUrlInfo, setProjectUrlInfo] = useState<ProjectUrlInfo | null>(null);
-  
+
   // Get workflow data to check render mode and get workflow directory
   const { data: workflowData } = useGetWorkflowDataQuery();
   const [previewModal, setPreviewModal] = useState<{
@@ -98,7 +110,7 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
   const getCMLFilesUrl = () => {
     const sessionDir = sessionDirectory || null;
     if (!sessionDir || !projectUrlInfo) return null;
-    
+
     // Construct the CML files URL using the project info
     return `${projectUrlInfo.filesUrlBase}/${sessionDir}`;
   };
@@ -115,32 +127,37 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
 
     try {
       // List all files in the session directory
-      const response = await fetch(`/api/file/listDirectory?directoryPath=${encodeURIComponent(sessionDir)}`);
+      const response = await fetch(
+        `/api/file/listDirectory?directoryPath=${encodeURIComponent(sessionDir)}`,
+      );
       const data = await response.json();
-      
+
       console.log('API Response:', data); // Debug logging
       console.log('Session directory:', sessionDir); // Debug logging
-      
+
       if (response.ok && data.files) {
         console.log('Raw files from API:', data.files); // Debug logging
-        
+
         // Filter out files with invalid names and sort by name for consistent display
         const validFiles = data.files.filter((file: FileInfo) => {
-          const isValid = file && file.name && typeof file.name === 'string' && file.name.trim() !== '';
+          const isValid =
+            file && file.name && typeof file.name === 'string' && file.name.trim() !== '';
           if (!isValid) {
             console.log('Filtered out invalid file:', file); // Debug logging
           }
           return isValid;
         });
-        
+
         console.log('Valid files after filtering:', validFiles); // Debug logging
-        
+
         if (data.files.length > 0 && validFiles.length === 0) {
           console.log('All files were filtered out due to invalid names');
           setError('Files found but all have invalid names. Check console for details.');
         }
-        
-        const sortedFiles = validFiles.sort((a: FileInfo, b: FileInfo) => a.name.localeCompare(b.name));
+
+        const sortedFiles = validFiles.sort((a: FileInfo, b: FileInfo) =>
+          a.name.localeCompare(b.name),
+        );
         setFiles(sortedFiles);
       } else {
         console.log('No files found or API error:', data); // Debug logging
@@ -192,69 +209,90 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
     if (!fileName || typeof fileName !== 'string') {
       return <FileOutlined style={{ color: '#666', fontSize: '30px' }} />;
     }
-    
+
     const extension = fileName.split('.').pop()?.toLowerCase();
-    
+
     // PDF files
     if (extension === 'pdf') {
       return <FilePdfOutlined style={{ color: '#ff4d4f', fontSize: '30px' }} />;
     }
-    
+
     // Image files
     if (['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'svg', 'ico'].includes(extension || '')) {
       return <FileImageOutlined style={{ color: '#52c41a', fontSize: '30px' }} />;
     }
-    
+
     // Video files
     if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv'].includes(extension || '')) {
       return <VideoCameraOutlined style={{ color: '#722ed1', fontSize: '30px' }} />;
     }
-    
+
     // Audio files
     if (['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a'].includes(extension || '')) {
       return <AudioOutlined style={{ color: '#fa8c16', fontSize: '30px' }} />;
     }
-    
+
     // Archive files
     if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2'].includes(extension || '')) {
       return <FileZipOutlined style={{ color: '#faad14', fontSize: '30px' }} />;
     }
-    
+
     // Code files
-    if (['py', 'js', 'ts', 'tsx', 'jsx', 'java', 'cpp', 'c', 'cs', 'php', 'rb', 'go', 'rs', 'swift', 'kt'].includes(extension || '')) {
+    if (
+      [
+        'py',
+        'js',
+        'ts',
+        'tsx',
+        'jsx',
+        'java',
+        'cpp',
+        'c',
+        'cs',
+        'php',
+        'rb',
+        'go',
+        'rs',
+        'swift',
+        'kt',
+      ].includes(extension || '')
+    ) {
       return <CodeOutlined style={{ color: '#722ed1', fontSize: '30px' }} />;
     }
-    
+
     // Web files
     if (['html', 'css', 'scss', 'sass', 'less'].includes(extension || '')) {
       return <CodeOutlined style={{ color: '#1890ff', fontSize: '30px' }} />;
     }
-    
+
     // Data/Config files
     if (['json', 'xml', 'yaml', 'yml', 'toml', 'ini', 'conf', 'config'].includes(extension || '')) {
       return <DatabaseOutlined style={{ color: '#1890ff', fontSize: '30px' }} />;
     }
-    
+
     // Spreadsheet files
     if (['csv', 'xlsx', 'xls'].includes(extension || '')) {
       return <FileExcelOutlined style={{ color: '#52c41a', fontSize: '30px' }} />;
     }
-    
+
     // Document files
     if (['doc', 'docx', 'rtf'].includes(extension || '')) {
       return <FileWordOutlined style={{ color: '#1890ff', fontSize: '30px' }} />;
     }
-    
+
     // Log files
     if (['log', 'logs'].includes(extension || '')) {
       return <BugOutlined style={{ color: '#fa8c16', fontSize: '30px' }} />;
     }
-    
+
     // Text files
-    if (['txt', 'md', 'readme'].includes(extension || '') || fileName.toLowerCase().includes('readme')) {
+    if (
+      ['txt', 'md', 'readme'].includes(extension || '') ||
+      fileName.toLowerCase().includes('readme')
+    ) {
       return <FileTextOutlined style={{ color: '#52c41a', fontSize: '30px' }} />;
     }
-    
+
     // Default
     return <FileOutlined style={{ color: '#666', fontSize: '30px' }} />;
   };
@@ -273,7 +311,11 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
     if (!dateString) return 'Unknown date';
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return (
+        date.toLocaleDateString() +
+        ' ' +
+        date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      );
     } catch {
       return 'Invalid date';
     }
@@ -283,7 +325,7 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
   const handlePreview = async (file: FileInfo) => {
     console.log('Preview file:', file); // Debug logging
     console.log('File path being used:', file.path); // Debug logging
-    
+
     setPreviewModal({
       visible: true,
       file,
@@ -297,10 +339,11 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
     // Guard: very large files should not be previewed – instruct user to download
     const MAX_PREVIEW_BYTES = 25 * 1024 * 1024; // 25MB
     if (typeof file.size === 'number' && file.size > MAX_PREVIEW_BYTES) {
-      setPreviewModal(prev => ({
+      setPreviewModal((prev) => ({
         ...prev,
         loading: false,
-        error: 'This file is too large to preview in the browser. Please download it to view locally.',
+        error:
+          'This file is too large to preview in the browser. Please download it to view locally.',
       }));
       return;
     }
@@ -309,26 +352,31 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
       // Download the file as a blob
       const downloadUrl = `/api/file/download?filePath=${encodeURIComponent(file.path)}`;
       console.log('Download URL:', downloadUrl); // Debug logging
-      
+
       const response = await fetch(downloadUrl);
       console.log('Download response status:', response.status); // Debug logging
       console.log('Download response headers:', response.headers.get('content-type')); // Debug logging
-      
+
       if (response.ok) {
         const blob = await response.blob();
         console.log('Download response blob size:', blob.size); // Debug logging
         console.log('Download response blob type:', blob.type); // Debug logging
-        
+
         // Debug: Check if blob contains JSON (indicating it's a directory listing instead of file content)
-        if (blob.size < 1024) { // Only check small blobs
+        if (blob.size < 1024) {
+          // Only check small blobs
           try {
             const tempText = await blob.text();
-            console.log('Download response blob content (first 500 chars):', tempText.substring(0, 500)); // Debug logging
+            console.log(
+              'Download response blob content (first 500 chars):',
+              tempText.substring(0, 500),
+            ); // Debug logging
             if (tempText.includes('"files":[') || tempText.includes('"is_dir"')) {
               console.error('ERROR: Received directory listing instead of file content!');
-              setPreviewModal(prev => ({
+              setPreviewModal((prev) => ({
                 ...prev,
-                error: 'Received directory listing instead of file content. Check console for details.',
+                error:
+                  'Received directory listing instead of file content. Check console for details.',
                 loading: false,
               }));
               return;
@@ -337,14 +385,15 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
             console.log('Could not read blob as text for debugging:', err);
           }
         }
-        
+
         const blobUrl = window.URL.createObjectURL(blob);
-        
+
         // For text files, also read the content as text
         let textContent = null;
         const isTextFile = isTextBasedFile(file.name);
-        
-        if (isTextFile && blob.size < 10 * 1024 * 1024) { // Only read text for files < 10MB
+
+        if (isTextFile && blob.size < 10 * 1024 * 1024) {
+          // Only read text for files < 10MB
           try {
             textContent = await blob.text();
           } catch (err) {
@@ -352,7 +401,7 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
           }
         }
 
-        setPreviewModal(prev => ({
+        setPreviewModal((prev) => ({
           ...prev,
           blob,
           blobUrl,
@@ -362,14 +411,14 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
       } else {
         const data = await response.json();
         console.log('Download API error response:', data); // Debug logging
-        setPreviewModal(prev => ({
+        setPreviewModal((prev) => ({
           ...prev,
           error: data.error || 'Failed to load file',
           loading: false,
         }));
       }
     } catch (err) {
-      setPreviewModal(prev => ({
+      setPreviewModal((prev) => ({
         ...prev,
         error: 'Failed to load file content',
         loading: false,
@@ -403,7 +452,7 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
     if (previewModal.blobUrl) {
       window.URL.revokeObjectURL(previewModal.blobUrl);
     }
-    
+
     setPreviewModal({
       visible: false,
       file: null,
@@ -418,24 +467,61 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
   // Check if a file is text-based
   const isTextBasedFile = (fileName: string): boolean => {
     const textExtensions = [
-      'txt', 'log', 'md', 'json', 'py', 'js', 'ts', 'tsx', 'jsx', 
-      'css', 'html', 'xml', 'yaml', 'yml', 'ini', 'conf', 'config', 
-      'csv', 'sql', 'java', 'cpp', 'c', 'h', 'cs', 'php', 'rb', 
-      'go', 'rs', 'sh', 'bash', 'zsh', 'fish', 'ps1', 'bat', 'cmd',
-      'dockerfile', 'gitignore', 'env', 'properties', 'toml'
+      'txt',
+      'log',
+      'md',
+      'json',
+      'py',
+      'js',
+      'ts',
+      'tsx',
+      'jsx',
+      'css',
+      'html',
+      'xml',
+      'yaml',
+      'yml',
+      'ini',
+      'conf',
+      'config',
+      'csv',
+      'sql',
+      'java',
+      'cpp',
+      'c',
+      'h',
+      'cs',
+      'php',
+      'rb',
+      'go',
+      'rs',
+      'sh',
+      'bash',
+      'zsh',
+      'fish',
+      'ps1',
+      'bat',
+      'cmd',
+      'dockerfile',
+      'gitignore',
+      'env',
+      'properties',
+      'toml',
     ];
-    
+
     const extension = fileName.split('.').pop()?.toLowerCase();
-    return textExtensions.includes(extension || '') || 
-           fileName.toLowerCase().includes('readme') ||
-           fileName.toLowerCase().includes('license') ||
-           fileName.toLowerCase().includes('changelog');
+    return (
+      textExtensions.includes(extension || '') ||
+      fileName.toLowerCase().includes('readme') ||
+      fileName.toLowerCase().includes('license') ||
+      fileName.toLowerCase().includes('changelog')
+    );
   };
 
   // Get file type category
   const getFileType = (fileName: string): string => {
     const extension = fileName.split('.').pop()?.toLowerCase();
-    
+
     if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].includes(extension || '')) {
       return 'image';
     }
@@ -451,7 +537,7 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
     if (isTextBasedFile(fileName)) {
       return 'text';
     }
-    
+
     return 'binary';
   };
 
@@ -465,12 +551,12 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
       case 'image':
         return (
           <div style={{ textAlign: 'center', width: '100%' }}>
-            <img 
-              src={blobUrl} 
+            <img
+              src={blobUrl}
               alt={file.name}
-              style={{ 
-                maxWidth: '100%', 
-                maxHeight: '60vh', 
+              style={{
+                maxWidth: '100%',
+                maxHeight: '60vh',
                 objectFit: 'contain',
                 border: '1px solid #d9d9d9',
                 borderRadius: '4px',
@@ -485,7 +571,9 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
             />
             <div style={{ display: 'none', padding: '40px' }}>
               <FileOutlined style={{ fontSize: '48px', color: '#d9d9d9', marginBottom: '16px' }} />
-              <Typography.Title level={4} type="secondary">Cannot Display Image</Typography.Title>
+              <Typography.Title level={4} type="secondary">
+                Cannot Display Image
+              </Typography.Title>
               <Typography.Text type="secondary">
                 This image file cannot be displayed in the browser.
               </Typography.Text>
@@ -509,10 +597,10 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
       case 'video':
         return (
           <div style={{ textAlign: 'center', width: '100%' }}>
-            <video 
-              controls 
-              style={{ 
-                maxWidth: '100%', 
+            <video
+              controls
+              style={{
+                maxWidth: '100%',
                 maxHeight: '60vh',
                 border: '1px solid #d9d9d9',
                 borderRadius: '4px',
@@ -528,11 +616,10 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
         return (
           <div style={{ textAlign: 'center', width: '100%', padding: '40px' }}>
             <FileOutlined style={{ fontSize: '48px', color: '#d9d9d9', marginBottom: '16px' }} />
-            <Typography.Title level={4} type="secondary">Audio File</Typography.Title>
-            <audio 
-              controls 
-              style={{ width: '100%', maxWidth: '400px', marginTop: '16px' }}
-            >
+            <Typography.Title level={4} type="secondary">
+              Audio File
+            </Typography.Title>
+            <audio controls style={{ width: '100%', maxWidth: '400px', marginTop: '16px' }}>
               <source src={blobUrl} />
               Your browser does not support the audio tag.
             </audio>
@@ -544,7 +631,9 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
           return (
             <div style={{ textAlign: 'center', padding: '40px' }}>
               <FileOutlined style={{ fontSize: '48px', color: '#d9d9d9', marginBottom: '16px' }} />
-              <Typography.Title level={4} type="secondary">Text File</Typography.Title>
+              <Typography.Title level={4} type="secondary">
+                Text File
+              </Typography.Title>
               <Typography.Text type="secondary">
                 File is too large to display as text or failed to load content.
                 <br />
@@ -581,7 +670,9 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
         return (
           <div style={{ textAlign: 'center', padding: '40px' }}>
             <FileOutlined style={{ fontSize: '48px', color: '#d9d9d9', marginBottom: '16px' }} />
-            <Typography.Title level={4} type="secondary">Binary File</Typography.Title>
+            <Typography.Title level={4} type="secondary">
+              Binary File
+            </Typography.Title>
             <Typography.Text type="secondary">
               This file contains binary data and cannot be previewed.
               <br />
@@ -600,10 +691,7 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
   if (!hasWorkflowData) {
     return (
       <div style={{ padding: '24px', textAlign: 'center' }}>
-        <Empty 
-          description="No workflow selected" 
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-        />
+        <Empty description="No workflow selected" image={Empty.PRESENTED_IMAGE_SIMPLE} />
       </div>
     );
   }
@@ -612,7 +700,9 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
     return (
       <div style={{ textAlign: 'center', padding: '24px' }}>
         <FolderOutlined style={{ fontSize: '48px', color: '#d9d9d9', marginBottom: '16px' }} />
-        <Typography.Title level={4} type="secondary">No Session Started</Typography.Title>
+        <Typography.Title level={4} type="secondary">
+          No Session Started
+        </Typography.Title>
         <Typography.Text type="secondary">
           Run the workflow to generate a session and view artifacts
         </Typography.Text>
@@ -623,12 +713,19 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
   return (
     <div style={{ padding: '16px', height: '100%', overflow: 'auto' }}>
       {/* Header with path link and refresh */}
-      <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div
+        style={{
+          marginBottom: '16px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
         <div style={{ flex: 1, minWidth: 0 }}>
           {cmlFilesUrl ? (
-            <Text 
-              style={{ 
-                fontSize: '14px', 
+            <Text
+              style={{
+                fontSize: '14px',
                 color: '#1890ff',
                 cursor: 'pointer',
                 textDecoration: 'underline',
@@ -638,9 +735,7 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
               Project Files Path For session {sessionId}
             </Text>
           ) : (
-            <Text style={{ fontSize: '14px' }}>
-              Project Files Path For session {sessionId}
-            </Text>
+            <Text style={{ fontSize: '14px' }}>Project Files Path For session {sessionId}</Text>
           )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
@@ -650,10 +745,10 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
             </Tooltip>
           </Badge>
           <Tooltip title="Manual refresh">
-            <Button 
+            <Button
               type="text"
               icon={<ReloadOutlined />}
-              onClick={() => fetchFiles(true)} 
+              onClick={() => fetchFiles(true)}
               loading={loading}
               size="small"
             />
@@ -662,12 +757,7 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
       </div>
 
       {error && (
-        <Alert 
-          message="Error" 
-          description={error} 
-          type="error" 
-          style={{ marginBottom: '16px' }}
-        />
+        <Alert message="Error" description={error} type="error" style={{ marginBottom: '16px' }} />
       )}
 
       {loading ? (
@@ -678,21 +768,14 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
           </div>
         </div>
       ) : files.length === 0 ? (
-        <Empty 
+        <Empty
           description="No artifacts found in this session"
           image={Empty.PRESENTED_IMAGE_SIMPLE}
         />
       ) : (
         <Row gutter={[6, 6]}>
           {files.map((file, index) => (
-            <Col 
-              key={`${file.name}-${index}`} 
-              xs={24} 
-              sm={12} 
-              md={8} 
-              lg={6}
-              xl={6}
-            >
+            <Col key={`${file.name}-${index}`} xs={24} sm={12} md={8} lg={6} xl={6}>
               <div
                 style={{
                   border: '1px solid #f0f0f0',
@@ -723,21 +806,26 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
                   e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', marginBottom: '4px' }}>
-                  <div style={{ flexShrink: 0 }}>
-                    {getFileIcon(file.name)}
-                  </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '6px',
+                    marginBottom: '4px',
+                  }}
+                >
+                  <div style={{ flexShrink: 0 }}>{getFileIcon(file.name)}</div>
                   <div style={{ flex: 1, minWidth: 0, marginTop: '2px' }}>
                     <Tooltip title={file.name || 'Unknown file'} placement="top">
-                      <Text 
-                        strong 
-                        style={{ 
-                          fontSize: '11px', 
-                          display: 'block', 
+                      <Text
+                        strong
+                        style={{
+                          fontSize: '11px',
+                          display: 'block',
                           lineHeight: '1.2',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap'
+                          whiteSpace: 'nowrap',
                         }}
                       >
                         {file.name || 'Unknown file'}
@@ -751,38 +839,45 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1px', marginTop: 'auto' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    gap: '1px',
+                    marginTop: 'auto',
+                  }}
+                >
                   <Tooltip title="Preview file">
-                    <Button 
-                      type="text" 
-                      icon={<EyeOutlined style={{ fontSize: '12px' }} />} 
+                    <Button
+                      type="text"
+                      icon={<EyeOutlined style={{ fontSize: '12px' }} />}
                       onClick={(e) => {
                         e.stopPropagation();
                         handlePreview(file);
                       }}
                       size="small"
-                      style={{ 
-                        color: '#1890ff', 
+                      style={{
+                        color: '#1890ff',
                         padding: '2px 4px',
                         minWidth: 'auto',
-                        height: '16px'
+                        height: '16px',
                       }}
                     />
                   </Tooltip>
                   <Tooltip title="Download file">
-                    <Button 
-                      type="text" 
-                      icon={<DownloadOutlined style={{ fontSize: '12px' }} />} 
+                    <Button
+                      type="text"
+                      icon={<DownloadOutlined style={{ fontSize: '12px' }} />}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDownload(file);
                       }}
                       size="small"
-                      style={{ 
+                      style={{
                         color: '#52c41a',
                         padding: '2px 4px',
                         minWidth: 'auto',
-                        height: '16px'
+                        height: '16px',
                       }}
                     />
                   </Tooltip>
@@ -809,7 +904,11 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
         open={previewModal.visible}
         onCancel={closePreviewModal}
         footer={[
-          <Button key="download" icon={<DownloadOutlined />} onClick={() => previewModal.file && handleDownload(previewModal.file)}>
+          <Button
+            key="download"
+            icon={<DownloadOutlined />}
+            onClick={() => previewModal.file && handleDownload(previewModal.file)}
+          >
             Download
           </Button>,
           <Button key="close" onClick={closePreviewModal}>
@@ -818,12 +917,12 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
         ]}
         width="80%"
         style={{ top: 20 }}
-        styles={{ 
+        styles={{
           body: {
-            maxHeight: '70vh', 
+            maxHeight: '70vh',
             overflow: 'auto',
             padding: '16px',
-          }
+          },
         }}
       >
         {previewModal.loading ? (
@@ -834,15 +933,11 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
             </div>
           </div>
         ) : previewModal.error ? (
-          <Alert 
-            message="Error" 
-            description={previewModal.error} 
-            type="error" 
-            showIcon
-          />
+          <Alert message="Error" description={previewModal.error} type="error" showIcon />
         ) : (
           <div style={{ width: '100%' }}>
-            {previewModal.file && renderFileContent(previewModal.file, previewModal.content, previewModal.blobUrl)}
+            {previewModal.file &&
+              renderFileContent(previewModal.file, previewModal.content, previewModal.blobUrl)}
           </div>
         )}
       </Modal>

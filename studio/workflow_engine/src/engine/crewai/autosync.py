@@ -11,7 +11,6 @@ from cmlapi.rest import ApiException
 from engine.utils import get_url_scheme
 from uuid import uuid4
 import logging
-import sys
 import concurrent.futures
 
 
@@ -60,16 +59,16 @@ ALWAYS_IGNORE_DIRS = {".venv"}
 
 # Comma-separated names (not globs) to ignore in local scan (in addition to ALWAYS_IGNORE_DIRS)
 IGNORE_DIRS = set(
-    x for x in os.getenv(
+    x
+    for x in os.getenv(
         "AUTOSYNC_IGNORE_DIRS",
         ".git,.venv,node_modules,__pycache__,.mypy_cache,.pytest_cache,.ipynb_checkpoints",
-    ).split(",") if x
+    ).split(",")
+    if x
 )
 
 # Comma-separated file names to ignore in local scan
-IGNORE_FILES = set(
-    x for x in os.getenv("AUTOSYNC_IGNORE_FILES", "").split(",") if x
-)
+IGNORE_FILES = set(x for x in os.getenv("AUTOSYNC_IGNORE_FILES", "").split(",") if x)
 
 
 def _path_has_ignored_segment(path_value: str) -> bool:
@@ -143,7 +142,7 @@ def list_remote_recursive(client, project_id: str, base_prefix: str) -> Dict[str
                 if not _path_has_ignored_segment(child_rel):
                     dq.append(child_rel)
             else:
-                rel = child_rel[len(base_prefix):].strip("/") if base_prefix else child_rel
+                rel = child_rel[len(base_prefix) :].strip("/") if base_prefix else child_rel
                 if _path_has_ignored_segment(rel):
                     continue
                 try:
@@ -166,6 +165,7 @@ def download_to_local(client, project_id: str, remote_rel_path: str, local_abs_p
 
 def upload_direct_to_target(client, project_id: str, target_rel_path: str, local_abs_path: str):
     import time as _time
+
     target_rel_path = normalize_rel_path(target_rel_path)
     header_params = {"Content-Type": "multipart/form-data"}
     files_payload = {target_rel_path: local_abs_path}
@@ -177,7 +177,7 @@ def upload_direct_to_target(client, project_id: str, target_rel_path: str, local
     last_exc = None
     for attempt in range(3):
         try:
-            logging.debug(f"[AutoSync] upload attempt={attempt+1} target={target_rel_path} src={local_abs_path}")
+            logging.debug(f"[AutoSync] upload attempt={attempt + 1} target={target_rel_path} src={local_abs_path}")
             client.api_client.call_api(
                 f"/api/v2/projects/{{project_id}}/files",
                 "POST",
@@ -361,8 +361,8 @@ def sync_once(local_base: Path, remote_prefix: str, client, project_id: str, con
             prev_local_sig = state[0] if state else None
             prev_remote_size = state[1] if state else None
 
-            local_changed = (sig != prev_local_sig)
-            remote_changed = (remote_size != prev_remote_size)
+            local_changed = sig != prev_local_sig
+            remote_changed = remote_size != prev_remote_size
 
             if local_changed and not remote_changed:
                 tasks.append(ex.submit(do_push, rel_path, abs_path, sig, size, "push"))
@@ -391,7 +391,9 @@ def sync_once(local_base: Path, remote_prefix: str, client, project_id: str, con
 
 
 class AutoSyncService:
-    def __init__(self, workflow_root_directory: str, interval_sec: int = 10, project_file_directory: Optional[str] = None):
+    def __init__(
+        self, workflow_root_directory: str, interval_sec: int = 10, project_file_directory: Optional[str] = None
+    ):
         self.workflow_root_directory = str(Path(workflow_root_directory).resolve())
         self.interval_sec = interval_sec
         self._stop_event = threading.Event()
@@ -414,10 +416,10 @@ class AutoSyncService:
 
         # Harden: ensure Authorization header present if key available
         try:
-            hdrs = getattr(self.client, 'api_client', None).default_headers
-            has_auth = any(k.lower() == 'authorization' for k in hdrs.keys()) if hdrs else False
+            hdrs = getattr(self.client, "api_client", None).default_headers
+            has_auth = any(k.lower() == "authorization" for k in hdrs.keys()) if hdrs else False
             if not has_auth and api_key:
-                self.client.api_client.set_default_header('authorization', f'Bearer {api_key}')
+                self.client.api_client.set_default_header("authorization", f"Bearer {api_key}")
         except Exception:
             pass
 
@@ -516,7 +518,7 @@ class AutoSyncService:
                     conn.commit()
                     after_local = scan_local(local_base)
                     after_remote = list_remote_recursive(self.client, self.project_id, self.remote_prefix)
-                    if (set(before_local.keys()) == set(after_local.keys()) and before_remote == after_remote):
+                    if set(before_local.keys()) == set(after_local.keys()) and before_remote == after_remote:
                         break
                 except Exception:
                     logging.exception("[AutoSync] drain pass error")
@@ -528,4 +530,3 @@ class AutoSyncService:
                 logging.info("[AutoSync] closed DB after drain")
             except Exception:
                 logging.exception("[AutoSync] error closing DB after drain")
-

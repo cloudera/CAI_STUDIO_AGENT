@@ -36,15 +36,18 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // Construct the CML files URL using environment variables
     const baseUrl = `${scheme}://${CDSW_DOMAIN}`;
     const filesUrlBase = `${baseUrl}/${PROJECT_OWNER}/${CDSW_PROJECT}/files`;
-    
-    return NextResponse.json({
-      scheme,
-      domain: CDSW_DOMAIN,
-      projectOwner: PROJECT_OWNER,
-      projectName: CDSW_PROJECT,
-      projectId: CDSW_PROJECT_ID,
-      filesUrlBase,
-    }, { status: 200 });
+
+    return NextResponse.json(
+      {
+        scheme,
+        domain: CDSW_DOMAIN,
+        projectOwner: PROJECT_OWNER,
+        projectName: CDSW_PROJECT,
+        projectId: CDSW_PROJECT_ID,
+        filesUrlBase,
+      },
+      { status: 200 },
+    );
   } catch (error) {
     console.error('Error getting project URL:', error);
     return NextResponse.json({ error: 'Failed to get project URL' }, { status: 500 });

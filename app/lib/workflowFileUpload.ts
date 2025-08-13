@@ -9,7 +9,7 @@ export interface WorkflowUploadFileOptions {
 export const getWorkflowDirectory = (
   renderMode: 'studio' | 'workflow',
   workflow: any,
-  workflowData: any
+  workflowData: any,
 ): string | null => {
   if (renderMode === 'workflow') {
     return workflowData?.deployedWorkflow?.workflow_directory || null;
@@ -18,15 +18,17 @@ export const getWorkflowDirectory = (
   }
 };
 
-export const uploadFileToWorkflowSession = async (options: WorkflowUploadFileOptions): Promise<boolean> => {
+export const uploadFileToWorkflowSession = async (
+  options: WorkflowUploadFileOptions,
+): Promise<boolean> => {
   const { file, sessionDirectory, signal } = options;
-  
+
   try {
     // Construct target path
     const targetPath = `${sessionDirectory}/${file.name}`;
-    
+
     // console.log(`🔍 DEBUG: Uploading file to: ${targetPath}`);
-    
+
     // First, try to delete existing file (ignore failures)
     try {
       const deleteResponse = await fetch('/api/file/delete', {
@@ -36,25 +38,25 @@ export const uploadFileToWorkflowSession = async (options: WorkflowUploadFileOpt
         },
         body: JSON.stringify({ filePath: targetPath }),
       });
-      
+
       if (deleteResponse.ok) {
         // console.log(`🗑️  Deleted existing file: ${targetPath}`);
       }
     } catch {
       // console.log(`ℹ️  No existing file to delete or deletion failed (continuing anyway): ${targetPath}`);
     }
-    
+
     // Upload the file using multipart form data
     const formData = new FormData();
     formData.append('file', file);
     formData.append('targetPath', targetPath);
-    
+
     const uploadResponse = await fetch('/api/file/upload', {
       method: 'POST',
       body: formData,
       signal,
     });
-    
+
     if (uploadResponse.ok) {
       // console.log(`✅ Successfully uploaded file to ${targetPath}`);
       return true;
@@ -63,7 +65,6 @@ export const uploadFileToWorkflowSession = async (options: WorkflowUploadFileOpt
       console.error(`❌ Upload failed:`, errorData);
       return false;
     }
-    
   } catch (error) {
     console.error(`❌ Error uploading file:`, error);
     return false;

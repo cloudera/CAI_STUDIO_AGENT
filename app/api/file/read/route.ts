@@ -50,26 +50,35 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       },
       agent,
     });
-    
+
     if (response.status === 200) {
       const content = await response.text();
-      return NextResponse.json({ 
-        content,
-        filePath 
-      }, { status: 200 });
+      return NextResponse.json(
+        {
+          content,
+          filePath,
+        },
+        { status: 200 },
+      );
     } else {
       const errorData = await response.text();
       console.error(`Error reading file ${filePath}:`, errorData);
-      return NextResponse.json({ 
-        error: `Failed to read file: ${response.status}`,
-        filePath 
-      }, { status: response.status });
+      return NextResponse.json(
+        {
+          error: `Failed to read file: ${response.status}`,
+          filePath,
+        },
+        { status: response.status },
+      );
     }
   } catch (error) {
     console.error('Error reading file:', error);
-    return NextResponse.json({ 
-      error: 'Failed to read file',
-      filePath 
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Failed to read file',
+        filePath,
+      },
+      { status: 500 },
+    );
   }
 }

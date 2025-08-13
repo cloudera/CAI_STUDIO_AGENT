@@ -20,15 +20,28 @@ import {
   updatedChatUserInput,
 } from '../workflows/workflowAppSlice';
 import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
-import { selectWorkflowAppSessionFiles, removedSessionFile, addedSessionFile, setSessionFiles } from '@/app/workflows/workflowAppSlice';
-import { selectWorkflowSessionId, selectWorkflowSessionDirectory } from '@/app/workflows/editorSlice';
+import {
+  selectWorkflowAppSessionFiles,
+  removedSessionFile,
+  addedSessionFile,
+  setSessionFiles,
+} from '@/app/workflows/workflowAppSlice';
+import {
+  selectWorkflowSessionId,
+  selectWorkflowSessionDirectory,
+} from '@/app/workflows/editorSlice';
 import showdown from 'showdown';
 import FileUploadButton from './FileUploadButton';
 
 const { TextArea } = Input;
 
 interface ChatMessagesProps {
-  messages: { role: 'user' | 'assistant'; content: string; events?: any[]; attachments?: { name: string; size?: number }[] }[];
+  messages: {
+    role: 'user' | 'assistant';
+    content: string;
+    events?: any[];
+    attachments?: { name: string; size?: number }[];
+  }[];
   handleTestWorkflow: () => void;
   isProcessing: boolean;
   messagesEndRef: React.RefObject<HTMLDivElement>;
@@ -58,12 +71,12 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   const dispatch = useAppDispatch();
 
   // Local attachment state for conversational view with individual file tracking
-  const [fileStates, setFileStates] = useState<{ 
-    [fileName: string]: { 
-      name: string; 
-      size: number; 
-      status: 'pending' | 'uploading' | 'completed' | 'failed' 
-    } 
+  const [fileStates, setFileStates] = useState<{
+    [fileName: string]: {
+      name: string;
+      size: number;
+      status: 'pending' | 'uploading' | 'completed' | 'failed';
+    };
   }>({});
   // Track files user canceled while uploading to prevent re-adding on completion
   const canceledUploadsRef = React.useRef<Set<string>>(new Set());
@@ -185,7 +198,12 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     if (lower.endsWith('.pdf')) {
       return { label: 'PDF', emoji: '🟥' };
     }
-    if (lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.gif')) {
+    if (
+      lower.endsWith('.png') ||
+      lower.endsWith('.jpg') ||
+      lower.endsWith('.jpeg') ||
+      lower.endsWith('.gif')
+    ) {
       return { label: 'Image', emoji: '🖼️' };
     }
     return { label: 'File', emoji: '📄' };
@@ -309,13 +327,24 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
               >
                 <div style={{ padding: '12px' }}>{message.content}</div>
                 {message.attachments && message.attachments.length > 0 && (
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: '0 12px 12px 12px' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: 8,
+                      flexWrap: 'wrap',
+                      padding: '0 12px 12px 12px',
+                    }}
+                  >
                     {message.attachments.map((f, i) => {
                       const meta = getAttachmentMeta(f.name);
                       return (
                         <Tag key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <span>{meta.emoji}</span>
-                          <span style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.name}</span>
+                          <span
+                            style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}
+                          >
+                            {f.name}
+                          </span>
                           {typeof f.size === 'number' && (
                             <span style={{ opacity: 0.8 }}>{(f.size / 1024).toFixed(1)} KB</span>
                           )}
@@ -338,59 +367,73 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
           {Object.values(fileStates)
             .filter((fs) => fs.status !== 'completed')
             .map((fileState) => (
-            <Tag
-              key={fileState.name}
-              color={fileState.status === 'uploading' ? 'blue' : fileState.status === 'failed' ? 'red' : 'default'}
-              closable={true}
-              onClose={async (e) => {
-                e.preventDefault();
-                // Remove from UI immediately
-                setFileStates(prev => {
-                  const newStates = { ...prev };
-                  delete newStates[fileState.name];
-                  return newStates;
-                });
-
-                // Mark as canceled if still uploading to prevent re-adding on completion
-                if (fileState.status === 'uploading') {
-                  canceledUploadsRef.current.add(fileState.name);
-                  // Try to cancel the in-flight request via upload hook if available
-                  try {
-                    // Soft import to avoid tight coupling
-                    // @ts-ignore
-                    if (typeof window !== 'undefined' && window.__cancelUpload) {
-                      // @ts-ignore
-                      window.__cancelUpload(fileState.name);
-                    }
-                  } catch {}
+              <Tag
+                key={fileState.name}
+                color={
+                  fileState.status === 'uploading'
+                    ? 'blue'
+                    : fileState.status === 'failed'
+                      ? 'red'
+                      : 'default'
                 }
+                closable={true}
+                onClose={async (e) => {
+                  e.preventDefault();
+                  // Remove from UI immediately
+                  setFileStates((prev) => {
+                    const newStates = { ...prev };
+                    delete newStates[fileState.name];
+                    return newStates;
+                  });
 
-                // Background deletion for completed files
-                if (fileState.status === 'completed') {
-                  if (sessionDirectory) {
-                    const filePath = `${sessionDirectory}/${fileState.name}`;
+                  // Mark as canceled if still uploading to prevent re-adding on completion
+                  if (fileState.status === 'uploading') {
+                    canceledUploadsRef.current.add(fileState.name);
+                    // Try to cancel the in-flight request via upload hook if available
                     try {
-                      await fetch('/api/file/delete', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ filePath }),
-                      });
-                    } catch (err) {
-                      console.error('Background delete error:', err);
-                    }
+                      // Soft import to avoid tight coupling
+                      // @ts-ignore
+                      if (typeof window !== 'undefined' && window.__cancelUpload) {
+                        // @ts-ignore
+                        window.__cancelUpload(fileState.name);
+                      }
+                    } catch {}
                   }
-                  dispatch(removedSessionFile(fileState.name));
-                }
-              }}
-              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-            >
-              <span role="img" aria-label="file">📄</span>
-              <span style={{ maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis' }}>{fileState.name}</span>
-              <span style={{ opacity: 0.8 }}>{(fileState.size / 1024).toFixed(1)} KB</span>
-              {fileState.status === 'uploading' && <Spin size="small" style={{ marginLeft: 4 }} />}
-              {fileState.status === 'failed' && <span style={{ color: 'red', marginLeft: 4 }}>✗</span>}
-            </Tag>
-          ))}
+
+                  // Background deletion for completed files
+                  if (fileState.status === 'completed') {
+                    if (sessionDirectory) {
+                      const filePath = `${sessionDirectory}/${fileState.name}`;
+                      try {
+                        await fetch('/api/file/delete', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ filePath }),
+                        });
+                      } catch (err) {
+                        console.error('Background delete error:', err);
+                      }
+                    }
+                    dispatch(removedSessionFile(fileState.name));
+                  }
+                }}
+                style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                <span role="img" aria-label="file">
+                  📄
+                </span>
+                <span style={{ maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {fileState.name}
+                </span>
+                <span style={{ opacity: 0.8 }}>{(fileState.size / 1024).toFixed(1)} KB</span>
+                {fileState.status === 'uploading' && (
+                  <Spin size="small" style={{ marginLeft: 4 }} />
+                )}
+                {fileState.status === 'failed' && (
+                  <span style={{ color: 'red', marginLeft: 4 }}>✗</span>
+                )}
+              </Tag>
+            ))}
           {sessionFiles?.map((f, idx) => (
             <Tag
               key={`uploaded-${idx}`}
@@ -416,8 +459,12 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
               }}
               style={{ display: 'flex', alignItems: 'center', gap: 6 }}
             >
-              <span role="img" aria-label="file">📄</span>
-              <span style={{ maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.name}</span>
+              <span role="img" aria-label="file">
+                📄
+              </span>
+              <span style={{ maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {f.name}
+              </span>
               <span style={{ opacity: 0.8 }}>{(f.size / 1024).toFixed(1)} KB</span>
             </Tag>
           ))}
@@ -448,9 +495,9 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
           onUploadSuccess={onOpenArtifacts}
           onFilesAdded={(files) => {
             // Add files to pending state
-            setFileStates(prev => {
+            setFileStates((prev) => {
               const newStates = { ...prev };
-              files.forEach(f => {
+              files.forEach((f) => {
                 newStates[f.name] = { name: f.name, size: f.size, status: 'uploading' };
               });
               return newStates;
@@ -458,7 +505,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
           }}
           onFileUploaded={(file, success) => {
             const wasCanceled = canceledUploadsRef.current.has(file.name);
-            setFileStates(prev => {
+            setFileStates((prev) => {
               const newStates = { ...prev };
               if (newStates[file.name]) {
                 if (success) {

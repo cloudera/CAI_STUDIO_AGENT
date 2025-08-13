@@ -44,10 +44,7 @@ export async function POST(request: NextRequest) {
     const targetPath = formData.get('targetPath') as string;
 
     if (!file || !targetPath) {
-      return NextResponse.json(
-        { error: 'File and target path are required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'File and target path are required' }, { status: 400 });
     }
 
     // console.log(`🔍 DEBUG: Uploading file to: ${targetPath}`);
@@ -60,7 +57,7 @@ export async function POST(request: NextRequest) {
     if (!CDSW_APIV2_KEY || !CDSW_DOMAIN || !CDSW_PROJECT_ID) {
       return NextResponse.json(
         { error: 'CML environment variables not configured' },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -84,24 +81,26 @@ export async function POST(request: NextRequest) {
       // Create multipart form data manually to match testagi.py pattern
       const boundary = `----WebKitFormBoundary${Math.random().toString(36).substring(2)}`;
       const fileContent = fs.readFileSync(tempFilePath);
-      
+
       // Build form data parts
       const parts = [];
-      
+
       // Add file part with target path as field name (like testagi.py)
       parts.push(`--${boundary}`);
-      parts.push(`Content-Disposition: form-data; name="${targetPath}"; filename="${path.basename(targetPath)}"`);
+      parts.push(
+        `Content-Disposition: form-data; name="${targetPath}"; filename="${path.basename(targetPath)}"`,
+      );
       parts.push('Content-Type: application/octet-stream');
       parts.push('');
-      
+
       // Create the complete form data
       const formDataStart = parts.join('\r\n') + '\r\n';
       const formDataEnd = `\r\n--${boundary}--\r\n`;
-      
+
       const formDataBuffer = Buffer.concat([
         Buffer.from(formDataStart, 'utf8'),
         fileContent,
-        Buffer.from(formDataEnd, 'utf8')
+        Buffer.from(formDataEnd, 'utf8'),
       ]);
 
       // console.log(`🔍 DEBUG: Upload boundary: ${boundary}`);
@@ -112,7 +111,7 @@ export async function POST(request: NextRequest) {
       let uploadResponse = await fetch(uploadUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${CDSW_APIV2_KEY}`,
+          Authorization: `Bearer ${CDSW_APIV2_KEY}`,
           'Content-Type': `multipart/form-data; boundary=${boundary}`,
         },
         body: formDataBuffer,
@@ -123,11 +122,11 @@ export async function POST(request: NextRequest) {
 
       if (uploadResponse.ok) {
         console.log(`✅ Successfully uploaded file to ${targetPath}`);
-        
-        return NextResponse.json({ 
-          success: true, 
+
+        return NextResponse.json({
+          success: true,
           path: targetPath,
-          message: 'File uploaded successfully' 
+          message: 'File uploaded successfully',
         });
       } else if (uploadResponse.status === 409) {
         // Conflict: try PUT to overwrite existing file
@@ -135,7 +134,7 @@ export async function POST(request: NextRequest) {
         uploadResponse = await fetch(uploadUrl, {
           method: 'PUT',
           headers: {
-            'Authorization': `Bearer ${CDSW_APIV2_KEY}`,
+            Authorization: `Bearer ${CDSW_APIV2_KEY}`,
             'Content-Type': `multipart/form-data; boundary=${boundary}`,
           },
           body: formDataBuffer,
@@ -145,10 +144,10 @@ export async function POST(request: NextRequest) {
         console.log(`PUT upload response status: ${uploadResponse.status}`);
         if (uploadResponse.ok) {
           console.log(`✅ Successfully overwrote file at ${targetPath}`);
-          return NextResponse.json({ 
-            success: true, 
+          return NextResponse.json({
+            success: true,
             path: targetPath,
-            message: 'File uploaded successfully (overwritten)'
+            message: 'File uploaded successfully (overwritten)',
           });
         }
 
@@ -156,24 +155,23 @@ export async function POST(request: NextRequest) {
         console.error('Upload (PUT) failed:', errorText);
         return NextResponse.json(
           { error: 'Failed to upload file to CML', details: errorText },
-          { status: uploadResponse.status }
+          { status: uploadResponse.status },
         );
       } else {
         const errorText = await uploadResponse.text();
         console.error('Upload failed:', errorText);
-        
+
         return NextResponse.json(
           { error: 'Failed to upload file to CML', details: errorText },
-          { status: uploadResponse.status }
+          { status: uploadResponse.status },
         );
       }
-
     } catch (uploadError) {
       console.error('Upload error:', uploadError);
-      
+
       return NextResponse.json(
         { error: 'Failed to upload file', details: getErrorMessage(uploadError) },
-        { status: 500 }
+        { status: 500 },
       );
     } finally {
       // Clean up temporary file
@@ -185,12 +183,11 @@ export async function POST(request: NextRequest) {
         console.warn('Failed to clean up temporary file:', cleanupError);
       }
     }
-
   } catch (error) {
     console.error('File upload error:', error);
     return NextResponse.json(
       { error: 'Failed to upload file', details: getErrorMessage(error) },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -186,9 +186,7 @@ def add_model(request: AddModelRequest, cml: CMLServiceApi = None, dao: AgentStu
                     try:
                         remove_model_api_key_from_env(model_id, cml)
                     except Exception as cleanup_e:
-                        logger.warning(
-                            f"Failed to clean up API key during extra headers error: {str(cleanup_e)}"
-                        )
+                        logger.warning(f"Failed to clean up API key during extra headers error: {str(cleanup_e)}")
                 raise ValueError(f"Failed to store extra headers in environment: {str(e)}")
 
     with dao.get_session() as session:
@@ -380,7 +378,7 @@ def model_test(request: TestModelRequest, cml: CMLServiceApi = None, dao: AgentS
                 for k, v in extra_headers.items()
                 if k not in {"aws_secret_access_key", "aws_access_key_id", "aws_region_name", "aws_session_token"}
             }
-        
+
         # Build LLM config dict
         llm_config_dict = {
             "provider_model": model.provider_model,
@@ -390,16 +388,18 @@ def model_test(request: TestModelRequest, cml: CMLServiceApi = None, dao: AgentS
             "api_key": api_key if model.model_type != SupportedModelTypes.BEDROCK.value else None,
             "extra_headers": extra_headers or None,
         }
-        
+
         # Add AWS credentials for Bedrock models
         if model.model_type == SupportedModelTypes.BEDROCK.value:
             aws_credentials = get_model_aws_credentials_from_env(model.model_id, cml)
-            llm_config_dict.update({
-                "aws_access_key_id": aws_credentials.get("aws_access_key_id"),
-                "aws_secret_access_key": aws_credentials.get("aws_secret_access_key"),
-                "aws_region_name": aws_credentials.get("aws_region_name"),
-                "aws_session_token": aws_credentials.get("aws_session_token"),
-            })
+            llm_config_dict.update(
+                {
+                    "aws_access_key_id": aws_credentials.get("aws_access_key_id"),
+                    "aws_secret_access_key": aws_credentials.get("aws_secret_access_key"),
+                    "aws_region_name": aws_credentials.get("aws_region_name"),
+                    "aws_session_token": aws_credentials.get("aws_session_token"),
+                }
+            )
 
         llm = get_crewai_llm(
             Input__LanguageModel(

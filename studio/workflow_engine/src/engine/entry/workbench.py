@@ -89,8 +89,10 @@ async def _set_mcp_tool_definitions():
         session_directory = None
         # Note: At startup, we don't have session_id yet, so MCP tools won't have SESSION_DIRECTORY env var
         # This will be set properly during actual workflow execution
-        
-        result = await get_mcp_tools_definitions(collated_input.mcp_instances, deployment_config.mcp_config, session_directory)
+
+        result = await get_mcp_tools_definitions(
+            collated_input.mcp_instances, deployment_config.mcp_config, session_directory
+        )
         _mcp_tool_defintions = {mcp_id: [t.model_dump() for t in tool_list] for mcp_id, tool_list in result.items()}
         print(f"MCP tool definitions are set")
 
@@ -128,9 +130,9 @@ def api_wrapper(args: Union[dict, str]) -> str:
         inputs = (
             base64_decode(serve_workflow_parameters.kickoff_inputs) if serve_workflow_parameters.kickoff_inputs else {}
         )
-        
+
         # Check if session_id is provided in inputs, if not generate a 6-character UUID
-        session_id = inputs.get('session_id')
+        session_id = inputs.get("session_id")
         if not session_id:
             session_id = str(uuid4())[:6]
 
@@ -151,7 +153,7 @@ def api_wrapper(args: Union[dict, str]) -> str:
             workflow_project_file_directory = WORKFLOW_PROJECT_FILE_DIR
             session_dir_base = workflow_project_file_directory or ""
             if session_dir_base.startswith("/home/cdsw/"):
-                session_dir_base = session_dir_base[len("/home/cdsw/"):]
+                session_dir_base = session_dir_base[len("/home/cdsw/") :]
             session_directory = f"{session_dir_base}/session/{session_id}"
 
             return {"trace_id": "n/a", "session_id": session_id, "session_directory": session_directory}
@@ -167,12 +169,12 @@ def api_wrapper(args: Union[dict, str]) -> str:
             workflow_root_directory = MODEL_EXECUTION_DIR
             # Remove /home/cdsw prefix if present
             if workflow_root_directory and workflow_root_directory.startswith("/home/cdsw/"):
-                workflow_root_directory = workflow_root_directory[len("/home/cdsw/"):]
+                workflow_root_directory = workflow_root_directory[len("/home/cdsw/") :]
 
             # Prepare workflow project file directory from env (do not strip prefix here)
             workflow_project_file_directory = WORKFLOW_PROJECT_FILE_DIR
             if workflow_project_file_directory and workflow_project_file_directory.startswith("/home/cdsw/"):
-                workflow_project_file_directory = workflow_project_file_directory[len("/home/cdsw/"):]
+                workflow_project_file_directory = workflow_project_file_directory[len("/home/cdsw/") :]
 
             with tracer.start_as_current_span(span_name) as parent_span:
                 decimal_trace_id = parent_span.get_span_context().trace_id
@@ -206,7 +208,7 @@ def api_wrapper(args: Union[dict, str]) -> str:
         workflow_project_file_directory = WORKFLOW_PROJECT_FILE_DIR
         # Remove /home/cdsw prefix if present
         if workflow_project_file_directory and workflow_project_file_directory.startswith("/home/cdsw/"):
-            workflow_project_file_directory = workflow_project_file_directory[len("/home/cdsw/"):]
+            workflow_project_file_directory = workflow_project_file_directory[len("/home/cdsw/") :]
 
         # Get the base configuration and add workflow_directory
         configuration = collated_input.model_dump()
@@ -220,7 +222,7 @@ def api_wrapper(args: Union[dict, str]) -> str:
         workflow_project_file_directory = WORKFLOW_PROJECT_FILE_DIR
         session_dir_base = workflow_project_file_directory or ""
         if session_dir_base.startswith("/home/cdsw/"):
-            session_dir_base = session_dir_base[len("/home/cdsw/"):]
+            session_dir_base = session_dir_base[len("/home/cdsw/") :]
         session_directory = f"{session_dir_base}/session/{session_id}"
         return {"session_id": session_id, "session_directory": session_directory}
     elif serve_workflow_parameters.action_type == input_types.DeployedWorkflowActions.GET_ASSET_DATA.value:

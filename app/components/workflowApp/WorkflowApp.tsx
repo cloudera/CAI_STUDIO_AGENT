@@ -55,7 +55,10 @@ import { hasValidToolConfiguration } from '@/app/components/workflowEditor/Workf
 import { TOOL_PARAMS_ALERT } from '@/app/lib/constants';
 import { selectWorkflowAppSessionFiles } from '@/app/workflows/workflowAppSlice';
 import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
-import { updatedWorkflowSessionDirectory, updatedWorkflowSessionId } from '@/app/workflows/editorSlice';
+import {
+  updatedWorkflowSessionDirectory,
+  updatedWorkflowSessionId,
+} from '@/app/workflows/editorSlice';
 import { createSessionForWorkflow } from '@/app/lib/session';
 
 const { Title, Text } = Typography;
@@ -592,9 +595,17 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
               'loading',
             )
           ) : workflow.is_conversational ? (
-            <WorkflowAppChatView workflow={workflow} tasks={tasks} onOpenArtifacts={handleOpenArtifacts} />
+            <WorkflowAppChatView
+              workflow={workflow}
+              tasks={tasks}
+              onOpenArtifacts={handleOpenArtifacts}
+            />
           ) : (
-            <WorkflowAppInputsView workflow={workflow} tasks={tasks} onOpenArtifacts={handleOpenArtifacts} />
+            <WorkflowAppInputsView
+              workflow={workflow}
+              tasks={tasks}
+              onOpenArtifacts={handleOpenArtifacts}
+            />
           )}
         </Layout>
 

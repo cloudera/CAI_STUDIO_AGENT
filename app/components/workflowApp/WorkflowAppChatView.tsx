@@ -43,7 +43,11 @@ export interface WorkflowAppChatViewProps {
   onOpenArtifacts?: () => void;
 }
 
-const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow, tasks, onOpenArtifacts }) => {
+const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({
+  workflow,
+  tasks,
+  onOpenArtifacts,
+}) => {
   const userInput = useAppSelector(selectWorkflowAppChatUserInput);
   const dispatch = useAppDispatch();
   const isRunning = useAppSelector(selectWorkflowIsRunning);
@@ -90,17 +94,18 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow, tas
   const handleCrewKickoff = async () => {
     // Create user_input and context from the messages and exsting input
     const context =
-      messages.map((message) => ({ 
-        role: message.role, 
+      messages.map((message) => ({
+        role: message.role,
         content: message.content,
         attachments: message.attachments || [],
       })) || [];
 
     // Build API user_input by appending attachment file names, while keeping the chat message content pure
     const attachmentNames = (sessionFiles || []).map((file) => file.name).filter(Boolean);
-    const userInputForApi = attachmentNames.length > 0
-      ? `${userInput || ''}${userInput ? '\n' : ''}Attachments: ${attachmentNames.join(', ')}`
-      : (userInput || '');
+    const userInputForApi =
+      attachmentNames.length > 0
+        ? `${userInput || ''}${userInput ? '\n' : ''}Attachments: ${attachmentNames.join(', ')}`
+        : userInput || '';
 
     let traceId: string | undefined = undefined;
     if (renderMode === 'studio') {
@@ -121,7 +126,7 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow, tas
           session_id: sessionId || '',
         }).unwrap();
         traceId = response.trace_id;
-        
+
         // Update session info from response
         if (response.session_id) {
           dispatch(updatedWorkflowSessionId(response.session_id));
@@ -156,7 +161,7 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow, tas
       });
       const kickoffResponseData = (await kickoffResponse.json()) as any;
       traceId = kickoffResponseData.response.trace_id;
-      
+
       // Extract session info from response if available
       if (kickoffResponseData.response.session_id) {
         dispatch(updatedWorkflowSessionId(kickoffResponseData.response.session_id));

@@ -1,16 +1,13 @@
 import { useState } from 'react';
 import { useAppDispatch, useAppSelector } from './hooks';
-import { 
+import {
   selectWorkflowSessionId,
   selectWorkflowSessionDirectory,
   updatedWorkflowSessionId,
   updatedWorkflowSessionDirectory,
 } from '@/app/workflows/editorSlice';
 import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
-import { 
-  getWorkflowDirectory, 
-  uploadFileToWorkflowSession 
-} from '../workflowFileUpload';
+import { getWorkflowDirectory, uploadFileToWorkflowSession } from '../workflowFileUpload';
 import { useGlobalNotification } from '@/app/components/Notifications';
 import { createSessionForWorkflow } from '@/app/lib/session';
 
@@ -44,7 +41,7 @@ export const useWorkflowFileUpload = (options: UseWorkflowFileUploadOptions) => 
 
   const uploadFile = async (file: File, _providedSessionId?: string): Promise<boolean> => {
     try {
-      setUploadingCount(prev => prev + 1);
+      setUploadingCount((prev) => prev + 1);
       setUploading(true);
 
       // Ensure session exists and get directory
@@ -68,7 +65,7 @@ export const useWorkflowFileUpload = (options: UseWorkflowFileUploadOptions) => 
           description: `${file.name} has been uploaded successfully`,
           placement: 'topRight',
         });
-        
+
         return true;
       } else {
         notificationApi.error({
@@ -88,8 +85,10 @@ export const useWorkflowFileUpload = (options: UseWorkflowFileUploadOptions) => 
       return false;
     } finally {
       // Cleanup controller for this file
-      try { delete abortControllersRef[file.name]; } catch {}
-      setUploadingCount(prev => {
+      try {
+        delete abortControllersRef[file.name];
+      } catch {}
+      setUploadingCount((prev) => {
         const newCount = Math.max(0, prev - 1);
         if (newCount === 0) {
           setUploading(false);
@@ -116,7 +115,9 @@ export const useWorkflowFileUpload = (options: UseWorkflowFileUploadOptions) => 
     cancelUpload: (fileName: string) => {
       const controller = abortControllersRef[fileName];
       if (controller) {
-        try { controller.abort(); } catch {}
+        try {
+          controller.abort();
+        } catch {}
         delete abortControllersRef[fileName];
       }
     },

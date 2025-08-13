@@ -56,4 +56,3 @@ export async function createSessionForWorkflow(options: {
     return { session_id, session_directory };
   }
 }
-

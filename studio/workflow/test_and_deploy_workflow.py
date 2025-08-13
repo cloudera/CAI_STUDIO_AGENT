@@ -70,17 +70,19 @@ def test_workflow(
 
             # Extract workflow root directory from database
             workflow_root_directory = workflow.directory
-            
+
             # Remove /home/cdsw prefix if present
             if workflow_root_directory and workflow_root_directory.startswith("/home/cdsw/"):
-                workflow_root_directory = workflow_root_directory[len("/home/cdsw/"):]
-            
+                workflow_root_directory = workflow_root_directory[len("/home/cdsw/") :]
+
             # Verify the cleaned directory path exists
             if workflow_root_directory:
                 # Convert to absolute path for verification
                 abs_workflow_path = os.path.abspath(workflow_root_directory)
                 if not os.path.exists(abs_workflow_path):
-                    raise RuntimeError(f"Workflow root directory does not exist: {abs_workflow_path} (cleaned from: {workflow.directory})")
+                    raise RuntimeError(
+                        f"Workflow root directory does not exist: {abs_workflow_path} (cleaned from: {workflow.directory})"
+                    )
                 if not os.path.isdir(abs_workflow_path):
                     raise RuntimeError(f"Workflow root directory path is not a directory: {abs_workflow_path}")
             else:
@@ -105,9 +107,9 @@ def test_workflow(
             for mcp_instance_id, env_vars in request.mcp_instance_env_vars.items()
         }
         events_trace_id = str(uuid4())
-        
+
         # Check if session_id is provided, if not generate a 6-character UUID
-        if hasattr(request, 'session_id') and request.session_id:
+        if hasattr(request, "session_id") and request.session_id:
             session_id = request.session_id
         else:
             session_id = str(uuid4())[:6]
@@ -155,7 +157,9 @@ def test_workflow(
     return
 
 
-def create_session(request: CreateSessionRequest, cml: CMLServiceApi = None, dao: AgentStudioDao = None) -> CreateSessionResponse:
+def create_session(
+    request: CreateSessionRequest, cml: CMLServiceApi = None, dao: AgentStudioDao = None
+) -> CreateSessionResponse:
     """
     Create a session for a given workflow id and return session id and session directory.
     Mirrors the session logic used in test_workflow.
@@ -169,7 +173,7 @@ def create_session(request: CreateSessionRequest, cml: CMLServiceApi = None, dao
 
             # Remove /home/cdsw prefix if present
             if workflow_root_directory and workflow_root_directory.startswith("/home/cdsw/"):
-                workflow_root_directory = workflow_root_directory[len("/home/cdsw/"):]
+                workflow_root_directory = workflow_root_directory[len("/home/cdsw/") :]
 
             if not workflow_root_directory:
                 raise RuntimeError("Workflow root directory is empty or None")

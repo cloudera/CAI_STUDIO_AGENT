@@ -40,10 +40,7 @@ export async function POST(request: NextRequest) {
     const { filePath } = await request.json();
 
     if (!filePath) {
-      return NextResponse.json(
-        { error: 'File path is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'File path is required' }, { status: 400 });
     }
 
     // Get environment variables
@@ -54,13 +51,13 @@ export async function POST(request: NextRequest) {
     if (!CDSW_APIV2_KEY || !CDSW_DOMAIN || !CDSW_PROJECT_ID) {
       return NextResponse.json(
         { error: 'CML environment variables not configured' },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     const agent = createAgent();
     const scheme = getUrlScheme();
-    
+
     // Double encode the file path to handle special characters
     const encodedFilePath = encodeURIComponent(encodeURIComponent(filePath));
     const deleteUrl = `${scheme}://${CDSW_DOMAIN}/api/v2/projects/${CDSW_PROJECT_ID}/files/${encodedFilePath}`;
@@ -72,7 +69,7 @@ export async function POST(request: NextRequest) {
       const deleteResponse = await fetch(deleteUrl, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${CDSW_APIV2_KEY}`,
+          Authorization: `Bearer ${CDSW_APIV2_KEY}`,
           'Content-Type': 'application/json',
         },
         agent,
@@ -83,40 +80,38 @@ export async function POST(request: NextRequest) {
       if (deleteResponse.ok) {
         console.log(`🗑️  Successfully deleted file: ${filePath}`);
 
-        return NextResponse.json({ 
-          success: true, 
-          message: 'File deleted successfully' 
+        return NextResponse.json({
+          success: true,
+          message: 'File deleted successfully',
         });
       } else if (deleteResponse.status === 404) {
         // If file doesn't exist (404), that's okay
         console.log(`ℹ️  File not found (already deleted): ${filePath}`);
-        return NextResponse.json({ 
-          success: true, 
-          message: 'File not found (already deleted)' 
+        return NextResponse.json({
+          success: true,
+          message: 'File not found (already deleted)',
         });
       } else {
         const errorText = await deleteResponse.text();
         console.error('Delete failed:', errorText);
-        
+
         return NextResponse.json(
           { error: 'Failed to delete file', details: errorText },
-          { status: deleteResponse.status }
+          { status: deleteResponse.status },
         );
       }
-
     } catch (deleteError) {
       console.error('Delete request error:', deleteError);
       return NextResponse.json(
         { error: 'Failed to delete file', details: getErrorMessage(deleteError) },
-        { status: 500 }
+        { status: 500 },
       );
     }
-
   } catch (error) {
     console.error('File delete error:', error);
     return NextResponse.json(
       { error: 'Failed to delete file', details: getErrorMessage(error) },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

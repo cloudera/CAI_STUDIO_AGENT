@@ -27,14 +27,17 @@ const FileUploadButton: React.FC<FileUploadButtonProps> = ({
   onFilesAdded,
   onFileUploaded,
 }) => {
-  const { uploadFile, uploadMultipleFiles, uploading, cancelUpload } = useWorkflowFileUpload({ workflow, renderMode });
+  const { uploadFile, uploadMultipleFiles, uploading, cancelUpload } = useWorkflowFileUpload({
+    workflow,
+    renderMode,
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files && files.length > 0) {
       const fileArray = Array.from(files);
-      
+
       if (onFilesAdded) {
         onFilesAdded(fileArray);
       }
@@ -42,10 +45,10 @@ const FileUploadButton: React.FC<FileUploadButtonProps> = ({
       if (onUploadSuccess) {
         onUploadSuccess();
       }
-      
+
       // Use uploadMultipleFiles for better session ID handling
       const results = await uploadMultipleFiles(fileArray);
-      
+
       // Notify about each file result
       if (onFileUploaded) {
         fileArray.forEach((file, index) => {
@@ -86,7 +89,7 @@ const FileUploadButton: React.FC<FileUploadButtonProps> = ({
     return (
       <>
         {fileInput}
-        <Tooltip title={uploading ? "Uploading files..." : "Upload files"}>
+        <Tooltip title={uploading ? 'Uploading files...' : 'Upload files'}>
           <Button
             icon={<PlusOutlined />}
             onClick={handleButtonClick}
@@ -96,7 +99,7 @@ const FileUploadButton: React.FC<FileUploadButtonProps> = ({
               backgroundColor: uploading ? '#1890ff' : undefined,
               borderColor: uploading ? '#1890ff' : undefined,
               color: uploading ? '#fff' : undefined,
-              ...style
+              ...style,
             }}
             size={size}
           />
@@ -110,7 +113,7 @@ const FileUploadButton: React.FC<FileUploadButtonProps> = ({
     return (
       <>
         {fileInput}
-        <Tooltip title={uploading ? "Uploading files..." : "Upload files"}>
+        <Tooltip title={uploading ? 'Uploading files...' : 'Upload files'}>
           <Button
             icon={<PlusOutlined />}
             onClick={handleButtonClick}
@@ -160,22 +163,22 @@ const FileUploadButton: React.FC<FileUploadButtonProps> = ({
   return (
     <>
       {fileInput}
-      <Tooltip title={uploading ? "Uploading files..." : "Upload files to session directory"}>
+      <Tooltip title={uploading ? 'Uploading files...' : 'Upload files to session directory'}>
         <Button
           icon={<UploadOutlined />}
           onClick={handleButtonClick}
           disabled={disabled || uploading}
           loading={uploading}
-          type={uploading ? "primary" : "default"}
+          type={uploading ? 'primary' : 'default'}
           style={{
             backgroundColor: uploading ? '#1890ff' : undefined,
             borderColor: uploading ? '#1890ff' : undefined,
             color: uploading ? '#fff' : undefined,
-            ...style
+            ...style,
           }}
           size={size}
         >
-          {uploading ? "Uploading..." : "Upload Files"}
+          {uploading ? 'Uploading...' : 'Upload Files'}
         </Button>
       </Tooltip>
     </>

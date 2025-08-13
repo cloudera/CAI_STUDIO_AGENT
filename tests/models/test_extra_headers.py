@@ -224,7 +224,8 @@ def test_model_test_uses_extra_headers_from_env():
         
         # Verify get_crewai_llm was called with extra headers
         call_args = mock_get_llm.call_args
-        llm_config = call_args[1]['llm_config_dict']
+        # The llm_config_dict is passed as the second positional argument
+        llm_config = call_args[0][1]
         assert llm_config['extra_headers'] == test_headers
 
 

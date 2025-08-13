@@ -48,18 +48,19 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       },
       agent,
     });
-    
+
     const responseData = (await response.json()) as any;
 
     if (response.status === 200) {
       if (responseData.files && responseData.files.length > 0) {
         // console.log('Raw CML API response files:', responseData.files); // Debug logging
-        
+
         // Filter out directories and files with invalid names, keep only files
         const files = responseData.files
           .filter((file: any) => {
             const fileName = file.path || file.name; // CML API uses 'path' for filename
-            const isValidFile = !file.is_dir && fileName && typeof fileName === 'string' && fileName.trim() !== '';
+            const isValidFile =
+              !file.is_dir && fileName && typeof fileName === 'string' && fileName.trim() !== '';
             if (!isValidFile) {
               console.log('Filtering out invalid file:', file);
             }
@@ -67,7 +68,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           })
           .map((file: any) => {
             const fileName = file.path || file.name; // CML API uses 'path' for filename
-            const fileSize = file.file_size ? parseInt(file.file_size) : (file.size || 0); // CML API uses 'file_size'
+            const fileSize = file.file_size ? parseInt(file.file_size) : file.size || 0; // CML API uses 'file_size'
             return {
               name: fileName,
               path: `${directoryPath}/${fileName}`,
@@ -79,23 +80,32 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
         // console.log('Valid files being returned by API:', files); // Debug logging
 
-        return NextResponse.json({ 
-          files,
-          directoryPath 
-        }, { status: 200 });
+        return NextResponse.json(
+          {
+            files,
+            directoryPath,
+          },
+          { status: 200 },
+        );
       }
     }
 
-    return NextResponse.json({ 
-      files: [],
-      directoryPath 
-    }, { status: 200 });
+    return NextResponse.json(
+      {
+        files: [],
+        directoryPath,
+      },
+      { status: 200 },
+    );
   } catch (error) {
     console.error('Error listing directory:', error);
-    return NextResponse.json({ 
-      error: 'Failed to list directory',
-      files: [],
-      directoryPath 
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Failed to list directory',
+        files: [],
+        directoryPath,
+      },
+      { status: 500 },
+    );
   }
 }

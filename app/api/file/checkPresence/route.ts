@@ -53,11 +53,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         responseData.files[0].is_dir === false
       ) {
         const fileInfo = responseData.files[0];
-        return NextResponse.json({ 
-          exists: true, 
-          size: fileInfo.size || 0,
-          lastModified: fileInfo.last_modified || null
-        }, { status: 200 });
+        return NextResponse.json(
+          {
+            exists: true,
+            size: fileInfo.size || 0,
+            lastModified: fileInfo.last_modified || null,
+          },
+          { status: 200 },
+        );
       }
     }
 

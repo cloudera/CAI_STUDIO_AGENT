@@ -142,11 +142,22 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
       } else {
         const isBedrock = modelRegisterType === 'BEDROCK';
         const missingCommon = !modelRegisterName || !modelRegisterType;
-        const missingApiBase = (['OPENAI_COMPATIBLE', 'AZURE_OPENAI', 'CAII'].includes(modelRegisterType || '') && !modelRegisterApiBase);
-        const missingAzureCaiiProvider = (['AZURE_OPENAI', 'CAII'].includes(modelRegisterType || '') && !modelRegisterProviderModel);
-        const missingBedrockCreds = isBedrock && (!bedrockAwsRegionName || !bedrockAwsAccessKeyId || !bedrockAwsSecretAccessKey);
+        const missingApiBase =
+          ['OPENAI_COMPATIBLE', 'AZURE_OPENAI', 'CAII'].includes(modelRegisterType || '') &&
+          !modelRegisterApiBase;
+        const missingAzureCaiiProvider =
+          ['AZURE_OPENAI', 'CAII'].includes(modelRegisterType || '') && !modelRegisterProviderModel;
+        const missingBedrockCreds =
+          isBedrock &&
+          (!bedrockAwsRegionName || !bedrockAwsAccessKeyId || !bedrockAwsSecretAccessKey);
         const missingApiKeyForOthers = !isBedrock && !modelRegisterApiKey;
-        if (missingCommon || missingApiBase || missingAzureCaiiProvider || missingBedrockCreds || missingApiKeyForOthers) {
+        if (
+          missingCommon ||
+          missingApiBase ||
+          missingAzureCaiiProvider ||
+          missingBedrockCreds ||
+          missingApiKeyForOthers
+        ) {
           throw new Error('Please fill in all required fields.');
         }
 
@@ -542,7 +553,9 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
                 ? 'Enter API key'
                 : 'Enter new API key (optional)'
         }
-        value={modelRegisterType === 'BEDROCK' ? (bedrockAwsAccessKeyId || '') : (modelRegisterApiKey || '')}
+        value={
+          modelRegisterType === 'BEDROCK' ? bedrockAwsAccessKeyId || '' : modelRegisterApiKey || ''
+        }
         onChange={(e) => {
           if (modelRegisterType === 'BEDROCK') {
             dispatch(setModelRegisterAwsAccessKeyId(e.target.value));

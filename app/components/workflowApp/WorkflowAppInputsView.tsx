@@ -61,7 +61,11 @@ export interface WorkflowAppInputsViewProps {
   onOpenArtifacts?: () => void;
 }
 
-const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow, tasks, onOpenArtifacts }) => {
+const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({
+  workflow,
+  tasks,
+  onOpenArtifacts,
+}) => {
   const dispatch = useAppDispatch();
   const inputs = useAppSelector(selectWorkflowAppStandardInputs);
   const crewOutput = useAppSelector(selectWorkflowCrewOutput);
@@ -86,12 +90,12 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
   } | null>(null);
 
   // Local state for non-conversational file chips - must be at top with other hooks
-  const [fileStates, setFileStates] = useState<{ 
-    [fileName: string]: { 
-      name: string; 
-      size: number; 
-      status: 'pending' | 'uploading' | 'completed' | 'failed' 
-    } 
+  const [fileStates, setFileStates] = useState<{
+    [fileName: string]: {
+      name: string;
+      size: number;
+      status: 'pending' | 'uploading' | 'completed' | 'failed';
+    };
   }>({});
   const [submittedFiles, setSubmittedFiles] = useState<{ name: string; size: number }[]>([]);
 
@@ -140,8 +144,8 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
   const handleCrewKickoff = async () => {
     // Move completed files to submitted files when workflow is run.
     // Always replace the submitted list so previous run's attachments don't persist.
-    const completedFiles = Object.values(fileStates).filter(f => f.status === 'completed');
-    setSubmittedFiles(completedFiles.map(f => ({ name: f.name, size: f.size })));
+    const completedFiles = Object.values(fileStates).filter((f) => f.status === 'completed');
+    setSubmittedFiles(completedFiles.map((f) => ({ name: f.name, size: f.size })));
     // Clear any pre-send chips regardless of whether there were completed files
     setFileStates({});
 
@@ -168,7 +172,7 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
           session_id: sessionId || '',
         }).unwrap();
         traceId = response.trace_id;
-        
+
         // Update session info from response
         if (response.session_id) {
           dispatch(updatedWorkflowSessionId(response.session_id));
@@ -190,7 +194,7 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
         ...finalInputs,
         session_id: sessionId || '',
       };
-      
+
       const kickoffResponse = await fetch(`${workflowModelUrl}`, {
         method: 'POST',
         headers: {
@@ -205,7 +209,7 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
       });
       const kickoffResponseData = (await kickoffResponse.json()) as any;
       traceId = kickoffResponseData.response.trace_id;
-      
+
       // Extract session info from response if available
       if (kickoffResponseData.response.session_id) {
         dispatch(updatedWorkflowSessionId(kickoffResponseData.response.session_id));
@@ -321,7 +325,12 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
     if (lower.endsWith('.pdf')) {
       return { label: 'PDF', emoji: '🟥' };
     }
-    if (lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.gif')) {
+    if (
+      lower.endsWith('.png') ||
+      lower.endsWith('.jpg') ||
+      lower.endsWith('.jpeg') ||
+      lower.endsWith('.gif')
+    ) {
       return { label: 'Image', emoji: '🖼️' };
     }
     return { label: 'File', emoji: '📄' };
@@ -360,30 +369,36 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
           {/* File chips above Inputs */}
           {Object.keys(fileStates).length > 0 && (
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-          {Object.values(fileStates).map((fileState) => (
-                <Tag 
+              {Object.values(fileStates).map((fileState) => (
+                <Tag
                   key={fileState.name}
-                  color={fileState.status === 'uploading' ? 'blue' : fileState.status === 'failed' ? 'red' : 'default'}
+                  color={
+                    fileState.status === 'uploading'
+                      ? 'blue'
+                      : fileState.status === 'failed'
+                        ? 'red'
+                        : 'default'
+                  }
                   closable={true}
                   onClose={async (e) => {
                     e.preventDefault();
                     // Remove from UI immediately
-                    setFileStates(prev => {
+                    setFileStates((prev) => {
                       const newStates = { ...prev };
                       delete newStates[fileState.name];
                       return newStates;
                     });
 
-                // If still uploading, cancel just this file's upload
-                if (fileState.status === 'uploading') {
-                  try {
-                    // @ts-ignore
-                    if (typeof window !== 'undefined' && window.__cancelUpload) {
-                      // @ts-ignore
-                      window.__cancelUpload(fileState.name);
+                    // If still uploading, cancel just this file's upload
+                    if (fileState.status === 'uploading') {
+                      try {
+                        // @ts-ignore
+                        if (typeof window !== 'undefined' && window.__cancelUpload) {
+                          // @ts-ignore
+                          window.__cancelUpload(fileState.name);
+                        }
+                      } catch {}
                     }
-                  } catch {}
-                }
 
                     // Background deletion for completed files
                     if (fileState.status === 'completed') {
@@ -403,13 +418,21 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
                   }}
                   style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                 >
-                  <span role="img" aria-label="file">📄</span>
-                  <span style={{ maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis' }}>{fileState.name}</span>
+                  <span role="img" aria-label="file">
+                    📄
+                  </span>
+                  <span style={{ maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {fileState.name}
+                  </span>
                   <span style={{ opacity: 0.8 }}>{(fileState.size / 1024).toFixed(1)} KB</span>
-                  {fileState.status === 'uploading' && <Spin size="small" style={{ marginLeft: 4 }} />}
-                  {fileState.status === 'failed' && <span style={{ color: 'red', marginLeft: 4 }}>✗</span>}
+                  {fileState.status === 'uploading' && (
+                    <Spin size="small" style={{ marginLeft: 4 }} />
+                  )}
+                  {fileState.status === 'failed' && (
+                    <span style={{ color: 'red', marginLeft: 4 }}>✗</span>
+                  )}
                 </Tag>
-          ))}
+              ))}
             </div>
           )}
           {getWorkflowInputs(workflow?.crew_ai_workflow_metadata, tasks).length > 0 ? (
@@ -464,14 +487,18 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
         {/* Submitted files display - below inputs and above Run Workflow */}
         {submittedFiles.length > 0 && (
           <div style={{ marginBottom: '16px' }}>
-            <Text style={{ fontSize: 13, fontWeight: 400, marginBottom: '4px', display: 'block' }}>Attachments</Text>
+            <Text style={{ fontSize: 13, fontWeight: 400, marginBottom: '4px', display: 'block' }}>
+              Attachments
+            </Text>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {submittedFiles.map((f, idx) => {
                 const meta = getAttachmentMeta(f.name);
                 return (
                   <Tag key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span>{meta.emoji}</span>
-                    <span style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.name}</span>
+                    <span style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {f.name}
+                    </span>
                     {typeof f.size === 'number' && (
                       <span style={{ opacity: 0.8 }}>{(f.size / 1024).toFixed(1)} KB</span>
                     )}
@@ -483,7 +510,15 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: '8px', flexShrink: 0, marginBottom: '16px', alignItems: 'center' }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: '8px',
+            flexShrink: 0,
+            marginBottom: '16px',
+            alignItems: 'center',
+          }}
+        >
           <Button
             type="primary"
             icon={isRunning ? <Spin size="small" /> : <SendOutlined />}
@@ -506,16 +541,16 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
             onUploadSuccess={onOpenArtifacts}
             onFilesAdded={(files) => {
               // Add files to uploading state
-              setFileStates(prev => {
+              setFileStates((prev) => {
                 const newStates = { ...prev };
-                files.forEach(f => {
+                files.forEach((f) => {
                   newStates[f.name] = { name: f.name, size: f.size, status: 'uploading' };
                 });
                 return newStates;
               });
             }}
             onFileUploaded={(file, success) => {
-              setFileStates(prev => {
+              setFileStates((prev) => {
                 const newStates = { ...prev };
                 if (newStates[file.name]) {
                   newStates[file.name].status = success ? 'completed' : 'failed';
@@ -544,7 +579,7 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
           }}
         >
           {/* Removed floating upload button in non-conversational view per request */}
-          
+
           {crewOutput && (
             <>
               <div

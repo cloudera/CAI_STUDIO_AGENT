@@ -75,7 +75,9 @@ def get_llm_config_for_workflow(workflow: Workflow, session: Session, cml: CMLSe
             "provider_model": language_model_db_model.provider_model,
             "model_type": language_model_db_model.model_type,
             # For Bedrock we no longer misuse api_base; leave None
-            "api_base": (language_model_db_model.api_base or None) if language_model_db_model.model_type != "BEDROCK" else None,
+            "api_base": (language_model_db_model.api_base or None)
+            if language_model_db_model.model_type != "BEDROCK"
+            else None,
             "api_key": api_key if language_model_db_model.model_type != "BEDROCK" else None,
             "extra_headers": extra_headers or None,
         }

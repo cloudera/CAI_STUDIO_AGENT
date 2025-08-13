@@ -40,9 +40,7 @@ def get_workbench_model_config(deployable_workflow_dir: str, artifact: Deploymen
             "model_file_path": "src/engine/entry/workbench.py",
             "workflow_artifact_location": os.path.join("/home/cdsw", os.path.basename(artifact.project_location)),
             "model_execution_dir": "/home/cdsw",
-            "workflow_project_file_dir": os.path.join(
-                "/home/cdsw", get_studio_subdirectory(), deployable_workflow_dir
-            ),
+            "workflow_project_file_dir": os.path.join("/home/cdsw", get_studio_subdirectory(), deployable_workflow_dir),
         }
     else:
         return {
@@ -57,9 +55,7 @@ def get_workbench_model_config(deployable_workflow_dir: str, artifact: Deploymen
                 os.path.basename(artifact.project_location),
             ),
             "model_execution_dir": os.path.join("/home/cdsw", get_studio_subdirectory(), deployable_workflow_dir),
-            "workflow_project_file_dir": os.path.join(
-                "/home/cdsw", get_studio_subdirectory(), deployable_workflow_dir
-            ),
+            "workflow_project_file_dir": os.path.join("/home/cdsw", get_studio_subdirectory(), deployable_workflow_dir),
         }
 
 

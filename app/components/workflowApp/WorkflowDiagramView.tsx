@@ -430,9 +430,7 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
                 Artifacts
               </span>
             ),
-            children: (
-              <WorkflowAppArtifactsView workflow={workflow} sessionId={sessionId} />
-            ),
+            children: <WorkflowAppArtifactsView workflow={workflow} sessionId={sessionId} />,
           },
         ]}
       />
