@@ -210,9 +210,7 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
 
   // Modify to exclude workflows that are deployed from draft section
   const deployedWorkflowIds = new Set(Object.keys(deployedWorkflowMap));
-  const draftWorkflows = filteredWorkflows.filter(
-    (w) => w.is_draft && !deployedWorkflowIds.has(w.workflow_id),
-  );
+  const draftWorkflows = filteredWorkflows.filter((w) => !deployedWorkflowIds.has(w.workflow_id));
 
   const displayedTemplates = showAllTemplates
     ? filteredWorkflowTemplates

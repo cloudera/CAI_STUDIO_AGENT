@@ -6,7 +6,6 @@ from studio.db import model as db_model
 from studio.api import *
 from cmlapi import CMLServiceApi
 import re
-from studio.workflow.utils import invalidate_workflow
 from studio.proto.utils import is_field_set
 
 
@@ -75,9 +74,6 @@ def update_task(request: UpdateTaskRequest, cml: CMLServiceApi, dao: AgentStudio
                 task.expected_output = request.UpdateCrewAITaskRequest.expected_output
             if request.UpdateCrewAITaskRequest.assigned_agent_id is not None:
                 task.assigned_agent_id = request.UpdateCrewAITaskRequest.assigned_agent_id or None
-
-            # Move dependent workflows to draft mode and mark any dependent deployed workflows as stale.
-            invalidate_workflow(session, db_model.Workflow.crew_ai_tasks.contains([request.task_id]))
 
             session.commit()
             return UpdateTaskResponse()
@@ -173,9 +169,6 @@ def remove_task(request: RemoveTaskRequest, cml: CMLServiceApi, dao: AgentStudio
             task = session.query(db_model.Task).filter_by(id=request.task_id).one_or_none()
             if not task:
                 raise ValueError(f"Task with ID '{request.task_id}' not found.")
-
-            # Move dependent workflows to draft mode and mark any dependent deployed workflows as stale.
-            invalidate_workflow(session, db_model.Workflow.crew_ai_tasks.contains([task.id]))
 
             session.delete(task)
             session.commit()

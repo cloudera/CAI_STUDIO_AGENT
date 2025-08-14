@@ -65,7 +65,7 @@ def package_workflow_for_deployment(
     ignore_fn = studio_data_workflow_ignore_factory(os.path.basename(workflow.directory))
     shutil.copytree(consts.ALL_STUDIO_DATA_LOCATION, os.path.join(packaging_directory, "studio-data"), ignore=ignore_fn)
     # Create the collated input.
-    collated_input: input_types.CollatedInput = create_collated_input(workflow, session)
+    collated_input: input_types.CollatedInput = create_collated_input(workflow, session, deployment.created_at or None)
 
     # Force override generational config. These generational configs
     # are set to default values and can optionally be overriden (currently
@@ -77,7 +77,7 @@ def package_workflow_for_deployment(
     # Write collated input to our packaging directory.
     collated_input_file_path = os.path.join(packaging_directory, "collated_input.json")
     with open(collated_input_file_path, "w") as f:
-        json.dump(collated_input.model_dump(), f, indent=2)
+        json.dump(collated_input.model_dump(), f, indent=2, default=str)
 
     # Package everything up into an archive.
     deployment_artifact_path = os.path.join(packaging_directory, "artifact.tar.gz")

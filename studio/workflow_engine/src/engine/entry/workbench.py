@@ -46,6 +46,7 @@ from datetime import datetime
 from typing import List, Dict, Union, Optional
 import json
 import base64
+from pydantic import BaseModel
 
 import engine.types as input_types
 from engine.crewai.mcp import get_mcp_tools_definitions
@@ -66,6 +67,7 @@ tracer = None  # keep this for CrewAI workflows
 if is_langgraph_workflow(WORKFLOW_DIRECTORY):
     LANGGRAPH_CALLABLES = load_langgraph_workflow(WORKFLOW_DIRECTORY)
 elif is_crewai_workflow(WORKFLOW_DIRECTORY):
+    collated_input: Optional[BaseModel] = None
     collated_input, tracer = load_crewai_workflow(WORKFLOW_DIRECTORY)
 else:
     raise ValueError("Unsupported workflow artifact type.")
@@ -164,7 +166,7 @@ def api_wrapper(args: Union[dict, str]) -> str:
 
         return {"trace_id": str(trace_id)}
     elif serve_workflow_parameters.action_type == input_types.DeployedWorkflowActions.GET_CONFIGURATION.value:
-        return {"configuration": collated_input.model_dump()}
+        return {"configuration": json.loads(collated_input.model_dump_json())}
     elif serve_workflow_parameters.action_type == input_types.DeployedWorkflowActions.GET_ASSET_DATA.value:
         unavailable_assets = list()
         asset_data: Dict[str, str] = dict()

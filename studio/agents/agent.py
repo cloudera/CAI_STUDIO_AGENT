@@ -11,7 +11,6 @@ from studio.tools.tool_instance import get_tool_instance
 from studio.tools.tool_template import get_tool_template
 from studio.as_mcp.mcp_instances import get_mcp_instance, create_mcp_instance
 from cmlapi import CMLServiceApi
-from studio.workflow.utils import invalidate_workflow
 from studio.proto.utils import is_field_set
 from studio.tools.tool_instance import create_tool_instance, remove_tool_instance
 
@@ -477,8 +476,6 @@ def _update_agent_impl(request: UpdateAgentRequest, cml: CMLServiceApi, session:
             if metadata.max_iter is not None:
                 agent.crew_ai_max_iter = metadata.max_iter
 
-        invalidate_workflow(session, db_model.Workflow.crew_ai_agents.contains([agent.id]))
-
         return UpdateAgentResponse()
     except SQLAlchemyError as e:
         raise RuntimeError(f"Failed to update agent: {str(e)}")
@@ -520,9 +517,6 @@ def remove_agent(
             agent = session.query(db_model.Agent).filter_by(id=request.agent_id).one_or_none()
             if not agent:
                 raise ValueError(f"Agent with ID '{request.agent_id}' not found.")
-
-            invalidate_workflow(session, db_model.Workflow.crew_ai_agents.contains([agent.id]))
-
             # Try to remove tool instances but continue even if they fail
             for tool_instance_id in agent.tool_ids:
                 try:

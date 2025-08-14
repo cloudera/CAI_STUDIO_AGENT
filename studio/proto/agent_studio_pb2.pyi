@@ -1205,35 +1205,35 @@ class DeployedWorkflow(_message.Message):
         "workflow_name",
         "deployed_workflow_name",
         "cml_deployed_model_id",
-        "is_stale",
         "application_url",
         "application_status",
         "application_deep_link",
         "model_deep_link",
         "deployment_metadata",
+        "created_at",
     )
     DEPLOYED_WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
     WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
     WORKFLOW_NAME_FIELD_NUMBER: _ClassVar[int]
     DEPLOYED_WORKFLOW_NAME_FIELD_NUMBER: _ClassVar[int]
     CML_DEPLOYED_MODEL_ID_FIELD_NUMBER: _ClassVar[int]
-    IS_STALE_FIELD_NUMBER: _ClassVar[int]
     APPLICATION_URL_FIELD_NUMBER: _ClassVar[int]
     APPLICATION_STATUS_FIELD_NUMBER: _ClassVar[int]
     APPLICATION_DEEP_LINK_FIELD_NUMBER: _ClassVar[int]
     MODEL_DEEP_LINK_FIELD_NUMBER: _ClassVar[int]
     DEPLOYMENT_METADATA_FIELD_NUMBER: _ClassVar[int]
+    CREATED_AT_FIELD_NUMBER: _ClassVar[int]
     deployed_workflow_id: str
     workflow_id: str
     workflow_name: str
     deployed_workflow_name: str
     cml_deployed_model_id: str
-    is_stale: bool
     application_url: str
     application_status: str
     application_deep_link: str
     model_deep_link: str
     deployment_metadata: str
+    created_at: str
     def __init__(
         self,
         deployed_workflow_id: _Optional[str] = ...,
@@ -1241,12 +1241,12 @@ class DeployedWorkflow(_message.Message):
         workflow_name: _Optional[str] = ...,
         deployed_workflow_name: _Optional[str] = ...,
         cml_deployed_model_id: _Optional[str] = ...,
-        is_stale: bool = ...,
         application_url: _Optional[str] = ...,
         application_status: _Optional[str] = ...,
         application_deep_link: _Optional[str] = ...,
         model_deep_link: _Optional[str] = ...,
         deployment_metadata: _Optional[str] = ...,
+        created_at: _Optional[str] = ...,
     ) -> None: ...
 
 class Workflow(_message.Message):
@@ -1257,7 +1257,6 @@ class Workflow(_message.Message):
         "is_valid",
         "is_ready",
         "is_conversational",
-        "is_draft",
         "description",
         "directory",
     )
@@ -1267,7 +1266,6 @@ class Workflow(_message.Message):
     IS_VALID_FIELD_NUMBER: _ClassVar[int]
     IS_READY_FIELD_NUMBER: _ClassVar[int]
     IS_CONVERSATIONAL_FIELD_NUMBER: _ClassVar[int]
-    IS_DRAFT_FIELD_NUMBER: _ClassVar[int]
     DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
     DIRECTORY_FIELD_NUMBER: _ClassVar[int]
     workflow_id: str
@@ -1276,7 +1274,6 @@ class Workflow(_message.Message):
     is_valid: bool
     is_ready: bool
     is_conversational: bool
-    is_draft: bool
     description: str
     directory: str
     def __init__(
@@ -1287,7 +1284,6 @@ class Workflow(_message.Message):
         is_valid: bool = ...,
         is_ready: bool = ...,
         is_conversational: bool = ...,
-        is_draft: bool = ...,
         description: _Optional[str] = ...,
         directory: _Optional[str] = ...,
     ) -> None: ...

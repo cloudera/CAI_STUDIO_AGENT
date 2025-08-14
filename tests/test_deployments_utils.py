@@ -56,7 +56,6 @@ def test_initialize_deployment_creates_metadata(mock_get_workflow, mock_get_depl
         mock_get_workflow.assert_called_once_with(payload, session, cml)
         mock_get_deployment.assert_called_once_with(workflow, payload, session, cml)
         assert result.status == DeploymentStatus.INITIALIZED
-        assert result.is_stale is False
         assert result.deployment_metadata == "{}"
 
 
@@ -81,7 +80,6 @@ def test_initialize_deployment_metadata_already_exists(mock_get_workflow, mock_g
         mock_get_deployment.assert_called_once()
         assert result.deployment_metadata == '{"existing": "true"}'
         assert result.status == DeploymentStatus.INITIALIZED
-        assert result.is_stale is False
         
         
 def make_payload_with_target(**kwargs) -> DeploymentPayload:

@@ -1,4 +1,5 @@
 from pydantic import BaseModel, ConfigDict
+from datetime import datetime
 from typing import Optional, List, Literal, Dict
 from enum import Enum
 from crewai import Agent, Crew, Task, Process
@@ -115,6 +116,7 @@ class Input__Workflow(BaseModel):
     manager_agent_id: Optional[str] = None
     llm_provider_model_id: Optional[str] = None
     is_conversational: bool
+    created_at: Optional[datetime] = None
 
 
 class CollatedInput(BaseModel):
