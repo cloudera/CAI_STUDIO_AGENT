@@ -133,7 +133,6 @@ def add_workflow_from_template(
         workflow.description = workflow_template.description
         workflow.crew_ai_process = workflow_template.process
         workflow.is_conversational = workflow_template.is_conversational
-        workflow.is_draft = True
         wf_dir = workflow_utils.get_fresh_workflow_directory(workflow.name)
         workflow.directory = wf_dir
         os.makedirs(wf_dir, exist_ok=True)
@@ -262,7 +261,6 @@ def add_workflow(request: AddWorkflowRequest, cml: CMLServiceApi, dao: AgentStud
                 crew_ai_manager_agent=manager_agent_id,
                 crew_ai_llm_provider_model_id=manager_llm_model_provider_id,
                 is_conversational=request.is_conversational,
-                is_draft=True,
                 directory=wf_dir,
             )
             session.add(workflow)
@@ -304,7 +302,6 @@ def list_workflows(
                         ),
                         is_ready=False,
                         is_conversational=workflow.is_conversational or False,
-                        is_draft=workflow.is_draft or False,
                         directory=workflow.directory or "",
                     )
                 )
@@ -341,7 +338,6 @@ def get_workflow(request: GetWorkflowRequest, cml: CMLServiceApi, dao: AgentStud
                 ),
                 is_ready=workflow_utils.is_workflow_ready(workflow.id, session),
                 is_conversational=workflow.is_conversational or False,
-                is_draft=workflow.is_draft or False,
                 directory=workflow.directory or "",
             )
             return GetWorkflowResponse(workflow=workflow_metadata)
@@ -417,16 +413,10 @@ def update_workflow(
                     _validate_process(metadata, cml, dao)
                     workflow.crew_ai_process = metadata.process
 
-            # Workflow enters draft mode after committing a change to the workflow. If the
-            # workflow is published, that published workflow then goes stale.
-            workflow.is_draft = True
-
             # Any deployed workflow instances have now entered a stale state.
             deployed_workflow_instances = (
                 session.query(db_model.DeployedWorkflowInstance).filter_by(workflow_id=workflow.id).all()
             )
-            for deployed_workflow_instance in deployed_workflow_instances:
-                deployed_workflow_instance.is_stale = True
 
             session.commit()
 

@@ -764,18 +764,18 @@ message DeployedWorkflow {
   string deployed_workflow_name = 4;
   // ID of the CML model
   string cml_deployed_model_id = 5;
-  // Revision of the workflow that was deployed
-  bool is_stale = 6;
   // Application URL for the deployed workflow
-  string application_url = 7;
+  string application_url = 6;
   // Application status for the deployed workflow
-  string application_status = 8;
+  string application_status = 7;
   // Deep link to the CML application
-  string application_deep_link = 9;
+  string application_deep_link = 8;
   // Deep link to the CML model
-  string model_deep_link = 10;
+  string model_deep_link = 9;
   // Deployment payload metadata
-  optional string deployment_metadata = 11;
+  optional string deployment_metadata = 10;
+  // Timestamp when the deployment was created
+  string created_at = 11;
 }
 
 // Workflow metadata
@@ -792,12 +792,10 @@ message Workflow {
   bool is_ready = 5;
   // Workflow is Conversational or not
   bool is_conversational = 6;
-  // Workflow state
-  bool is_draft = 7;
   // Workflow description
-  string description = 8;
+  string description = 7;
   // Directory
-  optional string directory = 9;
+  optional string directory = 8;
 }
 
 message CrewAIWorkflowMetadata {

@@ -3,6 +3,7 @@ import os
 from uuid import uuid4
 import json
 from typing import Union
+from datetime import datetime, timezone
 
 import cmlapi
 from cmlapi import CMLServiceApi
@@ -71,6 +72,7 @@ def create_new_deployed_workflow_instance(
         name=f"{workflow.name}_{get_random_compact_string()}",
         type=payload.deployment_target.type,
         workflow=workflow,
+        created_at=datetime.now(timezone.utc),
     )
 
 
@@ -135,7 +137,6 @@ def initialize_deployment(payload: DeploymentPayload, session: Session, cml: CML
     workflow: Workflow = get_or_create_workflow(payload, session, cml)
     deployment: DeployedWorkflowInstance = get_or_create_deployment(workflow, payload, session, cml)
     deployment.status = DeploymentStatus.INITIALIZED
-    deployment.is_stale = False
     session.commit()
 
     # Initialize deployment metadata if it does not exist yet

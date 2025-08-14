@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 from uuid import uuid4
+from datetime import datetime, timezone
 import cmlapi
 from typing import List, Optional
 from sqlalchemy.exc import SQLAlchemyError
@@ -67,7 +68,9 @@ def test_workflow(
             if not is_workflow_ready(workflow.id, session):
                 raise RuntimeError(f"Workflow '{workflow.name}' is not ready for testing!")
 
-            collated_input: input_types.CollatedInput = create_collated_input(workflow, session)
+            collated_input: input_types.CollatedInput = create_collated_input(
+                workflow, session, datetime.now(timezone.utc)
+            )
 
             # Model config is already created as part of creating collated input.
             llm_config = get_llm_config_for_workflow(workflow, session, cml)
@@ -95,9 +98,8 @@ def test_workflow(
         # Use the first available runner
         workflow_runner = available_workflow_runners[0]
 
-        resp = requests.post(
-            url=f"{workflow_runner['endpoint']}/kickoff",
-            json={
+        json_body = json.dumps(
+            {
                 "workflow_directory": os.path.abspath(os.curdir),  # for testing, everything is in studio-data/
                 "workflow_name": f"Test Workflow - {collated_input.workflow.name}",
                 "collated_input": collated_input.model_dump(),
@@ -107,6 +109,13 @@ def test_workflow(
                 "inputs": dict(request.inputs),
                 "events_trace_id": events_trace_id,
             },
+            default=str,
+        )
+
+        resp = requests.post(
+            url=f"{workflow_runner['endpoint']}/kickoff",
+            data=json_body,
+            headers={"Content-Type": "application/json"},
         )
 
         return TestWorkflowResponse(
@@ -371,12 +380,12 @@ def list_deployed_workflows(
                             deployed_workflow_name=deployed_workflow.name,
                             workflow_name=workflow.name,
                             cml_deployed_model_id=deployed_workflow.cml_deployed_model_id,
-                            is_stale=deployed_workflow.is_stale,
                             application_url=application_url,
                             application_status=application_status,
                             application_deep_link=application_deep_link,
                             model_deep_link=model_deep_link,
                             deployment_metadata=deployed_workflow.deployment_metadata or "{}",
+                            created_at=deployed_workflow.created_at.isoformat() if deployed_workflow.created_at else "",
                         )
                     )
                 except Exception as e:

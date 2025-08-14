@@ -76,7 +76,7 @@ def test_package_workflow_for_deployment(
     mock_copytree.assert_called()
     mock_yaml_dump.assert_called()
     mock_json_dump.assert_called()
-    mock_create_collated_input.assert_called_once_with(workflow, session)
+    mock_create_collated_input.assert_called_once_with(workflow, session, deployment.created_at)
 
     added_files = [call[0][0] for call in mock_tar.add.call_args_list]
     assert any("workflow.yaml" in f for f in added_files)

@@ -804,8 +804,6 @@ export interface DeployedWorkflow {
   deployed_workflow_name: string;
   /** ID of the CML model */
   cml_deployed_model_id: string;
-  /** Revision of the workflow that was deployed */
-  is_stale: boolean;
   /** Application URL for the deployed workflow */
   application_url: string;
   /** Application status for the deployed workflow */
@@ -815,7 +813,11 @@ export interface DeployedWorkflow {
   /** Deep link to the CML model */
   model_deep_link: string;
   /** Deployment payload metadata */
-  deployment_metadata?: string | undefined;
+  deployment_metadata?:
+    | string
+    | undefined;
+  /** Timestamp when the deployment was created */
+  created_at: string;
 }
 
 /** Workflow metadata */
@@ -834,8 +836,6 @@ export interface Workflow {
   is_ready: boolean;
   /** Workflow is Conversational or not */
   is_conversational: boolean;
-  /** Workflow state */
-  is_draft: boolean;
   /** Workflow description */
   description: string;
   /** Directory */
@@ -9986,12 +9986,12 @@ function createBaseDeployedWorkflow(): DeployedWorkflow {
     workflow_name: "",
     deployed_workflow_name: "",
     cml_deployed_model_id: "",
-    is_stale: false,
     application_url: "",
     application_status: "",
     application_deep_link: "",
     model_deep_link: "",
     deployment_metadata: undefined,
+    created_at: "",
   };
 }
 
@@ -10012,23 +10012,23 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
     if (message.cml_deployed_model_id !== "") {
       writer.uint32(42).string(message.cml_deployed_model_id);
     }
-    if (message.is_stale !== false) {
-      writer.uint32(48).bool(message.is_stale);
-    }
     if (message.application_url !== "") {
-      writer.uint32(58).string(message.application_url);
+      writer.uint32(50).string(message.application_url);
     }
     if (message.application_status !== "") {
-      writer.uint32(66).string(message.application_status);
+      writer.uint32(58).string(message.application_status);
     }
     if (message.application_deep_link !== "") {
-      writer.uint32(74).string(message.application_deep_link);
+      writer.uint32(66).string(message.application_deep_link);
     }
     if (message.model_deep_link !== "") {
-      writer.uint32(82).string(message.model_deep_link);
+      writer.uint32(74).string(message.model_deep_link);
     }
     if (message.deployment_metadata !== undefined) {
-      writer.uint32(90).string(message.deployment_metadata);
+      writer.uint32(82).string(message.deployment_metadata);
+    }
+    if (message.created_at !== "") {
+      writer.uint32(90).string(message.created_at);
     }
     return writer;
   },
@@ -10081,11 +10081,11 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
           continue;
         }
         case 6: {
-          if (tag !== 48) {
+          if (tag !== 50) {
             break;
           }
 
-          message.is_stale = reader.bool();
+          message.application_url = reader.string();
           continue;
         }
         case 7: {
@@ -10093,7 +10093,7 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
             break;
           }
 
-          message.application_url = reader.string();
+          message.application_status = reader.string();
           continue;
         }
         case 8: {
@@ -10101,7 +10101,7 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
             break;
           }
 
-          message.application_status = reader.string();
+          message.application_deep_link = reader.string();
           continue;
         }
         case 9: {
@@ -10109,7 +10109,7 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
             break;
           }
 
-          message.application_deep_link = reader.string();
+          message.model_deep_link = reader.string();
           continue;
         }
         case 10: {
@@ -10117,7 +10117,7 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
             break;
           }
 
-          message.model_deep_link = reader.string();
+          message.deployment_metadata = reader.string();
           continue;
         }
         case 11: {
@@ -10125,7 +10125,7 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
             break;
           }
 
-          message.deployment_metadata = reader.string();
+          message.created_at = reader.string();
           continue;
         }
       }
@@ -10146,7 +10146,6 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
         ? globalThis.String(object.deployed_workflow_name)
         : "",
       cml_deployed_model_id: isSet(object.cml_deployed_model_id) ? globalThis.String(object.cml_deployed_model_id) : "",
-      is_stale: isSet(object.is_stale) ? globalThis.Boolean(object.is_stale) : false,
       application_url: isSet(object.application_url) ? globalThis.String(object.application_url) : "",
       application_status: isSet(object.application_status) ? globalThis.String(object.application_status) : "",
       application_deep_link: isSet(object.application_deep_link) ? globalThis.String(object.application_deep_link) : "",
@@ -10154,6 +10153,7 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
       deployment_metadata: isSet(object.deployment_metadata)
         ? globalThis.String(object.deployment_metadata)
         : undefined,
+      created_at: isSet(object.created_at) ? globalThis.String(object.created_at) : "",
     };
   },
 
@@ -10174,9 +10174,6 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
     if (message.cml_deployed_model_id !== "") {
       obj.cml_deployed_model_id = message.cml_deployed_model_id;
     }
-    if (message.is_stale !== false) {
-      obj.is_stale = message.is_stale;
-    }
     if (message.application_url !== "") {
       obj.application_url = message.application_url;
     }
@@ -10192,6 +10189,9 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
     if (message.deployment_metadata !== undefined) {
       obj.deployment_metadata = message.deployment_metadata;
     }
+    if (message.created_at !== "") {
+      obj.created_at = message.created_at;
+    }
     return obj;
   },
 
@@ -10205,12 +10205,12 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
     message.workflow_name = object.workflow_name ?? "";
     message.deployed_workflow_name = object.deployed_workflow_name ?? "";
     message.cml_deployed_model_id = object.cml_deployed_model_id ?? "";
-    message.is_stale = object.is_stale ?? false;
     message.application_url = object.application_url ?? "";
     message.application_status = object.application_status ?? "";
     message.application_deep_link = object.application_deep_link ?? "";
     message.model_deep_link = object.model_deep_link ?? "";
     message.deployment_metadata = object.deployment_metadata ?? undefined;
+    message.created_at = object.created_at ?? "";
     return message;
   },
 };
@@ -10223,7 +10223,6 @@ function createBaseWorkflow(): Workflow {
     is_valid: false,
     is_ready: false,
     is_conversational: false,
-    is_draft: false,
     description: "",
     directory: undefined,
   };
@@ -10249,14 +10248,11 @@ export const Workflow: MessageFns<Workflow> = {
     if (message.is_conversational !== false) {
       writer.uint32(48).bool(message.is_conversational);
     }
-    if (message.is_draft !== false) {
-      writer.uint32(56).bool(message.is_draft);
-    }
     if (message.description !== "") {
-      writer.uint32(66).string(message.description);
+      writer.uint32(58).string(message.description);
     }
     if (message.directory !== undefined) {
-      writer.uint32(74).string(message.directory);
+      writer.uint32(66).string(message.directory);
     }
     return writer;
   },
@@ -10317,23 +10313,15 @@ export const Workflow: MessageFns<Workflow> = {
           continue;
         }
         case 7: {
-          if (tag !== 56) {
-            break;
-          }
-
-          message.is_draft = reader.bool();
-          continue;
-        }
-        case 8: {
-          if (tag !== 66) {
+          if (tag !== 58) {
             break;
           }
 
           message.description = reader.string();
           continue;
         }
-        case 9: {
-          if (tag !== 74) {
+        case 8: {
+          if (tag !== 66) {
             break;
           }
 
@@ -10359,7 +10347,6 @@ export const Workflow: MessageFns<Workflow> = {
       is_valid: isSet(object.is_valid) ? globalThis.Boolean(object.is_valid) : false,
       is_ready: isSet(object.is_ready) ? globalThis.Boolean(object.is_ready) : false,
       is_conversational: isSet(object.is_conversational) ? globalThis.Boolean(object.is_conversational) : false,
-      is_draft: isSet(object.is_draft) ? globalThis.Boolean(object.is_draft) : false,
       description: isSet(object.description) ? globalThis.String(object.description) : "",
       directory: isSet(object.directory) ? globalThis.String(object.directory) : undefined,
     };
@@ -10385,9 +10372,6 @@ export const Workflow: MessageFns<Workflow> = {
     if (message.is_conversational !== false) {
       obj.is_conversational = message.is_conversational;
     }
-    if (message.is_draft !== false) {
-      obj.is_draft = message.is_draft;
-    }
     if (message.description !== "") {
       obj.description = message.description;
     }
@@ -10411,7 +10395,6 @@ export const Workflow: MessageFns<Workflow> = {
     message.is_valid = object.is_valid ?? false;
     message.is_ready = object.is_ready ?? false;
     message.is_conversational = object.is_conversational ?? false;
-    message.is_draft = object.is_draft ?? false;
     message.description = object.description ?? "";
     message.directory = object.directory ?? undefined;
     return message;

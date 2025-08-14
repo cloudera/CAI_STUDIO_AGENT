@@ -1,5 +1,5 @@
 import os
-from sqlalchemy import Column, String, Text, Float, JSON, ForeignKey, Integer, Boolean
+from sqlalchemy import Column, String, Text, Float, JSON, ForeignKey, Integer, Boolean, DateTime
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.inspection import inspect
 from google.protobuf.message import Message
@@ -223,8 +223,6 @@ class Workflow(Base, MappedProtobuf, MappedDict):
         String, nullable=True)  # Manager LLM Model Provider ID
     # Is Workflow Conversational
     is_conversational = Column(Boolean, nullable=True)
-    # Whether or not the model is in draft mode.
-    is_draft = Column(Boolean, nullable=True)
     # directory location of the workflow
     directory = Column(String, nullable=True)
 
@@ -251,8 +249,8 @@ class DeployedWorkflowInstance(Base, MappedProtobuf, MappedDict):
         "workflows.id"), nullable=False)  # Workflow ID
     cml_deployed_model_id = Column(
         String, nullable=True)  # CML Deployed Model ID. TODO: deprecate in favor of metadata
-    # Staleness tracker comparing to the published workflow.
-    is_stale = Column(Boolean, nullable=True)
+    # Timestamp when the deployment was created
+    created_at = Column(DateTime, nullable=True)
 
     # Relationships
     workflow = relationship(
