@@ -15,7 +15,7 @@ export interface OpsData {
 export interface WorkflowData {
   renderMode: 'studio' | 'workflow';
   deployedWorkflowId: string;
-  deployedWorkflow: DeployedWorkflow;
+  deployedWorkflow: DeployedWorkflow & { workflow_directory?: string };
   workflowModelUrl: string;
   workflow: Workflow;
   agents: AgentMetadata[];

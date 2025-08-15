@@ -244,19 +244,21 @@ export async function GET(request: NextRequest) {
       is_valid: true,
       is_ready: true,
       is_conversational: configuration.workflow.is_conversational,
+      is_draft: false,
     };
 
-    const deployedWorkflow: DeployedWorkflow = {
+    const deployedWorkflow: DeployedWorkflow & { workflow_directory?: string } = {
       deployed_workflow_id: configuration.workflow.deployment_id,
       workflow_id: configuration.workflow.id,
       workflow_name: configuration.workflow.name,
       deployed_workflow_name: configuration.workflow.name,
       cml_deployed_model_id: deployedModelId as string,
+      is_stale: false,
       application_url: '', // These fields aren't in the config response
       application_status: '',
       application_deep_link: '',
       model_deep_link: '',
-      created_at: configuration.workflow.created_at || '',
+      workflow_directory: configuration.workflow_directory,
     };
 
     return NextResponse.json({

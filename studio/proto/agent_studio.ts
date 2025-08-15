@@ -41,6 +41,8 @@ export interface Model {
   is_studio_default: boolean;
   /** Serialized dict of extra headers to pass to the LLM provider */
   extra_headers: string;
+  /** AWS Region for Bedrock models (not secret). Only relevant when model_type == "BEDROCK" */
+  aws_region_name: string;
 }
 
 /** Model Messages */
@@ -74,7 +76,26 @@ export interface AddModelRequest {
   /** API Key for the model */
   api_key: string;
   /** Serialized dict of extra headers to pass to the LLM provider */
-  extra_headers?: string | undefined;
+  extra_headers?:
+    | string
+    | undefined;
+  /**
+   * The following fields are only used for AWS Bedrock models and will be stored in Project_env_vars per model
+   * AWS Region for Bedrock
+   */
+  aws_region_name?:
+    | string
+    | undefined;
+  /** AWS Access Key ID for Bedrock */
+  aws_access_key_id?:
+    | string
+    | undefined;
+  /** AWS Secret Access Key for Bedrock */
+  aws_secret_access_key?:
+    | string
+    | undefined;
+  /** Optional AWS Session Token for Bedrock */
+  aws_session_token?: string | undefined;
 }
 
 export interface AddModelResponse {
@@ -102,7 +123,26 @@ export interface UpdateModelRequest {
   /** API Key for the model */
   api_key: string;
   /** Serialized dict of extra headers to pass to the LLM provider */
-  extra_headers?: string | undefined;
+  extra_headers?:
+    | string
+    | undefined;
+  /**
+   * The following fields are only used for AWS Bedrock models and will be stored in Project_env_vars per model
+   * AWS Region for Bedrock
+   */
+  aws_region_name?:
+    | string
+    | undefined;
+  /** AWS Access Key ID for Bedrock */
+  aws_access_key_id?:
+    | string
+    | undefined;
+  /** AWS Secret Access Key for Bedrock */
+  aws_secret_access_key?:
+    | string
+    | undefined;
+  /** Optional AWS Session Token for Bedrock */
+  aws_session_token?: string | undefined;
 }
 
 export interface UpdateModelResponse {
@@ -691,6 +731,8 @@ export interface TestWorkflowRequest {
    * In the future, users may want to customize temperatures/max_new_tokens for each agent.
    */
   generation_config: string;
+  /** Optional session ID for workflow testing */
+  session_id?: string | undefined;
 }
 
 export interface TestWorkflowRequest_InputsEntry {
@@ -713,6 +755,23 @@ export interface TestWorkflowResponse {
   message: string;
   /** Trace ID of the test */
   trace_id: string;
+  /** Session ID for the workflow test */
+  session_id: string;
+  /** Optional session directory for artifacts */
+  session_directory?: string | undefined;
+}
+
+/** Create session messages */
+export interface CreateSessionRequest {
+  /** ID of the workflow to create a session for */
+  workflow_id: string;
+}
+
+export interface CreateSessionResponse {
+  /** Session ID */
+  session_id: string;
+  /** Session directory (relative to project root) */
+  session_directory: string;
 }
 
 /** Messages for deploying workflows */
@@ -804,6 +863,8 @@ export interface DeployedWorkflow {
   deployed_workflow_name: string;
   /** ID of the CML model */
   cml_deployed_model_id: string;
+  /** Revision of the workflow that was deployed */
+  is_stale: boolean;
   /** Application URL for the deployed workflow */
   application_url: string;
   /** Application status for the deployed workflow */
@@ -813,11 +874,7 @@ export interface DeployedWorkflow {
   /** Deep link to the CML model */
   model_deep_link: string;
   /** Deployment payload metadata */
-  deployment_metadata?:
-    | string
-    | undefined;
-  /** Timestamp when the deployment was created */
-  created_at: string;
+  deployment_metadata?: string | undefined;
 }
 
 /** Workflow metadata */
@@ -836,6 +893,8 @@ export interface Workflow {
   is_ready: boolean;
   /** Workflow is Conversational or not */
   is_conversational: boolean;
+  /** Workflow state */
+  is_draft: boolean;
   /** Workflow description */
   description: string;
   /** Directory */
@@ -1311,6 +1370,7 @@ function createBaseModel(): Model {
     api_base: "",
     is_studio_default: false,
     extra_headers: "",
+    aws_region_name: "",
   };
 }
 
@@ -1336,6 +1396,9 @@ export const Model: MessageFns<Model> = {
     }
     if (message.extra_headers !== "") {
       writer.uint32(58).string(message.extra_headers);
+    }
+    if (message.aws_region_name !== "") {
+      writer.uint32(66).string(message.aws_region_name);
     }
     return writer;
   },
@@ -1403,6 +1466,14 @@ export const Model: MessageFns<Model> = {
           message.extra_headers = reader.string();
           continue;
         }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.aws_region_name = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1421,6 +1492,7 @@ export const Model: MessageFns<Model> = {
       api_base: isSet(object.api_base) ? globalThis.String(object.api_base) : "",
       is_studio_default: isSet(object.is_studio_default) ? globalThis.Boolean(object.is_studio_default) : false,
       extra_headers: isSet(object.extra_headers) ? globalThis.String(object.extra_headers) : "",
+      aws_region_name: isSet(object.aws_region_name) ? globalThis.String(object.aws_region_name) : "",
     };
   },
 
@@ -1447,6 +1519,9 @@ export const Model: MessageFns<Model> = {
     if (message.extra_headers !== "") {
       obj.extra_headers = message.extra_headers;
     }
+    if (message.aws_region_name !== "") {
+      obj.aws_region_name = message.aws_region_name;
+    }
     return obj;
   },
 
@@ -1462,6 +1537,7 @@ export const Model: MessageFns<Model> = {
     message.api_base = object.api_base ?? "";
     message.is_studio_default = object.is_studio_default ?? false;
     message.extra_headers = object.extra_headers ?? "";
+    message.aws_region_name = object.aws_region_name ?? "";
     return message;
   },
 };
@@ -1690,7 +1766,18 @@ export const GetModelResponse: MessageFns<GetModelResponse> = {
 };
 
 function createBaseAddModelRequest(): AddModelRequest {
-  return { model_name: "", provider_model: "", model_type: "", api_base: "", api_key: "", extra_headers: undefined };
+  return {
+    model_name: "",
+    provider_model: "",
+    model_type: "",
+    api_base: "",
+    api_key: "",
+    extra_headers: undefined,
+    aws_region_name: undefined,
+    aws_access_key_id: undefined,
+    aws_secret_access_key: undefined,
+    aws_session_token: undefined,
+  };
 }
 
 export const AddModelRequest: MessageFns<AddModelRequest> = {
@@ -1712,6 +1799,18 @@ export const AddModelRequest: MessageFns<AddModelRequest> = {
     }
     if (message.extra_headers !== undefined) {
       writer.uint32(50).string(message.extra_headers);
+    }
+    if (message.aws_region_name !== undefined) {
+      writer.uint32(58).string(message.aws_region_name);
+    }
+    if (message.aws_access_key_id !== undefined) {
+      writer.uint32(66).string(message.aws_access_key_id);
+    }
+    if (message.aws_secret_access_key !== undefined) {
+      writer.uint32(74).string(message.aws_secret_access_key);
+    }
+    if (message.aws_session_token !== undefined) {
+      writer.uint32(82).string(message.aws_session_token);
     }
     return writer;
   },
@@ -1771,6 +1870,38 @@ export const AddModelRequest: MessageFns<AddModelRequest> = {
           message.extra_headers = reader.string();
           continue;
         }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.aws_region_name = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.aws_access_key_id = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.aws_secret_access_key = reader.string();
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.aws_session_token = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1788,6 +1919,12 @@ export const AddModelRequest: MessageFns<AddModelRequest> = {
       api_base: isSet(object.api_base) ? globalThis.String(object.api_base) : "",
       api_key: isSet(object.api_key) ? globalThis.String(object.api_key) : "",
       extra_headers: isSet(object.extra_headers) ? globalThis.String(object.extra_headers) : undefined,
+      aws_region_name: isSet(object.aws_region_name) ? globalThis.String(object.aws_region_name) : undefined,
+      aws_access_key_id: isSet(object.aws_access_key_id) ? globalThis.String(object.aws_access_key_id) : undefined,
+      aws_secret_access_key: isSet(object.aws_secret_access_key)
+        ? globalThis.String(object.aws_secret_access_key)
+        : undefined,
+      aws_session_token: isSet(object.aws_session_token) ? globalThis.String(object.aws_session_token) : undefined,
     };
   },
 
@@ -1811,6 +1948,18 @@ export const AddModelRequest: MessageFns<AddModelRequest> = {
     if (message.extra_headers !== undefined) {
       obj.extra_headers = message.extra_headers;
     }
+    if (message.aws_region_name !== undefined) {
+      obj.aws_region_name = message.aws_region_name;
+    }
+    if (message.aws_access_key_id !== undefined) {
+      obj.aws_access_key_id = message.aws_access_key_id;
+    }
+    if (message.aws_secret_access_key !== undefined) {
+      obj.aws_secret_access_key = message.aws_secret_access_key;
+    }
+    if (message.aws_session_token !== undefined) {
+      obj.aws_session_token = message.aws_session_token;
+    }
     return obj;
   },
 
@@ -1825,6 +1974,10 @@ export const AddModelRequest: MessageFns<AddModelRequest> = {
     message.api_base = object.api_base ?? "";
     message.api_key = object.api_key ?? "";
     message.extra_headers = object.extra_headers ?? undefined;
+    message.aws_region_name = object.aws_region_name ?? undefined;
+    message.aws_access_key_id = object.aws_access_key_id ?? undefined;
+    message.aws_secret_access_key = object.aws_secret_access_key ?? undefined;
+    message.aws_session_token = object.aws_session_token ?? undefined;
     return message;
   },
 };
@@ -1989,7 +2142,18 @@ export const RemoveModelResponse: MessageFns<RemoveModelResponse> = {
 };
 
 function createBaseUpdateModelRequest(): UpdateModelRequest {
-  return { model_id: "", model_name: "", provider_model: "", api_base: "", api_key: "", extra_headers: undefined };
+  return {
+    model_id: "",
+    model_name: "",
+    provider_model: "",
+    api_base: "",
+    api_key: "",
+    extra_headers: undefined,
+    aws_region_name: undefined,
+    aws_access_key_id: undefined,
+    aws_secret_access_key: undefined,
+    aws_session_token: undefined,
+  };
 }
 
 export const UpdateModelRequest: MessageFns<UpdateModelRequest> = {
@@ -2011,6 +2175,18 @@ export const UpdateModelRequest: MessageFns<UpdateModelRequest> = {
     }
     if (message.extra_headers !== undefined) {
       writer.uint32(50).string(message.extra_headers);
+    }
+    if (message.aws_region_name !== undefined) {
+      writer.uint32(58).string(message.aws_region_name);
+    }
+    if (message.aws_access_key_id !== undefined) {
+      writer.uint32(66).string(message.aws_access_key_id);
+    }
+    if (message.aws_secret_access_key !== undefined) {
+      writer.uint32(74).string(message.aws_secret_access_key);
+    }
+    if (message.aws_session_token !== undefined) {
+      writer.uint32(82).string(message.aws_session_token);
     }
     return writer;
   },
@@ -2070,6 +2246,38 @@ export const UpdateModelRequest: MessageFns<UpdateModelRequest> = {
           message.extra_headers = reader.string();
           continue;
         }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.aws_region_name = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.aws_access_key_id = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.aws_secret_access_key = reader.string();
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.aws_session_token = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -2087,6 +2295,12 @@ export const UpdateModelRequest: MessageFns<UpdateModelRequest> = {
       api_base: isSet(object.api_base) ? globalThis.String(object.api_base) : "",
       api_key: isSet(object.api_key) ? globalThis.String(object.api_key) : "",
       extra_headers: isSet(object.extra_headers) ? globalThis.String(object.extra_headers) : undefined,
+      aws_region_name: isSet(object.aws_region_name) ? globalThis.String(object.aws_region_name) : undefined,
+      aws_access_key_id: isSet(object.aws_access_key_id) ? globalThis.String(object.aws_access_key_id) : undefined,
+      aws_secret_access_key: isSet(object.aws_secret_access_key)
+        ? globalThis.String(object.aws_secret_access_key)
+        : undefined,
+      aws_session_token: isSet(object.aws_session_token) ? globalThis.String(object.aws_session_token) : undefined,
     };
   },
 
@@ -2110,6 +2324,18 @@ export const UpdateModelRequest: MessageFns<UpdateModelRequest> = {
     if (message.extra_headers !== undefined) {
       obj.extra_headers = message.extra_headers;
     }
+    if (message.aws_region_name !== undefined) {
+      obj.aws_region_name = message.aws_region_name;
+    }
+    if (message.aws_access_key_id !== undefined) {
+      obj.aws_access_key_id = message.aws_access_key_id;
+    }
+    if (message.aws_secret_access_key !== undefined) {
+      obj.aws_secret_access_key = message.aws_secret_access_key;
+    }
+    if (message.aws_session_token !== undefined) {
+      obj.aws_session_token = message.aws_session_token;
+    }
     return obj;
   },
 
@@ -2124,6 +2350,10 @@ export const UpdateModelRequest: MessageFns<UpdateModelRequest> = {
     message.api_base = object.api_base ?? "";
     message.api_key = object.api_key ?? "";
     message.extra_headers = object.extra_headers ?? undefined;
+    message.aws_region_name = object.aws_region_name ?? undefined;
+    message.aws_access_key_id = object.aws_access_key_id ?? undefined;
+    message.aws_secret_access_key = object.aws_secret_access_key ?? undefined;
+    message.aws_session_token = object.aws_session_token ?? undefined;
     return message;
   },
 };
@@ -8575,7 +8805,14 @@ export const TestWorkflowMCPInstanceEnvVars_EnvVarsEntry: MessageFns<TestWorkflo
 };
 
 function createBaseTestWorkflowRequest(): TestWorkflowRequest {
-  return { workflow_id: "", inputs: {}, tool_user_parameters: {}, mcp_instance_env_vars: {}, generation_config: "" };
+  return {
+    workflow_id: "",
+    inputs: {},
+    tool_user_parameters: {},
+    mcp_instance_env_vars: {},
+    generation_config: "",
+    session_id: undefined,
+  };
 }
 
 export const TestWorkflowRequest: MessageFns<TestWorkflowRequest> = {
@@ -8594,6 +8831,9 @@ export const TestWorkflowRequest: MessageFns<TestWorkflowRequest> = {
     });
     if (message.generation_config !== "") {
       writer.uint32(42).string(message.generation_config);
+    }
+    if (message.session_id !== undefined) {
+      writer.uint32(50).string(message.session_id);
     }
     return writer;
   },
@@ -8654,6 +8894,14 @@ export const TestWorkflowRequest: MessageFns<TestWorkflowRequest> = {
           message.generation_config = reader.string();
           continue;
         }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.session_id = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -8691,6 +8939,7 @@ export const TestWorkflowRequest: MessageFns<TestWorkflowRequest> = {
         )
         : {},
       generation_config: isSet(object.generation_config) ? globalThis.String(object.generation_config) : "",
+      session_id: isSet(object.session_id) ? globalThis.String(object.session_id) : undefined,
     };
   },
 
@@ -8729,6 +8978,9 @@ export const TestWorkflowRequest: MessageFns<TestWorkflowRequest> = {
     if (message.generation_config !== "") {
       obj.generation_config = message.generation_config;
     }
+    if (message.session_id !== undefined) {
+      obj.session_id = message.session_id;
+    }
     return obj;
   },
 
@@ -8761,6 +9013,7 @@ export const TestWorkflowRequest: MessageFns<TestWorkflowRequest> = {
       return acc;
     }, {});
     message.generation_config = object.generation_config ?? "";
+    message.session_id = object.session_id ?? undefined;
     return message;
   },
 };
@@ -9008,7 +9261,7 @@ export const TestWorkflowRequest_McpInstanceEnvVarsEntry: MessageFns<TestWorkflo
 };
 
 function createBaseTestWorkflowResponse(): TestWorkflowResponse {
-  return { message: "", trace_id: "" };
+  return { message: "", trace_id: "", session_id: "", session_directory: undefined };
 }
 
 export const TestWorkflowResponse: MessageFns<TestWorkflowResponse> = {
@@ -9018,6 +9271,12 @@ export const TestWorkflowResponse: MessageFns<TestWorkflowResponse> = {
     }
     if (message.trace_id !== "") {
       writer.uint32(18).string(message.trace_id);
+    }
+    if (message.session_id !== "") {
+      writer.uint32(26).string(message.session_id);
+    }
+    if (message.session_directory !== undefined) {
+      writer.uint32(34).string(message.session_directory);
     }
     return writer;
   },
@@ -9045,6 +9304,22 @@ export const TestWorkflowResponse: MessageFns<TestWorkflowResponse> = {
           message.trace_id = reader.string();
           continue;
         }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.session_id = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.session_directory = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -9058,6 +9333,8 @@ export const TestWorkflowResponse: MessageFns<TestWorkflowResponse> = {
     return {
       message: isSet(object.message) ? globalThis.String(object.message) : "",
       trace_id: isSet(object.trace_id) ? globalThis.String(object.trace_id) : "",
+      session_id: isSet(object.session_id) ? globalThis.String(object.session_id) : "",
+      session_directory: isSet(object.session_directory) ? globalThis.String(object.session_directory) : undefined,
     };
   },
 
@@ -9069,6 +9346,12 @@ export const TestWorkflowResponse: MessageFns<TestWorkflowResponse> = {
     if (message.trace_id !== "") {
       obj.trace_id = message.trace_id;
     }
+    if (message.session_id !== "") {
+      obj.session_id = message.session_id;
+    }
+    if (message.session_directory !== undefined) {
+      obj.session_directory = message.session_directory;
+    }
     return obj;
   },
 
@@ -9079,6 +9362,142 @@ export const TestWorkflowResponse: MessageFns<TestWorkflowResponse> = {
     const message = createBaseTestWorkflowResponse();
     message.message = object.message ?? "";
     message.trace_id = object.trace_id ?? "";
+    message.session_id = object.session_id ?? "";
+    message.session_directory = object.session_directory ?? undefined;
+    return message;
+  },
+};
+
+function createBaseCreateSessionRequest(): CreateSessionRequest {
+  return { workflow_id: "" };
+}
+
+export const CreateSessionRequest: MessageFns<CreateSessionRequest> = {
+  encode(message: CreateSessionRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.workflow_id !== "") {
+      writer.uint32(10).string(message.workflow_id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateSessionRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateSessionRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.workflow_id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateSessionRequest {
+    return { workflow_id: isSet(object.workflow_id) ? globalThis.String(object.workflow_id) : "" };
+  },
+
+  toJSON(message: CreateSessionRequest): unknown {
+    const obj: any = {};
+    if (message.workflow_id !== "") {
+      obj.workflow_id = message.workflow_id;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<CreateSessionRequest>): CreateSessionRequest {
+    return CreateSessionRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<CreateSessionRequest>): CreateSessionRequest {
+    const message = createBaseCreateSessionRequest();
+    message.workflow_id = object.workflow_id ?? "";
+    return message;
+  },
+};
+
+function createBaseCreateSessionResponse(): CreateSessionResponse {
+  return { session_id: "", session_directory: "" };
+}
+
+export const CreateSessionResponse: MessageFns<CreateSessionResponse> = {
+  encode(message: CreateSessionResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.session_id !== "") {
+      writer.uint32(10).string(message.session_id);
+    }
+    if (message.session_directory !== "") {
+      writer.uint32(18).string(message.session_directory);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateSessionResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateSessionResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.session_id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.session_directory = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateSessionResponse {
+    return {
+      session_id: isSet(object.session_id) ? globalThis.String(object.session_id) : "",
+      session_directory: isSet(object.session_directory) ? globalThis.String(object.session_directory) : "",
+    };
+  },
+
+  toJSON(message: CreateSessionResponse): unknown {
+    const obj: any = {};
+    if (message.session_id !== "") {
+      obj.session_id = message.session_id;
+    }
+    if (message.session_directory !== "") {
+      obj.session_directory = message.session_directory;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<CreateSessionResponse>): CreateSessionResponse {
+    return CreateSessionResponse.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<CreateSessionResponse>): CreateSessionResponse {
+    const message = createBaseCreateSessionResponse();
+    message.session_id = object.session_id ?? "";
+    message.session_directory = object.session_directory ?? "";
     return message;
   },
 };
@@ -9986,12 +10405,12 @@ function createBaseDeployedWorkflow(): DeployedWorkflow {
     workflow_name: "",
     deployed_workflow_name: "",
     cml_deployed_model_id: "",
+    is_stale: false,
     application_url: "",
     application_status: "",
     application_deep_link: "",
     model_deep_link: "",
     deployment_metadata: undefined,
-    created_at: "",
   };
 }
 
@@ -10012,23 +10431,23 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
     if (message.cml_deployed_model_id !== "") {
       writer.uint32(42).string(message.cml_deployed_model_id);
     }
+    if (message.is_stale !== false) {
+      writer.uint32(48).bool(message.is_stale);
+    }
     if (message.application_url !== "") {
-      writer.uint32(50).string(message.application_url);
+      writer.uint32(58).string(message.application_url);
     }
     if (message.application_status !== "") {
-      writer.uint32(58).string(message.application_status);
+      writer.uint32(66).string(message.application_status);
     }
     if (message.application_deep_link !== "") {
-      writer.uint32(66).string(message.application_deep_link);
+      writer.uint32(74).string(message.application_deep_link);
     }
     if (message.model_deep_link !== "") {
-      writer.uint32(74).string(message.model_deep_link);
+      writer.uint32(82).string(message.model_deep_link);
     }
     if (message.deployment_metadata !== undefined) {
-      writer.uint32(82).string(message.deployment_metadata);
-    }
-    if (message.created_at !== "") {
-      writer.uint32(90).string(message.created_at);
+      writer.uint32(90).string(message.deployment_metadata);
     }
     return writer;
   },
@@ -10081,11 +10500,11 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
           continue;
         }
         case 6: {
-          if (tag !== 50) {
+          if (tag !== 48) {
             break;
           }
 
-          message.application_url = reader.string();
+          message.is_stale = reader.bool();
           continue;
         }
         case 7: {
@@ -10093,7 +10512,7 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
             break;
           }
 
-          message.application_status = reader.string();
+          message.application_url = reader.string();
           continue;
         }
         case 8: {
@@ -10101,7 +10520,7 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
             break;
           }
 
-          message.application_deep_link = reader.string();
+          message.application_status = reader.string();
           continue;
         }
         case 9: {
@@ -10109,7 +10528,7 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
             break;
           }
 
-          message.model_deep_link = reader.string();
+          message.application_deep_link = reader.string();
           continue;
         }
         case 10: {
@@ -10117,7 +10536,7 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
             break;
           }
 
-          message.deployment_metadata = reader.string();
+          message.model_deep_link = reader.string();
           continue;
         }
         case 11: {
@@ -10125,7 +10544,7 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
             break;
           }
 
-          message.created_at = reader.string();
+          message.deployment_metadata = reader.string();
           continue;
         }
       }
@@ -10146,6 +10565,7 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
         ? globalThis.String(object.deployed_workflow_name)
         : "",
       cml_deployed_model_id: isSet(object.cml_deployed_model_id) ? globalThis.String(object.cml_deployed_model_id) : "",
+      is_stale: isSet(object.is_stale) ? globalThis.Boolean(object.is_stale) : false,
       application_url: isSet(object.application_url) ? globalThis.String(object.application_url) : "",
       application_status: isSet(object.application_status) ? globalThis.String(object.application_status) : "",
       application_deep_link: isSet(object.application_deep_link) ? globalThis.String(object.application_deep_link) : "",
@@ -10153,7 +10573,6 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
       deployment_metadata: isSet(object.deployment_metadata)
         ? globalThis.String(object.deployment_metadata)
         : undefined,
-      created_at: isSet(object.created_at) ? globalThis.String(object.created_at) : "",
     };
   },
 
@@ -10174,6 +10593,9 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
     if (message.cml_deployed_model_id !== "") {
       obj.cml_deployed_model_id = message.cml_deployed_model_id;
     }
+    if (message.is_stale !== false) {
+      obj.is_stale = message.is_stale;
+    }
     if (message.application_url !== "") {
       obj.application_url = message.application_url;
     }
@@ -10189,9 +10611,6 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
     if (message.deployment_metadata !== undefined) {
       obj.deployment_metadata = message.deployment_metadata;
     }
-    if (message.created_at !== "") {
-      obj.created_at = message.created_at;
-    }
     return obj;
   },
 
@@ -10205,12 +10624,12 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
     message.workflow_name = object.workflow_name ?? "";
     message.deployed_workflow_name = object.deployed_workflow_name ?? "";
     message.cml_deployed_model_id = object.cml_deployed_model_id ?? "";
+    message.is_stale = object.is_stale ?? false;
     message.application_url = object.application_url ?? "";
     message.application_status = object.application_status ?? "";
     message.application_deep_link = object.application_deep_link ?? "";
     message.model_deep_link = object.model_deep_link ?? "";
     message.deployment_metadata = object.deployment_metadata ?? undefined;
-    message.created_at = object.created_at ?? "";
     return message;
   },
 };
@@ -10223,6 +10642,7 @@ function createBaseWorkflow(): Workflow {
     is_valid: false,
     is_ready: false,
     is_conversational: false,
+    is_draft: false,
     description: "",
     directory: undefined,
   };
@@ -10248,11 +10668,14 @@ export const Workflow: MessageFns<Workflow> = {
     if (message.is_conversational !== false) {
       writer.uint32(48).bool(message.is_conversational);
     }
+    if (message.is_draft !== false) {
+      writer.uint32(56).bool(message.is_draft);
+    }
     if (message.description !== "") {
-      writer.uint32(58).string(message.description);
+      writer.uint32(66).string(message.description);
     }
     if (message.directory !== undefined) {
-      writer.uint32(66).string(message.directory);
+      writer.uint32(74).string(message.directory);
     }
     return writer;
   },
@@ -10313,15 +10736,23 @@ export const Workflow: MessageFns<Workflow> = {
           continue;
         }
         case 7: {
-          if (tag !== 58) {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.is_draft = reader.bool();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
             break;
           }
 
           message.description = reader.string();
           continue;
         }
-        case 8: {
-          if (tag !== 66) {
+        case 9: {
+          if (tag !== 74) {
             break;
           }
 
@@ -10347,6 +10778,7 @@ export const Workflow: MessageFns<Workflow> = {
       is_valid: isSet(object.is_valid) ? globalThis.Boolean(object.is_valid) : false,
       is_ready: isSet(object.is_ready) ? globalThis.Boolean(object.is_ready) : false,
       is_conversational: isSet(object.is_conversational) ? globalThis.Boolean(object.is_conversational) : false,
+      is_draft: isSet(object.is_draft) ? globalThis.Boolean(object.is_draft) : false,
       description: isSet(object.description) ? globalThis.String(object.description) : "",
       directory: isSet(object.directory) ? globalThis.String(object.directory) : undefined,
     };
@@ -10372,6 +10804,9 @@ export const Workflow: MessageFns<Workflow> = {
     if (message.is_conversational !== false) {
       obj.is_conversational = message.is_conversational;
     }
+    if (message.is_draft !== false) {
+      obj.is_draft = message.is_draft;
+    }
     if (message.description !== "") {
       obj.description = message.description;
     }
@@ -10395,6 +10830,7 @@ export const Workflow: MessageFns<Workflow> = {
     message.is_valid = object.is_valid ?? false;
     message.is_ready = object.is_ready ?? false;
     message.is_conversational = object.is_conversational ?? false;
+    message.is_draft = object.is_draft ?? false;
     message.description = object.description ?? "";
     message.directory = object.directory ?? undefined;
     return message;
@@ -16520,6 +16956,16 @@ export const AgentStudioService = {
     responseSerialize: (value: TestWorkflowResponse) => Buffer.from(TestWorkflowResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer) => TestWorkflowResponse.decode(value),
   },
+  /** Create a new session for a workflow */
+  createSession: {
+    path: "/agent_studio.AgentStudio/CreateSession",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateSessionRequest) => Buffer.from(CreateSessionRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => CreateSessionRequest.decode(value),
+    responseSerialize: (value: CreateSessionResponse) => Buffer.from(CreateSessionResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => CreateSessionResponse.decode(value),
+  },
   removeWorkflow: {
     path: "/agent_studio.AgentStudio/RemoveWorkflow",
     requestStream: false,
@@ -16875,6 +17321,8 @@ export interface AgentStudioServer extends UntypedServiceImplementation {
   addWorkflow: handleUnaryCall<AddWorkflowRequest, AddWorkflowResponse>;
   updateWorkflow: handleUnaryCall<UpdateWorkflowRequest, UpdateWorkflowResponse>;
   testWorkflow: handleUnaryCall<TestWorkflowRequest, TestWorkflowResponse>;
+  /** Create a new session for a workflow */
+  createSession: handleUnaryCall<CreateSessionRequest, CreateSessionResponse>;
   removeWorkflow: handleUnaryCall<RemoveWorkflowRequest, RemoveWorkflowResponse>;
   /** Deployed Workflow Operations */
   deployWorkflow: handleUnaryCall<DeployWorkflowRequest, DeployWorkflowResponse>;
@@ -17595,6 +18043,22 @@ export interface AgentStudioClient extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: TestWorkflowResponse) => void,
+  ): ClientUnaryCall;
+  /** Create a new session for a workflow */
+  createSession(
+    request: CreateSessionRequest,
+    callback: (error: ServiceError | null, response: CreateSessionResponse) => void,
+  ): ClientUnaryCall;
+  createSession(
+    request: CreateSessionRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CreateSessionResponse) => void,
+  ): ClientUnaryCall;
+  createSession(
+    request: CreateSessionRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CreateSessionResponse) => void,
   ): ClientUnaryCall;
   removeWorkflow(
     request: RemoveWorkflowRequest,

@@ -2,7 +2,6 @@ import json
 import os
 import shutil
 from uuid import uuid4
-from datetime import datetime, timezone
 import cmlapi
 from typing import List, Optional
 from sqlalchemy.exc import SQLAlchemyError
@@ -62,15 +61,34 @@ def test_workflow(
 
         collated_input = None
         llm_config = {}
+        workflow_root_directory = None
         with dao.get_session() as session:
             workflow: db_model.Workflow = session.query(db_model.Workflow).filter_by(id=request.workflow_id).one()
 
             if not is_workflow_ready(workflow.id, session):
                 raise RuntimeError(f"Workflow '{workflow.name}' is not ready for testing!")
 
-            collated_input: input_types.CollatedInput = create_collated_input(
-                workflow, session, datetime.now(timezone.utc)
-            )
+            # Extract workflow root directory from database
+            workflow_root_directory = workflow.directory
+
+            # Remove /home/cdsw prefix if present
+            if workflow_root_directory and workflow_root_directory.startswith("/home/cdsw/"):
+                workflow_root_directory = workflow_root_directory[len("/home/cdsw/") :]
+
+            # Verify the cleaned directory path exists
+            if workflow_root_directory:
+                # Convert to absolute path for verification
+                abs_workflow_path = os.path.abspath(workflow_root_directory)
+                if not os.path.exists(abs_workflow_path):
+                    raise RuntimeError(
+                        f"Workflow root directory does not exist: {abs_workflow_path} (cleaned from: {workflow.directory})"
+                    )
+                if not os.path.isdir(abs_workflow_path):
+                    raise RuntimeError(f"Workflow root directory path is not a directory: {abs_workflow_path}")
+            else:
+                raise RuntimeError("Workflow root directory is empty or None")
+
+            collated_input: input_types.CollatedInput = create_collated_input(workflow, session)
 
             # Model config is already created as part of creating collated input.
             llm_config = get_llm_config_for_workflow(workflow, session, cml)
@@ -90,6 +108,12 @@ def test_workflow(
         }
         events_trace_id = str(uuid4())
 
+        # Check if session_id is provided, if not generate a 6-character UUID
+        if hasattr(request, "session_id") and request.session_id:
+            session_id = request.session_id
+        else:
+            session_id = str(uuid4())[:6]
+
         workflow_runners = get_workflow_runners()
         available_workflow_runners = list(filter(lambda x: not x["busy"], workflow_runners))
         if not available_workflow_runners:
@@ -98,9 +122,12 @@ def test_workflow(
         # Use the first available runner
         workflow_runner = available_workflow_runners[0]
 
-        json_body = json.dumps(
-            {
+        resp = requests.post(
+            url=f"{workflow_runner['endpoint']}/kickoff",
+            json={
                 "workflow_directory": os.path.abspath(os.curdir),  # for testing, everything is in studio-data/
+                "workflow_root_directory": workflow_root_directory,
+                "workflow_project_file_directory": workflow_root_directory,
                 "workflow_name": f"Test Workflow - {collated_input.workflow.name}",
                 "collated_input": collated_input.model_dump(),
                 "tool_config": tool_user_params_kv,
@@ -108,19 +135,16 @@ def test_workflow(
                 "llm_config": llm_config,
                 "inputs": dict(request.inputs),
                 "events_trace_id": events_trace_id,
+                "session_id": session_id,
+                "mode": "TESTING",
             },
-            default=str,
-        )
-
-        resp = requests.post(
-            url=f"{workflow_runner['endpoint']}/kickoff",
-            data=json_body,
-            headers={"Content-Type": "application/json"},
         )
 
         return TestWorkflowResponse(
             message="",  # Return empty message since execution is async
             trace_id=events_trace_id,
+            session_id=session_id,
+            session_directory=f"{workflow_root_directory}/session/{session_id}",
         )
 
     except ValueError as e:
@@ -131,6 +155,37 @@ def test_workflow(
         raise RuntimeError(f"Unexpected error while testing workflow: {e}")
 
     return
+
+
+def create_session(
+    request: CreateSessionRequest, cml: CMLServiceApi = None, dao: AgentStudioDao = None
+) -> CreateSessionResponse:
+    """
+    Create a session for a given workflow id and return session id and session directory.
+    Mirrors the session logic used in test_workflow.
+    """
+    try:
+        with dao.get_session() as session:
+            workflow: db_model.Workflow = session.query(db_model.Workflow).filter_by(id=request.workflow_id).one()
+
+            # Extract workflow root directory from database
+            workflow_root_directory = workflow.directory
+
+            # Remove /home/cdsw prefix if present
+            if workflow_root_directory and workflow_root_directory.startswith("/home/cdsw/"):
+                workflow_root_directory = workflow_root_directory[len("/home/cdsw/") :]
+
+            if not workflow_root_directory:
+                raise RuntimeError("Workflow root directory is empty or None")
+
+        # Generate 6-char session id
+        session_id = str(uuid4())[:6]
+
+        session_directory = f"{workflow_root_directory}/session/{session_id}"
+
+        return CreateSessionResponse(session_id=session_id, session_directory=session_directory)
+    except Exception as e:
+        raise RuntimeError(f"Failed to create session: {str(e)}")
 
 
 def deploy_workflow(request: DeployWorkflowRequest, cml: CMLServiceApi, dao: AgentStudioDao) -> DeployWorkflowResponse:
@@ -380,12 +435,12 @@ def list_deployed_workflows(
                             deployed_workflow_name=deployed_workflow.name,
                             workflow_name=workflow.name,
                             cml_deployed_model_id=deployed_workflow.cml_deployed_model_id,
+                            is_stale=deployed_workflow.is_stale,
                             application_url=application_url,
                             application_status=application_status,
                             application_deep_link=application_deep_link,
                             model_deep_link=model_deep_link,
                             deployment_metadata=deployed_workflow.deployment_metadata or "{}",
-                            created_at=deployed_workflow.created_at.isoformat() if deployed_workflow.created_at else "",
                         )
                     )
                 except Exception as e:

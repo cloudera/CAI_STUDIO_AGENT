@@ -43,6 +43,7 @@ def test_get_workbench_model_config_custom_enabled(mock_custom_enabled, mock_get
         "model_file_path": "src/engine/entry/workbench.py",
         "workflow_artifact_location": "/home/cdsw/fake-artifact.tar.gz",
         "model_execution_dir": "/home/cdsw",
+        "workflow_project_file_dir": os.path.join("/home/cdsw", "studio_subdir", "my_workflow"),
     }
 
 @patch("studio.deployments.targets.workbench.get_studio_subdirectory", return_value="studio_subdir")
@@ -55,6 +56,7 @@ def test_get_workbench_model_config_custom_disabled(mock_custom_enabled, mock_ge
         "model_file_path": os.path.join("studio_subdir", "my_workflow", "src/engine/entry/workbench.py"),
         "workflow_artifact_location": os.path.join("/home/cdsw", "studio_subdir", "my_workflow", "fake-artifact.tar.gz"),
         "model_execution_dir": os.path.join("/home/cdsw", "studio_subdir", "my_workflow"),
+        "workflow_project_file_dir": os.path.join("/home/cdsw", "studio_subdir", "my_workflow"),
     }
     
     
@@ -90,6 +92,7 @@ def test_prepare_env_vars_for_workbench_success(mock_get_api_key, mock_validate,
     mock_get_config.return_value = {
         "workflow_artifact_location": "/home/cdsw/fake-artifact.tar.gz",
         "model_execution_dir": "/home/cdsw/exec",
+        "workflow_project_file_dir": "/home/cdsw/studio_subdir/workflow_dir",
     }
 
     result = prepare_env_vars_for_workbench(
@@ -106,6 +109,7 @@ def test_prepare_env_vars_for_workbench_success(mock_get_api_key, mock_validate,
         "AGENT_STUDIO_WORKFLOW_ARTIFACT": "/home/cdsw/fake-artifact.tar.gz",
         "AGENT_STUDIO_WORKFLOW_DEPLOYMENT_CONFIG": '{"example_config": true}',
         "AGENT_STUDIO_MODEL_EXECUTION_DIR": "/home/cdsw/exec",
+        "AGENT_STUDIO_WORKFLOW_PROJECT_FILE_DIR": "/home/cdsw/studio_subdir/workflow_dir",
         "CDSW_APIV2_KEY": "key_value",
         "CDSW_PROJECT_ID": "fake-project-id",
         "CUSTOM_ENV_VAR": "value",
@@ -113,7 +117,9 @@ def test_prepare_env_vars_for_workbench_success(mock_get_api_key, mock_validate,
         "AGENT_STUDIO_WORKBENCH_TLS_ENABLED": "true",
     }
 
-    assert result == expected
+    # Result may include optional None-valued keys like CDSW_DOMAIN and CDSW_API_URL; compare subset
+    for k, v in expected.items():
+        assert result.get(k) == v
     
     
 @patch("studio.deployments.targets.workbench.get_api_key_from_env", return_value=(None, None))

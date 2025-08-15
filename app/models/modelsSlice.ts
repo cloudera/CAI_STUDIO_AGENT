@@ -12,6 +12,11 @@ export interface ModelRegisterState {
   apiKey?: string;
   extraHeaders?: Record<string, string>;
   setAsDefault?: boolean;
+  // Bedrock-specific fields
+  awsRegionName?: string;
+  awsAccessKeyId?: string;
+  awsSecretAccessKey?: string;
+  awsSessionToken?: string;
 }
 
 export interface ModelTestState {
@@ -78,6 +83,11 @@ export const modelsSlice = createSlice({
         apiBase: action.payload.api_base,
         apiKey: '', // NOTE: we don't pass the API key when freshly populating details from a model.
         extraHeaders: action.payload.extra_headers ? JSON.parse(action.payload.extra_headers) : {},
+        // Only Bedrock exposes region (keys are never exposed)
+        awsRegionName: action.payload.aws_region_name || '',
+        awsAccessKeyId: '',
+        awsSecretAccessKey: '',
+        awsSessionToken: '',
       };
     },
     resetModelRegisterDetails: (state) => {
@@ -103,6 +113,19 @@ export const modelsSlice = createSlice({
     },
     setModelRegisterExtraHeaders: (state, action: PayloadAction<Record<string, string>>) => {
       state.modelRegisterDetails.extraHeaders = action.payload;
+    },
+    // Bedrock-specific setters
+    setModelRegisterAwsRegionName: (state, action: PayloadAction<string>) => {
+      state.modelRegisterDetails.awsRegionName = action.payload;
+    },
+    setModelRegisterAwsAccessKeyId: (state, action: PayloadAction<string>) => {
+      state.modelRegisterDetails.awsAccessKeyId = action.payload;
+    },
+    setModelRegisterAwsSecretAccessKey: (state, action: PayloadAction<string>) => {
+      state.modelRegisterDetails.awsSecretAccessKey = action.payload;
+    },
+    setModelRegisterAwsSessionToken: (state, action: PayloadAction<string>) => {
+      state.modelRegisterDetails.awsSessionToken = action.payload;
     },
     setModelRegisterSetAsDefault: (state, action: PayloadAction<boolean>) => {
       state.modelRegisterDetails.setAsDefault = action.payload;
@@ -146,6 +169,10 @@ export const {
   populateModelRegisterDetails,
   setModelsStatus,
   updateModelStatus,
+  setModelRegisterAwsRegionName,
+  setModelRegisterAwsAccessKeyId,
+  setModelRegisterAwsSecretAccessKey,
+  setModelRegisterAwsSessionToken,
 } = modelsSlice.actions;
 
 export const selectIsTestDrawerOpen = (state: RootState) => state.models.isTestDrawerOpen;
@@ -167,6 +194,14 @@ export const selectModelRegisterExtraHeaders = (state: RootState) =>
   state.models.modelRegisterDetails.extraHeaders;
 export const selectModelRegisterSetAsDefault = (state: RootState) =>
   state.models.modelRegisterDetails.setAsDefault;
+export const selectModelRegisterAwsRegionName = (state: RootState) =>
+  state.models.modelRegisterDetails.awsRegionName;
+export const selectModelRegisterAwsAccessKeyId = (state: RootState) =>
+  state.models.modelRegisterDetails.awsAccessKeyId;
+export const selectModelRegisterAwsSecretAccessKey = (state: RootState) =>
+  state.models.modelRegisterDetails.awsSecretAccessKey;
+export const selectModelRegisterAwsSessionToken = (state: RootState) =>
+  state.models.modelRegisterDetails.awsSessionToken;
 export const selectModelTestId = (state: RootState) => state.models.modelTestDetails.modelId;
 export const selectModelTestMessage = (state: RootState) =>
   state.models.modelTestDetails.testMessage;

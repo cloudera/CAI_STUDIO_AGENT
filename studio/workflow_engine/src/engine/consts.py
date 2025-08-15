@@ -8,6 +8,7 @@ class SupportedModelTypes(str, Enum):
     GEMINI = "GEMINI"
     ANTHROPIC = "ANTHROPIC"
     CAII = "CAII"
+    BEDROCK = "BEDROCK"
 
 
 ALL_STUDIO_DATA_LOCATION = "studio-data"
