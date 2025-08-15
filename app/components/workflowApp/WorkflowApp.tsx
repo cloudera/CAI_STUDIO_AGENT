@@ -114,6 +114,52 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
   const workflowDescription = useAppSelector(selectEditorWorkflowDescription);
   const [testModel] = useTestModelMutation();
 
+  // Thoughts box state
+  interface ThoughtEntry {
+    id: string;
+    timestamp?: string;
+    thought: string;
+    tool?: string;
+    coworker?: string;
+  }
+  type FileInfo = { name: string; path: string; size: number; lastModified: string | null };
+  const [thoughtEntries, setThoughtEntries] = useState<ThoughtEntry[]>([]); // non-conversational view
+  const [areThoughtsCollapsed, setAreThoughtsCollapsed] = useState<boolean>(false);
+  const [thoughtSessions, setThoughtSessions] = useState<
+    { id: string; entries: ThoughtEntry[]; collapsed: boolean; artifacts: FileInfo[] }[]
+  >([]); // conversational per-turn boxes
+  const processedThoughtEventIdsRef = useRef<Set<string>>(new Set());
+  const artifactsBaselineRef = useRef<Map<string, Set<string>>>(new Map());
+  const artifactsSeenRef = useRef<Map<string, Set<string>>>(new Map());
+  const thoughtSessionsRef = useRef<typeof thoughtSessions>(thoughtSessions);
+
+  // keep a live ref of sessions to avoid stale closures inside polling effect
+  useEffect(() => {
+    thoughtSessionsRef.current = thoughtSessions;
+  }, [thoughtSessions]);
+
+  const loadArtifactsFromStorage = (sessionId: string): FileInfo[] => {
+    try {
+      const raw = localStorage.getItem(`thought_artifacts_${sessionId}`);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed as FileInfo[];
+      return [];
+    } catch {
+      return [];
+    }
+  };
+
+  const saveArtifactsToStorage = (sessionId: string, artifacts: FileInfo[]) => {
+    try {
+      localStorage.setItem(`thought_artifacts_${sessionId}`, JSON.stringify(artifacts));
+    } catch {}
+  };
+
+  const handleToggleThoughtSession = (id: string, next: boolean) => {
+    setThoughtSessions((prev) => prev.map((s) => (s.id === id ? { ...s, collapsed: next } : s)));
+  };
+
   // Track processed exception IDs
   const processedExceptionsRef = useRef<Set<string>>(new Set());
   const allEventsRef = useRef<any[]>([]);
@@ -285,6 +331,68 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
     }
 
     // Set the interval function
+    const parseThoughtFromResponse = (
+      raw: string,
+    ): { thought?: string; tool?: string; coworker?: string } => {
+      try {
+        const text = String(raw || '');
+
+        // Primary: explicit Thought: ... until Action:/Final Answer:/end
+        const thoughtMatch = text.match(
+          /Thought:\s*([\s\S]*?)(?:\n\s*Action:|\n\s*Final Answer:|$)/i,
+        );
+        let thought = thoughtMatch ? thoughtMatch[1].trim() : undefined;
+
+        // Fallback: if no explicit Thought:, take text before first Action:/Final Answer:
+        if (!thought) {
+          const boundaryMatch = text.match(/\n\s*(Action:|Final Answer:)/i);
+          if (boundaryMatch && boundaryMatch.index !== undefined) {
+            const preamble = text.slice(0, boundaryMatch.index).trim();
+            if (preamble) thought = preamble;
+          } else {
+            // If no boundaries at all, use entire text as thought
+            const trimmed = text.trim();
+            if (trimmed) thought = trimmed;
+          }
+        }
+
+        let tool: string | undefined;
+        let coworker: string | undefined;
+
+        const actionMatch = text.match(/Action:\s*([^\n]+)(?:\n|$)/i);
+        if (actionMatch) {
+          const actionName = actionMatch[1].trim();
+          // Attempt to parse Action Input and extract coworker if present
+          const inputMatch = text.match(/Action Input:\s*([\s\S]*?)(?:\n\n|$)/i);
+          if (inputMatch) {
+            const possibleJson = inputMatch[1].trim();
+            try {
+              const parsed = JSON.parse(possibleJson);
+              if (parsed && typeof parsed === 'object') {
+                if (parsed.coworker) {
+                  coworker = String(parsed.coworker);
+                }
+              }
+            } catch {
+              // ignore json parse errors, not always strict JSON
+              const coworkerInline = possibleJson.match(/\"?coworker\"?\s*:\s*\"([^\"]+)\"/i);
+              if (coworkerInline) {
+                coworker = coworkerInline[1];
+              }
+            }
+          }
+
+          if (!coworker) {
+            tool = actionName;
+          }
+        }
+
+        return { thought, tool, coworker };
+      } catch {
+        return {};
+      }
+    };
+
     const fetchEvents = async () => {
       try {
         const { events: newEvents } = await getEvents({
@@ -294,6 +402,92 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
 
         if (newEvents && newEvents.length > 0) {
           allEventsRef.current = [...allEventsRef.current, ...newEvents];
+
+          // Extract thoughts from completed LLM calls
+          newEvents
+            .filter((e: any) => e?.type === 'llm_call_completed')
+            .forEach((e: any) => {
+              const key =
+                e.id ||
+                `${e.timestamp || ''}-${e.type}-${e.agent_studio_id || ''}-${(e.response || '').length}`;
+              if (processedThoughtEventIdsRef.current.has(key)) return;
+              processedThoughtEventIdsRef.current.add(key);
+              const { thought, tool, coworker } = parseThoughtFromResponse(e.response || '');
+              if (thought && thought.length > 0) {
+                if (workflow?.is_conversational) {
+                  setThoughtSessions((prev) => {
+                    if (prev.length === 0) return prev;
+                    const next = [...prev];
+                    const last = { ...next[next.length - 1] };
+                    last.entries = [
+                      ...last.entries,
+                      { id: key, timestamp: e.timestamp, thought, tool, coworker },
+                    ];
+                    next[next.length - 1] = last;
+                    return next;
+                  });
+                } else {
+                  setThoughtEntries((prev) => [
+                    ...prev,
+                    {
+                      id: key,
+                      timestamp: e.timestamp,
+                      thought,
+                      tool,
+                      coworker,
+                    },
+                  ]);
+                }
+              }
+            });
+
+          // Update artifacts for active conversational session
+          if (workflow?.is_conversational && thoughtSessionsRef.current.length > 0) {
+            const activeSessionId =
+              thoughtSessionsRef.current[thoughtSessionsRef.current.length - 1]?.id;
+            if (activeSessionId && sessionDirectory) {
+              try {
+                // Ensure we have baseline before computing deltas to avoid pulling all files
+                if (!artifactsBaselineRef.current.has(activeSessionId)) {
+                  // Skip this cycle; baseline will arrive shortly
+                  return;
+                }
+                const resp = await fetch(
+                  `/api/file/listDirectory?directoryPath=${encodeURIComponent(sessionDirectory)}`,
+                );
+                const data = await resp.json();
+                if (resp.ok && Array.isArray(data.files)) {
+                  const baseline =
+                    artifactsBaselineRef.current.get(activeSessionId) || new Set<string>();
+                  const seen = artifactsSeenRef.current.get(activeSessionId) || new Set<string>();
+                  const incoming: FileInfo[] = data.files.filter(
+                    (f: FileInfo) => f && f.name && typeof f.name === 'string',
+                  );
+                  const delta: FileInfo[] = [];
+                  for (const f of incoming) {
+                    const key = (f.path || f.name) as string;
+                    if (!baseline.has(key) && !seen.has(key)) {
+                      seen.add(key);
+                      delta.push(f);
+                    }
+                  }
+                  if (delta.length > 0) {
+                    artifactsSeenRef.current.set(activeSessionId, seen);
+                    setThoughtSessions((prev) => {
+                      const next = [...prev];
+                      const lastIdx = next.length - 1;
+                      const last = { ...next[lastIdx] };
+                      last.artifacts = [...(last.artifacts || []), ...delta];
+                      next[lastIdx] = last;
+                      // Persist to storage
+                      saveArtifactsToStorage(activeSessionId, last.artifacts);
+                      return next;
+                    });
+                  }
+                }
+              } catch {}
+            }
+          }
 
           // Check for successful completion as before
           const crewCompleteEvent = newEvents.find(
@@ -305,6 +499,10 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
             dispatch(updatedCrewOutput(crewCompleteEvent.output || crewCompleteEvent.error));
             dispatch(updatedIsRunning(false));
             dispatch(addedCurrentEvents(newEvents));
+
+            // Collapse thoughts box(es) at end of run
+            setAreThoughtsCollapsed(true);
+            setThoughtSessions((prev) => prev.map((s) => ({ ...s, collapsed: true })));
 
             if (workflow?.is_conversational) {
               dispatch(
@@ -332,6 +530,41 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
       dispatch(updatedCrewOutput(undefined));
       dispatch(updatedCurrentEvents([]));
       dispatch(updatedCurrentEventIndex(0));
+      // Reset thoughts for new run and expand
+      setThoughtEntries([]);
+      processedThoughtEventIdsRef.current.clear();
+      setAreThoughtsCollapsed(false);
+      if (workflow?.is_conversational) {
+        const sessionKey = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        // Capture baseline of files at start for delta calculation
+        if (sessionDirectory) {
+          fetch(`/api/file/listDirectory?directoryPath=${encodeURIComponent(sessionDirectory)}`)
+            .then((r) => r.json())
+            .then((data) => {
+              const baseline = new Set<string>(
+                Array.isArray(data?.files) ? data.files.map((f: FileInfo) => f.path || f.name) : [],
+              );
+              artifactsBaselineRef.current.set(sessionKey, baseline);
+              artifactsSeenRef.current.set(sessionKey, new Set<string>());
+            })
+            .catch(() => {
+              artifactsBaselineRef.current.set(sessionKey, new Set());
+              artifactsSeenRef.current.set(sessionKey, new Set<string>());
+            });
+        } else {
+          artifactsBaselineRef.current.set(sessionKey, new Set());
+          artifactsSeenRef.current.set(sessionKey, new Set<string>());
+        }
+        setThoughtSessions((prev) => [
+          ...prev.map((s) => ({ ...s, collapsed: true })),
+          {
+            id: sessionKey,
+            entries: [],
+            collapsed: false,
+            artifacts: loadArtifactsFromStorage(sessionKey) || [],
+          },
+        ]);
+      }
     };
 
     const stopPolling = () => {
@@ -599,12 +832,20 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
               workflow={workflow}
               tasks={tasks}
               onOpenArtifacts={handleOpenArtifacts}
+              thoughts={thoughtEntries}
+              thoughtsCollapsed={areThoughtsCollapsed}
+              onToggleThoughts={setAreThoughtsCollapsed}
+              thoughtSessions={thoughtSessions}
+              onToggleThoughtSession={handleToggleThoughtSession}
             />
           ) : (
             <WorkflowAppInputsView
               workflow={workflow}
               tasks={tasks}
               onOpenArtifacts={handleOpenArtifacts}
+              thoughts={thoughtEntries}
+              thoughtsCollapsed={areThoughtsCollapsed}
+              onToggleThoughts={setAreThoughtsCollapsed}
             />
           )}
         </Layout>

@@ -32,6 +32,7 @@ import {
 } from '@/app/workflows/editorSlice';
 import showdown from 'showdown';
 import FileUploadButton from './FileUploadButton';
+import ThoughtsBox, { ThoughtEntry } from './workflowApp/ThoughtsBox';
 
 const { TextArea } = Input;
 
@@ -50,6 +51,8 @@ interface ChatMessagesProps {
   workflow?: any;
   renderMode?: 'studio' | 'workflow';
   onOpenArtifacts?: () => void;
+  thoughtSessions?: { id: string; entries: ThoughtEntry[]; collapsed: boolean }[];
+  onToggleThoughtSession?: (id: string, next: boolean) => void;
 }
 
 const ChatMessages: React.FC<ChatMessagesProps> = ({
@@ -62,6 +65,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   workflow,
   renderMode = 'studio',
   onOpenArtifacts,
+  thoughtSessions = [],
+  onToggleThoughtSession = () => {},
 }) => {
   const userInput = useAppSelector(selectWorkflowAppChatUserInput);
   const sessionFiles = useAppSelector(selectWorkflowAppSessionFiles);
@@ -255,7 +260,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             }}
           >
             <Avatar
-              icon={message.role === 'user' ? <UserOutlined /> : <UserOutlined />}
+              icon={<UserOutlined />}
               style={{
                 marginRight: '8px',
                 backgroundColor: message.role === 'user' ? '#87d068' : '#1890ff',
@@ -318,21 +323,23 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                 </div>
               </Layout>
             ) : (
-              <Layout
+              <div
                 style={{
-                  background: '#fff',
-                  maxWidth: '95%',
+                  background: 'transparent',
+                  maxWidth: '100%',
                   position: 'relative',
+                  paddingTop: '2px',
+                  flex: 1,
                 }}
               >
-                <div style={{ padding: '12px' }}>{message.content}</div>
+                <div style={{ padding: 0 }}>{message.content}</div>
                 {message.attachments && message.attachments.length > 0 && (
                   <div
                     style={{
                       display: 'flex',
                       gap: 8,
                       flexWrap: 'wrap',
-                      padding: '0 12px 12px 12px',
+                      padding: '4px 0 0 0',
                     }}
                   >
                     {message.attachments.map((f, i) => {
@@ -354,7 +361,30 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                     })}
                   </div>
                 )}
-              </Layout>
+                {/* per-user-turn thoughts box */}
+                {(() => {
+                  // Find matching thought session for this user turn (index among user messages)
+                  if (message.role !== 'user') return null;
+                  const userIndex =
+                    messages.slice(0, index + 1).filter((m) => m.role === 'user').length - 1;
+                  const session = thoughtSessions[userIndex];
+                  if (!session) return null;
+                  return (
+                    <div style={{ marginTop: 8, width: '100%' }}>
+                      <ThoughtsBox
+                        entries={session.entries}
+                        isCollapsed={session.collapsed}
+                        onToggle={(next) => onToggleThoughtSession(session.id, next)}
+                        active={isProcessing && userIndex === thoughtSessions.length - 1}
+                        sessionKey={session.id}
+                        // Provide artifacts captured server-side in parent state if present
+                        // @ts-ignore - prop may be unused in this component but accepted by ThoughtsBox via spread
+                        artifacts={session.artifacts}
+                      />
+                    </div>
+                  );
+                })()}
+              </div>
             )}
           </div>
         ))}

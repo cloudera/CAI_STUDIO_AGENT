@@ -24,6 +24,7 @@ import {
   Workflow,
 } from '@/studio/proto/agent_studio';
 import ChatMessages from '../ChatMessages';
+import ThoughtsBox, { ThoughtEntry } from './ThoughtsBox';
 import {
   selectWorkflowConfiguration,
   selectWorkflowGenerationConfig,
@@ -41,12 +42,22 @@ export interface WorkflowAppChatViewProps {
   workflow?: Workflow;
   tasks?: CrewAITaskMetadata[];
   onOpenArtifacts?: () => void;
+  thoughts?: ThoughtEntry[];
+  thoughtsCollapsed?: boolean;
+  onToggleThoughts?: (next: boolean) => void;
+  thoughtSessions?: { id: string; entries: ThoughtEntry[]; collapsed: boolean }[];
+  onToggleThoughtSession?: (id: string, next: boolean) => void;
 }
 
 const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({
   workflow,
   tasks,
   onOpenArtifacts,
+  thoughts = [],
+  thoughtsCollapsed = false,
+  onToggleThoughts = () => {},
+  thoughtSessions = [],
+  onToggleThoughtSession = () => {},
 }) => {
   const userInput = useAppSelector(selectWorkflowAppChatUserInput);
   const dispatch = useAppDispatch();
@@ -71,9 +82,29 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Only auto-scroll when new content is appended (new message, new session, or new thought in active session)
+  const prevScrollStateRef = useRef<{
+    messagesLen: number;
+    sessionsLen: number;
+    lastEntriesLen: number;
+  }>({ messagesLen: 0, sessionsLen: 0, lastEntriesLen: 0 });
+
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    const prev = prevScrollStateRef.current;
+    const messagesLen = messages.length;
+    const sessionsLen = thoughtSessions.length;
+    const lastEntriesLen =
+      sessionsLen > 0 ? thoughtSessions[sessionsLen - 1]?.entries?.length || 0 : 0;
+
+    let shouldScroll = false;
+    if (messagesLen > prev.messagesLen) shouldScroll = true;
+    if (sessionsLen > prev.sessionsLen) shouldScroll = true;
+    if (lastEntriesLen > prev.lastEntriesLen) shouldScroll = true;
+
+    if (shouldScroll) scrollToBottom();
+
+    prevScrollStateRef.current = { messagesLen, sessionsLen, lastEntriesLen };
+  }, [messages, thoughtSessions]);
 
   if (!workflow) {
     return <></>;
@@ -221,6 +252,8 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({
           workflow={workflow}
           renderMode={renderMode}
           onOpenArtifacts={onOpenArtifacts}
+          thoughtSessions={thoughtSessions}
+          onToggleThoughtSession={onToggleThoughtSession}
         />
       </Layout>
     </>

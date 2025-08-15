@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Card, Input, Layout, Typography, Alert, Spin, Menu, Dropdown, Tag } from 'antd';
+import ThoughtsBox, { ThoughtEntry } from './ThoughtsBox';
 import { getWorkflowInputs } from '@/app/lib/workflow';
 import { useGetWorkflowByIdQuery, useTestWorkflowMutation } from '@/app/workflows/workflowsApi';
 import { useListTasksQuery } from '@/app/tasks/tasksApi';
@@ -59,12 +60,18 @@ export interface WorkflowAppInputsViewProps {
   workflow?: Workflow;
   tasks?: CrewAITaskMetadata[];
   onOpenArtifacts?: () => void;
+  thoughts?: ThoughtEntry[];
+  thoughtsCollapsed?: boolean;
+  onToggleThoughts?: (next: boolean) => void;
 }
 
 const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({
   workflow,
   tasks,
   onOpenArtifacts,
+  thoughts = [],
+  thoughtsCollapsed = false,
+  onToggleThoughts = () => {},
 }) => {
   const dispatch = useAppDispatch();
   const inputs = useAppSelector(selectWorkflowAppStandardInputs);
@@ -563,6 +570,14 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({
             <Button icon={<MoreOutlined />} />
           </Dropdown>
         </div>
+
+        {/* Thoughts above output box for non-conversational workflows */}
+        <ThoughtsBox
+          entries={thoughts}
+          isCollapsed={thoughtsCollapsed}
+          onToggle={onToggleThoughts}
+          style={{ marginBottom: 12 }}
+        />
 
         <div
           style={{
