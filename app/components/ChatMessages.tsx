@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Input, Button, Avatar, Layout, Spin, Tooltip, Menu, Dropdown, Tag } from 'antd';
 import {
   UserOutlined,
@@ -10,10 +10,22 @@ import {
   DownloadOutlined,
   ClearOutlined,
   MoreOutlined,
+  FileOutlined,
+  FilePdfOutlined,
+  FileImageOutlined,
+  FileTextOutlined,
+  CodeOutlined,
+  FileExcelOutlined,
+  FileWordOutlined,
+  FileZipOutlined,
+  VideoCameraOutlined,
+  AudioOutlined,
+  DatabaseOutlined,
 } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
+import { visit } from 'unist-util-visit';
 import { useAppDispatch, useAppSelector } from '../lib/hooks/hooks';
 import {
   selectWorkflowAppChatUserInput,
@@ -33,6 +45,9 @@ import {
 import showdown from 'showdown';
 import FileUploadButton from './FileUploadButton';
 import ThoughtsBox, { ThoughtEntry } from './workflowApp/ThoughtsBox';
+import ArtifactPreviewModal, {
+  FileInfo as ArtifactFileInfo,
+} from '@/app/components/workflowApp/ArtifactPreviewModal';
 
 const { TextArea } = Input;
 
@@ -74,6 +89,247 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   const sessionDirectory = useAppSelector(selectWorkflowSessionDirectory);
   const { data: workflowData } = useGetWorkflowDataQuery();
   const dispatch = useAppDispatch();
+  const [previewVisible, setPreviewVisible] = useState<boolean>(false);
+  const [selectedFile, setSelectedFile] = useState<ArtifactFileInfo | null>(null);
+
+  // Combine artifacts available via Redux session files with server directory listing for robust lookup
+  const [availableArtifacts, setAvailableArtifacts] = useState<Record<string, ArtifactFileInfo>>(
+    {},
+  );
+  const availableArtifactsLower = useMemo(() => {
+    const m: Record<string, ArtifactFileInfo> = {};
+    for (const f of Object.values(availableArtifacts)) {
+      if (f?.name) m[f.name.toLowerCase()] = f;
+    }
+    return m;
+  }, [availableArtifacts]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const setFromDir = (dirFiles: ArtifactFileInfo[] = []) => {
+      const byName: Record<string, ArtifactFileInfo> = {};
+      for (const f of dirFiles) {
+        if (f && f.name) byName[f.name] = f;
+      }
+      if (isActive) setAvailableArtifacts(byName);
+    };
+
+    const fetchDir = async () => {
+      if (!sessionDirectory) {
+        setFromDir();
+        return;
+      }
+      try {
+        const res = await fetch(
+          `/api/file/listDirectory?directoryPath=${encodeURIComponent(sessionDirectory)}`,
+        );
+        const data = await res.json();
+        if (res.ok && Array.isArray(data?.files)) {
+          setFromDir(
+            data.files.map((f: any) => ({
+              name: f.name,
+              path: f.path,
+              size: f.size ?? 0,
+              lastModified: f.lastModified ?? null,
+            })),
+          );
+        } else {
+          setFromDir();
+        }
+      } catch {
+        setFromDir();
+      }
+    };
+
+    fetchDir();
+    const id = setInterval(fetchDir, 5000);
+    return () => {
+      isActive = false;
+      clearInterval(id);
+    };
+  }, [sessionDirectory]);
+
+  const openPreview = (fileName: string) => {
+    const match = availableArtifacts[fileName] || availableArtifactsLower[fileName.toLowerCase()];
+    if (!match) return;
+    setSelectedFile(match);
+    setPreviewVisible(true);
+  };
+
+  const artifactMapKey = useMemo(() => {
+    const entries = Object.values(availableArtifacts)
+      .map((f) => `${f.name}:${f.size}`)
+      .sort();
+    return entries.join('|');
+  }, [availableArtifacts]);
+
+  const getFileIcon = (fileName?: string) => {
+    const size = 12;
+    if (!fileName) return <FileOutlined style={{ color: '#666', fontSize: size }} />;
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    if (ext === 'pdf') return <FilePdfOutlined style={{ color: '#ff4d4f', fontSize: size }} />;
+    if (['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'svg', 'ico'].includes(ext || ''))
+      return <FileImageOutlined style={{ color: '#52c41a', fontSize: size }} />;
+    if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv'].includes(ext || ''))
+      return <VideoCameraOutlined style={{ color: '#722ed1', fontSize: size }} />;
+    if (['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a'].includes(ext || ''))
+      return <AudioOutlined style={{ color: '#fa8c16', fontSize: size }} />;
+    if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2'].includes(ext || ''))
+      return <FileZipOutlined style={{ color: '#faad14', fontSize: size }} />;
+    if (
+      [
+        'py',
+        'js',
+        'ts',
+        'tsx',
+        'jsx',
+        'java',
+        'cpp',
+        'c',
+        'cs',
+        'php',
+        'rb',
+        'go',
+        'rs',
+        'swift',
+        'kt',
+      ].includes(ext || '')
+    )
+      return <CodeOutlined style={{ color: '#722ed1', fontSize: size }} />;
+    if (['html', 'css', 'scss', 'sass', 'less'].includes(ext || ''))
+      return <CodeOutlined style={{ color: '#1890ff', fontSize: size }} />;
+    if (['json', 'xml', 'yaml', 'yml', 'toml', 'ini', 'conf', 'config'].includes(ext || ''))
+      return <DatabaseOutlined style={{ color: '#1890ff', fontSize: size }} />;
+    if (['csv', 'xlsx', 'xls'].includes(ext || ''))
+      return <FileExcelOutlined style={{ color: '#52c41a', fontSize: size }} />;
+    if (['doc', 'docx', 'rtf'].includes(ext || ''))
+      return <FileWordOutlined style={{ color: '#1890ff', fontSize: size }} />;
+    if (['log', 'logs'].includes(ext || ''))
+      return <FileTextOutlined style={{ color: '#fa8c16', fontSize: size }} />;
+    if (['txt', 'md', 'readme'].includes(ext || '') || fileName.toLowerCase().includes('readme'))
+      return <FileTextOutlined style={{ color: '#52c41a', fontSize: size }} />;
+    return <FileOutlined style={{ color: '#666', fontSize: size }} />;
+  };
+
+  // rehype plugin to replace file-like text and links with artifact buttons
+  const artifactButtonRehype = useMemo(() => {
+    // Avoid lookbehind for cross-browser support; simple word boundary matching
+    const FILE_LIKE = /\b[\w()_\-\s]+\.[A-Za-z0-9]{1,10}\b/g;
+
+    const resolveName = (name: string) => {
+      if (!name) return null;
+      const exact = availableArtifacts[name];
+      if (exact) return exact.name;
+      const lower = availableArtifactsLower[name.toLowerCase()];
+      return lower ? lower.name : null;
+    };
+
+    const transformText = (node: any, index: number, parent: any) => {
+      const value: string = node.value;
+      FILE_LIKE.lastIndex = 0;
+      const parts: any[] = [];
+      let lastIndex = 0;
+      let match: RegExpExecArray | null;
+      while ((match = FILE_LIKE.exec(value)) !== null) {
+        const [full] = match;
+        const start = match.index;
+        const end = start + full.length;
+        if (start > lastIndex) parts.push({ type: 'text', value: value.slice(lastIndex, start) });
+        const resolved = resolveName(full);
+        if (resolved) {
+          parts.push({
+            type: 'element',
+            tagName: 'span',
+            properties: {
+              className: ['artifact-inline-button'],
+              'data-filename': resolved,
+              style:
+                'display:inline-flex;align-items:center;gap:6px;padding:2px 6px;border:1px solid #e8e8e8;border-radius:12px;background:#fafafa;color:#000;font-size:12px;cursor:pointer;',
+            },
+            children: [{ type: 'text', value: resolved }],
+          });
+        } else {
+          parts.push({ type: 'text', value: full });
+        }
+        lastIndex = end;
+      }
+      if (parts.length) {
+        if (lastIndex < value.length) parts.push({ type: 'text', value: value.slice(lastIndex) });
+        parent.children.splice(index, 1, ...parts);
+      }
+    };
+
+    return () => (tree: any) => {
+      // Replace <a> nodes that point to artifact filenames (by link text or last path segment)
+      visit(tree, 'element', (node: any, index: number | undefined, parent: any) => {
+        if (!parent || typeof index !== 'number') return;
+        if (node.tagName === 'a') {
+          const href: string | undefined = node.properties?.href;
+          let label = '';
+          if (
+            Array.isArray(node.children) &&
+            node.children.length === 1 &&
+            node.children[0].type === 'text'
+          ) {
+            label = String(node.children[0].value || '').trim();
+          }
+          let candidate = label;
+          if (!candidate && href) {
+            try {
+              const parts = href.split('/');
+              candidate = parts[parts.length - 1] || '';
+            } catch {}
+          }
+          const resolved = resolveName(candidate);
+          if (resolved) {
+            parent.children[index] = {
+              type: 'element',
+              tagName: 'span',
+              properties: {
+                className: ['artifact-inline-button'],
+                'data-filename': resolved,
+                style:
+                  'display:inline-flex;align-items:center;gap:6px;padding:2px 6px;border:1px solid #e8e8e8;border-radius:12px;background:#fafafa;color:#000;font-size:12px;cursor:pointer;',
+              },
+              children: [{ type: 'text', value: resolved }],
+            };
+          }
+        } else if (node.tagName === 'code') {
+          if (
+            Array.isArray(node.children) &&
+            node.children.length === 1 &&
+            node.children[0].type === 'text'
+          ) {
+            const txt = String(node.children[0].value || '').trim();
+            const resolved = resolveName(txt);
+            if (resolved) {
+              parent.children[index] = {
+                type: 'element',
+                tagName: 'span',
+                properties: {
+                  className: ['artifact-inline-button'],
+                  'data-filename': resolved,
+                  style:
+                    'display:inline-flex;align-items:center;gap:6px;padding:2px 6px;border:1px solid #e8e8e8;border-radius:12px;background:#fafafa;color:#000;font-size:12px;cursor:pointer;',
+                },
+                children: [{ type: 'text', value: resolved }],
+              };
+            }
+          }
+        }
+      });
+
+      // Replace plain text occurrences (skip pre/script/style)
+      visit(tree, 'text', (node: any, index: number | undefined, parent: any) => {
+        if (!node.value || typeof node.value !== 'string') return;
+        if (typeof index !== 'number' || !parent || !Array.isArray(parent.children)) return;
+        if (parent.type === 'element' && ['pre', 'script', 'style'].includes(parent.tagName))
+          return;
+        transformText(node, index, parent);
+      });
+    };
+  }, [availableArtifacts, availableArtifactsLower]);
 
   // Local attachment state for conversational view with individual file tracking
   const [fileStates, setFileStates] = useState<{
@@ -226,6 +482,11 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
 
   return (
     <>
+      <ArtifactPreviewModal
+        visible={previewVisible}
+        file={selectedFile}
+        onClose={() => setPreviewVisible(false)}
+      />
       <div
         style={{
           flex: 1,
@@ -317,7 +578,57 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                       '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
                   }}
                 >
-                  <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                  <ReactMarkdown
+                    key={artifactMapKey}
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeRaw, artifactButtonRehype]}
+                    components={{
+                      span: ({ node, ...props }) => {
+                        const propsAny = props as any;
+                        if (
+                          propsAny &&
+                          propsAny['data-filename'] &&
+                          propsAny.className?.toString().includes('artifact-inline-button')
+                        ) {
+                          const fileName = propsAny['data-filename'] as string;
+                          const exists = !!availableArtifacts[fileName];
+                          if (!exists) return <span {...props} />;
+                          return (
+                            <button
+                              onClick={() => openPreview(fileName)}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 6,
+                                padding: '2px 6px',
+                                height: 22,
+                                border: '1px solid #e8e8e8',
+                                borderRadius: 12,
+                                background: '#fafafa',
+                                color: '#000',
+                                fontSize: 12,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                                {getFileIcon(fileName)}
+                              </span>
+                              <span
+                                style={{
+                                  maxWidth: 200,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                }}
+                              >
+                                {fileName}
+                              </span>
+                            </button>
+                          );
+                        }
+                        return <span {...props} />;
+                      },
+                    }}
+                  >
                     {message.content}
                   </ReactMarkdown>
                 </div>

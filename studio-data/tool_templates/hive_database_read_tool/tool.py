@@ -135,20 +135,81 @@ def _ensure_unique_output_path(filename_or_path: str, desired_extension: str) ->
     return f"{base}_{ts}{ext}"
 
 
-def run_tool(config: UserParameters, args: ToolParameters) -> Any:
-    connection = cmldata.get_connection(
-        config.hive_cai_data_connection_name,
-        parameters={
-            "USERNAME": config.workload_user,
-            "PASSWORD": config.workload_pass,
-        },
-    )
-
-    cursor = connection.get_cursor()
-
-    results: List[Dict[str, Any]] = []
-
+def _record_sql_attempt(sql: str, status: str, has_data: bool) -> None:
+    """
+    Append the SQL attempt to sql_attempt_history.json inside SESSION_DIRECTORY.
+    Each entry is an object: {"sql", "status", "has_data", "timestamp"}.
+    Only keep the latest 5 attempts (pop the first/oldest when at capacity).
+    Backward-compatible with older history files that stored a list of strings.
+    Fail silently if anything goes wrong.
+    """
     try:
+        session_dir = os.getenv("SESSION_DIRECTORY")
+        if not session_dir:
+            return
+        session_dir_abs = os.path.abspath(session_dir)
+        os.makedirs(session_dir_abs, exist_ok=True)
+
+        history_path = os.path.join(session_dir_abs, "sql_attempt_history.json")
+
+        history: List[Dict[str, Any]] = []
+        if os.path.exists(history_path):
+            try:
+                with open(history_path, "r", encoding="utf-8") as f_in:
+                    loaded = json.load(f_in)
+                    if isinstance(loaded, list):
+                        # Normalize legacy formats into dict entries
+                        normalized: List[Dict[str, Any]] = []
+                        for item in loaded:
+                            if isinstance(item, dict):
+                                normalized.append(item)
+                            else:
+                                normalized.append({
+                                    "sql": str(item),
+                                    "status": None,
+                                    "has_data": False,
+                                    "timestamp": None,
+                                })
+                        history = normalized
+            except Exception:  # noqa: BLE001
+                history = []
+
+        # Trim to last 4 if already too many, so we can append one and keep 5 total
+        if len(history) >= 5:
+            history = history[-4:]
+
+        attempt_record = {
+            "sql": sql,
+            "status": status,
+            "has_data": bool(has_data),
+            "timestamp": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+        }
+
+        history.append(attempt_record)
+
+        with open(history_path, "w", encoding="utf-8") as f_out:
+            json.dump(history, f_out, ensure_ascii=False, indent=2)
+    except Exception:  # noqa: BLE001
+        # Best-effort only; never fail the tool due to history recording errors
+        pass
+
+
+def run_tool(config: UserParameters, args: ToolParameters) -> Any:
+    results: List[Dict[str, Any]] = []
+    has_any_data: bool = False
+    connection = None
+    cursor = None
+    try:
+        connection = cmldata.get_connection(
+            config.hive_cai_data_connection_name,
+            parameters={
+                "USERNAME": config.workload_user,
+                "PASSWORD": config.workload_pass,
+            },
+        )
+
+        cursor = connection.get_cursor()
+
         database_to_use = args.database or config.default_database
         if database_to_use:
             cursor.execute(f"USE {database_to_use}")
@@ -161,6 +222,7 @@ def run_tool(config: UserParameters, args: ToolParameters) -> Any:
 
         for statement_index, statement in enumerate(statements):
             if not _is_read_only_statement(statement):
+                _record_sql_attempt(args.sql, status="blocked", has_data=False)
                 return {
                     "error": (
                         f"Statement {statement_index} is not allowed in read-only mode: "
@@ -190,6 +252,8 @@ def run_tool(config: UserParameters, args: ToolParameters) -> Any:
                         "rows": row_dicts,
                     }
                 )
+                if len(row_dicts) > 0:
+                    has_any_data = True
             else:
                 rowcount = getattr(cursor, "rowcount", None)
                 results.append(
@@ -239,11 +303,17 @@ def run_tool(config: UserParameters, args: ToolParameters) -> Any:
                 f_out.write(json.dumps(payload, ensure_ascii=False, indent=2))
 
         # Return object with basename and statements count
+        _record_sql_attempt(args.sql, status="success", has_data=has_any_data)
         return {"output_file": os.path.basename(unique_path), "statements_count": len(statements)}
     except Exception as error:  # noqa: BLE001
+        _record_sql_attempt(args.sql, status="error", has_data=False)
         return {"error": f"SQL execution failed: {error}"}
     finally:
-        connection.close()
+        try:
+            if connection is not None:
+                connection.close()
+        except Exception:
+            pass
 
 
 OUTPUT_KEY = "tool_output"

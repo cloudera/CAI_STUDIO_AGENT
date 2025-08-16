@@ -229,13 +229,13 @@ def estimate_token_count(text: str) -> int:
     return len(text) // 4
 
 
-def truncate_content_for_llm(content: str, max_tokens: int = 25000) -> tuple[str, bool, dict]:
+def truncate_content_for_llm(content: str, max_tokens: int = 10000) -> tuple[str, bool, dict]:
     """
     Truncate content based on estimated token count to prevent LLM API failures.
     
     Args:
         content: The content to check and potentially truncate
-        max_tokens: Maximum number of tokens allowed (default: 25000)
+        max_tokens: Maximum number of tokens allowed (default: 10000)
         
     Returns:
         Tuple of (truncated_content, was_truncated, truncation_info)
@@ -285,9 +285,12 @@ def handle_list_operation(workspace_path: str) -> dict:
     files: List[Dict[str, Any]] = []
     total_size = 0
     for root, dirs, filenames in os.walk(workspace_path):
-        # Skip symlinks to avoid escaping workspace unintentionally
-        dirs[:] = [d for d in dirs if not os.path.islink(os.path.join(root, d))]
+        # Skip symlinks to avoid escaping workspace unintentionally and skip hidden directories (e.g., .venv)
+        dirs[:] = [d for d in dirs if not os.path.islink(os.path.join(root, d)) and not d.startswith('.')]
         for fname in filenames:
+            # Skip hidden files (starting with a dot) and symlinked files
+            if fname.startswith('.'):  
+                continue
             abs_path = os.path.join(root, fname)
             # Skip symlinked files
             if os.path.islink(abs_path):

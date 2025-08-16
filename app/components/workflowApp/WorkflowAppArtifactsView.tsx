@@ -10,7 +10,7 @@ import {
   Row,
   Col,
   Badge,
-  Modal,
+  Input,
 } from 'antd';
 import {
   FileOutlined,
@@ -38,6 +38,7 @@ import { Workflow } from '@/studio/proto/agent_studio';
 import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
 import { useAppSelector } from '@/app/lib/hooks/hooks';
 import { selectWorkflowSessionDirectory } from '@/app/workflows/editorSlice';
+import ArtifactPreviewModal from '@/app/components/workflowApp/ArtifactPreviewModal';
 
 const { Text } = Typography;
 
@@ -70,6 +71,7 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [projectUrlInfo, setProjectUrlInfo] = useState<ProjectUrlInfo | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Get workflow data to check render mode and get workflow directory
   const { data: workflowData } = useGetWorkflowDataQuery();
@@ -81,6 +83,7 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
     blobUrl: string | null;
     loading: boolean;
     error: string | null;
+    tooLarge: boolean;
   }>({
     visible: false,
     file: null,
@@ -89,6 +92,7 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
     blobUrl: null,
     loading: false,
     error: null,
+    tooLarge: false,
   });
 
   const sessionDirectory = useAppSelector(selectWorkflowSessionDirectory);
@@ -321,109 +325,18 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
     }
   };
 
-  // Handle file preview
-  const handlePreview = async (file: FileInfo) => {
-    console.log('Preview file:', file); // Debug logging
-    console.log('File path being used:', file.path); // Debug logging
-
+  // Handle file preview (shared modal handles fetching/rendering)
+  const handlePreview = (file: FileInfo) => {
     setPreviewModal({
       visible: true,
       file,
       content: null,
       blob: null,
       blobUrl: null,
-      loading: true,
+      loading: false,
       error: null,
+      tooLarge: false,
     });
-
-    // Guard: very large files should not be previewed – instruct user to download
-    const MAX_PREVIEW_BYTES = 25 * 1024 * 1024; // 25MB
-    if (typeof file.size === 'number' && file.size > MAX_PREVIEW_BYTES) {
-      setPreviewModal((prev) => ({
-        ...prev,
-        loading: false,
-        error:
-          'This file is too large to preview in the browser. Please download it to view locally.',
-      }));
-      return;
-    }
-
-    try {
-      // Download the file as a blob
-      const downloadUrl = `/api/file/download?filePath=${encodeURIComponent(file.path)}`;
-      console.log('Download URL:', downloadUrl); // Debug logging
-
-      const response = await fetch(downloadUrl);
-      console.log('Download response status:', response.status); // Debug logging
-      console.log('Download response headers:', response.headers.get('content-type')); // Debug logging
-
-      if (response.ok) {
-        const blob = await response.blob();
-        console.log('Download response blob size:', blob.size); // Debug logging
-        console.log('Download response blob type:', blob.type); // Debug logging
-
-        // Debug: Check if blob contains JSON (indicating it's a directory listing instead of file content)
-        if (blob.size < 1024) {
-          // Only check small blobs
-          try {
-            const tempText = await blob.text();
-            console.log(
-              'Download response blob content (first 500 chars):',
-              tempText.substring(0, 500),
-            ); // Debug logging
-            if (tempText.includes('"files":[') || tempText.includes('"is_dir"')) {
-              console.error('ERROR: Received directory listing instead of file content!');
-              setPreviewModal((prev) => ({
-                ...prev,
-                error:
-                  'Received directory listing instead of file content. Check console for details.',
-                loading: false,
-              }));
-              return;
-            }
-          } catch (err) {
-            console.log('Could not read blob as text for debugging:', err);
-          }
-        }
-
-        const blobUrl = window.URL.createObjectURL(blob);
-
-        // For text files, also read the content as text
-        let textContent = null;
-        const isTextFile = isTextBasedFile(file.name);
-
-        if (isTextFile && blob.size < 10 * 1024 * 1024) {
-          // Only read text for files < 10MB
-          try {
-            textContent = await blob.text();
-          } catch (err) {
-            console.warn('Failed to read blob as text:', err);
-          }
-        }
-
-        setPreviewModal((prev) => ({
-          ...prev,
-          blob,
-          blobUrl,
-          content: textContent,
-          loading: false,
-        }));
-      } else {
-        const data = await response.json();
-        console.log('Download API error response:', data); // Debug logging
-        setPreviewModal((prev) => ({
-          ...prev,
-          error: data.error || 'Failed to load file',
-          loading: false,
-        }));
-      }
-    } catch (err) {
-      setPreviewModal((prev) => ({
-        ...prev,
-        error: 'Failed to load file content',
-        loading: false,
-      }));
-    }
   };
 
   // Handle file download
@@ -461,229 +374,19 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
       blobUrl: null,
       loading: false,
       error: null,
+      tooLarge: false,
     });
   };
 
-  // Check if a file is text-based
-  const isTextBasedFile = (fileName: string): boolean => {
-    const textExtensions = [
-      'txt',
-      'log',
-      'md',
-      'json',
-      'py',
-      'js',
-      'ts',
-      'tsx',
-      'jsx',
-      'css',
-      'html',
-      'xml',
-      'yaml',
-      'yml',
-      'ini',
-      'conf',
-      'config',
-      'csv',
-      'sql',
-      'java',
-      'cpp',
-      'c',
-      'h',
-      'cs',
-      'php',
-      'rb',
-      'go',
-      'rs',
-      'sh',
-      'bash',
-      'zsh',
-      'fish',
-      'ps1',
-      'bat',
-      'cmd',
-      'dockerfile',
-      'gitignore',
-      'env',
-      'properties',
-      'toml',
-    ];
-
-    const extension = fileName.split('.').pop()?.toLowerCase();
-    return (
-      textExtensions.includes(extension || '') ||
-      fileName.toLowerCase().includes('readme') ||
-      fileName.toLowerCase().includes('license') ||
-      fileName.toLowerCase().includes('changelog')
-    );
-  };
-
-  // Get file type category
-  const getFileType = (fileName: string): string => {
-    const extension = fileName.split('.').pop()?.toLowerCase();
-
-    if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].includes(extension || '')) {
-      return 'image';
-    }
-    if (['pdf'].includes(extension || '')) {
-      return 'pdf';
-    }
-    if (['mp4', 'webm', 'ogg', 'mov', 'avi'].includes(extension || '')) {
-      return 'video';
-    }
-    if (['mp3', 'wav', 'ogg', 'flac', 'm4a'].includes(extension || '')) {
-      return 'audio';
-    }
-    if (isTextBasedFile(fileName)) {
-      return 'text';
-    }
-
-    return 'binary';
-  };
-
-  // Render file content based on file type
-  const renderFileContent = (file: FileInfo, content: string | null, blobUrl: string | null) => {
-    if (!blobUrl) return null;
-
-    const fileType = getFileType(file.name);
-
-    switch (fileType) {
-      case 'image':
-        return (
-          <div style={{ textAlign: 'center', width: '100%' }}>
-            <img
-              src={blobUrl}
-              alt={file.name}
-              style={{
-                maxWidth: '100%',
-                maxHeight: '60vh',
-                objectFit: 'contain',
-                border: '1px solid #d9d9d9',
-                borderRadius: '4px',
-              }}
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-                const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
-                if (nextElement) {
-                  nextElement.style.display = 'block';
-                }
-              }}
-            />
-            <div style={{ display: 'none', padding: '40px' }}>
-              <FileOutlined style={{ fontSize: '48px', color: '#d9d9d9', marginBottom: '16px' }} />
-              <Typography.Title level={4} type="secondary">
-                Cannot Display Image
-              </Typography.Title>
-              <Typography.Text type="secondary">
-                This image file cannot be displayed in the browser.
-              </Typography.Text>
-            </div>
-          </div>
-        );
-
-      case 'pdf':
-        return (
-          <div style={{ width: '100%', height: '60vh' }}>
-            <embed
-              src={blobUrl}
-              type="application/pdf"
-              width="100%"
-              height="100%"
-              style={{ border: '1px solid #d9d9d9', borderRadius: '4px' }}
-            />
-          </div>
-        );
-
-      case 'video':
-        return (
-          <div style={{ textAlign: 'center', width: '100%' }}>
-            <video
-              controls
-              style={{
-                maxWidth: '100%',
-                maxHeight: '60vh',
-                border: '1px solid #d9d9d9',
-                borderRadius: '4px',
-              }}
-            >
-              <source src={blobUrl} />
-              Your browser does not support the video tag.
-            </video>
-          </div>
-        );
-
-      case 'audio':
-        return (
-          <div style={{ textAlign: 'center', width: '100%', padding: '40px' }}>
-            <FileOutlined style={{ fontSize: '48px', color: '#d9d9d9', marginBottom: '16px' }} />
-            <Typography.Title level={4} type="secondary">
-              Audio File
-            </Typography.Title>
-            <audio controls style={{ width: '100%', maxWidth: '400px', marginTop: '16px' }}>
-              <source src={blobUrl} />
-              Your browser does not support the audio tag.
-            </audio>
-          </div>
-        );
-
-      case 'text':
-        if (!content) {
-          return (
-            <div style={{ textAlign: 'center', padding: '40px' }}>
-              <FileOutlined style={{ fontSize: '48px', color: '#d9d9d9', marginBottom: '16px' }} />
-              <Typography.Title level={4} type="secondary">
-                Text File
-              </Typography.Title>
-              <Typography.Text type="secondary">
-                File is too large to display as text or failed to load content.
-                <br />
-                Use the download button to save the file.
-              </Typography.Text>
-            </div>
-          );
-        }
-
-        return (
-          <div style={{ width: '100%' }}>
-            <pre
-              style={{
-                backgroundColor: '#f5f5f5',
-                border: '1px solid #d9d9d9',
-                borderRadius: '4px',
-                padding: '12px',
-                margin: 0,
-                whiteSpace: 'pre-wrap',
-                wordWrap: 'break-word',
-                fontSize: '12px',
-                fontFamily: 'Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace',
-                lineHeight: '1.4',
-                maxHeight: '60vh',
-                overflow: 'auto',
-              }}
-            >
-              {content}
-            </pre>
-          </div>
-        );
-
-      default: // binary
-        return (
-          <div style={{ textAlign: 'center', padding: '40px' }}>
-            <FileOutlined style={{ fontSize: '48px', color: '#d9d9d9', marginBottom: '16px' }} />
-            <Typography.Title level={4} type="secondary">
-              Binary File
-            </Typography.Title>
-            <Typography.Text type="secondary">
-              This file contains binary data and cannot be previewed.
-              <br />
-              Use the download button to save the file.
-            </Typography.Text>
-          </div>
-        );
-    }
-  };
+  // (Preview rendering moved to shared ArtifactPreviewModal)
 
   const cmlFilesUrl = getCMLFilesUrl();
+
+  const visibleFiles = React.useMemo(() => {
+    const query = (searchQuery || '').trim().toLowerCase();
+    if (!query) return files;
+    return files.filter((f) => (f.name || '').toLowerCase().includes(query));
+  }, [files, searchQuery]);
 
   // Check if we have workflow data in either studio mode (workflow prop) or workflow mode (workflowData)
   const hasWorkflowData = Boolean(workflow || workflowData?.renderMode === 'workflow');
@@ -739,6 +442,14 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
           )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+          <Input
+            allowClear
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            size="small"
+            placeholder="Search artifacts"
+            style={{ width: 220 }}
+          />
           <Badge dot color="green">
             <Tooltip title="Auto-refreshing every 5 seconds">
               <ClockCircleOutlined style={{ color: '#52c41a', fontSize: '14px' }} />
@@ -767,14 +478,18 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
             <Text type="secondary">Loading artifacts...</Text>
           </div>
         </div>
-      ) : files.length === 0 ? (
-        <Empty
-          description="No artifacts found in this session"
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-        />
+      ) : visibleFiles.length === 0 ? (
+        searchQuery.trim().length > 0 ? (
+          <Empty description="No matching artifacts" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        ) : (
+          <Empty
+            description="No artifacts found in this session"
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+          />
+        )
       ) : (
         <Row gutter={[6, 6]}>
-          {files.map((file, index) => (
+          {visibleFiles.map((file, index) => (
             <Col key={`${file.name}-${index}`} xs={24} sm={12} md={8} lg={6} xl={6}>
               <div
                 style={{
@@ -888,59 +603,11 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
         </Row>
       )}
 
-      {/* Preview Modal */}
-      <Modal
-        title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {previewModal.file && getFileIcon(previewModal.file.name)}
-            <span>{previewModal.file?.name || 'File Preview'}</span>
-            {previewModal.file && (
-              <Text type="secondary" style={{ fontSize: '12px' }}>
-                ({formatFileSize(previewModal.file.size)})
-              </Text>
-            )}
-          </div>
-        }
-        open={previewModal.visible}
-        onCancel={closePreviewModal}
-        footer={[
-          <Button
-            key="download"
-            icon={<DownloadOutlined />}
-            onClick={() => previewModal.file && handleDownload(previewModal.file)}
-          >
-            Download
-          </Button>,
-          <Button key="close" onClick={closePreviewModal}>
-            Close
-          </Button>,
-        ]}
-        width="80%"
-        style={{ top: 20 }}
-        styles={{
-          body: {
-            maxHeight: '70vh',
-            overflow: 'auto',
-            padding: '16px',
-          },
-        }}
-      >
-        {previewModal.loading ? (
-          <div style={{ textAlign: 'center', padding: '40px' }}>
-            <Spin size="large" />
-            <div style={{ marginTop: '16px' }}>
-              <Text type="secondary">Loading file content...</Text>
-            </div>
-          </div>
-        ) : previewModal.error ? (
-          <Alert message="Error" description={previewModal.error} type="error" showIcon />
-        ) : (
-          <div style={{ width: '100%' }}>
-            {previewModal.file &&
-              renderFileContent(previewModal.file, previewModal.content, previewModal.blobUrl)}
-          </div>
-        )}
-      </Modal>
+      <ArtifactPreviewModal
+        visible={previewModal.visible}
+        file={previewModal.file}
+        onClose={closePreviewModal}
+      />
     </div>
   );
 };

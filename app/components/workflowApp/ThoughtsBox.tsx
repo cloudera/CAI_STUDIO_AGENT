@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Tag, Button, Tooltip, Modal, Spin, Typography } from 'antd';
+import { Card, Tag, Button, Tooltip } from 'antd';
 import {
   FileOutlined,
   FilePdfOutlined,
@@ -14,11 +14,10 @@ import {
   DatabaseOutlined,
   RightOutlined,
   DownOutlined,
-  EyeOutlined,
-  DownloadOutlined,
 } from '@ant-design/icons';
 import { useAppSelector } from '@/app/lib/hooks/hooks';
 import { selectWorkflowSessionDirectory } from '@/app/workflows/editorSlice';
+import ArtifactPreviewModal from '@/app/components/workflowApp/ArtifactPreviewModal';
 
 export interface ThoughtEntry {
   id: string;
@@ -67,14 +66,8 @@ const ThoughtsBox: React.FC<ThoughtsBoxProps> = ({
   const [loading, setLoading] = React.useState<boolean>(false);
   const initialPathsRef = React.useRef<Set<string>>(new Set());
   const artifactsScrollRef = React.useRef<HTMLDivElement | null>(null);
-  const [preview, setPreview] = React.useState<{
-    visible: boolean;
-    file: FileInfo | null;
-    blobUrl: string | null;
-    content: string | null;
-    loading: boolean;
-    error: string | null;
-  }>({ visible: false, file: null, blobUrl: null, content: null, loading: false, error: null });
+  const [previewVisible, setPreviewVisible] = React.useState<boolean>(false);
+  const [selectedFile, setSelectedFile] = React.useState<FileInfo | null>(null);
 
   React.useEffect(() => {
     if (!isCollapsed && artifactsScrollRef.current) {
@@ -240,92 +233,9 @@ const ThoughtsBox: React.FC<ThoughtsBoxProps> = ({
     return textExt.includes(ext || '');
   };
 
-  const getFileType = (fileName: string) => {
-    const ext = fileName.split('.').pop()?.toLowerCase();
-    if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].includes(ext || '')) return 'image';
-    if (ext === 'pdf') return 'pdf';
-    if (['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv'].includes(ext || '')) return 'video';
-    if (['mp3', 'wav', 'ogg', 'flac', 'm4a'].includes(ext || '')) return 'audio';
-    if (isTextBasedFile(fileName)) return 'text';
-    return 'binary';
-  };
-
-  const previewFile = async (file: FileInfo) => {
-    setPreview({ visible: true, file, blobUrl: null, content: null, loading: true, error: null });
-    try {
-      const downloadUrl = `/api/file/download?filePath=${encodeURIComponent(file.path)}`;
-      const response = await fetch(downloadUrl);
-      if (!response.ok) throw new Error('Failed to download file');
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      let content: string | null = null;
-      if (getFileType(file.name) === 'text' && blob.size < 10 * 1024 * 1024) {
-        try {
-          content = await blob.text();
-        } catch {}
-      }
-      setPreview((p) => ({ ...p, blobUrl, content, loading: false }));
-    } catch (e: any) {
-      setPreview((p) => ({ ...p, loading: false, error: e?.message || 'Failed to preview file' }));
-    }
-  };
-
-  const closePreview = () => {
-    if (preview.blobUrl) URL.revokeObjectURL(preview.blobUrl);
-    setPreview({
-      visible: false,
-      file: null,
-      blobUrl: null,
-      content: null,
-      loading: false,
-      error: null,
-    });
-  };
-
-  const renderPreview = () => {
-    const file = preview.file;
-    if (!file || !preview.blobUrl) return null;
-    const type = getFileType(file.name);
-    if (type === 'image')
-      return <img src={preview.blobUrl} style={{ maxWidth: '100%', maxHeight: '60vh' }} />;
-    if (type === 'pdf')
-      return <embed src={preview.blobUrl} type="application/pdf" width="100%" height="60vh" />;
-    if (type === 'video')
-      return (
-        <video controls style={{ maxWidth: '100%', maxHeight: '60vh' }}>
-          <source src={preview.blobUrl} />
-        </video>
-      );
-    if (type === 'audio')
-      return (
-        <audio controls style={{ width: '100%' }}>
-          <source src={preview.blobUrl} />
-        </audio>
-      );
-    if (type === 'text')
-      return (
-        <pre
-          style={{
-            backgroundColor: '#f5f5f5',
-            border: '1px solid #d9d9d9',
-            borderRadius: 4,
-            padding: 12,
-            whiteSpace: 'pre-wrap',
-            wordWrap: 'break-word',
-            fontSize: 12,
-            maxHeight: '60vh',
-            overflow: 'auto',
-          }}
-        >
-          {preview.content}
-        </pre>
-      );
-    return (
-      <div style={{ textAlign: 'center', padding: 24 }}>
-        <FileOutlined style={{ fontSize: 36, color: '#d9d9d9' }} />
-        <div>Binary file preview not available.</div>
-      </div>
-    );
+  const openPreview = (file: FileInfo) => {
+    setSelectedFile(file);
+    setPreviewVisible(true);
   };
 
   return (
@@ -333,11 +243,11 @@ const ThoughtsBox: React.FC<ThoughtsBoxProps> = ({
       size="small"
       bodyStyle={{ padding: 8 }}
       style={{
-        backgroundColor: 'rgba(0,0,0,0.65)',
+        backgroundColor: '#fff8e7',
         backgroundImage:
-          'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
-        border: '1px solid rgba(255,255,255,0.06)',
-        boxShadow: '0 1px 6px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.03)',
+          'linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(255,248,230,0.9) 50%, rgba(255,255,255,0.85) 100%)',
+        border: '1px solid #efe7d9',
+        boxShadow: '0 1px 6px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.6)',
         borderRadius: 6,
         width: '100%',
         ...style,
@@ -350,7 +260,7 @@ const ThoughtsBox: React.FC<ThoughtsBoxProps> = ({
           100% { background-position: 200% 0; }
         }
         .thoughtsbox-shimmer-text {
-          background: linear-gradient(90deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.95) 50%, rgba(255,255,255,0.2) 100%);
+          background: linear-gradient(90deg, #000 0%, #000 45%, #ffffff 50%, #000 55%, #000 100%);
           background-size: 200% 100%;
           -webkit-background-clip: text;
           background-clip: text;
@@ -362,12 +272,18 @@ const ThoughtsBox: React.FC<ThoughtsBoxProps> = ({
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div
           onClick={() => onToggle(!isCollapsed)}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', color: '#fff' }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            cursor: 'pointer',
+            color: '#000',
+          }}
         >
           {isCollapsed ? (
-            <RightOutlined style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)' }} />
+            <RightOutlined style={{ fontSize: 10, color: 'rgba(0,0,0,0.45)' }} />
           ) : (
-            <DownOutlined style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)' }} />
+            <DownOutlined style={{ fontSize: 10, color: 'rgba(0,0,0,0.45)' }} />
           )}
           <div
             className={active ? 'thoughtsbox-shimmer-text' : undefined}
@@ -375,13 +291,13 @@ const ThoughtsBox: React.FC<ThoughtsBoxProps> = ({
               fontSize: 11,
               fontWeight: 600,
               opacity: 0.95,
-              color: active ? 'transparent' : '#fff',
+              color: active ? 'transparent' : '#000',
             }}
           >
             Thoughts
           </div>
         </div>
-        <span style={{ fontSize: 10, opacity: 0.8, color: '#ddd' }}>{entries.length}</span>
+        <span style={{ fontSize: 10, opacity: 0.8, color: '#000' }}>{entries.length}</span>
       </div>
       {!isCollapsed && (
         <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
@@ -396,16 +312,18 @@ const ThoughtsBox: React.FC<ThoughtsBoxProps> = ({
             }}
           >
             {entries.length === 0 && (
-              <div style={{ fontSize: 10, opacity: 0.8, color: '#ddd' }}>No thoughts yet…</div>
+              <div style={{ fontSize: 10, opacity: 0.8, color: '#000' }}>No thoughts yet…</div>
             )}
             {entries.map((entry) => (
               <div key={entry.id} style={{ marginBottom: 6 }}>
-                <div style={{ fontSize: 10, lineHeight: 1.4, whiteSpace: 'pre-wrap', color: '#fff' }}>
+                <div
+                  style={{ fontSize: 10, lineHeight: 1.4, whiteSpace: 'pre-wrap', color: '#000' }}
+                >
                   {entry.thought}
                 </div>
                 {entry.tool && (
-                  <div style={{ marginTop: 2 }}>
-                    <span style={{ fontSize: 10, opacity: 0.7, marginRight: 4, color: '#ccc' }}>
+                  <div style={{ marginTop: 12 }}>
+                    <span style={{ fontSize: 10, opacity: 0.9, marginRight: 4, color: '#000' }}>
                       Using Tool
                     </span>
                     <Tag style={{ fontSize: 10, padding: '0 6px', lineHeight: '16px', height: 18 }}>
@@ -414,8 +332,8 @@ const ThoughtsBox: React.FC<ThoughtsBoxProps> = ({
                   </div>
                 )}
                 {entry.coworker && (
-                  <div style={{ marginTop: 2 }}>
-                    <span style={{ fontSize: 10, opacity: 0.7, marginRight: 4, color: '#ccc' }}>
+                  <div style={{ marginTop: 12 }}>
+                    <span style={{ fontSize: 10, opacity: 0.9, marginRight: 4, color: '#000' }}>
                       Using Coworker
                     </span>
                     <Tag style={{ fontSize: 10, padding: '0 6px', lineHeight: '16px', height: 18 }}>
@@ -427,10 +345,10 @@ const ThoughtsBox: React.FC<ThoughtsBoxProps> = ({
             ))}
           </div>
           {/* Vertical divider */}
-          <div style={{ width: 1, background: '#333' }} />
+          <div style={{ width: 1, background: '#e8e8e8' }} />
           {/* Right: artifacts 20% */}
           <div style={{ flexBasis: '20%', display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ fontSize: 10, opacity: 0.9, color: '#eee' }}>Artifacts</div>
+            <div style={{ fontSize: 10, opacity: 0.9, color: '#000' }}>Artifacts</div>
             {((artifacts && artifacts.length > 0) || files.length > 0) && (
               <div
                 ref={artifactsScrollRef}
@@ -449,7 +367,7 @@ const ThoughtsBox: React.FC<ThoughtsBoxProps> = ({
                       type="default"
                       size="small"
                       icon={getFileIcon(f.name)}
-                      onClick={() => previewFile(f)}
+                      onClick={() => openPreview(f)}
                       style={{
                         padding: '0 6px',
                         height: 20,
@@ -464,6 +382,7 @@ const ThoughtsBox: React.FC<ThoughtsBoxProps> = ({
                           maxWidth: 90,
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
+                          color: '#000',
                         }}
                       >
                         {f.name}
@@ -477,39 +396,11 @@ const ThoughtsBox: React.FC<ThoughtsBoxProps> = ({
         </div>
       )}
 
-      <Modal
-        open={preview.visible}
-        onCancel={closePreview}
-        title={preview.file?.name || 'Artifact'}
-        footer={[
-          <Button
-            key="download"
-            icon={<DownloadOutlined />}
-            onClick={() => {
-              if (!preview.file) return;
-              const url = `/api/file/download?filePath=${encodeURIComponent(preview.file.path)}`;
-              window.open(url, '_blank');
-            }}
-          >
-            Download
-          </Button>,
-          <Button key="close" onClick={closePreview}>
-            Close
-          </Button>,
-        ]}
-        width="70%"
-        style={{ top: 40 }}
-      >
-        {preview.loading ? (
-          <div style={{ textAlign: 'center', padding: 24 }}>
-            <Spin />
-          </div>
-        ) : preview.error ? (
-          <div style={{ color: 'red' }}>{preview.error}</div>
-        ) : (
-          <div style={{ width: '100%' }}>{renderPreview()}</div>
-        )}
-      </Modal>
+      <ArtifactPreviewModal
+        visible={previewVisible}
+        file={selectedFile}
+        onClose={() => setPreviewVisible(false)}
+      />
     </Card>
   );
 };

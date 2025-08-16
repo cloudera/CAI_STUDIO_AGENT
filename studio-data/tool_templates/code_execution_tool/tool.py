@@ -2,29 +2,18 @@
 Python Code Execution Tool - CONTAINER-OPTIMIZED VERSION
 
 This tool allows secure execution of Python code within a session-scoped working directory.
-It accepts Python code, creates files in the session directory, installs required dependencies,
+It accepts Python code that can run in headless environment, creates files in the session directory, installs required dependencies,
 executes the code, and captures the output to a specified file.
 
-PERFORMANCE OPTIMIZATIONS:
-- Reuses virtual environments when possible (saves 30-60 seconds)
-- Caches package installations (saves 60-90 seconds)
-- Reduced retry attempts for faster execution
-- Smart artifact tracking with execution.json logging
-
-CONTAINER/PRODUCTION ENHANCEMENTS:
-- Automatic environment variable cleanup and safe defaults
-- Robust error handling patterns injection
-- Resource monitoring and memory management
-- Network operation retries with exponential backoff
-- File operation safety with permission fallbacks
-- Timeout protection and graceful degradation
-- Cross-platform compatibility improvements
+Capabilities:
+- The generated python code can be used to execute in headless environment.
+- The generated python code can be used to analyse data, select and filter data from big files.
+- The generated python code can be used to generate reports, charts, and other visualizations.
+- And there are many use cases for which this tool can be used.
 
 Security Features:
-- Restricts file operations to the SESSION_DIRECTORY working directory
-- Only allows Python code execution
-- Validates file paths to prevent directory traversal attacks
-- Isolates execution environment with enhanced safety
+- Restricts file operations to the SESSION_DIRECTORY working directory.
+- Only allows Python code execution that can run in headless environment.
 """
 
 import os
@@ -38,7 +27,7 @@ import ast
 import re
 import signal
 import tempfile
-from typing import Optional, Any, List, Tuple
+from typing import Optional, Any, List, Tuple, Union
 from pydantic import BaseModel, Field, validator
 
 # Try to import psutil for resource monitoring, graceful fallback if not available
@@ -119,7 +108,7 @@ class ToolParameters(BaseModel):
         description="The name of the file where the execution output will be stored (e.g., 'output.txt')"
     )
     
-    artifact_files: Optional[str] = Field(
+    artifact_files: Optional[Union[str, List[dict]]] = Field(
         default=None,
         description="JSON string containing list of expected output/artifact files that this code will produce. "
                     "These are files like CSV data files, PNG/JPG graphs, TXT reports, JSON results, etc. "
@@ -156,26 +145,34 @@ class ToolParameters(BaseModel):
     
     @validator('artifact_files')
     def validate_artifact_files(cls, v):
-        """Validate artifact files JSON format."""
+        """Validate artifact files JSON format (accept str or list and normalize to JSON string)."""
         if v is None:
             return v
-        
+
         try:
-            artifact_list = json.loads(v)
+            if isinstance(v, list):
+                artifact_list = v
+                v_out = json.dumps(v)
+            elif isinstance(v, str):
+                artifact_list = json.loads(v)
+                v_out = v
+            else:
+                raise ValueError("Artifact files must be valid JSON")
+
             if not isinstance(artifact_list, list):
                 raise ValueError("Artifact files must be a JSON list")
-            
+
             for item in artifact_list:
                 if not isinstance(item, dict) or 'file_name' not in item or 'description' not in item:
                     raise ValueError("Each artifact must have 'file_name' and 'description' fields")
-                
+
                 # Validate filename safety
                 file_name = item['file_name']
                 if '..' in file_name or '/' in file_name or '\\' in file_name:
                     raise ValueError(f"Artifact file name '{file_name}' cannot contain path separators")
-            
-            return v
-        except json.JSONDecodeError:
+
+            return v_out
+        except (json.JSONDecodeError, TypeError, ValueError):
             raise ValueError("Artifact files must be valid JSON")
     
     @validator('code')
