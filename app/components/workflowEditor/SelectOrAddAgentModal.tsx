@@ -45,7 +45,6 @@ import {
   selectEditorAgentViewIsOpen,
   selectEditorAgentViewStep,
   selectEditorAgentViewAgent,
-  selectEditorAgentViewCreateAgentTools,
   selectEditorAgentViewCreateAgentState,
   updatedEditorAgentViewCreateAgentToolTemplates,
   selectEditorAgentViewCreateAgentToolTemplates,
@@ -58,7 +57,6 @@ import {
 import {
   AgentTemplateMetadata,
   McpInstance,
-  Model,
   ToolInstance,
   UpdateAgentRequest,
   UpdateAgentResponse,
@@ -85,21 +83,6 @@ import { uploadFile } from '@/app/lib/fileUpload';
 
 const { Text } = Typography;
 const { TextArea } = Input;
-
-interface GenerateAgentPropertiesModalProps {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  onCancel: () => void;
-  form: FormInstance<{
-    name: string;
-    role: string;
-    backstory: string;
-    goal: string;
-    llm_provider_model_id: string;
-  }>;
-  llmModel: Model;
-  toolInstances: Record<string, ToolInstance>;
-}
 
 interface SelectAgentComponentProps {
   workflowId: string;
@@ -483,56 +466,15 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
         renderItem={(mcp) => (
           <List.Item>
             <div
-              style={{
-                borderRadius: '4px',
-                border: 'solid 1px #f0f0f0',
-                backgroundColor: '#fff',
-                width: '100%',
-                padding: '0',
-                display: 'flex',
-                flexDirection: 'column',
-                cursor: 'pointer',
-                transition: 'transform 0.2s, box-shadow 0.2s, background-color 0.2s',
-                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-              }}
+              className="rounded-md border border-solid border-gray-200 bg-white w-full p-0 flex flex-col cursor-pointer transition-all duration-200 shadow-sm hover:scale-[1.03] hover:shadow-md hover:bg-green-50"
               onClick={() => {
                 setClickedMcpInstance(mcp);
                 setAddMcpModalVisible(true);
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.03)';
-                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
-                e.currentTarget.style.backgroundColor = '#f6ffed';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
-                e.currentTarget.style.backgroundColor = '#fff';
-              }}
             >
-              <div
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  overflow: 'auto',
-                  padding: '12px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
-                  <div
-                    style={{
-                      width: '20px',
-                      height: '20px',
-                      minWidth: '20px',
-                      borderRadius: '50%',
-                      background: '#f1f1f1',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginRight: '4px',
-                    }}
-                  >
+              <div className="flex-1 flex flex-col overflow-auto p-3">
+                <div className="flex items-center min-w-0">
+                  <div className="w-5 h-5 min-w-[20px] rounded-full bg-gray-100 flex items-center justify-center mr-1">
                     <Image
                       src={
                         mcp.image_uri
@@ -543,23 +485,12 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                       width={16}
                       height={16}
                       preview={false}
-                      style={{
-                        borderRadius: '2px',
-                        objectFit: 'cover',
-                      }}
+                      className="rounded-sm object-cover"
                     />
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
+                  <div className="flex items-center min-w-0">
                     <Text
-                      style={{
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        maxWidth: '90%',
-                        display: 'inline-block',
-                      }}
+                      className="text-sm font-semibold whitespace-nowrap overflow-hidden text-ellipsis max-w-[90%] inline-block"
                       title={mcp.name}
                     >
                       {mcp.name}
@@ -576,49 +507,18 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                       }
                     >
                       {mcp.status === 'VALID' ? (
-                        <CheckCircleOutlined
-                          style={{
-                            color: '#52c41a',
-                            fontSize: '15px',
-                            fontWeight: 1000,
-                            marginLeft: '6px',
-                          }}
-                        />
+                        <CheckCircleOutlined className="text-green-500 text-base font-extrabold ml-1.5" />
                       ) : mcp.status === 'VALIDATING' ? (
-                        <ClockCircleOutlined
-                          style={{
-                            color: '#faad14',
-                            fontSize: '15px',
-                            fontWeight: 1000,
-                            marginLeft: '6px',
-                          }}
-                        />
+                        <ClockCircleOutlined className="text-yellow-500 text-base font-extrabold ml-1.5" />
                       ) : mcp.status === 'VALIDATION_FAILED' ? (
-                        <CloseCircleOutlined
-                          style={{
-                            color: '#f5222d',
-                            fontSize: '15px',
-                            fontWeight: 1000,
-                            marginLeft: '6px',
-                          }}
-                        />
+                        <CloseCircleOutlined className="text-red-500 text-base font-extrabold ml-1.5" />
                       ) : null}
                     </Tooltip>
                   </div>
                 </div>
               </div>
-              <Divider style={{ flexGrow: 0, margin: '0px' }} type="horizontal" />
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  flexGrow: 0,
-                  background: 'transparent',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  padding: '0px',
-                }}
-              >
+              <Divider className="flex-grow-0 m-0" type="horizontal" />
+              <div className="flex flex-row flex-grow-0 bg-transparent justify-center items-center p-0">
                 <Popconfirm
                   title="Dissociate MCP"
                   description="Are you sure you want to dissociate this MCP from the agent?"
@@ -630,7 +530,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                 >
                   <Button
                     type="link"
-                    icon={<DeleteOutlined style={{ color: '#ff4d4f' }} />}
+                    icon={<DeleteOutlined className="text-red-500" />}
                     onClick={(e) => e.stopPropagation()}
                     disabled={isFormDisabled}
                   />
@@ -660,18 +560,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
           renderItem={({ name, imageURI, id }) => (
             <List.Item>
               <div
-                style={{
-                  borderRadius: '4px',
-                  border: 'solid 1px #f0f0f0',
-                  backgroundColor: '#fff',
-                  width: '100%',
-                  padding: '16px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  cursor: 'pointer',
-                  transition: 'transform 0.2s, box-shadow 0.2s, background-color 0.2s',
-                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                }}
+                className="rounded-md border border-solid border-gray-200 bg-white w-full p-4 flex flex-col cursor-pointer transition-all duration-200 shadow-sm hover:scale-[1.03] hover:shadow-md hover:bg-green-50"
                 onClick={() => {
                   setClickedToolInstanceId(id);
                   setAddToolModalVisible(true);
@@ -687,20 +576,9 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                   e.currentTarget.style.backgroundColor = '#fff';
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <div
-                      style={{
-                        width: '24px',
-                        height: '24px',
-                        borderRadius: '50%',
-                        background: '#f1f1f1',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginRight: '8px',
-                      }}
-                    >
+                <div className="flex items-center mb-2">
+                  <div className="flex items-center">
+                    <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center mr-2">
                       {imageURI && (
                         <Image
                           src={toolIconsData[imageURI] || imageURI}
@@ -708,23 +586,12 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                           width={16}
                           height={16}
                           preview={false}
-                          style={{
-                            borderRadius: '2px',
-                            objectFit: 'cover',
-                          }}
+                          className="rounded-sm object-cover"
                         />
                       )}
                     </div>
                     <Text
-                      style={{
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        maxWidth: '40%',
-                        display: 'inline-block',
-                      }}
+                      className="text-sm font-semibold whitespace-nowrap overflow-hidden text-ellipsis max-w-[40%] inline-block"
                       title={name}
                     >
                       {name}
@@ -762,18 +629,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
           }) => (
             <List.Item>
               <div
-                style={{
-                  borderRadius: '4px',
-                  border: 'solid 1px #f0f0f0',
-                  backgroundColor: '#fff',
-                  width: '100%',
-                  padding: '0',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  cursor: 'pointer',
-                  transition: 'transform 0.2s, box-shadow 0.2s, background-color 0.2s',
-                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                }}
+                className="rounded border border-gray-200 bg-white w-full p-0 flex flex-col cursor-pointer transition-all duration-200 shadow-sm hover:scale-[1.03] hover:shadow-md hover:bg-green-50"
                 onClick={() => {
                   setClickedToolInstanceId(tool.id);
                   setAddToolModalVisible(true);
@@ -789,29 +645,9 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                   e.currentTarget.style.backgroundColor = '#fff';
                 }}
               >
-                <div
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    overflow: 'auto',
-                    padding: '12px',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
-                    <div
-                      style={{
-                        width: '20px',
-                        height: '20px',
-                        minWidth: '20px',
-                        borderRadius: '50%',
-                        background: '#f1f1f1',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginRight: '4px',
-                      }}
-                    >
+                <div className="flex-1 flex flex-col overflow-auto p-3">
+                  <div className="flex items-center min-w-0">
+                    <div className="w-5 h-5 min-w-[20px] rounded-full bg-gray-100 flex items-center justify-center mr-1">
                       <Image
                         src={
                           tool.tool_image_uri
@@ -822,23 +658,12 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                         width={16}
                         height={16}
                         preview={false}
-                        style={{
-                          borderRadius: '2px',
-                          objectFit: 'cover',
-                        }}
+                        className="rounded-sm object-cover"
                       />
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
+                    <div className="flex items-center min-w-0">
                       <Text
-                        style={{
-                          fontSize: '14px',
-                          fontWeight: 600,
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          maxWidth: '90%',
-                          display: 'inline-block',
-                        }}
+                        className="text-sm font-semibold whitespace-nowrap overflow-hidden text-ellipsis max-w-[90%] inline-block"
                         title={tool.name}
                       >
                         {tool.name}
@@ -857,40 +682,16 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                         }
                       >
                         {tool.is_valid ? (
-                          <CheckCircleOutlined
-                            style={{
-                              color: '#52c41a',
-                              fontSize: '15px',
-                              fontWeight: 1000,
-                              marginLeft: '6px',
-                            }}
-                          />
+                          <CheckCircleOutlined className="text-green-500 text-[15px] font-extrabold ml-1.5" />
                         ) : (
-                          <ExclamationCircleOutlined
-                            style={{
-                              color: '#faad14',
-                              fontSize: '15px',
-                              fontWeight: 1000,
-                              marginLeft: '6px',
-                            }}
-                          />
+                          <ExclamationCircleOutlined className="text-yellow-500 text-[15px] font-extrabold ml-1.5" />
                         )}
                       </Tooltip>
                     </div>
                   </div>
                 </div>
-                <Divider style={{ flexGrow: 0, margin: '0px' }} type="horizontal" />
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    flexGrow: 0,
-                    background: 'transparent',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    padding: '0px',
-                  }}
-                >
+                <Divider className="flex-grow-0 m-0" type="horizontal" />
+                <div className="flex flex-row flex-grow-0 bg-transparent justify-center items-center p-0">
                   <Popconfirm
                     title="Delete Tool"
                     description="Are you sure you want to delete this tool?"
@@ -902,7 +703,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                   >
                     <Button
                       type="link"
-                      icon={<DeleteOutlined style={{ color: '#ff4d4f' }} />}
+                      icon={<DeleteOutlined className="text-red-500" />}
                       onClick={(e) => e.stopPropagation()}
                       disabled={isFormDisabled}
                     />
@@ -925,19 +726,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
         return (
           <List.Item>
             <div
-              style={{
-                borderRadius: '4px',
-                border: 'solid 1px #f0f0f0',
-                backgroundColor: selectedAssignedAgent?.id === agent.id ? '#edf7ff' : '#fff',
-                width: '100%',
-                height: '160px',
-                padding: '16px',
-                display: 'flex',
-                flexDirection: 'column',
-                cursor: 'pointer',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-              }}
+              className={`rounded border border-gray-200 bg-white w-full h-[160px] p-4 flex flex-col cursor-pointer transition-transform duration-200 shadow-sm ${selectedAssignedAgent?.id === agent.id ? 'shadow-lg bg-blue-50' : ''} group`}
               onClick={() => handleSelectAssignedAgent(agent)}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'scale(1.03)';
@@ -948,35 +737,10 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                 e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
               }}
             >
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '16px',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    minWidth: 0,
-                    flex: 1,
-                  }}
-                >
+              <div className="flex flex-row items-center justify-between mb-4">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
                   <Avatar
-                    style={{
-                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-                      backgroundColor: imageData[agent.agent_image_uri] ? '#b8d6ff' : '#78b2ff',
-                      minWidth: '24px',
-                      minHeight: '24px',
-                      width: '24px',
-                      height: '24px',
-                      flex: '0 0 24px',
-                      padding: imageData[agent.agent_image_uri] ? 4 : 0,
-                    }}
+                    className={`shadow-md min-w-[24px] min-h-[24px] w-6 h-6 flex-none ${imageData[agent.agent_image_uri] ? 'bg-blue-300 p-1' : 'bg-blue-500'}`}
                     size={24}
                     icon={
                       imageData[agent.agent_image_uri] ? (
@@ -987,14 +751,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                     }
                   />
                   <Text
-                    style={{
-                      fontSize: '14px',
-                      fontWeight: 400,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      maxWidth: '150px',
-                    }}
+                    className="text-sm font-normal whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]"
                     title={agent.name}
                   >
                     {agent.name}
@@ -1012,62 +769,28 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                 >
                   <Button
                     type="link"
-                    icon={<DeleteOutlined style={{ color: '#ff4d4f' }} />}
+                    icon={<DeleteOutlined className="text-red-500" />}
                     onClick={(e) => e.stopPropagation()}
                     disabled={isLoading}
                     size="small"
-                    style={{
-                      width: '20px',
-                      height: '20px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: 0,
-                      minWidth: 'auto',
-                    }}
+                    className="w-5 h-5 flex items-center justify-center p-0 min-w-0"
                   />
                 </Popconfirm>
               </div>
-              <Text
-                style={{
-                  fontSize: '11px',
-                  opacity: 0.45,
-                  fontWeight: 400,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  marginBottom: '4px',
-                }}
-              >
+              <Text className="text-[11px] opacity-45 font-normal whitespace-nowrap overflow-hidden text-ellipsis mb-1">
                 Goal:{' '}
-                <span style={{ color: 'black', fontWeight: 400 }}>
+                <span className="text-black font-normal">
                   {agent.crew_ai_agent_metadata?.goal || 'N/A'}
                 </span>
               </Text>
-              <Text
-                style={{
-                  fontSize: '11px',
-                  opacity: 0.45,
-                  fontWeight: 400,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
+              <Text className="text-[11px] opacity-45 font-normal whitespace-nowrap overflow-hidden text-ellipsis">
                 Backstory:{' '}
-                <span style={{ color: 'black', fontWeight: 400 }}>
+                <span className="text-black font-normal">
                   {agent.crew_ai_agent_metadata?.backstory || 'N/A'}
                 </span>
               </Text>
               {iconResourceIds.length > 0 && (
-                <Space
-                  style={{
-                    marginTop: '12px',
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '10px',
-                  }}
-                >
+                <Space className="mt-3 flex flex-wrap gap-2.5">
                   {iconResourceIds.map((resourceId) => {
                     const toolInstance = toolInstances[resourceId];
                     const mcpInstance = mcpInstances[resourceId];
@@ -1086,31 +809,14 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                           : '/mcp-icon.svg';
                     return (
                       <Tooltip title={resourceName} key={resourceId} placement="top">
-                        <div
-                          style={{
-                            width: '24px',
-                            height: '24px',
-                            minWidth: '24px',
-                            minHeight: '24px',
-                            flex: '0 0 24px',
-                            borderRadius: '50%',
-                            background: '#f1f1f1',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                          }}
-                        >
+                        <div className="w-6 h-6 min-w-[24px] min-h-[24px] flex-none rounded-full bg-gray-100 flex items-center justify-center cursor-pointer">
                           <Image
                             src={imageSrc}
                             alt={resourceName || resourceId}
                             width={16}
                             height={16}
                             preview={false}
-                            style={{
-                              borderRadius: '2px',
-                              objectFit: 'cover',
-                            }}
+                            className="rounded-sm object-cover"
                           />
                         </div>
                       </Tooltip>
@@ -1132,30 +838,14 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
       return (
         <>
           <Alert
-            style={{
-              alignItems: 'flex-start',
-              justifyContent: 'flex-start',
-              padding: 12,
-              marginBottom: 12,
-            }}
+            className="items-start justify-start p-3 mb-3"
             message={
-              <Layout
-                style={{ flexDirection: 'column', gap: 4, padding: 0, background: 'transparent' }}
-              >
-                <Layout
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 8,
-                    background: 'transparent',
-                  }}
-                >
+              <Layout className="flex flex-col gap-1 p-0 bg-transparent">
+                <Layout className="flex flex-row items-center gap-2 bg-transparent">
                   <QuestionCircleOutlined />
-                  <Text style={{ fontSize: 13, fontWeight: 600, background: 'transparent' }}>
-                    Template Mode
-                  </Text>
+                  <Text className="text-sm font-semibold bg-transparent">Template Mode</Text>
                 </Layout>
-                <Text style={{ fontSize: 13, fontWeight: 400, background: 'transparent' }}>
+                <Text className="text-sm font-normal bg-transparent">
                   This is an Agent Template. To customize agent & tools and settings, first create
                   an agent from this template using the button below, then you can modify it.
                 </Text>
@@ -1172,10 +862,10 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
       // This handles both selectedAssignedAgent and new agent creation
       return (
         <>
-          <div style={{ display: 'flex', gap: '16px', height: '100%' }}>
+          <div className="flex gap-4 h-full">
             {/* Tools Section */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-              <Typography.Title level={5} style={{ marginBottom: '14px' }}>
+            <div className="flex-1 flex flex-col">
+              <Typography.Title level={5} className="mb-3.5">
                 Add Optional Tools
               </Typography.Title>
               <Button
@@ -1185,36 +875,20 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                   setClickedToolInstanceId(undefined);
                   setAddToolModalVisible(true);
                 }}
-                style={{ width: '100%', marginBottom: '16px' }}
+                className="w-full mb-4"
                 disabled={isFormDisabled}
               >
                 Create or Edit Tools
               </Button>
-              <div
-                style={{
-                  flex: 1,
-                  overflowY: 'auto',
-                  maxHeight: '300px',
-                }}
-              >
-                {renderToolList()}
-              </div>
+              <div className="flex-1 overflow-y-auto max-h-[300px]">{renderToolList()}</div>
             </div>
 
             {/* Vertical Divider */}
-            <Divider
-              type="vertical"
-              style={{
-                height: 'auto',
-                backgroundColor: '#f0f0f0',
-                margin: 0,
-                alignSelf: 'stretch',
-              }}
-            />
+            <Divider type="vertical" className="h-auto bg-gray-200 m-0 self-stretch" />
 
             {/* MCP Section */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-              <Typography.Title level={5} style={{ marginBottom: '14px' }}>
+            <div className="flex-1 flex flex-col">
+              <Typography.Title level={5} className="mb-3.5">
                 <Space>
                   Add Optional MCP Servers
                   <Tooltip
@@ -1227,11 +901,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                             e.preventDefault();
                             router.push('/tools?section=mcp');
                           }}
-                          style={{
-                            color: '#1890ff',
-                            textDecoration: 'underline',
-                            cursor: 'pointer',
-                          }}
+                          className="text-blue-500 underline cursor-pointer"
                         >
                           Tools Catalog
                         </a>{' '}
@@ -1240,7 +910,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                           href="https://modelcontextprotocol.io/introduction"
                           target="_blank"
                           rel="noopener noreferrer"
-                          style={{ color: '#1890ff', textDecoration: 'underline' }}
+                          className="text-blue-500 underline"
                         >
                           here
                         </a>
@@ -1248,7 +918,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                       </span>
                     }
                   >
-                    <QuestionCircleOutlined style={{ color: '#666' }} />
+                    <QuestionCircleOutlined className="text-gray-600" />
                   </Tooltip>
                 </Space>
               </Typography.Title>
@@ -1259,19 +929,11 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                   setClickedMcpInstance(undefined);
                   setAddMcpModalVisible(true);
                 }}
-                style={{ width: '100%', marginBottom: '16px' }}
+                className="w-full mb-4"
               >
                 Add MCP Server to Agent
               </Button>
-              <div
-                style={{
-                  flex: 1,
-                  overflowY: 'auto',
-                  maxHeight: '300px',
-                }}
-              >
-                {renderMcpList()}
-              </div>
+              <div className="flex-1 overflow-y-auto max-h-[300px]">{renderMcpList()}</div>
             </div>
           </div>
         </>
@@ -1281,118 +943,66 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
 
   return (
     <>
-      <Divider style={{ margin: 0, backgroundColor: '#f0f0f0' }} />
-      <Layout
-        style={{ display: 'flex', flexDirection: 'row', height: '100%', backgroundColor: '#fff' }}
-      >
-        <Layout style={{ flex: 1, overflowY: 'auto', padding: '16px', backgroundColor: '#fff' }}>
+      <Divider className="m-0 bg-gray-200" />
+      <Layout className="flex flex-row h-full bg-white">
+        <Layout className="flex-1 overflow-y-auto p-4 bg-white">
           <div
-            style={{
-              marginBottom: 16,
-              cursor: 'pointer',
-              boxShadow: isCreateMode ? '0 4px 8px rgba(0, 0, 0, 0.2)' : 'none',
-              width: '100%',
-              border: 'solid 1px #f0f0f0',
-              borderRadius: '4px',
-              padding: '16px',
-              backgroundColor: isCreateMode ? '#edf7ff' : '#fff',
-            }}
+            className={`mb-4 cursor-pointer w-full border border-solid border-gray-200 rounded p-4 ${isCreateMode ? 'shadow-lg bg-blue-50' : 'bg-white'}`}
             onClick={changeToCreateAgentMode}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div className="flex items-center justify-between">
               <Space size={16}>
-                <div
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '50%',
-                    backgroundColor: '#edf7ff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <PlusOutlined style={{ fontSize: '16px', color: '#1890ff' }} />
+                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                  <PlusOutlined className="text-base text-blue-500" />
                 </div>
                 <div>
-                  <div
-                    style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
-                  >
+                  <div className="whitespace-nowrap overflow-hidden text-ellipsis">
                     Create New Agent
                   </div>
-                  <Text
-                    style={{
-                      fontSize: '11px',
-                      opacity: 0.45,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
+                  <Text className="text-[11px] opacity-45 whitespace-nowrap overflow-hidden text-ellipsis">
                     Create a new custom agent from scratch
                   </Text>
                 </div>
               </Space>
             </div>
           </div>
-          <Layout style={{ display: 'flex', flexDirection: 'row', backgroundColor: '#fff' }}>
-            <Layout style={{ flex: 1, backgroundColor: '#fff', paddingRight: '16px' }}>
-              <Typography.Title level={5} style={{ marginBottom: '16px' }}>
+          <Layout className="flex flex-row bg-white">
+            <Layout className="flex-1 bg-white pr-4">
+              <Typography.Title level={5} className="mb-4">
                 Edit Agents in Workflow
               </Typography.Title>
             </Layout>
           </Layout>
-          <Layout
-            style={{
-              display: 'flex',
-              flexDirection: 'row',
-              height: '100%',
-              backgroundColor: '#fff',
-            }}
-          >
-            <Layout
-              style={{ flex: 1, overflowY: 'auto', backgroundColor: '#fff', paddingRight: '16px' }}
-            >
+          <Layout className="flex flex-row h-full bg-white">
+            <Layout className="flex-1 overflow-y-auto bg-white pr-4">
               {renderAssignedAgents()}
             </Layout>
           </Layout>
         </Layout>
-        <Divider type="vertical" style={{ height: 'auto', backgroundColor: '#f0f0f0' }} />
-        <Layout style={{ flex: 1, backgroundColor: '#fff', padding: '16px', overflowY: 'auto' }}>
-          <Typography.Title level={5} style={{ marginBottom: '16px' }}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                verticalAlign: 'middle',
-                justifyContent: 'space-between',
-              }}
-            >
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Agent Details</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Divider type="vertical" className="h-auto bg-gray-200" />
+        <Layout className="flex-1 bg-white p-4 overflow-y-auto">
+          <Typography.Title level={5} className="mb-4">
+            <div className="flex items-center align-middle justify-between">
+              <span className="flex items-center gap-2">Agent Details</span>
+              <span className="flex items-center gap-2">
                 <Button
                   type="default"
                   icon={
                     <img
                       src="/ai-assistant.svg"
                       alt="AI Assistant"
-                      style={{
-                        filter:
-                          'invert(27%) sepia(99%) saturate(1352%) hue-rotate(204deg) brightness(97%) contrast(97%)',
-                        width: '20px',
-                        height: '20px',
-                      }}
+                      className="[filter:invert(27%)_sepia(99%)_saturate(1352%)_hue-rotate(204deg)_brightness(97%)_contrast(97%)] w-5 h-5"
                     />
                   }
-                  style={{ color: '#0074D2', borderColor: '#0074D2' }}
+                  className="text-blue-700 border-blue-700"
                   onClick={() => setIsGenerateAgentPropertiesModalVisible(true)}
                 >
-                  <span style={{ color: '#0074D2' }}>Generate with AI</span>
+                  <span className="text-blue-700">Generate with AI</span>
                 </Button>
                 <Button
                   type="default"
-                  icon={<UndoOutlined style={{ color: '#0074D2', fontSize: 18, marginRight: 4 }} />}
-                  style={{ color: '#0074D2', borderColor: '#0074D2' }}
+                  icon={<UndoOutlined className="text-blue-700 text-lg mr-1" />}
+                  className="text-blue-700 border-blue-700"
                   onClick={() => {
                     form.setFieldsValue({
                       name: '',
@@ -1413,7 +1023,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                 <Space>
                   Name
                   <Tooltip title="The name of the agent">
-                    <QuestionCircleOutlined style={{ color: '#666' }} />
+                    <QuestionCircleOutlined className="text-gray-600" />
                   </Tooltip>
                 </Space>
               }
@@ -1427,7 +1037,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                 <Space>
                   Role
                   <Tooltip title="The role this agent plays in the workflow">
-                    <QuestionCircleOutlined style={{ color: '#666' }} />
+                    <QuestionCircleOutlined className="text-gray-600" />
                   </Tooltip>
                 </Space>
               }
@@ -1441,7 +1051,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                 <Space>
                   Backstory
                   <Tooltip title="Background information about this agent">
-                    <QuestionCircleOutlined style={{ color: '#666' }} />
+                    <QuestionCircleOutlined className="text-gray-600" />
                   </Tooltip>
                 </Space>
               }
@@ -1455,7 +1065,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                 <Space>
                   Goal
                   <Tooltip title="The primary objective of this agent">
-                    <QuestionCircleOutlined style={{ color: '#666' }} />
+                    <QuestionCircleOutlined className="text-gray-600" />
                   </Tooltip>
                 </Space>
               }
@@ -1469,7 +1079,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                 <Space>
                   LLM Model
                   <Tooltip title="The language model this agent will use">
-                    <QuestionCircleOutlined style={{ color: '#666' }} />
+                    <QuestionCircleOutlined className="text-gray-600" />
                   </Tooltip>
                 </Space>
               }
@@ -1486,7 +1096,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
             </Form.Item>
             <Form.Item>
               <Text strong>Agent Icon</Text>
-              <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+              <div className="flex flex-row items-center">
                 <Upload
                   accept=".png,.jpg,.jpeg"
                   customRequest={({ file, onSuccess, onError }) => {
@@ -1500,7 +1110,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                   <Button
                     icon={selectedFile ? <FileImageOutlined /> : <UploadOutlined />}
                     loading={isUploading}
-                    style={{ marginTop: '8px' }}
+                    className="mt-2"
                     disabled={selectedFile !== null}
                   >
                     {selectedFile ? selectedFile.name : 'Upload File'}
@@ -1509,7 +1119,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                 {selectedFile && (
                   <Button
                     icon={<DeleteOutlined />}
-                    style={{ marginLeft: '8px', marginTop: '8px' }}
+                    className="ml-2 mt-2"
                     onClick={() => {
                       setSelectedFile(null);
                       setUploadedFilePath('');
@@ -1517,13 +1127,13 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                   />
                 )}
               </div>
-              <div style={{ margin: '16px 0' }} />
+              <div className="my-4" />
             </Form.Item>
             {renderToolSection()}
           </Form>
         </Layout>
       </Layout>
-      <Divider style={{ margin: 0, backgroundColor: '#f0f0f0' }} />
+      <Divider className="m-0 bg-gray-200" />
       <WorkflowAddToolModal
         workflowId={workflowId}
         preSelectedToolInstanceId={clickedToolInstanceId}
@@ -1577,23 +1187,11 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
     null,
   );
   const toolTemplateIds = useSelector(selectEditorAgentViewCreateAgentToolTemplates) || [];
-  const existingToolIds = useSelector(selectEditorAgentViewCreateAgentTools) || [];
   const [updateWorkflow] = useUpdateWorkflowMutation();
   const [addWorkflow] = useAddWorkflowMutation();
   const workflowState = useAppSelector(selectEditorWorkflow);
   const notificationApi = useGlobalNotification();
   const [uploadedFilePath, setUploadedFilePath] = useState<string>('');
-  const [toolDetails, setToolDetails] = useState<{
-    name: string;
-    description: string;
-    pythonCode: string;
-    pythonRequirements: string;
-  }>({
-    name: '',
-    description: '',
-    pythonCode: '',
-    pythonRequirements: '',
-  });
   const { data: agents = [] } = useListAgentsQuery({ workflow_id: workflowId });
   const workflowAgentIds = useAppSelector(
     (state) => state.editor.workflow?.workflowMetadata?.agentIds || [],
@@ -1721,12 +1319,6 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
           mcpInstances: [],
         }),
       );
-      setToolDetails({
-        name: '',
-        description: '',
-        pythonCode: '',
-        pythonRequirements: '',
-      });
     } else {
       setSelectedAgentTemplate(null);
     }
@@ -1873,7 +1465,7 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
       centered
       title={title}
       width="98%"
-      style={{ height: '95vh' }}
+      className="!h-[95vh]"
       footer={[
         <Button
           key="cancel"
@@ -1894,27 +1486,13 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
         </Button>,
       ]}
     >
-      <div style={{ position: 'relative' }}>
+      <div className="relative">
         {isLoading && (
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(255, 255, 255, 0.6)',
-              zIndex: 1000,
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              cursor: 'not-allowed',
-            }}
-          >
+          <div className="absolute inset-0 bg-white bg-opacity-60 z-1000 flex justify-center items-center cursor-not-allowed">
             <Spin size="large" />
           </div>
         )}
-        <div style={{ overflowY: 'auto', height: 'calc(95vh - 108px)' }}>
+        <div className="overflow-y-auto h-[calc(95vh-108px)]">
           <SelectAgentComponent
             workflowId={workflowId}
             parentModalOpen={isModalOpen || false}

@@ -1,4 +1,4 @@
-import { AgentMetadata, CrewAIWorkflowMetadata, Workflow } from '@/studio/proto/agent_studio';
+import { AgentMetadata, Workflow } from '@/studio/proto/agent_studio';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../lib/store';
 import {
@@ -298,7 +298,7 @@ export const editorSlice = createSlice({
       };
     },
 
-    resetEditor: (state) => {
+    resetEditor: (_state) => {
       return initialState;
     },
 

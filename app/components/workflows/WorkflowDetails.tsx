@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Layout,
   Typography,
@@ -115,7 +115,7 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
 
   const {
     data: tasks = [],
-    isLoading: tasksLoading,
+    isLoading: _tasksLoading,
     error: tasksError,
   } = useListTasksQuery({ workflow_id: workflowId });
 
@@ -147,14 +147,7 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
 
   if (agentsLoading || toolInstancesLoading || mcpInstancesLoading) {
     return (
-      <Layout
-        style={{
-          height: '100vh',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
+      <Layout className="h-screen flex justify-center items-center">
         <Spin size="large" />
       </Layout>
     );
@@ -162,14 +155,7 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
 
   if (agentsError || tasksError || toolInstancesError || mcpInstancesError) {
     return (
-      <Layout
-        style={{
-          height: '100vh',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
+      <Layout className="h-screen flex justify-center items-center">
         <Alert
           message="Error"
           description={
@@ -191,51 +177,12 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
   const renderAgentCard = (agent: AgentMetadata, isManager: boolean = false) => (
     <Layout
       key={agent.id}
-      style={{
-        borderRadius: '4px',
-        border: 'solid 1px #f0f0f0',
-        backgroundColor: '#fff',
-        width: '100%',
-        height: '150px',
-        padding: '0',
-        display: 'flex',
-        flexDirection: 'column',
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-      }}
+      className="rounded border border-[#f0f0f0] bg-white w-full h-[150px] p-0 flex flex-col shadow-[0_2px_4px_rgba(0,0,0,0.1)]"
     >
-      <Layout
-        style={{
-          flex: 1,
-          background: 'transparent',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'auto',
-        }}
-      >
-        <div
-          style={{
-            padding: '16px 24px',
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: '12px',
-          }}
-        >
+      <Layout className="flex-1 bg-transparent flex flex-col overflow-auto">
+        <div className="px-6 py-4 flex flex-row items-center gap-3">
           <Avatar
-            style={{
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-              backgroundColor: isManager
-                ? 'lightgrey'
-                : imageData[agent.agent_image_uri]
-                  ? '#b8d6ff'
-                  : '#78b2ff',
-              minWidth: '24px',
-              minHeight: '24px',
-              width: '24px',
-              height: '24px',
-              flex: '0 0 24px',
-              padding: isManager ? 0 : imageData[agent.agent_image_uri] ? 5 : 0,
-            }}
+            className={`shadow-[0_2px_4px_rgba(0,0,0,0.2)] min-w-[24px] min-h-[24px] w-6 h-6 flex-none ${isManager ? 'bg-gray-300' : imageData[agent.agent_image_uri] ? 'bg-[#b8d6ff]' : 'bg-[#78b2ff]'} ${!isManager && imageData[agent.agent_image_uri] ? 'p-1' : ''}`}
             size={24}
             icon={
               isManager ? (
@@ -248,62 +195,26 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
             }
           />
           <Text
-            style={{
-              fontSize: '14px',
-              fontWeight: 400,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
+            className="text-[14px] font-normal whitespace-nowrap overflow-hidden text-ellipsis"
             title={agent.name}
           >
             {agent.name}
           </Text>
         </div>
-        <Text
-          style={{
-            padding: '0 24px',
-            fontSize: '11px',
-            opacity: 0.45,
-            fontWeight: 400,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
+        <Text className="px-6 text-[11px] opacity-45 font-normal whitespace-nowrap overflow-hidden text-ellipsis">
           Goal:{' '}
-          <span style={{ color: 'black', fontWeight: 400 }}>
+          <span className="text-black font-normal">
             {agent.crew_ai_agent_metadata?.goal || 'N/A'}
           </span>
         </Text>
-        <Text
-          style={{
-            padding: '0 24px',
-            fontSize: '11px',
-            opacity: 0.45,
-            fontWeight: 400,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            marginTop: '8px',
-          }}
-        >
+        <Text className="px-6 text-[11px] opacity-45 font-normal whitespace-nowrap overflow-hidden text-ellipsis mt-2">
           Backstory:{' '}
-          <span style={{ color: 'black', fontWeight: 400 }}>
+          <span className="text-black font-normal">
             {agent.crew_ai_agent_metadata?.backstory || 'N/A'}
           </span>
         </Text>
         {(agent.tools_id?.length > 0 || agent.mcp_instance_ids?.length > 0) && (
-          <Space
-            style={{
-              marginTop: '12px',
-              paddingLeft: '24px',
-              paddingRight: '24px',
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '10px',
-            }}
-          >
+          <Space className="mt-3 px-6 flex flex-wrap gap-2.5">
             {(agent.tools_id || [])
               .concat(agent.mcp_instance_ids || [])
               .map((resourceId: string) => {
@@ -325,28 +236,14 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
 
                 return (
                   <Tooltip title={resourceName} key={resourceId} placement="top">
-                    <div
-                      style={{
-                        width: '24px',
-                        height: '24px',
-                        borderRadius: '50%',
-                        background: '#f1f1f1',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                      }}
-                    >
+                    <div className="w-6 h-6 rounded-full bg-[#f1f1f1] flex items-center justify-center cursor-pointer">
                       <Image
                         src={imageSrc}
                         alt={resourceName}
                         width={16}
                         height={16}
                         preview={false}
-                        style={{
-                          borderRadius: '2px',
-                          objectFit: 'cover',
-                        }}
+                        className="rounded object-cover w-4 h-4"
                       />
                     </div>
                   </Tooltip>
@@ -364,80 +261,25 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
     return (
       <Layout
         key={`task-${index}`}
-        style={{
-          position: 'relative',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          height: 44,
-          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-          borderWidth: 0,
-          gap: 6,
-          paddingLeft: 48,
-          paddingRight: 12,
-          background: 'white',
-          width: '80%',
-        }}
+        className="relative flex flex-row items-center justify-between h-[44px] shadow-[0_2px_4px_rgba(0,0,0,0.1)] border-0 gap-1.5 pl-12 pr-3 bg-white w-4/5"
       >
         <Avatar
-          style={{
-            position: 'absolute',
-            left: 24,
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-            backgroundColor: '#26bd67',
-            minWidth: '24px',
-            minHeight: '24px',
-            width: '24px',
-            height: '24px',
-            flex: '0 0 24px',
-          }}
+          className="absolute left-6 shadow-[0_2px_4px_rgba(0,0,0,0.2)] bg-[#26bd67] min-w-[24px] min-h-[24px] w-6 h-6 flex-none"
           size={24}
           icon={<FileDoneOutlined />}
         />
-        <Text
-          ellipsis
-          style={{ flexBasis: '60%', fontSize: 13, fontWeight: 400, marginLeft: '12px' }}
-        >
-          <span style={{ fontWeight: 600 }}>{`Task ${index + 1}: `}</span>
+        <Text ellipsis className="flex-[0_0_60%] text-[13px] font-normal ml-3">
+          <span className="font-semibold">{`Task ${index + 1}: `}</span>
           {task.description}
         </Text>
         {!managerAgentId && !Boolean(process === 'hierarchical') && (
-          <div
-            style={{
-              width: '30%',
-              display: 'flex',
-              justifyContent: 'flex-start',
-              overflow: 'hidden',
-            }}
-          >
+          <div className="w-[30%] flex justify-start overflow-hidden">
             <Tooltip title={assignedAgent?.name || 'Unassigned'}>
               <Tag
                 icon={<UserOutlined />}
-                style={{
-                  maxWidth: '100%',
-                  fontSize: 11,
-                  fontWeight: 400,
-                  backgroundColor: '#add8e6',
-                  border: 'none',
-                  textOverflow: 'ellipsis',
-                  overflow: 'hidden',
-                  whiteSpace: 'nowrap',
-                  display: 'flex',
-                  alignItems: 'center',
-                  paddingLeft: 8,
-                  paddingRight: 8,
-                  gap: 4,
-                }}
+                className="max-w-full text-[11px] font-normal bg-[#add8e6] border-none text-ellipsis overflow-hidden whitespace-nowrap flex items-center px-2 gap-1"
               >
-                <span
-                  style={{
-                    maxWidth: '80%',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    display: 'block',
-                  }}
-                >
+                <span className="max-w-[80%] overflow-hidden text-ellipsis whitespace-nowrap block">
                   {assignedAgent?.name || 'Unassigned'}
                 </span>
               </Tag>
@@ -451,87 +293,33 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
   const renderDeploymentCard = (deployment: DeployedWorkflow) => (
     <Layout
       key={deployment.deployed_workflow_id}
-      style={{
-        borderRadius: '4px',
-        border: 'solid 1px #f0f0f0',
-        backgroundColor: '#fff',
-        width: '100%',
-        height: '150px',
-        padding: '0',
-        display: 'flex',
-        flexDirection: 'column',
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-      }}
+      className="rounded border border-[#f0f0f0] bg-white w-full h-[150px] p-0 flex flex-col shadow-[0_2px_4px_rgba(0,0,0,0.1)]"
     >
-      <Layout
-        style={{
-          flex: 1,
-          background: 'transparent',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'auto',
-        }}
-      >
-        <div
-          style={{
-            padding: '16px 24px',
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: '12px',
-          }}
-        >
+      <Layout className="flex-1 bg-transparent flex flex-col overflow-auto">
+        <div className="px-6 py-4 flex flex-row items-center gap-3">
           <Avatar
-            style={{
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-              backgroundColor: '#1890ff',
-              minWidth: '24px',
-              minHeight: '24px',
-              width: '24px',
-              height: '24px',
-              flex: '0 0 24px',
-            }}
+            className="shadow-[0_2px_4px_rgba(0,0,0,0.2)] bg-[#1890ff] min-w-[24px] min-h-[24px] w-6 h-6 flex-none"
             size={24}
             icon={<DeploymentUnitOutlined />}
           />
           <Text
-            style={{
-              fontSize: '14px',
-              fontWeight: 400,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
+            className="text-[14px] font-normal whitespace-nowrap overflow-hidden text-ellipsis"
             title={deployment.deployed_workflow_name}
           >
             {deployment.deployed_workflow_name}
           </Text>
         </div>
-        <div style={{ padding: '0 24px' }}>
+        <div className="px-6">
           <Tag
             color={getStatusColor(deployment.application_status || '')}
-            style={{
-              borderRadius: '12px',
-              color:
-                deployment.application_status?.toLowerCase() === 'unknown' ? 'white' : undefined,
-            }}
+            className={`rounded-[12px] ${deployment.application_status?.toLowerCase() === 'unknown' ? 'text-white' : ''}`}
           >
             {getStatusDisplay(deployment.application_status || '')}
           </Tag>
         </div>
       </Layout>
-      <Divider style={{ flexGrow: 0, margin: '0px' }} type="horizontal" />
-      <Layout
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          flexGrow: 0,
-          background: 'transparent',
-          justifyContent: 'space-around',
-          alignItems: 'center',
-          padding: '8px',
-        }}
-      >
+      <Divider className="flex-grow-0 m-0" type="horizontal" />
+      <Layout className="flex flex-row flex-grow-0 bg-transparent justify-around items-center p-2">
         <Tooltip title="Open Application UI">
           <Button
             type="link"
@@ -549,7 +337,7 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
             }}
           />
         </Tooltip>
-        <Divider type="vertical" style={{ height: '20px', margin: 0 }} />
+        <Divider type="vertical" className="h-5 m-0" />
         <Tooltip title="Open Cloudera AI Workbench Application">
           <Button
             type="link"
@@ -562,7 +350,7 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
             disabled={!deployment.application_deep_link}
           />
         </Tooltip>
-        <Divider type="vertical" style={{ height: '20px', margin: 0 }} />
+        <Divider type="vertical" className="h-5 m-0" />
         <Tooltip title="Open Cloudera AI Workbench Model">
           <Button
             type="link"
@@ -575,7 +363,7 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
             disabled={!deployment.model_deep_link}
           />
         </Tooltip>
-        <Divider type="vertical" style={{ height: '20px', margin: 0 }} />
+        <Divider type="vertical" className="h-5 m-0" />
         <Popconfirm
           title="Delete Deployment"
           description="Are you sure you want to delete this deployment?"
@@ -608,7 +396,7 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
       : false;
 
   return (
-    <Layout style={{ padding: '16px', background: '#fff' }}>
+    <Layout className="p-4 bg-white">
       {!isViewRoute &&
         (!defaultModel
           ? renderAlert(
@@ -656,23 +444,15 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
                           )
                         : null)}
       <Collapse
-        style={{ marginBottom: '12px' }}
+        className="mb-3"
         bordered={false}
         items={[
           {
             key: '1',
             label: 'Capability Guide',
             children: (
-              <div style={{ maxHeight: '130px', overflowY: 'auto' }}>
-                <Text
-                  style={{
-                    fontSize: 14,
-                    fontWeight: 400,
-                    background: 'transparent',
-                    fontStyle: 'italic',
-                    display: 'block',
-                  }}
-                >
+              <div className="max-h-[130px] overflow-y-auto">
+                <Text className="text-sm font-normal bg-transparent italic block">
                   {workflow.description}
                 </Text>
               </div>
@@ -687,7 +467,7 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
             grid={{ gutter: 16, column: 2 }}
             dataSource={workflowDeployments}
             renderItem={(deployment) => <List.Item>{renderDeploymentCard(deployment)}</List.Item>}
-            style={{ marginBottom: '20px' }}
+            className="mb-5"
           />
         </>
       )}
@@ -705,7 +485,7 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
 
       {showDefaultManagerEnablement && (
         <>
-          <Title level={5} style={{ marginTop: '20px' }}>
+          <Title level={5} className="mt-5">
             Manager Agent
           </Title>
           <List
@@ -723,20 +503,7 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
             renderItem={() => (
               <List.Item>
                 <Layout
-                  style={{
-                    borderRadius: '4px',
-                    border: 'solid 1px #f0f0f0',
-                    backgroundColor: '#fff',
-                    width: '100%',
-                    height: '40px',
-                    padding: '0',
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    cursor: 'pointer',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                  }}
+                  className="rounded border border-[#f0f0f0] bg-white w-full h-[40px] p-0 flex flex-row items-center cursor-pointer transition-transform transition-shadow duration-200 shadow-md"
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'scale(1.03)';
                     e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
@@ -746,38 +513,13 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
                     e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
                   }}
                 >
-                  <div
-                    style={{
-                      padding: '8px 24px',
-                      display: 'flex',
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: '12px',
-                    }}
-                  >
+                  <div className="p-2 px-6 flex flex-row items-center gap-3">
                     <Avatar
-                      style={{
-                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-                        backgroundColor: 'lightgrey',
-                        minWidth: '24px',
-                        minHeight: '24px',
-                        width: '24px',
-                        height: '24px',
-                        flex: '0 0 24px',
-                      }}
+                      className="shadow-md bg-gray-300 min-w-[24px] min-h-[24px] w-6 h-6 flex-none"
                       size={24}
                       icon={<UsergroupAddOutlined />}
                     />
-                    <Text
-                      style={{
-                        fontSize: '14px',
-                        fontWeight: 400,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        lineHeight: '24px',
-                      }}
-                    >
+                    <Text className="text-sm font-normal whitespace-nowrap overflow-hidden text-ellipsis leading-6">
                       Default Manager
                     </Text>
                   </div>
@@ -788,7 +530,7 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
         </>
       )}
 
-      <Title level={5} style={{ marginTop: '20px' }}>
+      <Title level={5} className="mt-5">
         Agents
       </Title>
       <List
@@ -797,7 +539,7 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
         renderItem={(agent) => <List.Item>{renderAgentCard(agent, false)}</List.Item>}
       />
 
-      <Title level={5} style={{ marginTop: '20px' }}>
+      <Title level={5} className="mt-5">
         Tasks
       </Title>
       <List

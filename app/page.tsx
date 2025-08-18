@@ -36,6 +36,12 @@ const HomePage: React.FC = () => {
     setViewSettings(readViewSettingsFromLocalStorage());
   }, []);
 
+  useEffect(() => {
+    if (viewSettings?.displayIntroPage === false) {
+      router.push('/workflows');
+    }
+  }, [viewSettings]);
+
   if (isLoading === true) {
     // Show a loading spinner while data is being fetched
     return <LargeCenterSpin message="Retrieving workflow and render mode..." />;
@@ -51,12 +57,7 @@ const HomePage: React.FC = () => {
   // Render workflow app.
   if (wflowData.renderMode === 'workflow') {
     return (
-      <Layout
-        style={{
-          padding: 36,
-          flexDirection: 'column',
-        }}
-      >
+      <Layout className="p-[36px] flex flex-col">
         <WorkflowAppDeployed workflowData={wflowData} />
       </Layout>
     );
@@ -71,7 +72,6 @@ const HomePage: React.FC = () => {
   // route to the /workflows page
   if (viewSettings.displayIntroPage === false) {
     // Show a loading spinner while we wait for workflows page.
-    router.push('/workflows');
     return <LargeCenterSpin message="Loading workflows..." />;
   }
 

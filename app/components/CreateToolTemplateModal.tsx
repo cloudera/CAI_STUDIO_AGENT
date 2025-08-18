@@ -30,18 +30,13 @@ const CreateToolTemplateModal: React.FC<CreateToolTemplateModalProps> = ({
       okText="Generate"
       cancelText="Cancel"
     >
-      <div style={{ marginTop: '16px' }}>
+      <div className="mt-4">
         <Input
           placeholder="Enter Tool Name"
           value={toolName}
           onChange={(e) => setToolName(e.target.value)}
           onPressEnter={handleGenerate}
-          style={{
-            marginTop: '16px',
-            marginBottom: '16px',
-            padding: '8px 12px',
-            borderRadius: '4px',
-          }}
+          className="mt-4 mb-4 p-2 rounded"
         />
       </div>
     </Modal>

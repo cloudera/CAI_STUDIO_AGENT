@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useGetAssetDataQuery } from '../crossCuttingApi';
-import { useAppSelector } from './hooks';
 import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
 
 export const useImageAssetsData = (uris: (string | undefined)[]) => {
   const [imageData, setImageData] = useState<{ [key: string]: string }>({});
   const [workflowRenderModeError, setWorkflowRenderModeError] = useState(false);
 
-  const { data: workflowData, isLoading } = useGetWorkflowDataQuery();
+  const { data: workflowData } = useGetWorkflowDataQuery();
   const renderMode = workflowData?.renderMode;
   const workflowModelUrl = workflowData?.workflowModelUrl;
 

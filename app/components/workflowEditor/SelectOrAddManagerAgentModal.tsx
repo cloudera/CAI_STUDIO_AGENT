@@ -41,37 +41,16 @@ const SelectManagerAgentComponent: React.FC<{
   setSelectedAgentTemplate: React.Dispatch<React.SetStateAction<AgentTemplateMetadata | null>>;
   existingManagerAgent: AgentMetadata | null;
   defaultModelId: string;
-}> = ({
-  form,
-  selectedAgentTemplate,
-  setSelectedAgentTemplate,
-  existingManagerAgent,
-  defaultModelId,
-}) => {
+}> = ({ form, existingManagerAgent, defaultModelId }) => {
   const { data: models = [] } = useListModelsQuery({});
   const [isGenerateManagerModalVisible, setIsGenerateManagerModalVisible] = useState(false);
-  const [parsedSuggestions, setParsedSuggestions] = useState({ role: '', goal: '', backstory: '' });
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [userDescription, setUserDescription] = useState('');
-
-  const handleApplySuggestions = () => {
-    form.setFieldsValue({
-      name: parsedSuggestions.role,
-      role: parsedSuggestions.role,
-      goal: parsedSuggestions.goal,
-      backstory: parsedSuggestions.backstory,
-    });
-    setIsGenerateManagerModalVisible(false);
-  };
 
   return (
     <>
-      <Divider style={{ margin: 0, backgroundColor: '#f0f0f0' }} />
-      <Layout
-        style={{ display: 'flex', flexDirection: 'row', height: '100%', backgroundColor: '#fff' }}
-      >
-        <Layout style={{ flex: 1, overflowY: 'auto', padding: '16px', backgroundColor: '#fff' }}>
-          <Typography.Title level={5} style={{ marginBottom: '16px' }}>
+      <Divider className="m-0 bg-gray-200" />
+      <Layout className="flex flex-row h-full bg-white">
+        <Layout className="flex-1 overflow-y-auto p-4 bg-white">
+          <Typography.Title level={5} className="mb-4">
             Current Manager Agent
           </Typography.Title>
 
@@ -81,19 +60,7 @@ const SelectManagerAgentComponent: React.FC<{
             renderItem={(agent) => (
               <List.Item>
                 <div
-                  style={{
-                    borderRadius: '4px',
-                    border: 'solid 1px #f0f0f0',
-                    backgroundColor: '#e6ffe6',
-                    width: '100%',
-                    height: '160px',
-                    padding: '16px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    cursor: 'pointer',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                  }}
+                  className="rounded border border-[#f0f0f0] bg-[#e6ffe6] w-full h-[160px] p-4 flex flex-col cursor-pointer shadow hover:shadow-lg hover:scale-[1.03] transition-transform"
                   onClick={() => {
                     form.setFieldsValue({
                       name: agent.name,
@@ -102,73 +69,29 @@ const SelectManagerAgentComponent: React.FC<{
                       goal: agent.crew_ai_agent_metadata?.goal || '',
                     });
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'scale(1.03)';
-                    e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'scale(1)';
-                    e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
-                  }}
                 >
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: '12px',
-                      marginBottom: '16px',
-                    }}
-                  >
+                  <div className="flex flex-row items-center gap-3 mb-4">
                     <Avatar
-                      style={{
-                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-                        backgroundColor: 'lightgrey',
-                      }}
+                      className="shadow bg-gray-300"
                       size={24}
                       icon={<UsergroupAddOutlined />}
                     />
                     <Text
-                      style={{
-                        fontSize: '14px',
-                        fontWeight: 400,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
+                      className="text-sm font-normal whitespace-nowrap overflow-hidden text-ellipsis"
                       title={agent.name}
                     >
                       {agent.name}
                     </Text>
                   </div>
-                  <Text
-                    style={{
-                      fontSize: '11px',
-                      opacity: 0.45,
-                      fontWeight: 400,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
+                  <Text className="text-[11px] opacity-45 font-normal whitespace-nowrap overflow-hidden text-ellipsis">
                     Goal:{' '}
-                    <span style={{ color: 'black', fontWeight: 400 }}>
+                    <span className="text-black font-normal">
                       {agent.crew_ai_agent_metadata?.goal || 'N/A'}
                     </span>
                   </Text>
-                  <Text
-                    style={{
-                      fontSize: '11px',
-                      opacity: 0.45,
-                      fontWeight: 400,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      marginTop: '8px',
-                    }}
-                  >
+                  <Text className="text-[11px] opacity-45 font-normal whitespace-nowrap overflow-hidden text-ellipsis mt-2">
                     Backstory:{' '}
-                    <span style={{ color: 'black', fontWeight: 400 }}>
+                    <span className="text-black font-normal">
                       {agent.crew_ai_agent_metadata?.backstory || 'N/A'}
                     </span>
                   </Text>
@@ -177,35 +100,24 @@ const SelectManagerAgentComponent: React.FC<{
             )}
           />
         </Layout>
-        <Divider type="vertical" style={{ height: 'auto', backgroundColor: '#f0f0f0' }} />
-        <Layout style={{ flex: 1, backgroundColor: '#fff', padding: '16px', overflowY: 'auto' }}>
-          <Typography.Title level={5} style={{ marginBottom: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Divider type="vertical" className="h-auto bg-[#f0f0f0]" />
+        <Layout className="flex-1 bg-white p-4 overflow-y-auto">
+          <Typography.Title level={5} className="mb-4">
+            <div className="flex items-center justify-between">
               <span>Manager Agent Details</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span className="flex items-center gap-2">
                 <Button
                   type="default"
-                  icon={
-                    <img
-                      src="/ai-assistant.svg"
-                      alt="AI Assistant"
-                      style={{
-                        filter:
-                          'invert(27%) sepia(99%) saturate(1352%) hue-rotate(204deg) brightness(97%) contrast(97%)',
-                        width: '20px',
-                        height: '20px',
-                      }}
-                    />
-                  }
-                  style={{ color: '#0074D2', borderColor: '#0074D2' }}
+                  icon={<img src="/ai-assistant.svg" alt="AI Assistant" className="w-5 h-5" />}
+                  className="text-[#0074D2] border-[#0074D2]"
                   onClick={() => setIsGenerateManagerModalVisible(true)}
                 >
-                  <span style={{ color: '#0074D2' }}>Generate with AI</span>
+                  <span className="text-[#0074D2]">Generate with AI</span>
                 </Button>
                 <Button
                   type="default"
-                  icon={<UndoOutlined style={{ color: '#0074D2', fontSize: 18, marginRight: 4 }} />}
-                  style={{ color: '#0074D2', borderColor: '#0074D2' }}
+                  icon={<UndoOutlined className="text-[#0074D2] text-[18px] mr-1" />}
+                  className="text-[#0074D2] border-[#0074D2]"
                   onClick={() => {
                     form.setFieldsValue({
                       name: '',
@@ -226,7 +138,7 @@ const SelectManagerAgentComponent: React.FC<{
                 <Space>
                   Name
                   <Tooltip title="The name of the manager agent">
-                    <QuestionCircleOutlined style={{ color: '#666' }} />
+                    <QuestionCircleOutlined className="text-[#666]" />
                   </Tooltip>
                 </Space>
               }
@@ -240,7 +152,7 @@ const SelectManagerAgentComponent: React.FC<{
                 <Space>
                   Role
                   <Tooltip title="The role this manager agent plays in the workflow">
-                    <QuestionCircleOutlined style={{ color: '#666' }} />
+                    <QuestionCircleOutlined className="text-[#666]" />
                   </Tooltip>
                 </Space>
               }
@@ -254,7 +166,7 @@ const SelectManagerAgentComponent: React.FC<{
                 <Space>
                   Backstory
                   <Tooltip title="Background information about this manager agent">
-                    <QuestionCircleOutlined style={{ color: '#666' }} />
+                    <QuestionCircleOutlined className="text-[#666]" />
                   </Tooltip>
                 </Space>
               }
@@ -268,7 +180,7 @@ const SelectManagerAgentComponent: React.FC<{
                 <Space>
                   Goal
                   <Tooltip title="The primary objective of this manager agent">
-                    <QuestionCircleOutlined style={{ color: '#666' }} />
+                    <QuestionCircleOutlined className="text-[#666]" />
                   </Tooltip>
                 </Space>
               }
@@ -282,7 +194,7 @@ const SelectManagerAgentComponent: React.FC<{
                 <Space>
                   LLM Model
                   <Tooltip title="The language model this agent will use">
-                    <QuestionCircleOutlined style={{ color: '#666' }} />
+                    <QuestionCircleOutlined className="text-[#666]" />
                   </Tooltip>
                 </Space>
               }
@@ -314,7 +226,7 @@ const SelectManagerAgentComponent: React.FC<{
           />
         </Layout>
       </Layout>
-      <Divider style={{ margin: 0, backgroundColor: '#f0f0f0' }} />
+      <Divider className="m-0 bg-gray-200" />
     </>
   );
 };
@@ -434,7 +346,7 @@ const SelectOrAddManagerAgentModal: React.FC<SelectOrAddManagerAgentModalProps> 
       if (workflowState.workflowId) {
         await updateWorkflow(createUpdateRequestFromEditor(updatedWorkflowState)).unwrap();
       } else {
-        const workflowId = await addWorkflow(
+        const _workflowId = await addWorkflow(
           createAddRequestFromEditor(updatedWorkflowState),
         ).unwrap();
       }
@@ -507,8 +419,8 @@ const SelectOrAddManagerAgentModal: React.FC<SelectOrAddManagerAgentModalProps> 
       onCancel={onClose}
       centered
       title={existingManagerAgent ? 'Edit Manager Agent' : 'Add Manager Agent'}
-      width="98%"
-      style={{ height: '95vh', padding: '0px' }}
+      className="w-[98%]"
+      rootClassName="!top-0"
       footer={[
         <Button key="cancel" onClick={onClose}>
           Cancel
@@ -518,7 +430,7 @@ const SelectOrAddManagerAgentModal: React.FC<SelectOrAddManagerAgentModalProps> 
         </Button>,
       ]}
     >
-      <div style={{ overflowY: 'auto', height: 'calc(95vh - 108px)' }}>
+      <div className="overflow-y-auto h-[calc(95vh-108px)]">
         <SelectManagerAgentComponent
           form={form}
           selectedAgentTemplate={selectedAgentTemplate}

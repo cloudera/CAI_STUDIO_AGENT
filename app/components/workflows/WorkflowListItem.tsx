@@ -8,8 +8,6 @@ import {
   ExportOutlined,
   UserOutlined,
   CopyOutlined,
-  AppstoreOutlined,
-  ApiOutlined,
   DownloadOutlined,
   LoadingOutlined,
 } from '@ant-design/icons';
@@ -24,20 +22,13 @@ import { useGlobalNotification } from '../Notifications';
 import { useAppDispatch } from '../../lib/hooks/hooks';
 import { resetEditor } from '../../workflows/editorSlice';
 import { clearedWorkflowApp } from '../../workflows/workflowAppSlice';
-import { downloadAndSaveFile, downloadFile } from '../../lib/fileDownload';
+import { downloadAndSaveFile } from '../../lib/fileDownload';
 import { useListAgentsQuery, useListAgentTemplatesQuery } from '@/app/agents/agentApi';
 import { useImageAssetsData } from '@/app/lib/hooks/useAssetData';
 
 const { Text } = Typography;
 
 const MAX_VISIBLE_AGENTS = 5;
-
-function formatDate(dateString?: string) {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return '';
-  return date.toLocaleString();
-}
 
 interface WorkflowDisplayCardProps {
   workflow: Workflow;
@@ -477,7 +468,6 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
   deleteWorkflowTemplate,
   testWorkflow,
   onDeploy,
-  onDeleteDeployedWorkflow,
   sectionType,
 }) => {
   const router = useRouter();

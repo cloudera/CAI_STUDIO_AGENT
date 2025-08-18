@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   readViewSettingsFromLocalStorage,
   writeViewSettingsToLocalStorage,
@@ -29,27 +29,11 @@ export interface HomeViewBannerCardProps {
 const HomeViewBannerCard: React.FC<HomeViewBannerCardProps> = ({ title, icon, content }) => {
   return (
     <>
-      <Layout
-        style={{
-          flexDirection: 'row',
-          background: 'transparent',
-          flexGrow: 0,
-          flexShrink: 0,
-          gap: 8,
-          padding: 0,
-        }}
-      >
-        <div style={{ flexShrink: 0 }}>{icon}</div>
-
-        <Layout
-          style={{
-            flexDirection: 'column',
-            background: 'tranparent',
-            gap: 8,
-          }}
-        >
-          <Text style={{ height: 24, fontSize: 16, fontWeight: 400 }}>{title}</Text>
-          <Text style={{ height: 24, fontSize: 14, fontWeight: 400 }}>{content}</Text>
+      <Layout className="bg-transparent flex flex-row gap-2 p-0">
+        <div className="flex-shrink-0">{icon}</div>
+        <Layout className="flex-col bg-transparent gap-2">
+          <Text className="h-6 text-lg font-normal">{title}</Text>
+          <Text className="h-6 text-base font-normal">{content}</Text>
         </Layout>
       </Layout>
     </>
@@ -69,92 +53,38 @@ const HomeViewBannerContent: React.FC = () => {
   };
 
   return (
-    <Layout
-      style={{
-        background: 'transparent',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        paddingLeft: 64,
-        paddingRight: 64,
-        gap: 24,
-        maxWidth: 800,
-        flexGrow: 0,
-      }}
-    >
-      <Title
-        level={2}
-        style={{
-          color: '#120046',
-          fontSize: 64,
-          fontWeight: '600',
-          paddingBottom: 8,
-          margin: 0,
-        }}
-        className="font-sans"
-      >
+    <Layout className="bg-transparent flex flex-col justify-center pl-16 pr-16 gap-6 max-w-[800px] flex-grow-0">
+      <Title level={2} className="text-[#120046] text-6xl font-semibold pb-2 m-0 font-sans">
         Agent Studio
       </Title>
-      <Paragraph style={{ fontSize: 14, fontWeight: '400', padding: 0, margin: 0 }}>
+      <Paragraph className="text-sm font-normal p-0 m-0">
         A dedicated platform within the Cloudera AI ecosystem that empowers users to design, test,
         and deploy multi-agent workflows.
       </Paragraph>
       <HomeViewBannerCard
         title="Create Agent Workflows"
-        icon={
-          <Avatar
-            icon={<DeploymentUnitOutlined />}
-            style={{ backgroundColor: '#fff4cd', color: 'black' }}
-          />
-        }
+        icon={<Avatar icon={<DeploymentUnitOutlined />} className="bg-[#fff4cd] text-black" />}
         content="Start by creating a workflow assigning multiple agents, with configurations tailored to specific tasks and tools."
       />
       <HomeViewBannerCard
         title="Create Agents & Tools"
-        icon={
-          <Avatar
-            icon={<UsergroupAddOutlined />}
-            style={{ backgroundColor: '#edf7ff', color: 'black' }}
-          />
-        }
+        icon={<Avatar icon={<UsergroupAddOutlined />} className="bg-[#edf7ff] text-black" />}
         content="Agents can be created as standalone entities, configured to work with tools, and reused across workflows."
       />
       <HomeViewBannerCard
         title="Assign Tasks"
-        icon={
-          <Avatar
-            icon={<FileDoneOutlined />}
-            style={{ backgroundColor: '#e5ffe5', color: 'black' }}
-          />
-        }
+        icon={<Avatar icon={<FileDoneOutlined />} className="bg-[#e5ffe5] text-black" />}
         content="Assign tasks to tell your agents what to do."
       />
       <HomeViewBannerCard
         title="Deploy Workflow"
-        icon={
-          <Avatar
-            icon={<CloudUploadOutlined />}
-            style={{ backgroundColor: '#f9eeff', color: 'black' }}
-          />
-        }
+        icon={<Avatar icon={<CloudUploadOutlined />} className="bg-[#f9eeff] text-black" />}
         content="Workflows can be deployed as standalone applications in Cloudera's AI Workbench, enabling other users to interact with and benefit from them for specific tasks."
       />
-      <Layout
-        style={{
-          flexGrow: 0,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'flex-start',
-          paddingTop: 32,
-          gap: 24,
-        }}
-      >
+      <Layout className="flex-grow-0 flex flex-row items-center justify-start pt-8 gap-6">
         <Button
           type="primary"
-          style={{
-            height: 40,
-            borderRadius: 3,
-            backgroundColor: '#0074d2',
-          }}
+          className="h-10 rounded bg-[#0074d2]"
           onClick={() => {
             router.push('/workflows');
           }}
@@ -178,26 +108,15 @@ export interface HomeViewAgentToolTextCardProps {
 }
 
 const HomeViewAgentToolTextCard: React.FC<HomeViewAgentToolTextCardProps> = ({
-  itemBackgroundColor,
-  itemBorderColor,
-  textColor,
+  _itemBackgroundColor,
+  _itemBorderColor,
+  _textColor,
   text,
-  borderType,
+  _borderType,
 }) => {
   return (
     <>
-      <Text
-        style={{
-          height: 22,
-          fontSize: 12,
-          backgroundColor: `${itemBackgroundColor}`,
-          color: `${textColor}`,
-          padding: '1px 8px',
-          flexShrink: 0,
-          borderRadius: 4,
-          border: `${borderType} 1px ${itemBorderColor}`,
-        }}
-      >
+      <Text className="h-[22px] text-xs bg-[rgba(0,0,0,0.02)] text-[rgba(0,0,0,0.88)] p-[1px_8px] flex-shrink-0 rounded border-solid border-[1px] border-[#d9d9d9]">
         {text}
       </Text>
     </>
@@ -212,26 +131,14 @@ export interface HomeViewAgentToolCardProps {
 }
 
 const HomeViewDiagramAgentToolCard: React.FC<HomeViewAgentToolCardProps> = ({
-  borderColor,
+  _borderColor,
   itemBackgroundColor,
   itemBorderColor,
   textColor,
 }) => {
   return (
     <>
-      <Layout
-        style={{
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'flex-start',
-          flexGrow: 0,
-          flexShrink: 0,
-          borderRadius: 10,
-          padding: 8,
-          gap: 8,
-          border: `solid 1px ${borderColor}`,
-        }}
-      >
+      <Layout className="flex flex-col justify-center items-center flex-grow-0 w-1/2 gap-2">
         <HomeViewAgentToolTextCard
           itemBorderColor={itemBorderColor}
           itemBackgroundColor={itemBackgroundColor}
@@ -239,13 +146,7 @@ const HomeViewDiagramAgentToolCard: React.FC<HomeViewAgentToolCardProps> = ({
           borderType="solid"
           text="Agent 1"
         />
-        <Layout
-          style={{
-            background: 'transparent',
-            flexDirection: 'row',
-            gap: 8,
-          }}
-        >
+        <Layout className="flex flex-row justify-center items-center flex-grow-0 flex-shrink-0 m-0 p-0 gap-2">
           <HomeViewAgentToolTextCard
             itemBorderColor={itemBorderColor}
             itemBackgroundColor={itemBackgroundColor}
@@ -269,32 +170,12 @@ const HomeViewDiagramAgentToolCard: React.FC<HomeViewAgentToolCardProps> = ({
 const HomeViewDiagramContent: React.FC = () => {
   return (
     <>
-      <Layout
-        style={{
-          flexDirection: 'column',
-          width: '50%',
-          gap: 8,
-          justifyContent: 'center',
-          alignItems: 'center',
-          flexGrow: 0,
-        }}
-      >
+      <Layout className="flex flex-col justify-center items-center flex-grow-0 w-1/2 gap-2">
         <Image
           src="/ic-brand-developer-engineer.svg"
-          style={{ width: 80, height: 80, color: '#5284ff', flexGrow: 0 }}
+          className="w-[80px] h-[80px] text-[#5284ff] flex-grow-0"
         />
-        <Layout
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-            flexGrow: 0,
-            flexShrink: 0,
-            margin: 0,
-            padding: 0,
-            gap: 8,
-          }}
-        >
+        <Layout className="flex flex-row justify-center items-center flex-grow-0 flex-shrink-0 m-0 p-0 gap-2">
           <HomeViewDiagramAgentToolCard
             borderColor="#ff8400"
             itemBackgroundColor="#fff7e6"
@@ -314,33 +195,12 @@ const HomeViewDiagramContent: React.FC = () => {
             textColor="#722ed1"
           />
         </Layout>
-        <Layout
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-            flexGrow: 0,
-            flexShrink: 0,
-            margin: 0,
-            padding: 0,
-            gap: 72,
-          }}
-        >
+        <Layout className="flex flex-row justify-center items-center flex-grow-0 flex-shrink-0 m-0 p-0 gap-[72px]">
           <Image src="vec1.svg" />
           <Image src="vec2.svg" />
           <Image src="vec3.svg" />
         </Layout>
-        <Layout
-          style={{
-            flexDirection: 'row',
-            gap: 28,
-            justifyContent: 'center',
-            alignItems: 'center',
-            flexGrow: 0,
-            margin: 0,
-            padding: 0,
-          }}
-        >
+        <Layout className="flex flex-row gap-7 justify-center items-center flex-grow-0 m-0 p-0">
           <HomeViewAgentToolTextCard
             itemBorderColor="#d9d9d9"
             itemBackgroundColor="rgba(0, 0, 0, 0.02)"
@@ -363,123 +223,35 @@ const HomeViewDiagramContent: React.FC = () => {
             text="Task 3"
           />
         </Layout>
-        <Layout
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-            flexGrow: 0,
-            margin: 0,
-            padding: 0,
-          }}
-        >
+        <Layout className="flex flex-row justify-center items-center flex-grow-0 m-0 p-0">
           <Image src="vec2.svg" />
         </Layout>
-        <Button
-          type="primary"
-          style={{
-            borderRadius: 2,
-            backgroundColor: '#1890ff',
-          }}
-        >
+        <Button type="primary" className="rounded bg-[#1890ff]">
           Test
         </Button>
-        <Layout
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-            flexGrow: 0,
-          }}
-        >
+        <Layout className="flex flex-row justify-center items-center flex-grow-0 m-0 p-0">
           <Image src="vec2.svg" />
         </Layout>
-        <Layout
-          style={{
-            backgroundColor: 'white',
-            borderRadius: 12,
-            boxShadow: '0 1px 4px 0 rgba(0, 0, 0, 0.2)',
-            width: 317.8,
-            height: 160.5,
-            flexGrow: 0,
-            padding: 12,
-          }}
-        >
+        <Layout className="rounded bg-white shadow-md w-[317.8px] h-[160.5px] flex-grow-0 p-3">
           {/* Cloudera agent studio header */}
-          <Layout
-            style={{
-              alignItems: 'center',
-              justifyContent: 'flex-start',
-              display: 'flex',
-              flexDirection: 'row',
-              backgroundColor: 'transparent',
-              gap: '4px',
-              flexGrow: 0,
-            }}
-          >
-            <Image
-              src="/cloudera-logo.svg"
-              preview={false}
-              color="gray"
-              style={{
-                width: 18.6,
-              }}
-            />
+          <Layout className="flex flex-row items-center justify-start flex-grow-0 gap-1 bg-transparent">
+            <Image src="/cloudera-logo.svg" preview={false} color="gray" className="w-[18.6px]" />
             <Image
               src="/cloudera-agent-studio-text.svg"
               preview={false}
               color="gray"
-              style={{
-                width: 47.4,
-              }}
+              className="w-[47.4px]"
             />
           </Layout>
-          <Layout
-            style={{
-              background: 'transparent',
-              justifyContent: 'flex-end',
-              flexGrow: 0,
-              flexShrink: 0,
-              flexDirection: 'row',
-              paddingTop: 24,
-              gap: 8,
-            }}
-          >
-            <Text style={{ fontSize: 8, fontWeight: 300 }}>
+          <Layout className="bg-transparent justify-end flex-grow-0 flex-shrink-0 flex-row pt-6 gap-2">
+            <Text className="text-xs font-light">
               What are the most customer service complaints?
             </Text>
-            <Avatar
-              icon={<UserOutlined />}
-              size={14}
-              style={{ backgroundColor: '#f7c200', flexShrink: 0 }}
-            />
+            <Avatar icon={<UserOutlined />} size={14} className="bg-[#f7c200] flex-shrink-0" />
           </Layout>
-          <Layout
-            style={{
-              background: 'transparent',
-              justifyContent: 'flex-start',
-              alignItems: 'start',
-              flexGrow: 0,
-              flexShrink: 0,
-              flexDirection: 'row',
-              paddingTop: 24,
-              gap: 8,
-            }}
-          >
-            <Avatar
-              icon={<UserOutlined />}
-              size={14}
-              style={{ backgroundColor: '#008cff', flexShrink: 0 }}
-            />
-            <Paragraph
-              style={{
-                fontSize: 8,
-                fontWeight: 300,
-                backgroundColor: '#f4f5f6',
-                borderRadius: 3,
-                padding: 4,
-              }}
-            >
+          <Layout className="bg-transparent justify-start items-start flex-grow-0 flex-shrink-0 flex-row pt-6 gap-2">
+            <Avatar icon={<UserOutlined />} size={14} className="bg-[#008cff] flex-shrink-0" />
+            <Paragraph className="text-xs font-light bg-[#f4f5f6] rounded p-1">
               Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
               incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
               exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
@@ -487,41 +259,14 @@ const HomeViewDiagramContent: React.FC = () => {
           </Layout>
         </Layout>
 
-        <Layout
-          style={{
-            backgroundColor: 'white',
-            borderRadius: 12,
-            boxShadow: '0 1px 4px 0 rgba(0, 0, 0, 0.2)',
-            width: 317.8,
-            height: 40.1,
-            flexGrow: 0,
-            marginTop: 12,
-            flexDirection: 'row',
-            gap: 4.5,
-            padding: 10,
-            alignItems: 'center',
-          }}
-        >
+        <Layout className="rounded bg-white shadow-md w-[317.8px] h-[40.1px] flex-grow-0 mt-3 flex-row gap-1.5 p-2.5 items-center">
           <Input
-            style={{
-              backgroundColor: '#f4f5f6',
-              height: 22.3,
-              fontSize: 10,
-              border: 'none',
-              borderRadius: 3,
-            }}
+            className="bg-[#f4f5f6] h-[22.3px] text-[10px] border-none rounded w-[22.3px] flex-shrink-0"
             placeholder="Ask your question here"
           />
           <Button
-            style={{
-              backgroundColor: '#f4f5f6',
-              border: 'none',
-              height: 22.3,
-              borderRadius: 3,
-              width: 22.3,
-              flexShrink: 0,
-            }}
-            icon={<SendOutlined style={{}} />}
+            className="bg-[#f4f5f6] border-none h-[22.3px] rounded w-[22.3px] flex-shrink-0"
+            icon={<SendOutlined />}
           />
         </Layout>
       </Layout>
@@ -532,14 +277,7 @@ const HomeViewDiagramContent: React.FC = () => {
 const HomeView: React.FC = () => {
   return (
     <>
-      <Layout
-        style={{
-          flex: 1,
-          flexDirection: 'row',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
+      <Layout className="flex-1 flex flex-row justify-center items-center">
         <HomeViewBannerContent />
         <HomeViewDiagramContent />
       </Layout>

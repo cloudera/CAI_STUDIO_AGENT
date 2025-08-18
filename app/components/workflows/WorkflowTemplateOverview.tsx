@@ -1,13 +1,9 @@
 'use client';
 
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { Suspense } from 'react';
 import { Layout, Spin, Alert, Divider } from 'antd';
-import {
-  useGetWorkflowTemplateByIdQuery,
-  useGetWorkflowTemplateMutation,
-} from '@/app/workflows/workflowsApi';
+import { useGetWorkflowTemplateByIdQuery } from '@/app/workflows/workflowsApi';
 import WorkflowTemplateDetails from './WorkflowTemplateDetails';
-import { useAppDispatch } from '../../lib/hooks/hooks';
 import ErrorBoundary from '../ErrorBoundary';
 import WorkflowTemplateDiagramView from '../workflowApp/WorkflowTemplateDiagramView';
 
@@ -28,14 +24,7 @@ const WorkflowTemplateOverview: React.FC<WorkflowTemplateOverviewProps> = ({
     return (
       <ErrorBoundary fallback={<Alert message="Error loading template" type="error" />}>
         <Suspense fallback={<Spin size="large" />}>
-          <Layout
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              height: '100vh',
-            }}
-          >
+          <Layout className="flex justify-center items-center h-screen">
             <Spin size="large" />
           </Layout>
         </Suspense>
@@ -46,14 +35,7 @@ const WorkflowTemplateOverview: React.FC<WorkflowTemplateOverviewProps> = ({
   if (error) {
     return (
       <ErrorBoundary fallback={<Alert message="Error loading template" type="error" />}>
-        <Layout
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '100vh',
-          }}
-        >
+        <Layout className="flex justify-center items-center h-screen">
           <Alert message="Error" description={JSON.stringify(error)} type="error" showIcon />
         </Layout>
       </ErrorBoundary>
@@ -63,14 +45,7 @@ const WorkflowTemplateOverview: React.FC<WorkflowTemplateOverviewProps> = ({
   if (!templateDetails) {
     return (
       <ErrorBoundary fallback={<Alert message="Error loading template" type="error" />}>
-        <Layout
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '100vh',
-          }}
-        >
+        <Layout className="flex justify-center items-center h-screen">
           <Alert
             message="No Data"
             description="No template details available."
@@ -85,39 +60,16 @@ const WorkflowTemplateOverview: React.FC<WorkflowTemplateOverviewProps> = ({
   return (
     <ErrorBoundary fallback={<Alert message="Error loading template" type="error" />}>
       <Suspense fallback={<Spin size="large" />}>
-        <Layout
-          style={{
-            flex: 1,
-            flexDirection: 'row',
-            backgroundColor: 'white',
-            borderRadius: 4,
-            height: '100vh',
-            overflow: 'hidden',
-          }}
-        >
+        <Layout className="flex-1 flex flex-row bg-white rounded h-screen overflow-hidden">
           {/* Left Side: Template Details */}
-          <Layout.Content
-            style={{
-              background: '#fff',
-              overflowY: 'auto',
-              overflowX: 'hidden',
-              flex: '1 1 40%',
-            }}
-          >
+          <Layout.Content className="bg-white overflow-y-auto overflow-x-hidden flex-auto w-2/5">
             <WorkflowTemplateDetails template={templateDetails} />
           </Layout.Content>
 
-          <Divider type="vertical" style={{ height: '100%', flexGrow: 0, flexShrink: 0 }} />
+          <Divider type="vertical" className="h-full flex-grow-0 flex-shrink-0" />
 
           {/* Right Side: Workflow Diagram */}
-          <Layout.Content
-            style={{
-              background: 'transparent',
-              flex: '1 1 60%',
-              position: 'relative',
-              minHeight: 0,
-            }}
-          >
+          <Layout.Content className="bg-transparent flex-auto w-3/5 relative min-h-0">
             <WorkflowTemplateDiagramView template={templateDetails} />
           </Layout.Content>
         </Layout>

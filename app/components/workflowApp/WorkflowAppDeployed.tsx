@@ -23,38 +23,13 @@ interface WorkflowAppDeployedHeaderProps {
  */
 const WorkflowAppDeployedHeader: React.FC<WorkflowAppDeployedHeaderProps> = ({ workflowData }) => {
   return (
-    <Layout
-      style={{
-        background: 'transparent',
-        padding: 0,
-        marginBottom: 12,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexGrow: 0,
-        flexShrink: 0,
-      }}
-    >
-      <Title level={1} ellipsis style={{ flexGrow: 1 }}>
+    <Layout className="bg-transparent p-0 mb-[12px] flex flex-row items-center justify-between flex-none">
+      <Title level={1} ellipsis className="flex-grow">
         {workflowData.workflow.name}
       </Title>
-      <Layout
-        style={{
-          backgroundColor: '#132329',
-          opacity: 0.7,
-          borderRadius: 4,
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          flexGrow: 0,
-          flexShrink: 0,
-          padding: 12,
-        }}
-      >
-        <Text className="font-sans" style={{ fontSize: 12, fontWeight: 200, color: 'white' }}>
-          built with
-        </Text>
-        <Text className="font-sans" style={{ fontSize: 16, fontWeight: 200, color: 'white' }}>
+      <Layout className="bg-[#132329] opacity-70 rounded flex flex-col justify-center items-center flex-none p-[12px]">
+        <Text className="font-sans text-white text-[12px] font-extralight">built with</Text>
+        <Text className="font-sans text-white text-[16px] font-extralight">
           Cloudera <b>Agent Studio</b>
         </Text>
       </Layout>

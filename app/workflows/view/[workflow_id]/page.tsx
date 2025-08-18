@@ -15,11 +15,10 @@ import WorkflowOverview from '@/app/components/workflows/WorkflowOverview';
 import {
   useGetWorkflowMutation,
   useRemoveWorkflowMutation,
-  useDeployWorkflowMutation,
   useAddWorkflowTemplateMutation,
 } from '@/app/workflows/workflowsApi';
 import CommonBreadCrumb from '@/app/components/CommonBreadCrumb';
-import { resetEditor, updatedEditorStep } from '@/app/workflows/editorSlice';
+import { updatedEditorStep } from '@/app/workflows/editorSlice';
 import { useAppDispatch } from '@/app/lib/hooks/hooks';
 import DeleteWorkflowModal from '@/app/components/workflows/DeleteWorkflowModal';
 import { useGlobalNotification } from '@/app/components/Notifications';
@@ -261,51 +260,24 @@ const WorkflowPage: React.FC = () => {
 
   if (loading) {
     return (
-      <Layout
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-        }}
-      >
+      <Layout className="flex justify-center items-center h-screen">
         <Spin size="large" />
       </Layout>
     );
   }
 
   if (error) {
-    return (
-      <Alert
-        message="Error"
-        description={error}
-        type="error"
-        showIcon
-        style={{
-          margin: '16px',
-        }}
-      />
-    );
+    return <Alert message="Error" description={error} type="error" showIcon className="m-4" />;
   }
 
   return (
-    <Layout style={{ flex: 1, padding: '16px 24px 22px', flexDirection: 'column' }}>
+    <Layout className="flex-1 p-4 md:p-6 lg:p-6 flex flex-col">
       <CommonBreadCrumb
         items={[{ title: 'Agentic Workflows', href: '/workflows' }, { title: 'View Workflow' }]}
       />
-      <Layout
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          borderBottom: '1px solid #f0f0f0',
-          flexGrow: 0,
-          flexShrink: 0,
-        }}
-      >
+      <Layout className="flex flex-row items-center justify-between border-b border-gray-200 flex-grow-0 flex-shrink-0">
         {/* Workflow Name */}
-        <Title level={4} style={{ margin: 0 }}>
+        <Title level={4} className="m-0">
           {workflowName || 'Unknown Workflow'}
         </Title>
         {/* Action Menu */}
@@ -314,23 +286,12 @@ const WorkflowPage: React.FC = () => {
           trigger={['click']}
           placement="bottomRight"
         >
-          <Button
-            style={{
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px', // Spacing between text and arrow
-            }}
-          >
+          <Button className="text-sm flex items-center gap-1">
             Actions <DownOutlined /> {/* Rotate the icon to face downwards */}
           </Button>
         </Dropdown>
       </Layout>
-      <Layout
-        style={{
-          marginTop: '10px',
-        }}
-      >
+      <Layout className="mt-2.5">
         <WorkflowOverview workflowId={workflowId} />
       </Layout>
       <DeleteWorkflowModal

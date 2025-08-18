@@ -34,18 +34,9 @@ const ToolTemplateList: React.FC<ToolsListProps> = ({
   );
 
   return (
-    <Layout
-      style={{
-        flex: 1,
-        flexDirection: 'column',
-        height: '100%',
-        overflow: 'auto',
-        width: '100%',
-        background: 'transparent',
-      }}
-    >
+    <Layout className="flex flex-col h-full overflow-auto w-full bg-transparent">
       {/* Search Bar */}
-      <Space direction="vertical" style={{ width: '100%', marginBottom: 16 }}>
+      <Space direction="vertical" className="w-full mb-4">
         <Search
           placeholder="Search tools by name"
           allowClear
@@ -62,20 +53,7 @@ const ToolTemplateList: React.FC<ToolsListProps> = ({
         renderItem={(item) => (
           <List.Item>
             <Layout
-              style={{
-                borderRadius: '4px',
-                border: 'solid 1px #f0f0f0',
-                backgroundColor: '#fff',
-                width: '320px',
-                height: '164px',
-                margin: '0px 12px 16px 0px',
-                padding: '0',
-                display: 'flex',
-                flexDirection: 'column',
-                cursor: 'pointer',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-              }}
+              className="rounded border border-[#f0f0f0] bg-white w-[320px] h-[164px] mr-3 mb-4 p-0 flex flex-col cursor-pointer transition-transform duration-200 ease-in-out shadow-md"
               onClick={() => router.push(`/tools/view/${item.id}`)} // Navigate to tool details page
               onMouseEnter={(e: React.MouseEvent<HTMLElement>) => {
                 e.currentTarget.style.transform = 'scale(1.03)';
@@ -86,104 +64,49 @@ const ToolTemplateList: React.FC<ToolsListProps> = ({
                 e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
               }}
             >
-              <Layout
-                style={{
-                  flex: 1,
-                  background: 'transparent',
-                  display: 'flex',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  paddingLeft: '24px',
-                  paddingRight: '24px',
-                }}
-              >
+              <Layout className="flex-1 bg-transparent flex flex-row items-center px-6">
                 {/* Image */}
                 {item.tool_image_uri && imageData[item.tool_image_uri] && (
-                  <div
-                    style={{
-                      width: '24px',
-                      height: '24px',
-                      borderRadius: '50%',
-                      background: '#f1f1f1', // Grey background
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginRight: '16px',
-                    }}
-                  >
+                  <div className="w-6 h-6 rounded-full bg-[#f1f1f1] flex items-center justify-center mr-4">
                     {/* Icon - Only render if URI exists and image data is available */}
                     <img
                       src={imageData[item.tool_image_uri]}
                       alt={item.name}
-                      style={{
-                        width: '16px',
-                        height: '16px',
-                        objectFit: 'cover',
-                        borderRadius: '2px', // Optional, based on design preference
-                      }}
+                      className="w-4 h-4 object-cover rounded-sm"
                     />
                   </div>
                 )}
                 {/* Text */}
-                <div style={{ flex: 1, maxWidth: '220px' }}>
+                <div className="flex-1 max-w-[220px]">
                   <Tooltip title={item.name}>
-                    <Text
-                      style={{
-                        fontSize: '14px',
-                        fontWeight: 400,
-                        display: 'block',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
-                    >
+                    <Text className="text-[14px] font-normal block whitespace-nowrap overflow-hidden text-ellipsis">
                       {truncateText(item.name, 50)}
                     </Text>
                   </Tooltip>
                   <Tooltip title={item.tool_description || 'N/A'}>
-                    <Text
-                      style={{
-                        paddingTop: '4px',
-                        display: 'block',
-                        fontSize: '11px',
-                        opacity: 0.45,
-                        fontWeight: 400,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
-                    >
+                    <Text className="pt-1 block text-[11px] opacity-45 font-normal whitespace-nowrap overflow-hidden text-ellipsis">
                       {truncateText(item.tool_description || 'N/A', 100)}
                     </Text>
                   </Tooltip>
                 </div>
               </Layout>
-              <Divider style={{ flexGrow: 0, margin: '0px' }} type="horizontal" />
-              <Layout
-                style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  flexGrow: 0,
-                  background: 'transparent',
-                  justifyContent: 'space-around',
-                  alignItems: 'center',
-                }}
-              >
+              <Divider className="flex-grow-0 m-0" type="horizontal" />
+              <Layout className="flex flex-row flex-grow-0 bg-transparent justify-around items-center">
                 {/* Edit Button */}
                 <Tooltip
                   title={item.pre_built ? 'Prepackaged tools cannot be edited' : 'Edit Tool'}
                 >
                   <Button
-                    style={{ border: 'none' }}
-                    icon={<EditOutlined style={{ opacity: 0.45 }} />}
+                    className="border-none"
+                    icon={<EditOutlined className="opacity-45" />}
                     disabled={item.pre_built}
                     onClick={(e) => {
-                      e.stopPropagation(); // Prevent card click event
+                      e.stopPropagation();
                       editExistingTemplate(item.id);
                     }}
                   />
                 </Tooltip>
-                <Divider style={{ flexGrow: 0, margin: '12px 0px' }} type="vertical" />
+                <Divider className="flex-grow-0 my-3" type="vertical" />
                 {/* Delete Button */}
                 <Tooltip
                   title={item.pre_built ? 'Prepackaged tools cannot be deleted' : 'Delete Tool'}
@@ -204,10 +127,10 @@ const ToolTemplateList: React.FC<ToolsListProps> = ({
                       onCancel={(e) => e?.stopPropagation()} // Prevent card click event
                     >
                       <Button
-                        style={{ border: 'none' }}
-                        icon={<DeleteOutlined style={{ opacity: 0.45 }} />}
+                        className="border-none"
+                        icon={<DeleteOutlined className="opacity-45" />}
                         disabled={item.pre_built}
-                        onClick={(e) => e.stopPropagation()} // Prevent card click event
+                        onClick={(e) => e.stopPropagation()}
                       />
                     </Popconfirm>
                   </div>

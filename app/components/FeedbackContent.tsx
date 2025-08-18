@@ -10,7 +10,7 @@ const FeedbackContent: React.FC = () => {
     {
       title: 'Email Feedback',
       description: (
-        <Text style={{ fontSize: 13, fontWeight: 300, opacity: 0.6 }}>
+        <Text className="text-sm font-light opacity-60">
           Reach out to us at ai_feedback@cloudera.com
         </Text>
       ),
@@ -20,7 +20,7 @@ const FeedbackContent: React.FC = () => {
     {
       title: 'GitHub Discussions',
       description: (
-        <Text style={{ fontSize: 13, fontWeight: 350, opacity: 0.6 }}>
+        <Text className="text-sm font-light opacity-60">
           Join the discussion on{' '}
           <a href={githubBaseUrl} target="_blank" rel="noopener noreferrer">
             GitHub
@@ -33,17 +33,12 @@ const FeedbackContent: React.FC = () => {
   ];
 
   return (
-    <Space direction="vertical" style={{ width: '100%' }} size="small">
+    <Space direction="vertical" className="w-full" size="small">
       <Alert
-        style={{
-          alignItems: 'flex-start',
-          justifyContent: 'flex-start',
-          padding: 8,
-          width: '100%',
-        }}
+        className="items-start justify-start p-2 w-full"
         message={
-          <Layout style={{ width: '100%', background: 'transparent' }}>
-            <Text style={{ fontSize: 13, fontWeight: 400 }}>
+          <Layout className="w-full bg-transparent">
+            <Text className="text-sm font-normal">
               {'We value your feedback! Reach out to us via email or join the discussion on GitHub. ' +
                 'Your thoughts help us improve and grow.'}
             </Text>
@@ -56,10 +51,7 @@ const FeedbackContent: React.FC = () => {
       <List
         itemLayout="horizontal"
         dataSource={feedbackItems}
-        style={{
-          width: '100%',
-          paddingLeft: '20px',
-        }}
+        className="w-full pl-5"
         renderItem={(item) => (
           <List.Item>
             <List.Item.Meta

@@ -8,7 +8,6 @@ import {
   UpdateWorkflowRequest,
 } from '@/studio/proto/agent_studio';
 import { WorkflowState } from '../workflows/editorSlice';
-import AgentNode from '../components/diagram/AgentNode';
 
 export interface ActiveNodeState {
   id: string;
@@ -62,9 +61,9 @@ export const ASK_COWORKER_TOOL = 'Ask question to coworker';
 
 export const processEvents = (
   events: any[],
-  agents: AgentMetadata[],
-  tasks: CrewAITaskMetadata[],
-  toolInstances: ToolInstance[],
+  _agents: AgentMetadata[],
+  _tasks: CrewAITaskMetadata[],
+  _toolInstances: ToolInstance[],
   _mcpInstances: McpInstance[], // Prefixed with underscore as it's unused
   _manager_agent_id: string | undefined, // Prefixed with underscore as it's unused
   _process: string | undefined, // Prefixed with underscore as it's unused

@@ -1,5 +1,5 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
-import { Alert, Card, Layout, Tabs, Tooltip, Typography, Checkbox } from 'antd';
+import { Alert, Card, Layout, Tabs, Tooltip, Checkbox } from 'antd';
 import { ReactFlowProvider } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import {
@@ -10,20 +10,12 @@ import {
 } from '@/studio/proto/agent_studio';
 import { WorkflowState } from '@/app/workflows/editorSlice';
 import WorkflowDiagram from './WorkflowDiagram';
-import {
-  ApiOutlined,
-  BugOutlined,
-  ExportOutlined,
-  EyeOutlined,
-  MonitorOutlined,
-} from '@ant-design/icons';
+import { ApiOutlined, BugOutlined, ExportOutlined, EyeOutlined } from '@ant-design/icons';
 import OpsIFrame from '../OpsIFrame';
 import ReactMarkdown from 'react-markdown';
 import { useAppSelector } from '@/app/lib/hooks/hooks';
 import { selectCurrentEventIndex } from '@/app/workflows/workflowAppSlice';
 import { useGetOpsDataQuery } from '@/app/ops/opsApi';
-
-const { Text, Paragraph } = Typography;
 
 export interface WorkflowDiagramViewProps {
   workflowState: WorkflowState;
@@ -106,50 +98,21 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
   }
 
   return (
-    <Layout
-      style={{
-        background: 'transparent',
-        flexDirection: 'column',
-        display: 'flex',
-        height: '100%',
-        width: '100%',
-      }}
-    >
+    <Layout className="bg-transparent flex flex-col h-full w-full">
       <Tabs
         defaultActiveKey="1"
-        style={{
-          width: '100%',
-          padding: '4px',
-          height: '100%',
-        }}
+        className="w-full p-1 h-full"
         items={[
           {
             key: '1',
             label: (
-              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <ApiOutlined
-                  style={{
-                    color: 'white',
-                    background: '#1890ff',
-                    borderRadius: '50%',
-                    width: '24px',
-                    height: '24px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '4px',
-                  }}
-                />
+              <span className="flex items-center gap-2">
+                <ApiOutlined className="text-white bg-blue-500 rounded-full w-6 h-6 flex items-center justify-center p-1" />
                 Flow Diagram
               </span>
             ),
             children: (
-              <div
-                style={{
-                  height: '100%',
-                  width: '100%',
-                }}
-              >
+              <div className="h-full w-full">
                 <ReactFlowProvider>
                   <WorkflowDiagram
                     workflowState={workflowState}
@@ -167,45 +130,16 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
           {
             key: '2',
             label: (
-              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <BugOutlined
-                  style={{
-                    color: 'white',
-                    background: '#1890ff',
-                    borderRadius: '50%',
-                    width: '24px',
-                    height: '24px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '4px',
-                  }}
-                />
+              <span className="flex items-center gap-2">
+                <BugOutlined className="text-white bg-blue-500 rounded-full w-6 h-6 flex items-center justify-center p-1" />
                 Logs
               </span>
             ),
             children: (
-              <div
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  overflow: 'auto',
-                  padding: '16px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                }}
-              >
+              <div className="w-full h-full overflow-auto p-4 flex flex-col">
                 {/* Filter checkboxes */}
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: 12,
-                    marginBottom: 8,
-                    alignItems: 'center',
-                    flexWrap: 'wrap',
-                  }}
-                >
-                  <span style={{ fontSize: 12, color: '#888' }}>Filter:</span>
+                <div className="flex gap-3 mb-2 items-center flex-wrap">
+                  <span className="text-xs text-gray-500">Filter:</span>
                   <Checkbox
                     checked={eventTypeFilters.includes('error')}
                     onChange={(e) => {
@@ -213,7 +147,7 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
                         e.target.checked ? [...f, 'error'] : f.filter((x) => x !== 'error'),
                       );
                     }}
-                    style={{ fontSize: 11, padding: 0 }}
+                    className="text-xs p-0"
                   >
                     Error
                   </Checkbox>
@@ -224,7 +158,7 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
                         e.target.checked ? [...f, 'workflow'] : f.filter((x) => x !== 'workflow'),
                       );
                     }}
-                    style={{ fontSize: 11, padding: 0 }}
+                    className="text-xs p-0"
                   >
                     Workflow
                   </Checkbox>
@@ -235,7 +169,7 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
                         e.target.checked ? [...f, 'task'] : f.filter((x) => x !== 'task'),
                       );
                     }}
-                    style={{ fontSize: 11, padding: 0 }}
+                    className="text-xs p-0"
                   >
                     Task
                   </Checkbox>
@@ -246,7 +180,7 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
                         e.target.checked ? [...f, 'agent'] : f.filter((x) => x !== 'agent'),
                       );
                     }}
-                    style={{ fontSize: 11, padding: 0 }}
+                    className="text-xs p-0"
                   >
                     Agent
                   </Checkbox>
@@ -257,7 +191,7 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
                         e.target.checked ? [...f, 'llm'] : f.filter((x) => x !== 'llm'),
                       );
                     }}
-                    style={{ fontSize: 11, padding: 0 }}
+                    className="text-xs p-0"
                   >
                     LLM
                   </Checkbox>
@@ -268,7 +202,7 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
                         e.target.checked ? [...f, 'tool'] : f.filter((x) => x !== 'tool'),
                       );
                     }}
-                    style={{ fontSize: 11, padding: 0 }}
+                    className="text-xs p-0"
                   >
                     Tool
                   </Checkbox>
@@ -276,16 +210,7 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
                 {!filteredEvents || filteredEvents.length === 0 ? (
                   <Alert message="No events yet" type="info" showIcon />
                 ) : (
-                  <Layout
-                    style={{
-                      background: 'transparent',
-                      flex: 1,
-                      overflowY: 'auto',
-                      overflowX: 'hidden',
-                      gap: 16,
-                      padding: 4,
-                    }}
-                  >
+                  <Layout className="bg-transparent flex-1 overflow-y-auto overflow-x-hidden gap-4 p-1">
                     {filteredEvents.map((event, index) => {
                       const isError = /error|fail/i.test(event.type);
                       return (
@@ -295,35 +220,16 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
                             eventLogs.current[index] = el;
                           }}
                           title={event.type}
-                          style={{
-                            margin: 8,
-                            backgroundColor: isError
-                              ? '#ffeaea'
-                              : event.type === 'crew_kickoff_completed'
-                                ? '#a2f5bf'
-                                : index === currentEventIndex
-                                  ? '#8fe6ff'
-                                  : 'white',
-                            fontSize: '9px',
-                            maxWidth: '100%',
-                            overflow: 'hidden',
-                            flexShrink: 0,
-                            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.4)',
+                          className={`m-2 text-xs max-w-full overflow-hidden flex-shrink-0 shadow-md ${isError ? 'bg-red-100' : event.type === 'crew_kickoff_completed' ? 'bg-green-200' : index === currentEventIndex ? 'bg-blue-200' : 'bg-white'}`}
+                          classNames={{
+                            header: 'text-sm',
+                            body: 'text-[9px] p-3 overflow-auto',
                           }}
-                          headStyle={{ fontSize: '14px' }}
-                          bodyStyle={{ fontSize: '9px', padding: '12px', overflow: 'auto' }}
                         >
                           {event.type === 'crew_kickoff_completed' ? (
                             <ReactMarkdown>{event.output}</ReactMarkdown>
                           ) : (
-                            <pre
-                              style={{
-                                fontSize: '9px',
-                                margin: 0,
-                                overflow: 'auto',
-                                maxWidth: '100%',
-                              }}
-                            >
+                            <pre className="text-xs m-0 overflow-auto max-w-full">
                               {JSON.stringify(event, null, 2)}
                             </pre>
                           )}
@@ -338,60 +244,25 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
           {
             key: '3',
             label: (
-              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <EyeOutlined
-                  style={{
-                    color: 'white',
-                    background: '#1890ff',
-                    borderRadius: '50%',
-                    width: '24px',
-                    height: '24px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '4px',
-                  }}
-                />
+              <span className="flex items-center gap-2">
+                <EyeOutlined className="text-white bg-blue-500 rounded-full w-6 h-6 flex items-center justify-center p-1" />
                 Monitoring
                 <Tooltip title="Open the Agent Ops & Metrics application in a new tab">
                   <ExportOutlined
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: '4px',
-                    }}
+                    className="flex items-center justify-center p-1"
                     onClick={() => window.open(opsData?.ops_display_url)}
                   />
                 </Tooltip>
               </span>
             ),
             children: (
-              <div
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  overflow: 'auto',
-                  padding: '16px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                }}
-              >
+              <div className="w-full h-full overflow-auto p-4 flex flex-col">
                 {!events ? (
                   <Alert message="No telemetry yet" type="info" showIcon />
                 ) : events && events.length === 0 ? (
                   <Alert message="No telemetry yet" type="info" showIcon />
                 ) : (
-                  <Layout
-                    style={{
-                      background: 'transparent',
-                      flex: 1,
-                      overflowY: 'auto',
-                      overflowX: 'hidden',
-                      gap: 16,
-                      padding: 4,
-                    }}
-                  >
+                  <Layout className="bg-transparent flex-1 overflow-y-auto overflow-x-hidden gap-4 p-1">
                     <OpsIFrame />
                   </Layout>
                 )}

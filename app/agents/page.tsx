@@ -1,15 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Button, Typography, Layout, Alert, notification, Image } from 'antd';
-import { UserOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { Button, Typography, Layout, Alert, Image } from 'antd';
+import { ArrowRightOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import AgentList from '../components/AgentList';
 import { useListGlobalAgentTemplatesQuery, useRemoveAgentTemplateMutation } from './agentApi';
 import CommonBreadCrumb from '../components/CommonBreadCrumb';
 import { useGlobalNotification } from '../components/Notifications';
 
-const { Content } = Layout;
 const { Text } = Typography;
 
 const AgentsPage: React.FC = () => {
@@ -59,7 +58,7 @@ const AgentsPage: React.FC = () => {
   };
 
   return (
-    <Layout style={{ flex: 1, padding: '16px 24px 22px', flexDirection: 'column' }}>
+    <Layout className="flex flex-1 flex-col pt-4 px-6 pb-[22px]">
       <CommonBreadCrumb items={[{ title: 'Agent Template Catalog' }]} />
       {submitError && (
         <Alert
@@ -69,49 +68,19 @@ const AgentsPage: React.FC = () => {
           showIcon
           closable
           onClose={() => setSubmitError(null)}
-          style={{ marginBottom: '10px' }}
+          className="mb-[10px]"
         />
       )}
       <Layout>
-        <Layout
-          style={{
-            background: '#fff',
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexGrow: 0,
-            padding: '16px',
-          }}
-        >
+        <Layout className="bg-white flex flex-row items-center justify-between p-4 mb-2">
           {/* Icon */}
-          <div
-            style={{
-              width: '66px',
-              height: '66px',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              overflow: 'hidden',
-              backgroundColor: '#e5ffe5',
-              margin: '0px',
-            }}
-          >
+          <div className="w-[66px] h-[66px] rounded-full flex items-center justify-center overflow-hidden bg-[#e5ffe5] m-0">
             <Image src="/ic-brand-developer-engineer.svg" alt="Workflow Catalog Icon" />
           </div>
           {/* Descriptive Text */}
-          <Layout
-            style={{
-              background: '#fff',
-              flex: 1,
-              marginLeft: '12px',
-              flexDirection: 'column',
-              display: 'flex',
-            }}
-          >
-            <Text style={{ fontWeight: 600, fontSize: '18px' }}>Create Agent</Text>
-            <Text style={{ fontWeight: 350 }}>
+          <Layout className="bg-white flex-1 ml-3 flex flex-col">
+            <Text className="font-semibold text-lg">Create Agent</Text>
+            <Text className="font-normal">
               The Agent Template Catalog is your centralized hub for managing AI agent templates.
               Register new templates, edit existing ones, and organize them seamlessly. Build and
               optimize agent templates to enhance workflows with ease.
@@ -119,24 +88,13 @@ const AgentsPage: React.FC = () => {
           </Layout>
           {/* Register New Model Button */}
           <Button
-            style={{
-              marginLeft: '20px',
-              marginRight: '16px',
-              marginTop: '20px',
-              marginBottom: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              flexDirection: 'row-reverse',
-            }}
+            className="ml-5 mr-4 my-5 flex items-center justify-center gap-2 flex-row-reverse"
             icon={<ArrowRightOutlined />}
             onClick={handleGetStarted}
           >
             Get Started
           </Button>
         </Layout>
-        &nbsp;
         <AgentList
           agentTemplates={agentTemplates || []} // Pass `agentTemplates` correctly
           editExistingAgentTemplate={editExistingAgentTemplate}

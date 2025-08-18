@@ -8,7 +8,6 @@ import {
   TestWorkflowRequest,
   TestWorkflowResponse,
   UpdateWorkflowRequest,
-  UpdateWorkflowResponse,
   AddWorkflowRequest,
   DeployWorkflowRequest,
   AddWorkflowResponse,

@@ -33,9 +33,7 @@ const WorkflowTemplateDiagramView: React.FC<WorkflowTemplateDiagramViewProps> = 
 
   if (isLoading) {
     return (
-      <Layout
-        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}
-      >
+      <Layout className="flex justify-center items-center h-full">
         <Spin size="large" />
       </Layout>
     );
@@ -48,56 +46,27 @@ const WorkflowTemplateDiagramView: React.FC<WorkflowTemplateDiagramViewProps> = 
   }
 
   // Get manager agent template if exists
-  const managerAgentTemplate = template.manager_agent_template_id
-    ? agentTemplates?.find((a) => a.id === template.manager_agent_template_id)
-    : null;
+  // removed unused managerAgentTemplate
 
   // Get agent templates
-  const agentTemplateDetails =
-    template.agent_template_ids
-      ?.map((id) => agentTemplates?.find((a) => a.id === id))
-      .filter(Boolean) || [];
+  // removed unused agentTemplateDetails
 
   return (
-    <Layout
-      style={{
-        background: 'transparent',
-        flexDirection: 'column',
-        display: 'flex',
-        height: '100%',
-        width: '100%',
-      }}
-    >
+    <Layout className="bg-transparent flex flex-col h-full w-full">
       <Tabs
         defaultActiveKey="1"
-        style={{
-          width: '100%',
-          padding: '4px',
-          height: '100%',
-        }}
+        className="w-full p-1 h-full"
         items={[
           {
             key: '1',
             label: (
-              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <ApiOutlined
-                  style={{
-                    color: 'white',
-                    background: '#1890ff',
-                    borderRadius: '50%',
-                    width: '24px',
-                    height: '24px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '4px',
-                  }}
-                />
+              <span className="flex items-center gap-2">
+                <ApiOutlined className="text-white bg-blue-500 rounded-full w-6 h-6 flex items-center justify-center p-1" />
                 Flow Diagram
               </span>
             ),
             children: (
-              <div style={{ height: '100%', width: '100%' }}>
+              <div className="h-full w-full">
                 <ReactFlowProvider>
                   <WorkflowTemplateDiagram
                     template={template}

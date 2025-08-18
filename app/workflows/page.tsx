@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Button, Typography, Layout, Image } from 'antd';
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation'; // Use Next.js router
@@ -25,7 +25,7 @@ import { clearedWorkflowApp } from './workflowAppSlice';
 
 import ContentWithHealthCheck from '../components/ContentWithHealthCheck';
 
-const { Text, Title, Paragraph } = Typography;
+const { Text } = Typography;
 
 const WorkflowsPageContent: React.FC = () => {
   const { data: workflows } = useListWorkflowsQuery({}, { refetchOnMountOrArgChange: true });
@@ -75,7 +75,7 @@ const WorkflowsPageContent: React.FC = () => {
 
       setGetStartModalVisible(false);
       router.push(`/workflows/create?workflowId=${workflowId}`);
-    } catch (error) {
+    } catch (_error) {
       notificationApi.error({
         message: 'Error',
         description: 'Failed to create workflow.',
@@ -219,7 +219,7 @@ const WorkflowsPageContent: React.FC = () => {
         deployed_workflow_id: selectedDeployedWorkflow.deployed_workflow_id,
       }).unwrap();
       closeDeleteDeployedWorkflowModal();
-    } catch (error) {
+    } catch (_error) {
       notificationApi.error({
         message: 'Error',
         description: 'Failed to delete deployed workflow.',
@@ -229,55 +229,18 @@ const WorkflowsPageContent: React.FC = () => {
   };
 
   return (
-    <Layout
-      style={{
-        flex: 1,
-        padding: '16px 24px 0px',
-        flexDirection: 'column',
-        background: 'transparent',
-      }}
-    >
+    <Layout className="flex-1 pt-4 px-6 pb-0 flex flex-col bg-transparent">
       <CommonBreadCrumb items={[{ title: 'Agentic Workflows' }]} />
       <Layout>
-        <Layout
-          style={{
-            background: '#fff',
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexGrow: 0,
-            padding: '16px',
-          }}
-        >
+        <Layout className="bg-white flex flex-row items-center justify-between p-4">
           {/* Icon */}
-          <div
-            style={{
-              width: '66px',
-              height: '66px',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              overflow: 'hidden',
-              backgroundColor: '#fff4cd',
-              margin: '0px',
-            }}
-          >
+          <div className="w-[66px] h-[66px] rounded-full flex items-center justify-center overflow-hidden bg-[#fff4cd] m-0">
             <Image src="/ic-brand-algorithm.svg" alt="Workflow Catalog Icon" />
           </div>
           {/* Descriptive Text */}
-          <Layout
-            style={{
-              background: 'transparent',
-              flex: 1,
-              marginLeft: '12px',
-              flexDirection: 'column',
-              display: 'flex',
-            }}
-          >
-            <Text style={{ fontWeight: 600, fontSize: '18px' }}>Create Agentic Workflow</Text>
-            <Text style={{ fontWeight: 350 }}>
+          <Layout className="bg-transparent flex-1 ml-3 flex flex-col">
+            <Text className="font-semibold text-lg">Create Agentic Workflow</Text>
+            <Text className="font-normal">
               Orchestrate AI agents to collaborate on complex tasks, powered by custom tools and
               seamless workflow automation.
             </Text>
@@ -285,17 +248,7 @@ const WorkflowsPageContent: React.FC = () => {
           {/* Register New Workflow Button */}
           <Button
             type="primary"
-            style={{
-              marginLeft: '20px',
-              marginRight: '16px',
-              marginTop: '20px',
-              marginBottom: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              flexDirection: 'row-reverse',
-            }}
+            className="ml-5 mr-4 my-5 flex items-center justify-center gap-2 flex-row-reverse"
             icon={<ArrowRightOutlined />}
             onClick={handleGetStarted}
           >

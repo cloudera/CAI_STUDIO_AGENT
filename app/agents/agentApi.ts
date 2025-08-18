@@ -48,7 +48,7 @@ export const agentsApi = apiSlice.injectEndpoints({
         }
         return response.agent;
       },
-      providesTags: (result, error, { agent_id }) => [{ type: 'Agent', id: agent_id }],
+      providesTags: (_result, _error, { agent_id }) => [{ type: 'Agent', id: agent_id }],
     }),
     addAgent: builder.mutation<string, AddAgentRequest>({
       query: (request) => ({
@@ -59,7 +59,7 @@ export const agentsApi = apiSlice.injectEndpoints({
       transformResponse: (response: AddAgentResponse) => {
         return response.agent_id;
       },
-      invalidatesTags: (result, error, request) => [
+      invalidatesTags: (_result, _error, request) => [
         { type: 'Agent', id: 'LIST' },
         { type: 'Workflow', id: request.workflow_id },
       ],
@@ -74,7 +74,7 @@ export const agentsApi = apiSlice.injectEndpoints({
         // No transformation needed as the API doesn't return a response body
         return;
       },
-      invalidatesTags: (result, error, request) => [
+      invalidatesTags: (_result, _error, request) => [
         { type: 'Agent', id: 'LIST' },
         { type: 'Agent', id: request.agent_id }, // TODO: add middleware to update the workflow too?
       ],
@@ -85,7 +85,7 @@ export const agentsApi = apiSlice.injectEndpoints({
         method: 'POST',
         body: request,
       }),
-      invalidatesTags: (result, error, request) => [{ type: 'Agent', id: 'LIST' }],
+      invalidatesTags: () => [{ type: 'Agent', id: 'LIST' }],
     }),
     testAgent: builder.mutation<TestAgentResponse, TestAgentRequest>({
       query: (request) => ({
@@ -98,7 +98,7 @@ export const agentsApi = apiSlice.injectEndpoints({
       },
     }),
     listGlobalAgentTemplates: builder.query<AgentTemplateMetadata[], void>({
-      query: (request) => ({
+      query: () => ({
         url: '/grpc/listAgentTemplates',
         method: 'POST',
         body: {},
@@ -117,7 +117,7 @@ export const agentsApi = apiSlice.injectEndpoints({
       transformResponse: (response: ListAgentTemplatesResponse) => {
         return response.agent_templates;
       },
-      providesTags: (result, error, { workflow_template_id }) =>
+      providesTags: (_result, _error, { workflow_template_id }) =>
         workflow_template_id
           ? [{ type: 'AgentTemplate', id: workflow_template_id }]
           : [{ type: 'AgentTemplate', id: 'GLOBAL' }],
@@ -134,7 +134,7 @@ export const agentsApi = apiSlice.injectEndpoints({
         }
         return response.agent_template;
       },
-      providesTags: (result, error, { id }) => [{ type: 'AgentTemplate', id }],
+      providesTags: (_result, _error, { id }) => [{ type: 'AgentTemplate', id }],
     }),
     addAgentTemplate: builder.mutation<string, AddAgentTemplateRequest>({
       query: (request) => ({
@@ -145,7 +145,7 @@ export const agentsApi = apiSlice.injectEndpoints({
       transformResponse: (response: AddAgentTemplateResponse) => {
         return response.id;
       },
-      invalidatesTags: (result, error, { workflow_template_id }) =>
+      invalidatesTags: (_result, _error, { workflow_template_id }) =>
         workflow_template_id
           ? [{ type: 'AgentTemplate', id: workflow_template_id }]
           : [{ type: 'AgentTemplate', id: 'GLOBAL' }], // TODO: middleware to update workflow?
@@ -166,7 +166,7 @@ export const agentsApi = apiSlice.injectEndpoints({
         method: 'POST',
         body: request,
       }),
-      invalidatesTags: (result, error, { agent_template_id }) => [
+      invalidatesTags: (_result, _error, { agent_template_id }) => [
         { type: 'AgentTemplate', id: agent_template_id },
       ],
     }),

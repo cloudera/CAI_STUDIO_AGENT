@@ -10,7 +10,7 @@ interface SearchBarProps {
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onChange }) => (
-  <Space direction="vertical" style={{ width: '100%', marginBottom: 16 }}>
+  <Space direction="vertical" className="w-full mb-4">
     <Search
       placeholder="Search workflows by name"
       allowClear

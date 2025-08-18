@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+	important: true,
 	darkMode: ["class"],
 	content: ["./app/**/*.{html,js,ts,tsx}"],
 	theme: {
@@ -60,5 +61,8 @@ module.exports = {
 	  require("tailwindcss-animate"),
 	  require("@tailwindcss/typography"), // Add the typography plugin
 	],
+	corePlugins: {
+      preflight: false
+    },
   };
   

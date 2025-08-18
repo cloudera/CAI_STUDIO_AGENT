@@ -130,18 +130,10 @@ const McpTemplateView: React.FC<McpTemplateViewProps> = ({
     if (mcpTemplateDetails.status === 'VALIDATING') {
       return (
         <Alert
-          style={{
-            alignItems: 'flex-start',
-            justifyContent: 'flex-start',
-            padding: 12,
-            marginBottom: 16,
-            marginTop: 16,
-          }}
+          className="items-start justify-start p-3 mb-4 mt-4"
           message={
-            <Layout
-              style={{ flexDirection: 'column', gap: 4, padding: 0, background: 'transparent' }}
-            >
-              <Text style={{ fontSize: 13, fontWeight: 400 }}>
+            <Layout className="flex-col gap-1 p-0 bg-transparent">
+              <Text className="text-[13px] font-normal">
                 We're validating the MCP server. Tools made available by the MCP server would be
                 visible once the validation succeeds.
               </Text>
@@ -155,18 +147,10 @@ const McpTemplateView: React.FC<McpTemplateViewProps> = ({
     } else if (mcpTemplateDetails.status === 'VALIDATION_FAILED') {
       return (
         <Alert
-          style={{
-            alignItems: 'flex-start',
-            justifyContent: 'flex-start',
-            padding: 12,
-            marginBottom: 16,
-            marginTop: 16,
-          }}
+          className="items-start justify-start p-3 mb-4 mt-4"
           message={
-            <Layout
-              style={{ flexDirection: 'column', gap: 4, padding: 0, background: 'transparent' }}
-            >
-              <Text style={{ fontSize: 13, fontWeight: 400 }}>
+            <Layout className="flex-col gap-1 p-0 bg-transparent">
+              <Text className="text-[13px] font-normal">
                 We could not figure out the tools offered by the MCP server. But you can still use
                 the MCP server in your agentic workflows.
               </Text>
@@ -195,61 +179,22 @@ const McpTemplateView: React.FC<McpTemplateViewProps> = ({
         }
       >
         {mcpTemplateDetails.status === 'VALID' ? (
-          <CheckCircleOutlined
-            style={{
-              color: '#52c41a',
-              fontSize: '16px',
-              marginLeft: '8px',
-            }}
-          />
+          <CheckCircleOutlined className="text-green-500 text-lg ml-2" />
         ) : mcpTemplateDetails.status === 'VALIDATING' ? (
-          <ClockCircleOutlined
-            style={{
-              color: '#faad14',
-              fontSize: '16px',
-              marginLeft: '8px',
-            }}
-          />
+          <ClockCircleOutlined className="text-yellow-500 text-lg ml-2" />
         ) : mcpTemplateDetails.status === 'VALIDATION_FAILED' ? (
-          <CloseCircleOutlined
-            style={{
-              color: '#f5222d',
-              fontSize: '16px',
-              marginLeft: '8px',
-            }}
-          />
+          <CloseCircleOutlined className="text-red-500 text-lg ml-2" />
         ) : null}
       </Tooltip>
     );
   };
 
   return (
-    <div
-      style={{
-        background: '#fff',
-        overflowY: 'auto',
-        padding: '16px',
-        position: 'relative',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          backgroundColor: '#fff',
-        }}
-      >
-        <div
-          style={{ flex: 0.5, overflowY: 'auto', paddingRight: '16px', backgroundColor: '#fff' }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              backgroundColor: '#fff',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center' }}>
+    <div className="bg-white overflow-y-auto p-4 relative">
+      <div className="flex flex-row bg-white">
+        <div className="flex-1 overflow-y-auto pr-4 bg-white">
+          <div className="flex flex-col bg-white">
+            <div className="flex items-center">
               <Text strong>MCP Server Name</Text>
               {renderStatusIcon()}
             </div>
@@ -260,45 +205,18 @@ const McpTemplateView: React.FC<McpTemplateViewProps> = ({
                 setMcpName(e.target.value);
                 setParentPageMcpName?.(e.target.value);
               }}
-              style={{
-                marginTop: '8px',
-                backgroundColor: mode === 'view' ? '#fff' : undefined,
-                cursor: mode === 'view' ? 'not-allowed' : 'text',
-                color: mode === 'view' ? 'rgba(0, 0, 0, 0.88)' : undefined,
-              }}
+              className={`mt-2 ${mode === 'view' ? 'bg-white cursor-not-allowed text-black' : ''}`}
             />
           </div>
         </div>
-        <div
-          style={{
-            flex: 0.5,
-            overflowY: 'auto',
-            paddingLeft: '16px',
-            backgroundColor: '#fff',
-            justifyContent: 'space-between',
-          }}
-        >
+        <div className="flex-1 overflow-y-auto pl-4 bg-white justify-between">
           {mode === 'edit' && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                backgroundColor: '#fff',
-                paddingLeft: '16px',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center' }}>
+            <div className="flex flex-col bg-white pl-4">
+              <div className="flex items-center">
                 <Text strong>Icon</Text>
               </div>
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+              <div className="flex flex-row items-center justify-between">
+                <div className="flex flex-row items-center">
                   <Upload
                     accept=".png,.jpg,.jpeg"
                     customRequest={({ file, onSuccess, onError }) => {
@@ -312,7 +230,7 @@ const McpTemplateView: React.FC<McpTemplateViewProps> = ({
                     <Button
                       icon={selectedFile ? <FileImageOutlined /> : <UploadOutlined />}
                       loading={isUploading}
-                      style={{ marginTop: '8px' }}
+                      className="mt-2"
                       disabled={selectedFile !== null}
                     >
                       {selectedFile ? selectedFile.name : 'Upload File'}
@@ -321,7 +239,7 @@ const McpTemplateView: React.FC<McpTemplateViewProps> = ({
                   {selectedFile && (
                     <Button
                       icon={<DeleteOutlined />}
-                      style={{ marginLeft: '8px', marginTop: '8px' }}
+                      className="ml-2 mt-2"
                       onClick={() => {
                         setSelectedFile(null);
                         setUploadedFilePath('');
@@ -335,7 +253,7 @@ const McpTemplateView: React.FC<McpTemplateViewProps> = ({
                   onClick={handleRefresh}
                   disabled={isRefreshing}
                   size="small"
-                  style={{ marginTop: '8px' }}
+                  className="mt-2"
                 >
                   Refresh
                 </Button>
@@ -345,35 +263,25 @@ const McpTemplateView: React.FC<McpTemplateViewProps> = ({
         </div>
       </div>
 
-      <div style={{ margin: '24px 0 16px 0' }} />
+      <div className="my-6" />
 
       <Text strong>Tools Available</Text>
       {renderStatusAlert()}
       {mcpTemplateDetails.status === 'VALID' ? (
         parsedTools.length > 0 ? (
-          <Collapse accordion style={{ marginTop: '8px' }}>
+          <Collapse accordion className="mt-2">
             {parsedTools.map((tool, index) => (
               <Panel header={tool.name || `Tool ${index + 1}`} key={`${tool.name}-${index}`}>
-                <div style={{ marginBottom: '12px' }}>
+                <div className="mb-3">
                   <Text strong>Description:</Text>
-                  <Paragraph
-                    style={{
-                      marginTop: '4px',
-                      marginBottom: 0,
-                      whiteSpace: 'pre-line',
-                      color: 'rgba(0, 0, 0, 0.7)',
-                      fontSize: '11px',
-                    }}
-                  >
+                  <Paragraph className="mt-1 mb-0 whitespace-pre-line text-[11px] text-[rgba(0,0,0,0.7)]">
                     {(tool.description || 'No description provided.').trim()}
                   </Paragraph>
                 </div>
 
                 <div>
                   <Text strong>Input Schema:</Text>
-                  <div
-                    style={{ marginTop: '8px', border: '1px solid #d9d9d9', borderRadius: '4px' }}
-                  >
+                  <div className="mt-2 border border-[#d9d9d9] rounded">
                     <Editor
                       height="250px"
                       defaultLanguage="json"
@@ -396,7 +304,7 @@ const McpTemplateView: React.FC<McpTemplateViewProps> = ({
             ))}
           </Collapse>
         ) : (
-          <Text style={{ display: 'block', marginTop: '8px', color: 'rgba(0, 0, 0, 0.45)' }}>
+          <Text className="block mt-2 text-[rgba(0,0,0,0.45)]">
             No tools available for this MCP or tool data is malformed.
           </Text>
         )
@@ -407,14 +315,7 @@ const McpTemplateView: React.FC<McpTemplateViewProps> = ({
         <Button
           type="primary"
           onClick={handleSave}
-          style={{
-            position: 'fixed',
-            bottom: '48px',
-            right: '48px',
-            zIndex: 1000,
-            minWidth: '120px',
-            height: '40px',
-          }}
+          className="fixed bottom-12 right-12 z-[1000] min-w-[120px] h-10"
         >
           Save
         </Button>

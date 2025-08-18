@@ -1,19 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import {
-  Form,
-  Input,
-  Button,
-  Layout,
-  Alert,
-  Table,
-  Select,
-  notification,
-  List,
-  Image,
-  Typography,
-} from 'antd';
+import { Form, Input, Button, Layout, Alert, List, Image, Typography } from 'antd';
 import { DeleteOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import {
@@ -22,7 +10,6 @@ import {
   useUpdateAgentTemplateMutation,
 } from '@/app/agents/agentApi';
 import { useListGlobalToolTemplatesQuery } from '@/app/tools/toolTemplatesApi';
-import CommonBreadCrumb from './CommonBreadCrumb';
 import AddToolModal from './AddToolModal';
 import { useGlobalNotification } from '../components/Notifications';
 import { useImageAssetsData } from '@/app/lib/hooks/useAssetData';
@@ -95,37 +82,12 @@ const AgentTemplateForm = ({ agentTemplateId }: { agentTemplateId?: string }) =>
     }
   }, [agentTemplateData, agentTemplateId, form, toolTemplates]);
 
-  const handleAddTool = (toolTemplateId: string) => {
-    const toolTemplate = toolTemplates.find((t) => t.id === toolTemplateId);
-
-    if (!toolTemplate) {
-      showNotification('error', 'Invalid Tool', 'The selected tool template does not exist.');
-      return;
-    }
-
-    const isDuplicate = configuredTools.some((t) => t.toolTemplateId === toolTemplateId);
-    if (isDuplicate) {
-      showNotification('error', 'Duplicate Tool', 'The selected tool template is already added.');
-      return;
-    }
-
-    setConfiguredTools((prev) => [
-      ...prev,
-      {
-        toolTemplateId,
-        toolTemplateName: toolTemplate.name,
-        toolTemplateImageURI: toolTemplate.tool_image_uri,
-        toolDescription: toolTemplate.tool_description || 'No description available',
-      },
-    ]);
-  };
-
   const handleDeleteTool = (toolTemplateId: string) => {
     setConfiguredTools((prev) => prev.filter((tool) => tool.toolTemplateId !== toolTemplateId));
     showNotification('success', 'Tool Removed', 'Tool removed successfully.');
   };
 
-  const handleViewToolDetails = (toolTemplateId: string) => {
+  const handleViewToolDetails = (_toolTemplateId: string) => {
     // Implement tool details view logic here
   };
 
@@ -190,33 +152,18 @@ const AgentTemplateForm = ({ agentTemplateId }: { agentTemplateId?: string }) =>
     ]);
   };
 
-  const toolColumns = [
+  const _toolColumns = [
     {
       title: '',
       dataIndex: 'toolTemplateImageURI',
       key: 'toolTemplateImageURI',
       render: (imagePath: string) => (
-        <div
-          style={{
-            width: '24px',
-            height: '24px',
-            borderRadius: '50%',
-            background: '#f1f1f1',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
+        <div className="w-6 h-6 rounded-full bg-[#f1f1f1] flex items-center justify-center">
           {imagePath && toolIconsData[imagePath] && (
             <img
               src={toolIconsData[imagePath]}
               alt="Tool"
-              style={{
-                width: '16px',
-                height: '16px',
-                objectFit: 'cover',
-                borderRadius: '2px',
-              }}
+              className="w-4 h-4 object-cover rounded-sm"
             />
           )}
         </div>
@@ -247,19 +194,8 @@ const AgentTemplateForm = ({ agentTemplateId }: { agentTemplateId?: string }) =>
   ];
 
   return (
-    <Layout style={{ flex: 1, padding: '16px 24px 22px', flexDirection: 'column' }}>
-      <Content
-        style={{
-          padding: '16px',
-          margin: '0 auto',
-          overflowY: 'auto',
-          flex: 1,
-          width: '60%',
-          background: '#fff',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-          marginBottom: '80px',
-        }}
-      >
+    <Layout className="flex-1 px-6 pt-4 pb-[22px] flex flex-col">
+      <Content className="p-4 mx-auto overflow-y-auto flex-1 w-[60%] bg-white shadow">
         {submitError && (
           <Alert
             message="Error"
@@ -268,7 +204,7 @@ const AgentTemplateForm = ({ agentTemplateId }: { agentTemplateId?: string }) =>
             showIcon
             closable
             onClose={() => setSubmitError(null)}
-            style={{ marginBottom: '10px' }}
+            className="mb-[10px]"
           />
         )}
         <Form
@@ -326,11 +262,7 @@ const AgentTemplateForm = ({ agentTemplateId }: { agentTemplateId?: string }) =>
             />
           </Form.Item>
           <Form.Item label=" " colon={false}>
-            <Button
-              type="dashed"
-              onClick={() => setAddToolModalVisible(true)}
-              style={{ width: '100%' }}
-            >
+            <Button type="dashed" onClick={() => setAddToolModalVisible(true)} className="w-full">
               + Add Tool
             </Button>
           </Form.Item>
@@ -343,66 +275,24 @@ const AgentTemplateForm = ({ agentTemplateId }: { agentTemplateId?: string }) =>
                 toolDescription: tool.toolDescription,
                 ...tool,
               }))}
-              style={{ marginTop: '16px' }}
+              className="mt-4"
               renderItem={(tool) => (
                 <List.Item>
-                  <div
-                    style={{
-                      borderRadius: '4px',
-                      border: 'solid 1px #f0f0f0',
-                      backgroundColor: '#fff',
-                      width: '100%',
-                      padding: '16px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      cursor: 'pointer',
-                      transition: 'transform 0.2s, box-shadow 0.2s',
-                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        marginBottom: '8px',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <div
-                          style={{
-                            width: '24px',
-                            height: '24px',
-                            borderRadius: '50%',
-                            background: '#f1f1f1',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            marginRight: '8px',
-                          }}
-                        >
+                  <div className="rounded border border-[#f0f0f0] bg-white w-full p-4 flex flex-col cursor-pointer transition-transform duration-200 ease-in-out shadow-md">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center">
+                        <div className="w-6 h-6 rounded-full bg-[#f1f1f1] flex items-center justify-center mr-2">
                           {tool.toolTemplateImageURI && (
                             <Image
-                              src={tool.toolTemplateImageURI}
-                              alt={tool.toolTemplateName}
                               width={16}
                               height={16}
                               preview={false}
-                              style={{
-                                borderRadius: '2px',
-                                objectFit: 'cover',
-                              }}
+                              className="rounded-sm object-cover"
                             />
                           )}
                         </div>
                         <Text
-                          style={{
-                            fontSize: '14px',
-                            fontWeight: 400,
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                          }}
+                          className="text-[14px] font-normal whitespace-nowrap overflow-hidden text-ellipsis"
                           title={tool.toolTemplateName}
                         >
                           {tool.toolTemplateName}
@@ -410,33 +300,24 @@ const AgentTemplateForm = ({ agentTemplateId }: { agentTemplateId?: string }) =>
                       </div>
                       <Button
                         type="link"
-                        icon={<DeleteOutlined style={{ color: '#ff4d4f' }} />}
+                        icon={<DeleteOutlined className="text-[#ff4d4f]" />}
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteTool(tool.toolTemplateId);
                         }}
                       />
                     </div>
-                    <Text
-                      style={{
-                        fontSize: '11px',
-                        opacity: 0.45,
-                        fontWeight: 400,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
-                    >
+                    <Text className="text-[11px] opacity-45 font-normal whitespace-nowrap overflow-hidden text-ellipsis">
                       {tool.toolDescription}
                     </Text>
-                    <div style={{ marginTop: 'auto' }}>
+                    <div className="mt-auto">
                       <Button
                         type="link"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleViewToolDetails(tool.toolTemplateId);
                         }}
-                        style={{ paddingLeft: 0 }}
+                        className="pl-0"
                       >
                         View Details
                       </Button>
@@ -448,22 +329,8 @@ const AgentTemplateForm = ({ agentTemplateId }: { agentTemplateId?: string }) =>
           )}
         </Form>
       </Content>
-      <Footer
-        style={{
-          position: 'fixed',
-          bottom: '0',
-          width: '100%',
-          background: '#fff',
-          borderTop: '1px solid #f0f0f0',
-          textAlign: 'right',
-          padding: '10px 24px',
-        }}
-      >
-        <Button
-          onClick={() => router.push('/agents')}
-          style={{ marginRight: 8 }}
-          disabled={loading}
-        >
+      <Footer className="fixed bottom-0 w-full bg-white border-t border-[#f0f0f0] text-right py-[10px] px-6">
+        <Button onClick={() => router.push('/agents')} className="mr-2" disabled={loading}>
           Cancel
         </Button>
         <Button type="primary" onClick={() => form.submit()} loading={loading}>

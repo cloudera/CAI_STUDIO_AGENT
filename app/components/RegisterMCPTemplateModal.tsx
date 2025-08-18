@@ -224,7 +224,7 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
       setValidationError('');
       setIsValid(true);
       setParsedConfig(config);
-    } catch (error) {
+    } catch (_error) {
       setValidationError('Invalid JSON format');
       setServerNameInfo('');
       setIsValid(false);
@@ -263,9 +263,9 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
 
       setUploadedFilePath(fp);
       setSelectedFile(file);
-    } catch (error) {
+    } catch (_error) {
       setSelectedFile(null);
-      console.error('Upload failed:', error);
+      console.error('Upload failed');
       notificationApi.error({
         message: 'Failed to upload file',
         placement: 'topRight',
@@ -323,7 +323,7 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
       cancelText="Cancel"
       okButtonProps={{ disabled: !isValid }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div className="flex flex-col gap-4">
         <Alert
           message={
             'For security reasons, Agent Studio does not save environment variable values. ' +
@@ -334,12 +334,12 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
           showIcon
         />
 
-        <div style={{ display: 'flex', flexDirection: 'row', gap: '16px' }}>
+        <div className="flex flex-row gap-4">
           {/* MCP Server Configuration - 75% */}
-          <div style={{ flex: '0 0 75%' }}>
-            <Text style={{ marginBottom: '8px', display: 'block' }}>MCP Server Configuration:</Text>
+          <div className="flex-[0_0_75%]">
+            <Text className="mb-2 block">MCP Server Configuration:</Text>
 
-            <div style={{ border: '1px solid #d9d9d9', borderRadius: '6px', overflow: 'hidden' }}>
+            <div className="border border-solid border-[#d9d9d9] rounded overflow-hidden">
               <Editor
                 height="300px"
                 defaultLanguage="json"
@@ -359,13 +359,11 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
           </div>
 
           {/* Icon Upload - 25% */}
-          <div style={{ flex: '0 0 25%' }}>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <Text style={{ marginBottom: '8px', display: 'block' }}>Icon (Optional):</Text>
+          <div className="flex-[0_0_25%]">
+            <div className="flex flex-col">
+              <Text className="mb-2 block">Icon (Optional):</Text>
 
-              <div
-                style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px' }}
-              >
+              <div className="flex flex-row items-center gap-2">
                 {selectedFile && (
                   <Button
                     icon={<DeleteOutlined />}
@@ -386,23 +384,20 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
                   }}
                   showUploadList={false}
                   disabled={isUploading}
-                  style={{ flex: 1 }}
+                  className="flex-1"
                 >
                   <Button
                     icon={selectedFile ? <FileImageOutlined /> : <UploadOutlined />}
                     loading={isUploading}
                     disabled={selectedFile !== null}
-                    style={{ width: '100%' }}
+                    className="w-full"
                   >
                     {selectedFile ? selectedFile.name : 'Upload Icon'}
                   </Button>
                 </Upload>
               </div>
 
-              <Text
-                type="secondary"
-                style={{ fontSize: '11px', marginTop: '8px', lineHeight: '1.4' }}
-              >
+              <Text className="text-xs mt-2 leading-[1.4]">
                 Upload a PNG or JPEG image (max 64KB) to customize the MCP server icon.
               </Text>
             </div>
@@ -411,31 +406,23 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
 
         {/* Validation Messages - Full Width */}
         {serverNameInfo && (
-          <div style={{ marginTop: '16px', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
-              <InfoCircleOutlined style={{ color: '#4d7cff', marginRight: '4px' }} />
-              <Text type="secondary" style={{ fontSize: '12px', color: '#4d7cff' }}>
-                {serverNameInfo}
-              </Text>
+          <div className="mt-4 flex flex-col">
+            <div className="flex items-center text-xs">
+              <InfoCircleOutlined className="text-[#4d7cff] mr-1" />
+              <Text className="text-xs text-[#4d7cff]">{serverNameInfo}</Text>
             </div>
-            <div
-              style={{ display: 'flex', alignItems: 'center', fontSize: '12px', marginTop: '2px' }}
-            >
-              <InfoCircleOutlined style={{ color: '#4d7cff', marginRight: '4px' }} />
-              <Text type="secondary" style={{ fontSize: '12px', color: '#4d7cff' }}>
-                {availableRuntimeMessage}
-              </Text>
+            <div className="flex items-center text-xs mt-0.5">
+              <InfoCircleOutlined className="text-[#4d7cff] mr-1" />
+              <Text className="text-xs text-[#4d7cff]">{availableRuntimeMessage}</Text>
             </div>
           </div>
         )}
 
         {validationError && (
-          <div style={{ marginTop: '8px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
-              <WarningOutlined style={{ color: '#ff4d4f', marginRight: '4px' }} />
-              <Text type="danger" style={{ fontSize: '12px' }}>
-                {validationError}
-              </Text>
+          <div className="mt-2">
+            <div className="flex items-center text-xs">
+              <WarningOutlined className="text-[#ff4d4f] mr-1" />
+              <Text className="text-xs text-danger">{validationError}</Text>
             </div>
           </div>
         )}

@@ -146,7 +146,7 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
   // TODO. Need a better way to organize
   // the diagram dynamically.
   let totalXWidth = 0;
-  workflowData.workflowState.workflowMetadata.agentIds?.forEach((agent_id, index) => {
+  workflowData.workflowState.workflowMetadata.agentIds?.forEach((agent_id, _index) => {
     const agent = workflowData.agents?.find((agent) => agent.id === agent_id);
     agent && (totalXWidth += 220 * Math.max(0, agent?.tools_id.length - 1));
     agent && (totalXWidth += 220 * Math.max(0, (agent?.mcp_instance_ids?.length || 0) - 1));
@@ -155,7 +155,7 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
 
   // Add agent nodes
   let xIndexOffset = -0.5 * totalXWidth + 0.5 * 220;
-  workflowData.workflowState.workflowMetadata.agentIds?.forEach((agent_id, index) => {
+  workflowData.workflowState.workflowMetadata.agentIds?.forEach((agent_id, _index) => {
     const agent = workflowData.agents?.find((agent) => agent.id === agent_id);
     agent &&
       initialNodes.push({
@@ -189,7 +189,7 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
       }
 
       // Add nodes and edges of all the tools
-      agent.tools_id?.forEach((tool_ins_id, index2) => {
+      agent.tools_id?.forEach((tool_ins_id) => {
         // Find the appropriate tool from the tool instances
         const toolInstance = workflowData.toolInstances?.find(
           (toolInstance: ToolInstance) => toolInstance.id === tool_ins_id,
@@ -229,7 +229,7 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
       });
 
       // Add nodes and edges of all the MCP instances
-      agent.mcp_instance_ids?.forEach((mcp_instance_id, index2) => {
+      agent.mcp_instance_ids?.forEach((mcp_instance_id) => {
         // Find the appropriate MCP instance from the MCP instances
         const mcpInstance = workflowData.mcpInstances?.find(
           (mcpInstance: McpInstance) => mcpInstance.id === mcp_instance_id,

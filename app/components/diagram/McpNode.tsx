@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Handle, Position, NodeProps, Node, NodeToolbar } from '@xyflow/react';
-import { Avatar, Image, Typography, Tag, Tooltip } from 'antd';
+import { Avatar, Image, Typography, Tag } from 'antd';
 
 const { Paragraph } = Typography;
 

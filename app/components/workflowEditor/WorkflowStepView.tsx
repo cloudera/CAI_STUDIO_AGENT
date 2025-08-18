@@ -11,25 +11,17 @@ interface StepComponentProps {
 }
 
 const StepComponent: React.FC<StepComponentProps> = ({ stepNumber, title, isActive }) => {
-  const color = isActive ? '#1677ff' : 'white';
-  const opacity = isActive ? 1.0 : 0.45;
-  const numberColor = isActive ? undefined : 'darkgray';
-  const textColor = isActive ? undefined : 'darkgray';
+  // Tailwind color classes for dynamic background and text
+  const avatarBg = isActive ? 'bg-[#1890ff]' : 'bg-[#d9d9d9]';
+  const textColor = isActive ? 'text-[#1890ff]' : 'text-[#434343]';
+
   return (
     <>
-      <Layout
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          background: 'transparent',
-          gap: '8px',
-          flexGrow: 0,
-        }}
-      >
-        <Avatar size={32} style={{ backgroundColor: color, opacity: opacity, color: numberColor }}>
+      <Layout className="flex flex-row items-center bg-transparent gap-2 flex-grow-0">
+        <Avatar size={32} className={`${avatarBg} text-white`}>
           {stepNumber}
         </Avatar>
-        <Text style={{ fontSize: '16px', fontWeight: 400, color: textColor }}>{title}</Text>
+        <Text className={`text-lg font-normal ${textColor}`}>{title}</Text>
       </Layout>
     </>
   );
@@ -40,31 +32,21 @@ const WorkflowStepView: React.FC = () => {
 
   return (
     <>
-      <Layout
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          background: 'transparent',
-          flexGrow: 0,
-          height: '32px',
-          gap: '12px',
-        }}
-      >
+      <Layout className="flex flex-row items-center justify-between bg-transparent flex-grow-0 h-8 gap-3">
         <StepComponent stepNumber={1} title="Add Agents" isActive={currentStep === 'Agents'} />
-        <Layout style={{ flexGrow: 1, alignItems: 'center', flexDirection: 'column' }}>
+        <Layout className="flex-grow items-center flex-col">
           <Divider type="horizontal" />
         </Layout>
         <StepComponent stepNumber={2} title="Add Tasks" isActive={currentStep === 'Tasks'} />
-        <Layout style={{ flexGrow: 1, alignItems: 'center', flexDirection: 'column' }}>
+        <Layout className="flex-grow items-center flex-col">
           <Divider type="horizontal" />
         </Layout>
         <StepComponent stepNumber={3} title="Configure" isActive={currentStep === 'Configure'} />
-        <Layout style={{ flexGrow: 1, alignItems: 'center', flexDirection: 'column' }}>
+        <Layout className="flex-grow items-center flex-col">
           <Divider type="horizontal" />
         </Layout>
         <StepComponent stepNumber={4} title="Test" isActive={currentStep === 'Test'} />
-        <Layout style={{ flexGrow: 1, alignItems: 'center', flexDirection: 'column' }}>
+        <Layout className="flex-grow items-center flex-col">
           <Divider type="horizontal" />
         </Layout>
         <StepComponent stepNumber={5} title="Deploy" isActive={currentStep === 'Deploy'} />

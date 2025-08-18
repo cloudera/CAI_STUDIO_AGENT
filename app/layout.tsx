@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
 import 'antd/dist/reset.css';
@@ -18,19 +16,10 @@ const RootLayout = ({ children }: React.PropsWithChildren) => {
           <AntdRegistry>
             <StoreProvider>
               <NotificationProvider>
-                <Layout style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <Layout className="flex flex-col h-full">
                   <TopNav />
                   <MessageBoxes />
-                  <Layout
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      height: '100%',
-                      flexGrow: 1,
-                    }}
-                  >
-                    {children}
-                  </Layout>
+                  <Layout className="flex flex-col h-full flex-grow">{children}</Layout>
                 </Layout>
               </NotificationProvider>
             </StoreProvider>
