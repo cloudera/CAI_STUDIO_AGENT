@@ -29,19 +29,14 @@ RUN export NVM_DIR="/studio_app/.nvm" && \
 # Set NVM environment variable for future shell sessions
 ENV NVM_DIR="/studio_app/.nvm"
 
-# Copy dependency files only
-COPY pyproject.toml uv.lock ./
-COPY package.json package-lock.json ./
-COPY studio/workflow_engine/pyproject.toml studio/workflow_engine/
+# Copy source code
+COPY . .
 
 # Install Python dependencies WITHOUT --all-extras (no extras defined anyway)
 RUN uv sync --no-dev
 
 # Install Node.js dependencies
 RUN npm install
-
-# Copy source code
-COPY . .
 
 # Build Next.js application
 RUN npm run build
@@ -69,6 +64,10 @@ RUN apt-get update && apt-get install -y \
 
 # Install only uv in runtime
 RUN pip install uv==0.5.29
+# Fixing ubuntu 24 CVEs
+RUN apt-get --assume-yes --purge remove libopenmpt0t64 emacs-common emacs-el emacs-bin-common \
+    libswresample4 libavdevice60 ffmpeg libswscale7 libpostproc57 libavutil58 libavcodec60 \
+    libavfilter9 libavformat60 libjxl0.7
 
 # Copy everything from builder with correct permissions
 COPY --from=builder --chown=cdsw:cdsw --chmod=755 /studio_app /studio_app
