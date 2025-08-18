@@ -54,6 +54,10 @@ class UserParameters(BaseModel):
     # Metadata location configured at user level (required)
     metadata_database: str = Field(description="Database/schema that stores the table metadata")
     metadata_table: str = Field(description="Table name for metadata with columns (table_name, column_name, column_description)")
+    # Explicit metadata field names provided by the user (no hardcoded guesses)
+    metadata_table_name_field: str = Field(description="Column name in metadata table that stores the table name. Value may be qualified like 'db.table'. Used as-is.")
+    metadata_column_name_field: Optional[str] = Field(default=None, description="Column name in metadata table that stores the column name. May be NULL/empty for table-level rows. Used as-is.")
+    metadata_description_field: str = Field(description="Column name in metadata table that stores the description (table or column). Used as-is.")
 
 
 class ToolParameters(BaseModel):
@@ -176,14 +180,38 @@ COLUMN_FIELD_WEIGHTS: Dict[str, int] = {
 
 
 # ---------- Metadata search specific cache helpers ----------
-def _tablemeta_cache_path(connection_name: str, db: str, table: str) -> str:
+def _tablemeta_cache_path(
+    connection_name: str,
+    db: str,
+    table: str,
+    table_field: str,
+    column_field: Optional[str],
+    desc_field: str,
+) -> str:
     session_dir_abs = _get_session_dir_abs()
-    fname = f"tablemeta_cache_{_safe_filename(connection_name)}_{_safe_filename(db)}_{_safe_filename(table)}.json"
+    # Include field names in cache key to avoid stale caches across different schemas
+    cf = column_field or "__NONE__"
+    fname = (
+        f"tablemeta_cache_"
+        f"{_safe_filename(connection_name)}_"
+        f"{_safe_filename(db)}_"
+        f"{_safe_filename(table)}_"
+        f"{_safe_filename(table_field)}_"
+        f"{_safe_filename(cf)}_"
+        f"{_safe_filename(desc_field)}.json"
+    )
     return os.path.join(session_dir_abs, fname)
 
 
-def _load_tablemeta_cache(connection_name: str, db: str, table: str) -> Optional[Dict[str, Any]]:
-    path = _tablemeta_cache_path(connection_name, db, table)
+def _load_tablemeta_cache(
+    connection_name: str,
+    db: str,
+    table: str,
+    table_field: str,
+    column_field: Optional[str],
+    desc_field: str,
+) -> Optional[Dict[str, Any]]:
+    path = _tablemeta_cache_path(connection_name, db, table, table_field, column_field, desc_field)
     if not os.path.exists(path):
         return None
     try:
@@ -193,8 +221,16 @@ def _load_tablemeta_cache(connection_name: str, db: str, table: str) -> Optional
         return None
 
 
-def _save_tablemeta_cache(connection_name: str, db: str, table: str, payload: Dict[str, Any]) -> str:
-    path = _tablemeta_cache_path(connection_name, db, table)
+def _save_tablemeta_cache(
+    connection_name: str,
+    db: str,
+    table: str,
+    table_field: str,
+    column_field: Optional[str],
+    desc_field: str,
+    payload: Dict[str, Any],
+) -> str:
+    path = _tablemeta_cache_path(connection_name, db, table, table_field, column_field, desc_field)
     with open(path, "w", encoding="utf-8") as f_out:
         json.dump(payload, f_out, ensure_ascii=False)
     return path
@@ -261,7 +297,15 @@ def _qualify_metadata_identifier(metadata_db: str, metadata_table: str) -> str:
     return f"`{db_clean}`.`{tbl_clean}`"
 
 
-def _fetch_table_metadata(cursor: Any, metadata_db: str, metadata_table: str, debug_log_path: Optional[str] = None) -> List[Dict[str, str]]:
+def _fetch_table_metadata(
+    cursor: Any,
+    metadata_db: str,
+    metadata_table: str,
+    table_field: str,
+    column_field: Optional[str],
+    desc_field: str,
+    debug_log_path: Optional[str] = None,
+) -> List[Dict[str, str]]:
     """
     Fetch rows from metadata table with columns roughly like:
       table_name, column_name, column_description
@@ -269,36 +313,47 @@ def _fetch_table_metadata(cursor: Any, metadata_db: str, metadata_table: str, de
     If column_name is empty/NULL -> description is table description.
     Returns a list of dicts with keys: table_name, column_name (may be ''), column_description (may be '').
     """
+    def q(name: str) -> str:
+        n = name.strip()
+        # Respect user-provided identifier as-is if already quoted
+        if n.startswith("`") and n.endswith("`") and len(n) >= 2:
+            return n
+        return f"`{n}`"
+
     try:
         fq = _qualify_metadata_identifier(metadata_db, metadata_table)
-        sql = f"SELECT * FROM {fq}"
+        if column_field:
+            sql = (
+                f"SELECT {q(table_field)} AS `__tbl`, {q(column_field)} AS `__col`, {q(desc_field)} AS `__desc` "
+                f"FROM {fq}"
+            )
+            expected_cols = ["__tbl", "__col", "__desc"]
+        else:
+            sql = f"SELECT {q(table_field)} AS `__tbl`, {q(desc_field)} AS `__desc` FROM {fq}"
+            expected_cols = ["__tbl", "__desc"]
         _debug_write(debug_log_path, f"Executing SQL: {sql}")
         colnames, rows = _execute(cursor, sql)
         _debug_write(debug_log_path, f"Result columns: {colnames}; rows fetched: {len(rows)}")
+        # Basic validation
+        for cname in expected_cols:
+            if cname not in colnames:
+                raise ValueError(f"Expected column alias '{cname}' not found in metadata select result")
     except Exception as e:
-        _debug_write(debug_log_path, f"SELECT * failed for {metadata_db}.{metadata_table}: {e}")
-        # Best effort: direct select of expected columns
-        try:
-            fq = _qualify_metadata_identifier(metadata_db, metadata_table)
-            sql = f"SELECT table_name, column_name, column_description FROM {fq}"
-            _debug_write(debug_log_path, f"Retry SQL: {sql}")
-            colnames, rows = _execute(cursor, sql)
-            _debug_write(debug_log_path, f"Retry result columns: {colnames}; rows fetched: {len(rows)}")
-        except Exception as e2:
-            _debug_write(debug_log_path, f"Retry failed: {e2}")
-            return []
+        _debug_write(debug_log_path, f"Metadata select failed for {metadata_db}.{metadata_table} with fields (table='{table_field}', column='{column_field}', desc='{desc_field}'): {e}")
+        return []
 
-    # Identify columns by flexible naming
-    idx_table = _find_first(colnames, ["table_name", "tablename", "table"])
-    idx_column = _find_first(colnames, ["column_name", "column", "col_name", "columnname"])
-    idx_desc = _find_first(colnames, ["column_description", "description", "column_desc", "comment"])
-    _debug_write(debug_log_path, f"Resolved column indexes -> table:{idx_table} column:{idx_column} desc:{idx_desc}")
-    if idx_table == -1 or idx_desc == -1:
-        _debug_write(debug_log_path, "Unable to resolve required columns from metadata result; returning empty list")
+    # Resolve indexes based on our explicit aliases
+    try:
+        idx_table = colnames.index("__tbl")
+        idx_desc = colnames.index("__desc")
+        idx_column = colnames.index("__col") if "__col" in colnames else -1
+    except Exception:
+        _debug_write(debug_log_path, "Unable to resolve aliased columns from metadata result; returning empty list")
         return []
 
     out: List[Dict[str, str]] = []
     for r in rows:
+        # Preserve field values exactly as provided by metadata (no normalization)
         tname = str(r[idx_table]) if r[idx_table] is not None else ""
         cname = str(r[idx_column]) if (idx_column != -1 and r[idx_column] is not None) else ""
         desc = str(r[idx_desc]) if r[idx_desc] is not None else ""
@@ -452,6 +507,9 @@ def _metadata_search_flow(
     cursor: Any,
     metadata_db: str,
     metadata_table: str,
+    table_field: str,
+    column_field: Optional[str],
+    desc_field: str,
     keywords: List[str],
     output_file: str,
     tool_params: Optional[ToolParameters] = None,
@@ -461,7 +519,7 @@ def _metadata_search_flow(
     _debug_write(debug_log, f"Start metadata search; connection={connection_name} db={metadata_db} table={metadata_table} keywords={keywords}")
 
     # Load or fetch metadata with cache
-    rows = _load_or_fetch_metadata_rows(connection_name, cursor, metadata_db, metadata_table, debug_log)
+    rows = _load_or_fetch_metadata_rows(connection_name, cursor, metadata_db, metadata_table, table_field, column_field, desc_field, debug_log)
 
     # If still no rows, fail fast with a helpful error
     if not rows:
@@ -725,15 +783,18 @@ def _load_or_fetch_metadata_rows(
     cursor: Any,
     metadata_db: str,
     metadata_table: str,
+    table_field: str,
+    column_field: Optional[str],
+    desc_field: str,
     debug_log: Optional[str] = None,
 ) -> List[Dict[str, str]]:
-    cached = _load_tablemeta_cache(connection_name, metadata_db, metadata_table)
+    cached = _load_tablemeta_cache(connection_name, metadata_db, metadata_table, table_field, column_field, desc_field)
     if cached is None:
         _debug_write(debug_log, "No existing cache; fetching metadata")
-        rows = _fetch_table_metadata(cursor, metadata_db, metadata_table, debug_log)
+        rows = _fetch_table_metadata(cursor, metadata_db, metadata_table, table_field, column_field, desc_field, debug_log)
         if rows:
             payload = {"fetched_at_utc": datetime.utcnow().isoformat() + "Z", "rows": rows}
-            _save_tablemeta_cache(connection_name, metadata_db, metadata_table, payload)
+            _save_tablemeta_cache(connection_name, metadata_db, metadata_table, table_field, column_field, desc_field, payload)
         else:
             rows = []
     else:
@@ -741,11 +802,11 @@ def _load_or_fetch_metadata_rows(
         rows = cached.get("rows", [])
         if not rows:
             _debug_write(debug_log, "Cache empty; attempting refresh")
-            refreshed = _fetch_table_metadata(cursor, metadata_db, metadata_table, debug_log)
+            refreshed = _fetch_table_metadata(cursor, metadata_db, metadata_table, table_field, column_field, desc_field, debug_log)
             if refreshed:
                 rows = refreshed
                 payload = {"fetched_at_utc": datetime.utcnow().isoformat() + "Z", "rows": rows}
-                _save_tablemeta_cache(connection_name, metadata_db, metadata_table, payload)
+                _save_tablemeta_cache(connection_name, metadata_db, metadata_table, table_field, column_field, desc_field, payload)
     return rows
 
 
@@ -754,12 +815,15 @@ def _metadata_list_tables_flow(
     cursor: Any,
     metadata_db: str,
     metadata_table: str,
+    table_field: str,
+    column_field: Optional[str],
+    desc_field: str,
     output_file: str,
 ) -> Dict[str, Any]:
     debug_log = _debug_log_path()
     _debug_write(debug_log, f"Start list_tables; connection={connection_name} db={metadata_db} table={metadata_table}")
 
-    rows = _load_or_fetch_metadata_rows(connection_name, cursor, metadata_db, metadata_table, debug_log)
+    rows = _load_or_fetch_metadata_rows(connection_name, cursor, metadata_db, metadata_table, table_field, column_field, desc_field, debug_log)
     if not rows:
         raise ValueError(
             f"Metadata table returned zero rows. Verify metadata_database/metadata_table and that it is populated. Debug log: {debug_log}"
@@ -805,20 +869,22 @@ def _metadata_describe_table_flow(
     cursor: Any,
     metadata_db: str,
     metadata_table: str,
+    table_field: str,
+    column_field: Optional[str],
+    desc_field: str,
     table_name: str,
     output_file: str,
 ) -> Dict[str, Any]:
     debug_log = _debug_log_path()
     _debug_write(debug_log, f"Start describe_table; connection={connection_name} db={metadata_db} table={metadata_table} target={table_name}")
 
-    rows = _load_or_fetch_metadata_rows(connection_name, cursor, metadata_db, metadata_table, debug_log)
+    rows = _load_or_fetch_metadata_rows(connection_name, cursor, metadata_db, metadata_table, table_field, column_field, desc_field, debug_log)
     if not rows:
         raise ValueError(
             f"Metadata table returned zero rows. Verify metadata_database/metadata_table and that it is populated. Debug log: {debug_log}"
         )
 
-    # Normalize table match using identifier normalization used elsewhere
-    target_norm = _normalize_identifier(table_name)
+    # Match using exact value as provided (no normalization)
     tbl_desc_value = ""
     columns: List[Dict[str, str]] = []
 
@@ -826,7 +892,7 @@ def _metadata_describe_table_flow(
         t = str(r.get("table_name", ""))
         c = str(r.get("column_name", ""))
         d = str(r.get("column_description", ""))
-        if _normalize_identifier(t) != target_norm:
+        if t != table_name:
             continue
         if c is None or c.strip() == "":
             # Table-level description
@@ -1297,6 +1363,9 @@ def run_tool(config: UserParameters, args: ToolParameters) -> Any:
                 cursor=cursor,
                 metadata_db=config.metadata_database,
                 metadata_table=config.metadata_table,
+                table_field=config.metadata_table_name_field,
+                column_field=config.metadata_column_name_field,
+                desc_field=config.metadata_description_field,
                 output_file=args.output_file,
             )
         if action == "describe_table":
@@ -1308,6 +1377,9 @@ def run_tool(config: UserParameters, args: ToolParameters) -> Any:
                 cursor=cursor,
                 metadata_db=config.metadata_database,
                 metadata_table=config.metadata_table,
+                table_field=config.metadata_table_name_field,
+                column_field=config.metadata_column_name_field,
+                desc_field=config.metadata_description_field,
                 table_name=table_name,
                 output_file=args.output_file,
             )
@@ -1318,6 +1390,9 @@ def run_tool(config: UserParameters, args: ToolParameters) -> Any:
                 cursor=cursor,
                 metadata_db=config.metadata_database,
                 metadata_table=config.metadata_table,
+                table_field=config.metadata_table_name_field,
+                column_field=config.metadata_column_name_field,
+                desc_field=config.metadata_description_field,
                 keywords=args.keywords,
                 output_file=args.output_file,
                 tool_params=args,
