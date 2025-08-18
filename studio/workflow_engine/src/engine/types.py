@@ -53,6 +53,11 @@ class Input__LanguageModelConfig(BaseModel):
     api_base: Optional[str] = None
     api_key: Optional[str] = None
     extra_headers: Optional[Dict[str, str]] = None
+    # AWS Bedrock specific fields
+    aws_access_key_id: Optional[str] = None
+    aws_secret_access_key: Optional[str] = None
+    aws_region_name: Optional[str] = None
+    aws_session_token: Optional[str] = None
 
 
 class Input__LanguageModel(BaseModel):
@@ -152,9 +157,11 @@ class DeployedWorkflowActions(str, Enum):
     GET_CONFIGURATION = "get-configuration"
     GET_ASSET_DATA = "get-asset-data"
     GET_MCP_TOOL_DEFINITIONS = "get-mcp-tool-definitions"
+    CREATE_SESSION = "create-session"
 
 
 class ServeWorkflowParameters(BaseModel):
     action_type: DeployedWorkflowActions
     kickoff_inputs: Optional[str] = None
     get_asset_data_inputs: List[str] = list()
+    create_session_inputs: Optional[str] = None

@@ -76,5 +76,17 @@ def get_crewai_llm(language_model: Input__LanguageModel, llm_config_dict: Dict[s
             seed=0,
             extra_headers=llm_config.extra_headers,
         )
+    elif llm_config.model_type == SupportedModelTypes.BEDROCK.value:
+        return AgentStudioCrewAILLM(
+            agent_studio_id=language_model.model_id,
+            model="bedrock/" + llm_config.provider_model,
+            aws_access_key_id=llm_config.aws_access_key_id,
+            aws_secret_access_key=llm_config.aws_secret_access_key,
+            aws_region_name=llm_config.aws_region_name,
+            aws_session_token=llm_config.aws_session_token,
+            temperature=language_model.generation_config.get("temperature"),
+            max_completion_tokens=language_model.generation_config.get("max_new_tokens"),
+            extra_headers=llm_config.extra_headers,
+        )
     else:
         raise ValueError(f"Model type {llm_config.model_type} is not supported.")

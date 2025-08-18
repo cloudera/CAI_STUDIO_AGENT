@@ -13,8 +13,27 @@ To register a new model, click on the "Register New Model" button. We support th
  - Azure OpenAI
  - Google Gemini
  - Anthropic
+ - AWS Bedrock
  - OpenAI compatible providers (any model endpoint that adheres to the [OpenAI API specifications](https://platform.openai.com/docs/api-reference/chat))
    - You can use this to connect to models hosted within your enterprise boundaries or on [Cloudera AI Inference Service](https://docs.cloudera.com/machine-learning/cloud/ai-inference/topics/ml-caii-use-caii.html).
+
+### AWS Bedrock Configuration
+
+When registering AWS Bedrock models, you'll need to provide:
+- **Provider Model**: The Bedrock model identifier (e.g., `anthropic.claude-3-sonnet-20240229-v1:0`, `meta.llama3-70b-instruct-v1:0`, `amazon.nova-pro-v1:0`)
+- **AWS Credentials**: Configure via environment variables or IAM roles
+  - AWS Access Key ID
+  - AWS Secret Access Key  
+  - AWS Region (e.g., `us-east-1`, `us-west-2`)
+  - AWS Session Token (optional, for temporary credentials)
+
+AWS Bedrock supports models from multiple providers including:
+- Anthropic Claude models
+- Meta Llama models  
+- Amazon Nova models
+- Mistral models
+- Cohere Command models
+- Custom imported models
 
 ## Editing Regsitered Models
 

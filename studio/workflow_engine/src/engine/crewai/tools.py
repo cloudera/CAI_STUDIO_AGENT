@@ -186,7 +186,10 @@ def run_code_in_thread(code):
 
 
 def get_tool_instance_proxy(
-    tool_instance: Input__ToolInstance, user_params_kv: Dict[str, str], workflow_directory: str
+    tool_instance: Input__ToolInstance,
+    user_params_kv: Dict[str, str],
+    workflow_directory: str,
+    session_directory: str = None,
 ) -> BaseTool:
     """
     Get the tool instance proxy callable for the tool instance.
@@ -226,6 +229,8 @@ def get_tool_instance_proxy(
             )
         new_envs = os.environ.copy()
         new_envs["PATH"] = path_to_add + ":" + new_envs["PATH"]
+        if session_directory:
+            new_envs["SESSION_DIRECTORY"] = session_directory
         result = subprocess.run([python_executable, "-c", augmented_tool_code], capture_output=True, text=True, check=False, env=new_envs)
         if result.stderr:
             raise ValueError(f"Error in executing tool: {{result.stderr}}")
@@ -446,7 +451,10 @@ def get_venv_tool_tool_parameters_type(code: str) -> Type[BaseModel]:
 
 
 def get_venv_tool(
-    tool_instance: input_types.Input__ToolInstance, user_params_kv: Dict[str, str], workflow_directory: str
+    tool_instance: input_types.Input__ToolInstance,
+    user_params_kv: Dict[str, str],
+    workflow_directory: str,
+    session_directory: str = None,
 ) -> BaseTool:
     relative_module_dir = os.path.abspath(os.path.join(workflow_directory, tool_instance.source_folder_path))
     with open(os.path.join(relative_module_dir, tool_instance.python_code_file_name), "r") as code_file:
@@ -477,6 +485,8 @@ def get_venv_tool(
                 # Copy the entire existing environment and override specific variables
                 env = os.environ.copy()
                 env.update({"VIRTUAL_ENV": self.venv_dir})
+                if session_directory:
+                    env.update({"SESSION_DIRECTORY": session_directory})
 
                 result = subprocess.run(
                     cmd,
@@ -526,7 +536,10 @@ def is_venv_tool(tool_code: str) -> bool:
 
 
 def get_crewai_tool(
-    tool_instance: input_types.Input__ToolInstance, user_params_kv: Dict[str, str], workflow_directory: str
+    tool_instance: input_types.Input__ToolInstance,
+    user_params_kv: Dict[str, str],
+    workflow_directory: str,
+    session_directory: str = None,
 ) -> BaseTool:
     """
     Agent Studio currently supports two different tool template types - one which is a "V2" venv tool (multiple
@@ -538,6 +551,6 @@ def get_crewai_tool(
     with open(os.path.join(relative_module_dir, tool_instance.python_code_file_name), "r") as code_file:
         tool_code = code_file.read()
     if is_venv_tool(tool_code):
-        return get_venv_tool(tool_instance, user_params_kv, workflow_directory)
+        return get_venv_tool(tool_instance, user_params_kv, workflow_directory, session_directory)
     else:
-        return get_tool_instance_proxy(tool_instance, user_params_kv, workflow_directory)
+        return get_tool_instance_proxy(tool_instance, user_params_kv, workflow_directory, session_directory)

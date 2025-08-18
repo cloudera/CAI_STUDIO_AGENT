@@ -1,0 +1,18 @@
+# https://pip.pypa.io/en/stable/reference/requirements-file-format/
+pydantic==2.10.3
+PyPDF2==3.0.1
+python-docx==0.8.11
+Pillow==9.4.0
+openpyxl==3.0.10
+pandas==2.1.4
+pytesseract>=0.3.8
+striprtf==0.0.28
+beautifulsoup4==4.12.3
+markdown==3.4.3
+typing-extensions==4.12.2
+numpy==1.24.3  # Compatible with pandas 2.1.4
+
+
+
+# Refer to https://pip.pypa.io/en/stable/reference/requirements-file-format/ for requirements.txt format
+# Please mention the tool specific python packages requirements below:

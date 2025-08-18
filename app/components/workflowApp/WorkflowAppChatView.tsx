@@ -14,26 +14,48 @@ import {
 } from '@/app/workflows/workflowAppSlice';
 import { CrewAITaskMetadata, Workflow } from '@/studio/proto/agent_studio';
 import ChatMessages from '../ChatMessages';
+import ThoughtsBox, { ThoughtEntry } from './ThoughtsBox';
 import {
   selectWorkflowConfiguration,
   selectWorkflowGenerationConfig,
+  selectWorkflowSessionId,
+  updatedWorkflowSessionId,
+  updatedWorkflowSessionDirectory,
 } from '@/app/workflows/editorSlice';
 import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
 import { useGlobalNotification } from '../Notifications';
+import { selectWorkflowAppSessionFiles } from '@/app/workflows/workflowAppSlice';
 
 export interface WorkflowAppChatViewProps {
   workflow?: Workflow;
   tasks?: CrewAITaskMetadata[];
+  onOpenArtifacts?: () => void;
+  thoughts?: ThoughtEntry[];
+  thoughtsCollapsed?: boolean;
+  onToggleThoughts?: (next: boolean) => void;
+  thoughtSessions?: { id: string; entries: ThoughtEntry[]; collapsed: boolean }[];
+  onToggleThoughtSession?: (id: string, next: boolean) => void;
 }
 
-const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow }) => {
+const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({
+  workflow,
+  tasks,
+  onOpenArtifacts,
+  thoughts = [],
+  thoughtsCollapsed = false,
+  onToggleThoughts = () => {},
+  thoughtSessions = [],
+  onToggleThoughtSession = () => {},
+}) => {
   const userInput = useAppSelector(selectWorkflowAppChatUserInput);
   const dispatch = useAppDispatch();
   const isRunning = useAppSelector(selectWorkflowIsRunning);
   const [testWorkflow] = useTestWorkflowMutation();
   const workflowGenerationConfig = useAppSelector(selectWorkflowGenerationConfig);
   const workflowConfiguration = useAppSelector(selectWorkflowConfiguration);
+  const sessionId = useAppSelector(selectWorkflowSessionId);
   const notificationApi = useGlobalNotification();
+  const sessionFiles = useAppSelector(selectWorkflowAppSessionFiles);
 
   // If we haven't determined our application render type, then we don't render yet!
   const { data: workflowData, isLoading } = useGetWorkflowDataQuery();
@@ -47,9 +69,29 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow }) =
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Only auto-scroll when new content is appended (new message, new session, or new thought in active session)
+  const prevScrollStateRef = useRef<{
+    messagesLen: number;
+    sessionsLen: number;
+    lastEntriesLen: number;
+  }>({ messagesLen: 0, sessionsLen: 0, lastEntriesLen: 0 });
+
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    const prev = prevScrollStateRef.current;
+    const messagesLen = messages.length;
+    const sessionsLen = thoughtSessions.length;
+    const lastEntriesLen =
+      sessionsLen > 0 ? thoughtSessions[sessionsLen - 1]?.entries?.length || 0 : 0;
+
+    let shouldScroll = false;
+    if (messagesLen > prev.messagesLen) shouldScroll = true;
+    if (sessionsLen > prev.sessionsLen) shouldScroll = true;
+    if (lastEntriesLen > prev.lastEntriesLen) shouldScroll = true;
+
+    if (shouldScroll) scrollToBottom();
+
+    prevScrollStateRef.current = { messagesLen, sessionsLen, lastEntriesLen };
+  }, [messages, thoughtSessions]);
 
   if (!workflow) {
     return <></>;
@@ -64,7 +106,18 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow }) =
   const handleCrewKickoff = async () => {
     // Create user_input and context from the messages and exsting input
     const context =
-      messages.map((message) => ({ role: message.role, content: message.content })) || [];
+      messages.map((message) => ({
+        role: message.role,
+        content: message.content,
+        attachments: message.attachments || [],
+      })) || [];
+
+    // Build API user_input by appending attachment file names, while keeping the chat message content pure
+    const attachmentNames = (sessionFiles || []).map((file) => file.name).filter(Boolean);
+    const userInputForApi =
+      attachmentNames.length > 0
+        ? `${userInput || ''}${userInput ? '\n' : ''}Attachments: ${attachmentNames.join(', ')}`
+        : userInput || '';
 
     let traceId: string | undefined = undefined;
     if (renderMode === 'studio') {
@@ -72,7 +125,7 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow }) =
         const response = await testWorkflow({
           workflow_id: workflow.workflow_id,
           inputs: {
-            user_input: userInput || '', // TODO: fail on blank?
+            user_input: userInputForApi, // user input with appended attachments for API only
             context: JSON.stringify(context),
           },
           tool_user_parameters: workflowConfiguration?.toolConfigurations || {},
@@ -82,8 +135,17 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow }) =
             ),
           ),
           generation_config: JSON.stringify(workflowGenerationConfig),
+          session_id: sessionId || '',
         }).unwrap();
         traceId = response.trace_id;
+
+        // Update session info from response
+        if (response.session_id) {
+          dispatch(updatedWorkflowSessionId(response.session_id));
+        }
+        if ((response as any).session_directory) {
+          dispatch(updatedWorkflowSessionDirectory((response as any).session_directory));
+        }
       } catch (error) {
         notificationApi.error({
           message: 'Test Workflow failed',
@@ -102,14 +164,23 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow }) =
           request: {
             action_type: 'kickoff',
             kickoff_inputs: base64Encode({
-              user_input: userInput || '',
+              user_input: userInputForApi,
               context: JSON.stringify(context),
+              session_id: sessionId || '',
             }),
           },
         }),
       });
       const kickoffResponseData = (await kickoffResponse.json()) as any;
       traceId = kickoffResponseData.response.trace_id;
+
+      // Extract session info from response if available
+      if (kickoffResponseData.response.session_id) {
+        dispatch(updatedWorkflowSessionId(kickoffResponseData.response.session_id));
+      }
+      if (kickoffResponseData.response.session_directory) {
+        dispatch(updatedWorkflowSessionDirectory(kickoffResponseData.response.session_directory));
+      }
     }
 
     if (traceId) {
@@ -119,14 +190,16 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow }) =
       dispatch(updatedCurrentTraceId(traceId));
       dispatch(updatedIsRunning(true));
 
-      // Add message to history
+      // Add message to history, include any session files as attachments
       dispatch(
         addedChatMessage({
           role: 'user',
           content: userInput || '', // TODO: fail on blank?
+          attachments: sessionFiles && sessionFiles.length > 0 ? sessionFiles : undefined,
         }),
       );
       dispatch(updatedChatUserInput(''));
+      // clear composer-side file chips handled in ChatMessages after send
     } else {
       dispatch(updatedIsRunning(false));
     }
@@ -151,6 +224,11 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow }) =
           messagesEndRef={messagesEndRef}
           clearMessages={handleClearMessages}
           workflowName={workflow.name}
+          workflow={workflow}
+          renderMode={renderMode}
+          onOpenArtifacts={onOpenArtifacts}
+          thoughtSessions={thoughtSessions}
+          onToggleThoughtSession={onToggleThoughtSession}
         />
       </Layout>
     </>

@@ -40,6 +40,7 @@ def get_workbench_model_config(deployable_workflow_dir: str, artifact: Deploymen
             "model_file_path": "src/engine/entry/workbench.py",
             "workflow_artifact_location": os.path.join("/home/cdsw", os.path.basename(artifact.project_location)),
             "model_execution_dir": "/home/cdsw",
+            "workflow_project_file_dir": os.path.join("/home/cdsw", get_studio_subdirectory(), deployable_workflow_dir),
         }
     else:
         return {
@@ -54,6 +55,7 @@ def get_workbench_model_config(deployable_workflow_dir: str, artifact: Deploymen
                 os.path.basename(artifact.project_location),
             ),
             "model_execution_dir": os.path.join("/home/cdsw", get_studio_subdirectory(), deployable_workflow_dir),
+            "workflow_project_file_dir": os.path.join("/home/cdsw", get_studio_subdirectory(), deployable_workflow_dir),
         }
 
 
@@ -89,10 +91,13 @@ def prepare_env_vars_for_workbench(
             "AGENT_STUDIO_WORKFLOW_ARTIFACT": workbench_model_config["workflow_artifact_location"],
             "AGENT_STUDIO_WORKFLOW_DEPLOYMENT_CONFIG": json.dumps(payload.deployment_config.model_dump()),
             "AGENT_STUDIO_MODEL_EXECUTION_DIR": workbench_model_config["model_execution_dir"],
+            "AGENT_STUDIO_WORKFLOW_PROJECT_FILE_DIR": workbench_model_config["workflow_project_file_dir"],
             "CDSW_APIV2_KEY": key_value,  # Pass the validated API key
             "CDSW_PROJECT_ID": os.getenv("CDSW_PROJECT_ID"),  # Pass the project ID
             "CREWAI_DISABLE_TELEMETRY": "true",  # disable crewai telemetry for the workflow engine
             "AGENT_STUDIO_WORKBENCH_TLS_ENABLED": os.getenv("AGENT_STUDIO_WORKBENCH_TLS_ENABLED", "true"),
+            "CDSW_DOMAIN": os.getenv("CDSW_DOMAIN"),
+            "CDSW_API_URL": os.getenv("CDSW_API_URL"),
         }
     )
 

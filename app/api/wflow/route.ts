@@ -246,7 +246,7 @@ export async function GET(_request: NextRequest) {
       is_conversational: configuration.workflow.is_conversational,
     };
 
-    const deployedWorkflow: DeployedWorkflow = {
+    const deployedWorkflow: DeployedWorkflow & { workflow_directory?: string } = {
       deployed_workflow_id: configuration.workflow.deployment_id,
       workflow_id: configuration.workflow.id,
       workflow_name: configuration.workflow.name,
@@ -257,6 +257,7 @@ export async function GET(_request: NextRequest) {
       application_deep_link: '',
       model_deep_link: '',
       created_at: configuration.workflow.created_at || '',
+      workflow_directory: configuration.workflow_directory,
     };
 
     return NextResponse.json({

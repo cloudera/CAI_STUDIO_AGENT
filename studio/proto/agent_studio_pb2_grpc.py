@@ -2,6 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 
 import grpc
+import warnings
 
 from studio.proto import agent_studio_pb2 as studio_dot_proto_dot_agent__studio__pb2
 
@@ -309,6 +310,12 @@ class AgentStudioStub(object):
             "/agent_studio.AgentStudio/TestWorkflow",
             request_serializer=studio_dot_proto_dot_agent__studio__pb2.TestWorkflowRequest.SerializeToString,
             response_deserializer=studio_dot_proto_dot_agent__studio__pb2.TestWorkflowResponse.FromString,
+            _registered_method=True,
+        )
+        self.CreateSession = channel.unary_unary(
+            "/agent_studio.AgentStudio/CreateSession",
+            request_serializer=studio_dot_proto_dot_agent__studio__pb2.CreateSessionRequest.SerializeToString,
+            response_deserializer=studio_dot_proto_dot_agent__studio__pb2.CreateSessionResponse.FromString,
             _registered_method=True,
         )
         self.RemoveWorkflow = channel.unary_unary(
@@ -766,6 +773,12 @@ class AgentStudioServicer(object):
         context.set_details("Method not implemented!")
         raise NotImplementedError("Method not implemented!")
 
+    def CreateSession(self, request, context):
+        """Create a new session for a workflow"""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
     def RemoveWorkflow(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -1167,6 +1180,11 @@ def add_AgentStudioServicer_to_server(servicer, server):
             servicer.TestWorkflow,
             request_deserializer=studio_dot_proto_dot_agent__studio__pb2.TestWorkflowRequest.FromString,
             response_serializer=studio_dot_proto_dot_agent__studio__pb2.TestWorkflowResponse.SerializeToString,
+        ),
+        "CreateSession": grpc.unary_unary_rpc_method_handler(
+            servicer.CreateSession,
+            request_deserializer=studio_dot_proto_dot_agent__studio__pb2.CreateSessionRequest.FromString,
+            response_serializer=studio_dot_proto_dot_agent__studio__pb2.CreateSessionResponse.SerializeToString,
         ),
         "RemoveWorkflow": grpc.unary_unary_rpc_method_handler(
             servicer.RemoveWorkflow,
@@ -2668,6 +2686,36 @@ class AgentStudio(object):
             "/agent_studio.AgentStudio/TestWorkflow",
             studio_dot_proto_dot_agent__studio__pb2.TestWorkflowRequest.SerializeToString,
             studio_dot_proto_dot_agent__studio__pb2.TestWorkflowResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def CreateSession(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/agent_studio.AgentStudio/CreateSession",
+            studio_dot_proto_dot_agent__studio__pb2.CreateSessionRequest.SerializeToString,
+            studio_dot_proto_dot_agent__studio__pb2.CreateSessionResponse.FromString,
             options,
             channel_credentials,
             insecure,

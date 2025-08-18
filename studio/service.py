@@ -16,6 +16,7 @@ from studio.agents.agent_templates import (
     update_agent_template,
 )
 from studio.workflow.test_and_deploy_workflow import (
+    create_session,
     test_workflow,
     deploy_workflow,
     undeploy_workflow,
@@ -482,6 +483,12 @@ class AgentStudioApp(AgentStudioServicer):
         Test an existing workflow by its ID.
         """
         return test_workflow(request, self.cml, dao=self.dao)
+
+    def CreateSession(self, request, context):
+        """
+        Create Session for an existing workflow by its ID.
+        """
+        return create_session(request, self.cml, dao=self.dao)
 
     def DeployWorkflow(self, request, context):
         """

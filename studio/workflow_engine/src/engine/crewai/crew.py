@@ -18,6 +18,7 @@ def create_crewai_objects(
     tool_config: Dict[str, Dict[str, str]],
     mcp_config: Dict[str, Dict[str, str]],
     llm_config: Dict[str, Dict[str, str]],
+    session_directory: str = None,
 ) -> input_types.CrewAIObjects:
     language_models: Dict[str, AgentStudioCrewAILLM] = {}
     for l_ in collated_input.language_models:
@@ -25,11 +26,11 @@ def create_crewai_objects(
 
     tools: Dict[str, BaseTool] = {}
     for t_ in collated_input.tool_instances:
-        tools[t_.id] = get_crewai_tool(t_, tool_config.get(t_.id, {}), workflow_directory)
+        tools[t_.id] = get_crewai_tool(t_, tool_config.get(t_.id, {}), workflow_directory, session_directory)
 
     mcps: Dict[str, input_types.MCPObjects] = {}
     for m_ in collated_input.mcp_instances:
-        mcps[m_.id] = get_mcp_tools_for_crewai(m_, mcp_config.get(m_.id, {}))
+        mcps[m_.id] = get_mcp_tools_for_crewai(m_, mcp_config.get(m_.id, {}), session_directory)
 
     agents: Dict[str, AgentStudioCrewAIAgent] = {}
     for agent in collated_input.agents:

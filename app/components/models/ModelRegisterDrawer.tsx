@@ -34,10 +34,20 @@ import {
   setModelRegisterName,
   setModelRegisterApiBase,
   setModelRegisterApiKey,
+  setModelRegisterExtraHeaders,
   setModelRegisterSetAsDefault,
   updateModelStatus,
+  // Bedrock-specific selectors and actions
+  selectModelRegisterAwsRegionName,
+  selectModelRegisterAwsAccessKeyId,
+  selectModelRegisterAwsSecretAccessKey,
+  selectModelRegisterAwsSessionToken,
+  setModelRegisterAwsRegionName,
+  setModelRegisterAwsAccessKeyId,
+  setModelRegisterAwsSecretAccessKey,
+  setModelRegisterAwsSessionToken,
 } from '@/app/models/modelsSlice';
-import { MODEL_IDENTIFIER_OPTIONS } from '@/app/lib/constants';
+import { MODEL_IDENTIFIER_OPTIONS, BEDROCK_REGIONS } from '@/app/lib/constants';
 import { asyncTestModelWithRetry } from '@/app/models/utils';
 
 const { Option } = Select;
@@ -62,6 +72,11 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
   const modelRegisterApiKey = useAppSelector(selectModelRegisterApiKey);
   const modelRegisterExtraHeaders = useAppSelector(selectModelRegisterExtraHeaders);
   const setAsDefault = useAppSelector(selectModelRegisterSetAsDefault);
+  // Bedrock-specific state
+  const bedrockAwsRegionName = useAppSelector(selectModelRegisterAwsRegionName);
+  const bedrockAwsAccessKeyId = useAppSelector(selectModelRegisterAwsAccessKeyId);
+  const bedrockAwsSecretAccessKey = useAppSelector(selectModelRegisterAwsSecretAccessKey);
+  const bedrockAwsSessionToken = useAppSelector(selectModelRegisterAwsSessionToken);
 
   const dispatch = useAppDispatch();
 
@@ -94,14 +109,25 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
       if (drawerMode === 'edit') {
         if (!modelRegisterId) throw new Error('Model ID not specified for updating model.');
 
-        await updateModel({
+        const updatePayload: any = {
           model_id: modelRegisterId,
           model_name: modelRegisterName || '',
           provider_model: modelRegisterProviderModel || '',
           api_base: modelRegisterApiBase || '',
           api_key: modelRegisterApiKey || '',
           extra_headers: JSON.stringify(modelRegisterExtraHeaders || {}),
-        });
+        };
+        if (modelRegisterType === 'BEDROCK') {
+          // For Bedrock, use explicit fields
+          updatePayload.api_base = '';
+          updatePayload.api_key = '';
+          updatePayload.aws_region_name = bedrockAwsRegionName || '';
+          updatePayload.aws_access_key_id = bedrockAwsAccessKeyId || '';
+          updatePayload.aws_secret_access_key = bedrockAwsSecretAccessKey || '';
+          if (bedrockAwsSessionToken) updatePayload.aws_session_token = bedrockAwsSessionToken;
+        }
+
+        await updateModel(updatePayload);
 
         notificationsApi.success({
           message: 'Model Updated',
@@ -114,27 +140,45 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
         // Trigger revalidation of the model
         asyncTestModelWithRetry(modelRegisterId, dispatch, testModel, updateModelStatus);
       } else {
+        const isBedrock = modelRegisterType === 'BEDROCK';
+        const missingCommon = !modelRegisterName || !modelRegisterType;
+        const missingApiBase =
+          ['OPENAI_COMPATIBLE', 'AZURE_OPENAI', 'CAII'].includes(modelRegisterType || '') &&
+          !modelRegisterApiBase;
+        const missingAzureCaiiProvider =
+          ['AZURE_OPENAI', 'CAII'].includes(modelRegisterType || '') && !modelRegisterProviderModel;
+        const missingBedrockCreds =
+          isBedrock &&
+          (!bedrockAwsRegionName || !bedrockAwsAccessKeyId || !bedrockAwsSecretAccessKey);
+        const missingApiKeyForOthers = !isBedrock && !modelRegisterApiKey;
         if (
-          !modelRegisterName ||
-          !modelRegisterApiKey ||
-          !modelRegisterType ||
-          (['OPENAI_COMPATIBLE', 'AZURE_OPENAI', 'CAII'].includes(modelRegisterType || '') &&
-            !modelRegisterApiBase) ||
-          (['AZURE_OPENAI', 'CAII'].includes(modelRegisterType || '') &&
-            !modelRegisterProviderModel)
+          missingCommon ||
+          missingApiBase ||
+          missingAzureCaiiProvider ||
+          missingBedrockCreds ||
+          missingApiKeyForOthers
         ) {
           throw new Error('Please fill in all required fields.');
         }
 
         try {
-          const modelId = await addModel({
+          const addPayload: any = {
             model_name: modelRegisterName,
             model_type: modelRegisterType,
             provider_model: modelRegisterProviderModel || '',
             api_base: modelRegisterApiBase || '',
             api_key: modelRegisterApiKey,
             extra_headers: JSON.stringify(modelRegisterExtraHeaders || {}),
-          }).unwrap();
+          };
+          if (isBedrock) {
+            addPayload.api_base = '';
+            addPayload.api_key = '';
+            addPayload.aws_region_name = bedrockAwsRegionName || '';
+            addPayload.aws_access_key_id = bedrockAwsAccessKeyId || '';
+            addPayload.aws_secret_access_key = bedrockAwsSecretAccessKey || '';
+            if (bedrockAwsSessionToken) addPayload.aws_session_token = bedrockAwsSessionToken;
+          }
+          const modelId = await addModel(addPayload).unwrap();
 
           if (setAsDefault && modelId) {
             await setDefaultModel({ model_id: modelId });
@@ -334,6 +378,16 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
             Anthropic
           </div>
         </Option>
+        <Option value="BEDROCK">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <img
+              src="/llm_providers/bedrock.svg"
+              alt="AWS Bedrock"
+              style={{ width: '16px', height: '16px' }}
+            />
+            AWS Bedrock
+          </div>
+        </Option>
       </Select>
 
       {/* Model Alias */}
@@ -389,15 +443,51 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
           />
         </>
       )}
+      {/* AWS Region for Bedrock */}
+      {modelRegisterType === 'BEDROCK' && (
+        <>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              paddingTop: '16px',
+              paddingBottom: '8px',
+            }}
+          >
+            AWS Region
+            <Tooltip title="Select the AWS region where your Bedrock models are available (e.g., us-east-1, us-west-2)">
+              <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+            </Tooltip>
+          </div>
+          <Select
+            style={{ width: '100%' }}
+            placeholder="Select AWS region"
+            value={bedrockAwsRegionName}
+            onChange={(value) => dispatch(setModelRegisterAwsRegionName(value))}
+            showSearch
+            optionFilterProp="label"
+          >
+            {BEDROCK_REGIONS.map((r) => (
+              <Option key={r.value} value={r.value} label={r.label}>
+                {r.label}
+              </Option>
+            ))}
+          </Select>
+        </>
+      )}
 
-      {/* API Key */}
-      <div className="flex items-center pt-4 pb-2">
-        API Key
+      {/* API Key or Access Key */}
+      <div
+        style={{ display: 'flex', alignItems: 'center', paddingTop: '16px', paddingBottom: '8px' }}
+      >
+        {modelRegisterType === 'BEDROCK' ? 'AWS Access Key ID' : 'API Key'}
         <Tooltip
           title={
-            modelRegisterType === 'CAII'
-              ? 'Generate a long-lived JWT token on the Knox Gateway Server in the Data Lake environment. Copy the CDP Token from the Cloudera AI Model Endpoint Code Sample page'
-              : "Provide the API key for accessing the model's service."
+            modelRegisterType === 'BEDROCK'
+              ? 'Your AWS Access Key ID. You can also use IAM roles or environment variables for authentication.'
+              : modelRegisterType === 'CAII'
+                ? 'Generate a long-lived JWT token on the Knox Gateway Server in the Data Lake environment. Copy the CDP Token from the Cloudera AI Model Endpoint Code Sample page'
+                : "Provide the API key for accessing the model's service."
           }
         >
           <QuestionCircleOutlined className="ml-2 cursor-pointer" />
@@ -405,17 +495,67 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
       </div>
       <Input.Password
         placeholder={
-          modelRegisterType === 'CAII'
-            ? 'Enter JWT token'
-            : drawerMode === 'register'
-              ? 'Enter API key'
-              : 'Enter new API key (optional)'
+          modelRegisterType === 'BEDROCK'
+            ? 'Enter AWS Access Key ID'
+            : modelRegisterType === 'CAII'
+              ? 'Enter JWT token'
+              : drawerMode === 'register'
+                ? 'Enter API key'
+                : 'Enter new API key (optional)'
         }
-        value={modelRegisterApiKey}
+        value={
+          modelRegisterType === 'BEDROCK' ? bedrockAwsAccessKeyId || '' : modelRegisterApiKey || ''
+        }
         onChange={(e) => {
-          dispatch(setModelRegisterApiKey(e.target.value));
+          if (modelRegisterType === 'BEDROCK') {
+            dispatch(setModelRegisterAwsAccessKeyId(e.target.value));
+          } else {
+            dispatch(setModelRegisterApiKey(e.target.value));
+          }
         }}
       />
+
+      {/* AWS Secret Access Key for Bedrock */}
+      {modelRegisterType === 'BEDROCK' && (
+        <>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              paddingTop: '16px',
+              paddingBottom: '8px',
+            }}
+          >
+            AWS Secret Access Key
+            <Tooltip title="Your AWS Secret Access Key (will be stored securely)">
+              <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+            </Tooltip>
+          </div>
+          <Input.Password
+            placeholder="Enter AWS Secret Access Key"
+            value={bedrockAwsSecretAccessKey || ''}
+            onChange={(e) => dispatch(setModelRegisterAwsSecretAccessKey(e.target.value))}
+          />
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              paddingTop: '16px',
+              paddingBottom: '8px',
+            }}
+          >
+            AWS Session Token (optional)
+            <Tooltip title="If using temporary credentials, provide the session token.">
+              <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+            </Tooltip>
+          </div>
+          <Input.Password
+            placeholder="Enter AWS Session Token (optional)"
+            value={bedrockAwsSessionToken || ''}
+            onChange={(e) => dispatch(setModelRegisterAwsSessionToken(e.target.value))}
+          />
+        </>
+      )}
 
       {/* Set as default toggle (Only in case of new model registration) */}
       {drawerMode === 'register' && (

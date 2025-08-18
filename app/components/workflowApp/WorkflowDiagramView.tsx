@@ -7,11 +7,20 @@ import {
   CrewAITaskMetadata,
   McpInstance,
   ToolInstance,
+  Workflow,
 } from '@/studio/proto/agent_studio';
 import { WorkflowState } from '@/app/workflows/editorSlice';
 import WorkflowDiagram from './WorkflowDiagram';
-import { ApiOutlined, BugOutlined, ExportOutlined, EyeOutlined } from '@ant-design/icons';
+import {
+  ApiOutlined,
+  BugOutlined,
+  ExportOutlined,
+  EyeOutlined,
+  MonitorOutlined,
+  FolderOutlined,
+} from '@ant-design/icons';
 import OpsIFrame from '../OpsIFrame';
+import WorkflowAppArtifactsView from './WorkflowAppArtifactsView';
 import ReactMarkdown from 'react-markdown';
 import { useAppSelector } from '@/app/lib/hooks/hooks';
 import { selectCurrentEventIndex } from '@/app/workflows/workflowAppSlice';
@@ -26,6 +35,10 @@ export interface WorkflowDiagramViewProps {
   events?: any[];
   displayDiagnostics?: boolean;
   renderMode?: 'studio' | 'workflow';
+  workflow?: Workflow;
+  sessionId?: string | null;
+  activeTab?: string;
+  onTabChange?: (key: string) => void;
 }
 
 const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
@@ -37,6 +50,10 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
   events,
   displayDiagnostics,
   renderMode = 'studio',
+  workflow,
+  sessionId,
+  activeTab = '1',
+  onTabChange,
 }) => {
   const currentEventIndex = useAppSelector(selectCurrentEventIndex);
   const { data: opsData } = useGetOpsDataQuery();
@@ -100,8 +117,13 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
   return (
     <Layout className="bg-transparent flex flex-col h-full w-full">
       <Tabs
-        defaultActiveKey="1"
-        className="w-full p-1 h-full"
+        activeKey={activeTab}
+        onChange={onTabChange}
+        style={{
+          width: '100%',
+          padding: '4px',
+          height: '100%',
+        }}
         items={[
           {
             key: '1',
@@ -268,6 +290,28 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
                 )}
               </div>
             ),
+          },
+          {
+            key: '4',
+            label: (
+              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FolderOutlined
+                  style={{
+                    color: 'white',
+                    background: '#1890ff',
+                    borderRadius: '50%',
+                    width: '24px',
+                    height: '24px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '4px',
+                  }}
+                />
+                Artifacts
+              </span>
+            ),
+            children: <WorkflowAppArtifactsView workflow={workflow} sessionId={sessionId} />,
           },
         ]}
       />

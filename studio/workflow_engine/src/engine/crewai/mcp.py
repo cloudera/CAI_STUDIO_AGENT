@@ -51,9 +51,13 @@ def _wrap_mcp_tool_with_agent_studio_wrapper(base_tool, mcp_instance_id: str) ->
     return MCPWrappedTool(base_tool, mcp_instance_id)
 
 
-def get_mcp_tools_for_crewai(mcp_instance: Input__MCPInstance, env_vars: Dict[str, str]) -> input_types.MCPObjects:
+def get_mcp_tools_for_crewai(
+    mcp_instance: Input__MCPInstance, env_vars: Dict[str, str], session_directory: str = None
+) -> input_types.MCPObjects:
     env_to_pass = os.environ.copy()
     env_to_pass.update(env_vars)
+    if session_directory:
+        env_to_pass["SESSION_DIRECTORY"] = session_directory
     server_params = StdioServerParameters(
         command=_mcp_type_to_command[mcp_instance.type],
         args=mcp_instance.args,
@@ -72,10 +76,14 @@ def get_mcp_tools_for_crewai(mcp_instance: Input__MCPInstance, env_vars: Dict[st
     )
 
 
-async def get_mcp_tool_definitions(mcp_instance: Input__MCPInstance, env_vars: Dict[str, str]) -> List[mcp_types.Tool]:
+async def get_mcp_tool_definitions(
+    mcp_instance: Input__MCPInstance, env_vars: Dict[str, str], session_directory: str = None
+) -> List[mcp_types.Tool]:
     timeout = timedelta(seconds=60)  # 60 seconds
     env_to_pass = os.environ.copy()
     env_to_pass.update(env_vars)
+    if session_directory:
+        env_to_pass["SESSION_DIRECTORY"] = session_directory
     server_params = StdioServerParameters(
         command=_mcp_type_to_command[mcp_instance.type],
         args=mcp_instance.args,
@@ -99,10 +107,11 @@ async def get_mcp_tool_definitions(mcp_instance: Input__MCPInstance, env_vars: D
 
 
 async def get_mcp_tools_definitions(
-    mcp_instances: List[Input__MCPInstance], env_vars: Dict[str, Dict[str, str]]
+    mcp_instances: List[Input__MCPInstance], env_vars: Dict[str, Dict[str, str]], session_directory: str = None
 ) -> Dict[str, List[mcp_types.Tool]]:
     tasks = [
-        get_mcp_tool_definitions(mcp_instance, env_vars.get(mcp_instance.id, {})) for mcp_instance in mcp_instances
+        get_mcp_tool_definitions(mcp_instance, env_vars.get(mcp_instance.id, {}), session_directory)
+        for mcp_instance in mcp_instances
     ]
     results = await asyncio.gather(*tasks)
     return {mcp_instance.id: result for (mcp_instance, result) in zip(mcp_instances, results)}

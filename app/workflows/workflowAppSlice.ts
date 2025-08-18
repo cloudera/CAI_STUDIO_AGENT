@@ -6,11 +6,13 @@ export interface WorkflowAppChatMessage {
   role: 'user' | 'assistant';
   content: string;
   events?: any[];
+  attachments?: { name: string; size?: number }[];
 }
 
 export interface WorkflowAppChat {
   messages: WorkflowAppChatMessage[];
   userInput?: string;
+  sessionFiles?: { name: string; size: number }[];
 }
 
 export interface WorkflowAppStandard {
@@ -37,6 +39,7 @@ const initialState: WorkflowAppState = {
   },
   appChat: {
     messages: [],
+    sessionFiles: [],
   },
 };
 
@@ -71,6 +74,17 @@ export const workflowAppSlice = createSlice({
       }
 
       state.appChat.messages = [...state.appChat.messages, action.payload];
+    },
+    addedSessionFile: (state, action: PayloadAction<{ name: string; size: number }>) => {
+      const files = state.appChat.sessionFiles || [];
+      state.appChat.sessionFiles = [...files, action.payload];
+    },
+    removedSessionFile: (state, action: PayloadAction<string>) => {
+      const files = state.appChat.sessionFiles || [];
+      state.appChat.sessionFiles = files.filter((f) => f.name !== action.payload);
+    },
+    setSessionFiles: (state, action: PayloadAction<{ name: string; size: number }[]>) => {
+      state.appChat.sessionFiles = action.payload;
     },
     updatedChatMessages: (state, action: PayloadAction<WorkflowAppChatMessage[]>) => {
       state.appChat.messages = action.payload;
@@ -111,6 +125,7 @@ export const workflowAppSlice = createSlice({
       state.appStandard.inputs = {};
       state.appChat.messages = [];
       state.appChat.userInput = '';
+      state.appChat.sessionFiles = [];
     },
     clearedChatMessages: (state) => {
       state.appChat.messages = [];
@@ -124,6 +139,9 @@ export const {
   updatedAppInputs,
   addedChatMessage,
   updatedChatMessages,
+  addedSessionFile,
+  removedSessionFile,
+  setSessionFiles,
   updatedIsRunning,
   updatedCurrentEvents,
   addedCurrentEvents,
@@ -141,6 +159,8 @@ export const selectWorkflowAppChatMessages = (state: RootState) =>
   state.workflowApp.appChat.messages;
 export const selectWorkflowAppChatUserInput = (state: RootState) =>
   state.workflowApp.appChat.userInput;
+export const selectWorkflowAppSessionFiles = (state: RootState) =>
+  state.workflowApp.appChat.sessionFiles || [];
 export const selectWorkflowCurrentTraceId = (state: RootState) => state.workflowApp.currentTraceId;
 export const selectWorkflowIsRunning = (state: RootState) => state.workflowApp.isRunning;
 export const selectWorkflowCrewOutput = (state: RootState) => state.workflowApp.crewOutput;
