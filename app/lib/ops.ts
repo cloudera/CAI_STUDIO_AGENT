@@ -1,4 +1,3 @@
-import { GraphQLClient } from 'graphql-request';
 import fetch from 'node-fetch';
 import https from 'https';
 import http from 'http';

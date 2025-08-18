@@ -63,10 +63,8 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
 }) => {
   const [shouldPollForMcpInstances, setShouldPollForMcpInstances] = useState(false);
 
-  const { data: mcpTemplates = [], refetch: refetchMcpTemplates } = useListGlobalMcpTemplatesQuery(
-    {},
-  );
-  const { data: mcpInstanceList = [], refetch: refetchMcpInstanceList } = useListMcpInstancesQuery(
+  const { data: mcpTemplates = [] } = useListGlobalMcpTemplatesQuery({});
+  const { data: mcpInstanceList = [] } = useListMcpInstancesQuery(
     {
       workflow_id: workflowId,
     },
@@ -76,7 +74,6 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
   );
   const { data: agents = [] } = useListAgentsQuery({ workflow_id: workflowId });
   const [isLoading, setIsLoading] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [selectedMcpTemplate, setSelectedMcpTemplate] = useState<MCPTemplate | null>(null);
   const [selectedMcpInstance, setSelectedMcpInstance] = useState<McpInstance | null>(null);
   const [selectedMcpInstanceTools, setSelectedMcpInstanceTools] = useState<string[]>([]);
@@ -260,7 +257,7 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
         placement: 'topRight',
       });
 
-      const response = await updateMcpInstance({
+      await updateMcpInstance({
         mcp_instance_id: selectedMcpInstance.id,
         name: editedMcpInstanceName,
         activated_tools: selectedMcpInstanceTools,
@@ -281,42 +278,18 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
   const renderMcpTemplateList = () => {
     return (
       <List
-        style={{ marginTop: '8px' }}
+        className="mt-2"
         grid={{ gutter: 16, column: 1 }}
         dataSource={mcpTemplates}
         renderItem={(item) => (
           <List.Item>
             <div
-              style={{
-                borderRadius: '4px',
-                border: 'solid 1px #f0f0f0',
-                backgroundColor: selectedMcpTemplate?.id === item.id ? '#edf7ff' : '#fff',
-                width: '100%',
-                padding: '16px',
-                display: 'flex',
-                alignItems: 'center',
-                cursor: 'pointer',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                boxShadow:
-                  selectedMcpTemplate?.id === item.id
-                    ? '0 4px 8px rgba(0, 0, 0, 0.2)'
-                    : '0 2px 4px rgba(0, 0, 0, 0.1)',
-              }}
+              className={`rounded border border-[#f0f0f0] ${
+                selectedMcpTemplate?.id === item.id ? 'bg-[#edf7ff] shadow-lg' : 'bg-white shadow'
+              } w-full p-4 flex items-center cursor-pointer transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg`}
               onClick={() => {
                 setSelectedMcpTemplate(item);
                 setSelectedMcpInstance(null);
-              }}
-              onMouseEnter={(e) => {
-                if (selectedMcpTemplate?.id !== item.id) {
-                  e.currentTarget.style.transform = 'scale(1.02)';
-                  e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (selectedMcpTemplate?.id !== item.id) {
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
-                }
               }}
             >
               <Radio
@@ -325,45 +298,23 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
                   setSelectedMcpTemplate(item);
                   setSelectedMcpInstance(null);
                 }}
-                style={{ marginRight: '12px' }}
+                className="mr-3"
               />
 
-              <div
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  minWidth: '32px',
-                  borderRadius: '50%',
-                  background: '#f1f1f1',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginRight: '12px',
-                }}
-              >
+              <div className="w-8 h-8 min-w-[32px] rounded-full bg-[#f1f1f1] flex items-center justify-center mr-3">
                 <Image
                   src={imageData[item.image_uri] || '/mcp-icon.svg'}
                   alt={item.name}
                   width={20}
                   height={20}
                   preview={false}
-                  style={{
-                    borderRadius: '2px',
-                    objectFit: 'cover',
-                  }}
+                  className="rounded-[2px] object-cover"
                 />
               </div>
 
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', minWidth: 0 }}>
+              <div className="flex-1 flex items-center min-w-0">
                 <Text
-                  style={{
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    marginRight: '8px',
-                  }}
+                  className="text-sm font-semibold whitespace-nowrap overflow-hidden text-ellipsis mr-2"
                   title={item.name}
                 >
                   {item.name}
@@ -393,41 +344,17 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
 
     return (
       <List
-        style={{ marginTop: '8px' }}
+        className="mt-2"
         grid={{ gutter: 16, column: 1 }}
         dataSource={filteredMcpInstancesForAgent}
         renderItem={(item) => (
           <List.Item>
             <div
-              style={{
-                borderRadius: '4px',
-                border: 'solid 1px #f0f0f0',
-                backgroundColor: selectedMcpInstance?.id === item.id ? '#edf7ff' : '#fff',
-                width: '100%',
-                padding: '16px',
-                display: 'flex',
-                alignItems: 'center',
-                cursor: 'pointer',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                boxShadow:
-                  selectedMcpInstance?.id === item.id
-                    ? '0 4px 8px rgba(0, 0, 0, 0.2)'
-                    : '0 2px 4px rgba(0, 0, 0, 0.1)',
-              }}
+              className={`rounded border border-[#f0f0f0] ${
+                selectedMcpInstance?.id === item.id ? 'bg-[#edf7ff] shadow-lg' : 'bg-white shadow'
+              } w-full p-4 flex items-center cursor-pointer transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg`}
               onClick={() => {
                 handleSelectMcpInstance(item);
-              }}
-              onMouseEnter={(e) => {
-                if (selectedMcpInstance?.id !== item.id) {
-                  e.currentTarget.style.transform = 'scale(1.02)';
-                  e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (selectedMcpInstance?.id !== item.id) {
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
-                }
               }}
             >
               <Radio
@@ -435,45 +362,23 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
                 onChange={() => {
                   handleSelectMcpInstance(item);
                 }}
-                style={{ marginRight: '12px' }}
+                className="mr-3"
               />
 
-              <div
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  minWidth: '32px',
-                  borderRadius: '50%',
-                  background: '#f1f1f1',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginRight: '12px',
-                }}
-              >
+              <div className="w-8 h-8 min-w-[32px] rounded-full bg-[#f1f1f1] flex items-center justify-center mr-3">
                 <Image
                   src={imageData[item.image_uri] || '/mcp-icon.svg'}
                   alt={item.name}
                   width={20}
                   height={20}
                   preview={false}
-                  style={{
-                    borderRadius: '2px',
-                    objectFit: 'cover',
-                  }}
+                  className="rounded-[2px] object-cover"
                 />
               </div>
 
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', minWidth: 0 }}>
+              <div className="flex-1 flex items-center min-w-0">
                 <Text
-                  style={{
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    marginRight: '8px',
-                  }}
+                  className="text-sm font-semibold whitespace-nowrap overflow-hidden text-ellipsis mr-2"
                   title={item.name}
                 >
                   {item.name}
@@ -491,29 +396,11 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
                   }
                 >
                   {item.status === 'VALID' ? (
-                    <CheckCircleOutlined
-                      style={{
-                        color: '#52c41a',
-                        fontSize: '16px',
-                        marginLeft: '8px',
-                      }}
-                    />
+                    <CheckCircleOutlined className="text-[#52c41a] text-[16px] ml-2" />
                   ) : item.status === 'VALIDATING' ? (
-                    <ClockCircleOutlined
-                      style={{
-                        color: '#faad14',
-                        fontSize: '16px',
-                        marginLeft: '8px',
-                      }}
-                    />
+                    <ClockCircleOutlined className="text-[#faad14] text-[16px] ml-2" />
                   ) : item.status === 'VALIDATION_FAILED' ? (
-                    <CloseCircleOutlined
-                      style={{
-                        color: '#f5222d',
-                        fontSize: '16px',
-                        marginLeft: '8px',
-                      }}
-                    />
+                    <CloseCircleOutlined className="text-[#f5222d] text-[16px] ml-2" />
                   ) : null}
                 </Tooltip>
               </div>
@@ -527,17 +414,8 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
   const renderMcpDetails = () => {
     if (!selectedMcpInstance && !selectedMcpTemplate) {
       return (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100%',
-            color: '#8c8c8c',
-          }}
-        >
-          <Typography.Text style={{ fontSize: '16px' }}>
+        <div className="flex flex-col items-center justify-center h-full text-[#8c8c8c]">
+          <Typography.Text className="text-[16px]">
             Select an MCP server to view details
           </Typography.Text>
         </div>
@@ -624,13 +502,13 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
         selectedMcpInstanceTools.length === allToolNames.length);
 
     return (
-      <div style={{ padding: '8px 0' }}>
-        <Typography.Title level={4} style={{ marginBottom: '16px' }}>
+      <div className="py-2">
+        <Typography.Title level={4} className="mb-4">
           Edit Server
         </Typography.Title>
 
-        <div style={{ marginBottom: '24px' }}>
-          <Typography.Text strong style={{ marginBottom: '8px', display: 'block' }}>
+        <div className="mb-6">
+          <Typography.Text strong className="mb-2 block">
             MCP Server Name
           </Typography.Text>
           <Input
@@ -649,22 +527,19 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
               }
             }}
             placeholder="[Name]"
-            style={{ width: '100%' }}
+            className="w-full"
             status={mcpInstanceNameError ? 'error' : ''}
           />
           {mcpInstanceNameError && (
-            <Typography.Text
-              type="danger"
-              style={{ fontSize: '12px', marginTop: '4px', display: 'block' }}
-            >
+            <Typography.Text type="danger" className="text-[12px] mt-1 block">
               {mcpInstanceNameError}
             </Typography.Text>
           )}
         </div>
 
-        <div style={{ marginBottom: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
-            <Typography.Text strong style={{ marginRight: '8px' }}>
+        <div className="mb-4">
+          <div className="flex items-center mb-3">
+            <Typography.Text strong className="mr-2">
               Tools
             </Typography.Text>
             <Tooltip
@@ -679,26 +554,11 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
               }
             >
               {selectedMcpInstance.status === 'VALID' ? (
-                <CheckCircleOutlined
-                  style={{
-                    color: '#52c41a',
-                    fontSize: '16px',
-                  }}
-                />
+                <CheckCircleOutlined className="text-[#52c41a] text-[16px]" />
               ) : selectedMcpInstance.status === 'VALIDATING' ? (
-                <ClockCircleOutlined
-                  style={{
-                    color: '#faad14',
-                    fontSize: '16px',
-                  }}
-                />
+                <ClockCircleOutlined className="text-[#faad14] text-[16px]" />
               ) : selectedMcpInstance.status === 'VALIDATION_FAILED' ? (
-                <CloseCircleOutlined
-                  style={{
-                    color: '#f5222d',
-                    fontSize: '16px',
-                  }}
-                />
+                <CloseCircleOutlined className="text-[#f5222d] text-[16px]" />
               ) : null}
             </Tooltip>
           </div>
@@ -708,24 +568,17 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
               <Checkbox
                 checked={isSelectAllChecked}
                 onChange={(e) => handleSelectAllToggle(e.target.checked)}
-                style={{ marginBottom: '16px' }}
+                className="mb-4"
               >
                 {selectedCount}/{allToolNames.length} Tools Selected
               </Checkbox>
             </>
           ) : selectedMcpInstance.status === 'VALIDATING' ? (
             <Alert
-              style={{
-                alignItems: 'flex-start',
-                justifyContent: 'flex-start',
-                padding: 12,
-                marginBottom: 16,
-              }}
+              className="items-start justify-start p-3 mb-4"
               message={
-                <Layout
-                  style={{ flexDirection: 'column', gap: 4, padding: 0, background: 'transparent' }}
-                >
-                  <Text style={{ fontSize: 13, fontWeight: 400 }}>
+                <Layout className="flex flex-col gap-1 p-0 bg-transparent">
+                  <Text className="text-[13px] font-normal">
                     We're validating the MCP server. Tools made available by the MCP server would be
                     visible once the validation succeeds.
                   </Text>
@@ -737,17 +590,10 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
             />
           ) : selectedMcpInstance.status === 'VALIDATION_FAILED' ? (
             <Alert
-              style={{
-                alignItems: 'flex-start',
-                justifyContent: 'flex-start',
-                padding: 12,
-                marginBottom: 16,
-              }}
+              className="items-start justify-start p-3 mb-4"
               message={
-                <Layout
-                  style={{ flexDirection: 'column', gap: 4, padding: 0, background: 'transparent' }}
-                >
-                  <Text style={{ fontSize: 13, fontWeight: 400 }}>
+                <Layout className="flex flex-col gap-1 p-0 bg-transparent">
+                  <Text className="text-[13px] font-normal">
                     We could not figure out the tools offered by the MCP server. But you can still
                     use the MCP server in your agentic workflows.
                   </Text>
@@ -759,26 +605,12 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
             />
           ) : (
             <Alert
-              style={{
-                alignItems: 'flex-start',
-                justifyContent: 'flex-start',
-                padding: 12,
-                marginBottom: 16,
-              }}
+              className="items-start justify-start p-3 mb-4"
               message={
-                <Layout
-                  style={{ flexDirection: 'column', gap: 4, padding: 0, background: 'transparent' }}
-                >
-                  <Layout
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 8,
-                      background: 'transparent',
-                    }}
-                  >
-                    <InfoCircleOutlined style={{ fontSize: 16, color: '#1890ff' }} />
-                    <Text style={{ fontSize: 13, fontWeight: 400, background: 'transparent' }}>
+                <Layout className="flex flex-col gap-1 p-0 bg-transparent">
+                  <Layout className="flex flex-row items-center gap-2 bg-transparent">
+                    <InfoCircleOutlined className="text-[16px] text-[#1890ff]" />
+                    <Text className="text-[13px] font-normal bg-transparent">
                       Sorry, we couldn't predetermine the tools made available by the MCP. The agent
                       will use all the tools made available to it by the MCP at runtime.
                     </Text>
@@ -797,29 +629,18 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
             {tools.map((tool: Tool) => (
               <div
                 key={tool.name}
-                style={{
-                  marginBottom: '12px',
-                  padding: '8px',
-                  border: '1px solid #f0f0f0',
-                  borderRadius: '4px',
-                  backgroundColor: isToolSelected(tool.name) ? '#f6ffed' : '#fff',
-                }}
+                className={`mb-3 p-2 border border-[#f0f0f0] rounded ${
+                  isToolSelected(tool.name) ? 'bg-[#f6ffed]' : 'bg-white'
+                }`}
               >
                 <Checkbox
                   checked={isToolSelected(tool.name)}
                   onChange={() => handleToolToggle(tool.name)}
                 >
                   <div>
-                    <div style={{ fontWeight: 500, marginBottom: '2px' }}>{tool.name}</div>
+                    <div className="font-medium mb-[2px]">{tool.name}</div>
                     {tool.description && (
-                      <div
-                        style={{
-                          fontSize: '12px',
-                          color: '#666',
-                          lineHeight: '1.4',
-                          marginLeft: '0px',
-                        }}
-                      >
+                      <div className="text-[12px] text-[#666] leading-[1.4] ml-0">
                         {tool.description}
                       </div>
                     )}
@@ -840,11 +661,11 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
       onCancel={!isLoading ? onCancel : undefined}
       centered
       width="98%"
-      style={{ height: '95vh' }}
+      rootClassName="!top-0"
       maskClosable={!isLoading}
       keyboard={!isLoading}
       footer={[
-        <Button key="cancel" onClick={onCancel} disabled={loading || isLoading}>
+        <Button key="cancel" onClick={onCancel} disabled={isLoading}>
           Close
         </Button>,
         // If MCP Template is selected, show the create button else update button
@@ -853,7 +674,7 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
             key="create"
             type="primary"
             onClick={() => handleCreateMcpInstance(selectedMcpTemplate)}
-            disabled={loading || isLoading}
+            disabled={isLoading}
           >
             {getButtonText()}
           </Button>
@@ -863,7 +684,7 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
               key="update"
               type="primary"
               onClick={() => handleUpdateMcpInstance()}
-              disabled={loading || isLoading}
+              disabled={isLoading}
             >
               {getButtonText()}
             </Button>
@@ -881,92 +702,38 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
         ),
       ]}
     >
-      <div style={{ position: 'relative' }}>
+      <div className="relative">
         {isLoading && (
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(255, 255, 255, 0.6)',
-              zIndex: 1000,
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              cursor: 'not-allowed',
-            }}
-          >
+          <div className="absolute inset-0 bg-white/60 z-[1000] flex justify-center items-center cursor-not-allowed">
             <Spin size="large" />
           </div>
         )}
       </div>
-      {loading ? (
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '100%',
-          }}
-        >
+      {isLoading ? (
+        <div className="flex justify-center items-center h-full">
           <Spin size="large" />
         </div>
       ) : (
-        <div style={{ overflowY: 'auto', height: 'calc(95vh - 108px)' }}>
-          <Divider style={{ margin: 0, backgroundColor: '#f0f0f0' }} />
-          <Layout
-            style={{
-              display: 'flex',
-              flexDirection: 'row',
-              height: '100%',
-              backgroundColor: '#fff',
-            }}
-          >
-            <Layout
-              style={{
-                flex: 0.2,
-                padding: '16px',
-                backgroundColor: '#fff',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
-              <Layout
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  backgroundColor: '#fff',
-                  flex: 1,
-                  minHeight: 0,
-                }}
-              >
-                <Typography.Title level={5} style={{ marginBottom: '8px' }}>
+        <div className="overflow-y-auto h-[calc(95vh-108px)]">
+          <Divider className="m-0 bg-[#f0f0f0]" />
+          <Layout className="flex flex-row h-full bg-white">
+            <Layout className="flex-[0.2] p-4 bg-white flex flex-col">
+              <Layout className="flex flex-col bg-white flex-1 min-h-0">
+                <Typography.Title level={5} className="mb-2">
                   Edit MCP Server
                 </Typography.Title>
-                <div style={{ flex: 1, overflowY: 'auto' }}>{renderMcpInstanceList()}</div>
+                <div className="flex-1 overflow-y-auto">{renderMcpInstanceList()}</div>
               </Layout>
-              <Divider type="horizontal" style={{ margin: '8px', backgroundColor: '#f0f0f0' }} />
-              <Layout
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  backgroundColor: '#fff',
-                  flex: 1,
-                  minHeight: 0,
-                }}
-              >
-                <Typography.Title level={5} style={{ marginBottom: '8px' }}>
+              <Divider type="horizontal" className="m-2 bg-[#f0f0f0]" />
+              <Layout className="flex flex-col bg-white flex-1 min-h-0">
+                <Typography.Title level={5} className="mb-2">
                   Add MCP Server to Agent
                 </Typography.Title>
-                <div style={{ flex: 1, overflowY: 'auto' }}>{renderMcpTemplateList()}</div>
+                <div className="flex-1 overflow-y-auto">{renderMcpTemplateList()}</div>
               </Layout>
             </Layout>
-            <Divider type="vertical" style={{ height: '100%', backgroundColor: '#f0f0f0' }} />
-            <Layout
-              style={{ flex: 0.8, overflowY: 'auto', padding: '16px', backgroundColor: '#fff' }}
-            >
+            <Divider type="vertical" className="h-full bg-[#f0f0f0]" />
+            <Layout className="flex-[0.8] overflow-y-auto p-4 bg-white">
               {renderMcpDetails()}
             </Layout>
           </Layout>

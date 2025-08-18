@@ -94,7 +94,7 @@ const ImportWorkflowTemplateModal: React.FC<ImportWorkflowTemplateModalProps> = 
 
   return (
     <Modal
-      title={<div style={{ textAlign: 'center' }}>Import Workflow Template</div>}
+      title={<div className="text-center">Import Workflow Template</div>}
       open={visible}
       onOk={handleImportWorkflowTemplate}
       okText="Import"
@@ -103,22 +103,18 @@ const ImportWorkflowTemplateModal: React.FC<ImportWorkflowTemplateModalProps> = 
       confirmLoading={isImporting}
       width="40%"
     >
-      <p style={{ marginBottom: '10px' }}>
+      <p className="mb-2">
         Please enter the absolute path of the workflow template zip file to import:
       </p>
       {importFilePath.length > filePrefix.length && (
-        <div
-          style={{ height: '30px', marginBottom: '10px', display: 'flex', alignItems: 'center' }}
-        >
+        <div className="h-[30px] mb-2 flex items-center">
           {(fileExists === null || isCheckingFile) && <Spin indicator={<LoadingOutlined spin />} />}
           {!isCheckingFile && (
             <Alert
-              style={{ width: '100%' }}
+              className="w-full"
               message={
-                <Layout
-                  style={{ flexDirection: 'column', gap: 4, padding: 0, background: 'transparent' }}
-                >
-                  <Text style={{ fontSize: 10, fontWeight: 300, background: 'transparent' }}>
+                <Layout className="flex flex-col gap-1 p-0 bg-transparent">
+                  <Text className="text-[10px] font-light bg-transparent">
                     {fileExists
                       ? `Found: ${path.basename(importFilePath)}`
                       : 'The specified file could not be found. Please ensure that the path is correct.'}
@@ -131,10 +127,8 @@ const ImportWorkflowTemplateModal: React.FC<ImportWorkflowTemplateModalProps> = 
           )}
         </div>
       )}
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <span style={{ marginRight: '4px', color: '#850020', fontFamily: 'monospace' }}>
-          {filePrefix}
-        </span>
+      <div className="flex items-center">
+        <span className="mr-1 text-[#850020] font-mono">{filePrefix}</span>
         <Input
           value={importFilePath.replace(filePrefix, '')}
           onChange={(e) => setImportFilePath(`${filePrefix}${e.target.value}`)}
@@ -173,7 +167,6 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
   testWorkflow,
   onDeploy,
   onDeleteDeployedWorkflow,
-  onCreateWorkflow,
   handleGetStarted,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -223,20 +216,9 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
     : Object.keys(deployedWorkflowMap).slice(0, 5);
 
   const EmptyWorkflowState = () => (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '40px',
-        background: 'white',
-        borderRadius: '8px',
-        margin: '20px 0 0 0',
-      }}
-    >
+    <div className="flex flex-col items-center justify-center p-10 bg-white rounded-lg mt-5">
       <Text>No workflows here yet</Text>
-      <Text style={{ color: '#666', marginBottom: '20px' }}>
+      <Text className="text-gray-600 mb-5">
         Explore our different workflow templates or create one yourself.
       </Text>
       <Button type="primary" onClick={handleGetStarted}>
@@ -245,40 +227,18 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
     </div>
   );
 
-  // Common button style
-  const buttonStyle = {
-    background: 'white',
-    border: '1px solid #d9d9d9', // Ant Design's default grey border color
-  };
-
   return (
-    <Layout
-      style={{
-        flexDirection: 'column',
-        height: '100%',
-        position: 'relative',
-        margin: '0px 0px 0px 0px',
-      }}
-    >
+    <Layout className="flex flex-col h-full relative m-0">
       {/* Search and Filter Bar */}
-      <div
-        style={{
-          display: 'flex',
-          gap: '12px',
-          position: 'sticky',
-          top: 0,
-          zIndex: 1,
-          borderBottom: '1px solid #f0f0f0',
-        }}
-      >
-        <div style={{ width: '25%' }}>
+      <div className="flex gap-3 sticky top-0 z-10 border-b border-gray-200">
+        <div className="w-1/4">
           <SearchBar
             onSearch={(value) => setSearchTerm(value)}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <Select
-          style={{ width: '25%' }}
+          className="w-1/4"
           defaultValue="all"
           onChange={(value: WorkflowFilter) => {
             setWorkflowFilter(value);
@@ -305,7 +265,7 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
       </div>
 
       {/* Scrollable content area */}
-      <div style={{ overflowY: 'auto', height: 'calc(100% - 0px)' }}>
+      <div className="overflow-y-auto h-[calc(100%-0px)]">
         {/* Show empty state when no workflows exist */}
         {!Object.keys(deployedWorkflowMap).length &&
           !draftWorkflows.length &&
@@ -317,29 +277,14 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
         {(workflowFilter === 'all' || workflowFilter === 'deployed') &&
           Object.keys(deployedWorkflowMap).length > 0 && (
             <div>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '10px',
-                }}
-              >
-                <Text style={{ fontSize: '18px', fontWeight: 600 }}>Deployed Workflows</Text>
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: '8px',
-                    padding: '2px 8px',
-                    height: '32px',
-                    alignItems: 'center',
-                  }}
-                >
+              <div className="flex justify-between items-center mb-2.5">
+                <Text className="text-lg font-semibold">Deployed Workflows</Text>
+                <div className="flex gap-2 p-0.5 h-8 items-center">
                   <Button
                     type="link"
                     size="small"
                     onClick={() => setShowAllDeployed(!showAllDeployed)}
-                    style={buttonStyle}
+                    className="bg-white border border-gray-300"
                   >
                     {showAllDeployed ? (
                       <>
@@ -363,14 +308,14 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
                   xl: 5,
                   xxl: 5,
                 }}
-                style={{ width: '100%', padding: 0 }}
+                className="w-full p-0"
                 dataSource={displayedDeployed}
                 renderItem={(workflowId) => {
                   const workflow = workflows.find((w) => w.workflow_id === workflowId);
                   const deployments = deployedWorkflowMap[workflowId] || [];
 
                   return workflow ? (
-                    <List.Item style={{ width: '100%' }}>
+                    <List.Item className="w-full">
                       <WorkflowListItem
                         key={workflowId}
                         workflow={workflow}
@@ -392,30 +337,14 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
         {/* Draft Workflows */}
         {(workflowFilter === 'all' || workflowFilter === 'draft') && draftWorkflows.length > 0 && (
           <div>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginTop: '1px',
-                marginBottom: '1px',
-              }}
-            >
-              <Text style={{ fontSize: '18px', fontWeight: 600 }}>Draft Workflows</Text>
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '8px',
-                  padding: '2px 8px',
-                  height: '32px',
-                  alignItems: 'center',
-                }}
-              >
+            <div className="flex justify-between items-center mt-px mb-px">
+              <Text className="text-lg font-semibold">Draft Workflows</Text>
+              <div className="flex gap-2 p-0.5 h-8 items-center">
                 <Button
                   type="link"
                   size="small"
                   onClick={() => setShowAllDrafts(!showAllDrafts)}
-                  style={buttonStyle}
+                  className="bg-white border border-gray-300"
                 >
                   {showAllDrafts ? (
                     <>
@@ -439,10 +368,10 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
                 xl: 5,
                 xxl: 5,
               }}
-              style={{ width: '100%' }}
+              className="w-full"
               dataSource={displayedDrafts}
               renderItem={(workflow) => (
-                <List.Item style={{ width: '100%', marginTop: '10px' }}>
+                <List.Item className="w-full mt-2.5">
                   <WorkflowListItem
                     key={workflow.workflow_id}
                     workflow={workflow}
@@ -464,41 +393,25 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
         {(workflowFilter === 'all' || workflowFilter === 'templates') &&
           displayedTemplates.length > 0 && (
             <div>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginTop: '1px',
-                  marginBottom: '1px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <Text style={{ fontSize: '18px', fontWeight: 600 }}>Workflow Templates</Text>
+              <div className="flex justify-between items-center mt-px mb-px">
+                <div className="flex items-center">
+                  <Text className="text-lg font-semibold">Workflow Templates</Text>
                   <Button
                     type="text"
                     size="small"
                     onClick={() => setImportModalVisible(true)}
-                    style={{ marginLeft: 30, background: 'white', border: '1px solid #d9d9d9' }}
+                    className="ml-7 bg-white border border-gray-300"
                   >
                     <PlusCircleOutlined /> Import Template
                   </Button>
                 </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: '12px',
-                    padding: '2px 8px',
-                    height: '32px',
-                    alignItems: 'center',
-                  }}
-                >
-                  <div style={{ width: '1px', background: '#d9d9d9' }} />
+                <div className="flex gap-3 p-0.5 h-8 items-center">
+                  <div className="w-px bg-gray-300" />
                   <Button
                     type="link"
                     size="small"
                     onClick={() => setShowAllTemplates(!showAllTemplates)}
-                    style={buttonStyle}
+                    className="bg-white border border-gray-300"
                   >
                     {showAllTemplates ? (
                       <>
@@ -522,10 +435,10 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
                   xl: 5,
                   xxl: 5,
                 }}
-                style={{ width: '100%', marginTop: '10px' }}
+                className="w-full mt-2.5"
                 dataSource={displayedTemplates}
                 renderItem={(workflowTemplate) => (
-                  <List.Item style={{ width: '100%', margin: 0 }}>
+                  <List.Item className="w-full m-0">
                     <WorkflowListItem
                       key={workflowTemplate.id}
                       workflowTemplate={workflowTemplate}

@@ -35,8 +35,6 @@ import {
   updatedEditorTaskEditingId,
   clearEditorTaskEditingState,
   updatedEditorAgentViewOpen,
-  updatedEditorAgentViewStep,
-  updatedEditorAgentViewAgent,
 } from '@/app/workflows/editorSlice';
 import { ReloadOutlined } from '@ant-design/icons';
 import SelectOrAddAgentModal from '../workflowEditor/SelectOrAddAgentModal';
@@ -129,7 +127,7 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
 
   // Callback for editing manager agent - only in studio mode
   const handleEditManager = useCallback(
-    (agent: AgentMetadata) => {
+    (_agent: AgentMetadata) => {
       if (renderMode !== 'studio') return;
       // Clear any existing task editing state to prevent conflicts
       dispatch(clearEditorTaskEditingState());
@@ -452,16 +450,7 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
   }, []);
 
   return (
-    <Layout
-      style={{
-        flexShrink: 0,
-        flexGrow: 1,
-        height: '100%',
-        flexDirection: 'column',
-        padding: 0,
-        background: 'transparent',
-      }}
-    >
+    <Layout className="flex-shrink-0 flex-grow h-full flex flex-col p-0 bg-transparent">
       <ReactFlow
         nodes={nodesWithActiveStates}
         edges={edges}

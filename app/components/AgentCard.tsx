@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card } from 'antd';
-import { AgentMetadata, CrewAIAgentMetadata } from '@/studio/proto/agent_studio';
+import { AgentMetadata } from '@/studio/proto/agent_studio';
 
 const { Meta } = Card;
 
@@ -10,11 +10,7 @@ type AgentCardProps = {
 
 const AgentCard: React.FC<AgentCardProps> = ({ agent }) => {
   return (
-    <Card
-      title={agent.name}
-      // style={{ width: 300 }}
-      bordered={true}
-    >
+    <Card title={agent.name} className="w-72" bordered={true}>
       <Meta
         description={
           <>

@@ -95,13 +95,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ upgradeStatus, isOpen, setI
             : []
         }
       >
-        <Layout
-          style={{
-            background: 'transparent',
-            flexDirection: 'column',
-            gap: 24,
-          }}
-        >
+        <Layout className="flex-col gap-6 bg-transparent">
           {!upgradePressed ? (
             <>
               <Title level={4}>
@@ -112,7 +106,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ upgradeStatus, isOpen, setI
                     : upgradeStatus?.newest_version.substring(0, 7)}
                 </b>
                 {'?'}
-                <SyncOutlined style={{ marginLeft: 12 }} />{' '}
+                <SyncOutlined className="ml-3" />{' '}
               </Title>
               <Text>
                 Current Version:{' '}
@@ -130,13 +124,11 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ upgradeStatus, isOpen, setI
             </>
           ) : (
             <>
-              <>
-                <Title level={4}>Agent Studio Upgrade Started</Title>
-                <Paragraph>
-                  Agent Studio will automatically close in <b>{countdown}</b> second
-                  {countdown !== 1 ? 's' : ''}...
-                </Paragraph>
-              </>
+              <Title level={4}>Agent Studio Upgrade Started</Title>
+              <Paragraph>
+                Agent Studio will automatically close in <b>{countdown}</b> second
+                {countdown !== 1 ? 's' : ''}...
+              </Paragraph>
             </>
           )}
         </Layout>
@@ -232,7 +224,7 @@ const MessageBoxes: React.FC = () => {
       notificationsApi.success({
         message: 'API Keys Rotated Successfully',
         description: (
-          <Layout style={{ flexDirection: 'column', gap: 4, background: 'transparent' }}>
+          <Layout className="flex flex-col gap-1 bg-transparent">
             <Text>New API keys have been generated.</Text>
             <Text>All deployed workflows will be redeployed automatically.</Text>
           </Layout>
@@ -278,30 +270,14 @@ const MessageBoxes: React.FC = () => {
         ]}
       >
         <Alert
-          style={{
-            alignItems: 'flex-start',
-            justifyContent: 'flex-start',
-            padding: 12,
-            marginBottom: 12,
-          }}
+          className="flex-start justify-start p-3 mb-3"
           message={
-            <Layout
-              style={{ flexDirection: 'column', gap: 4, padding: 0, background: 'transparent' }}
-            >
-              <Layout
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 8,
-                  background: 'transparent',
-                }}
-              >
-                <InfoCircleOutlined style={{ fontSize: 16, color: '#faad14' }} />
-                <Text style={{ fontSize: 13, fontWeight: 600 }}>
-                  Warning: Workflow Redeployment
-                </Text>
+            <Layout className="flex-col gap-1 p-0 bg-transparent">
+              <Layout className="flex-row items-center gap-2 bg-transparent">
+                <InfoCircleOutlined className="text-yellow-500 text-lg" />
+                <Text className="text-sm font-semibold">Warning: Workflow Redeployment</Text>
               </Layout>
-              <Text style={{ fontSize: 13, fontWeight: 400 }}>
+              <Text className="text-sm font-normal">
                 Rotating API keys will create new user API keys and trigger redeployment of all
                 deployed workflows.
               </Text>

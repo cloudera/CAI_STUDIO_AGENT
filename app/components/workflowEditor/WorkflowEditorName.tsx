@@ -59,7 +59,7 @@ const WorkflowEditorName: React.FC<WorkflowEditorNameProps> = ({ workflowId }) =
       });
 
       setIsEditing(false);
-    } catch (error) {
+    } catch (_error) {
       notificationApi.error({
         message: 'Error Updating Workflow',
         description: 'Failed to update workflow name. Please try again.',
@@ -86,9 +86,9 @@ const WorkflowEditorName: React.FC<WorkflowEditorNameProps> = ({ workflowId }) =
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+      <div className="flex items-center w-full">
         {isEditing ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
+          <div className="flex items-center gap-2 w-full">
             <Input
               size="large"
               value={workflowName}
@@ -103,7 +103,7 @@ const WorkflowEditorName: React.FC<WorkflowEditorNameProps> = ({ workflowId }) =
                   setIsEditing(false);
                 }
               }}
-              style={{ width: '50%' }}
+              className="w-1/2"
               autoFocus
             />
             <Button
@@ -117,13 +117,13 @@ const WorkflowEditorName: React.FC<WorkflowEditorNameProps> = ({ workflowId }) =
           </div>
         ) : (
           <>
-            <Title level={5} style={{ paddingTop: 4, fontSize: '18px', fontWeight: 600 }}>
+            <Title level={5} className="pt-1 text-[18px] font-semibold">
               {workflowId ? workflowName : 'Create Workflow'}
             </Title>
             <Button
               icon={<EditOutlined />}
               type="text"
-              style={{ marginLeft: '8px' }}
+              className="ml-2"
               onClick={() => {
                 setIsEditing(true);
                 setPreEditName(workflowName);
@@ -133,7 +133,7 @@ const WorkflowEditorName: React.FC<WorkflowEditorNameProps> = ({ workflowId }) =
               <Button
                 icon={<FolderOpenOutlined />}
                 type="text"
-                style={{ marginLeft: '8px' }}
+                className="ml-2"
                 onClick={handleOpenWorkflowDirectory}
               />
             </Tooltip>

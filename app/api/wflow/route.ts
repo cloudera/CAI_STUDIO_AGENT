@@ -79,7 +79,7 @@ const fetchModelUrl = async (cml_model_id: string): Promise<string | null> => {
 // workflow if a workflow app is initialized. This
 // is determined by env vars that are passed in at
 // application start.
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   const agent = createAgent();
 
   if (process.env.AGENT_STUDIO_RENDER_MODE === 'workflow') {

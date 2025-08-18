@@ -19,7 +19,6 @@ import {
 import { GENERATE_AGENT_BACKGROUND_PROMPT } from '@/app/lib/constants';
 
 const { Text } = Typography;
-const { TextArea } = Input;
 
 interface GenerateAgentPropertiesModalProps {
   open: boolean;
@@ -74,7 +73,7 @@ const GenerateAgentPropertiesModal: React.FC<GenerateAgentPropertiesModalProps> 
     } // reset on close
   }, [open]);
 
-  const generatePrompt = (description: string, tools: ToolInstance[]) => {
+  const generatePrompt = (description: string, _tools: ToolInstance[]) => {
     return GENERATE_AGENT_BACKGROUND_PROMPT(description);
   };
 
@@ -158,17 +157,11 @@ const GenerateAgentPropertiesModal: React.FC<GenerateAgentPropertiesModalProps> 
       width="50%"
       title={
         <Typography.Title level={5}>
-          <div
-            style={{ display: 'flex', alignItems: 'center', gap: '4px', verticalAlign: 'middle' }}
-          >
+          <div className="flex items-center gap-1 align-middle">
             <img
               src="/ai-assistant.svg"
               alt="AI Assistant"
-              style={{
-                filter: 'invert(70%) sepia(80%) saturate(1000%) hue-rotate(360deg)',
-                width: '20px',
-                height: '20px',
-              }}
+              className="filter-invert-70 filter-sepia-80 filter-saturate-1000 filter-hue-rotate-360 w-5 h-5"
             />
             Generate Agent Properties using AI
           </div>
@@ -191,30 +184,15 @@ const GenerateAgentPropertiesModal: React.FC<GenerateAgentPropertiesModalProps> 
         </Button>,
       ]}
     >
-      <Space direction="vertical" style={{ width: '100%' }} size="large">
+      <Space direction="vertical" className="w-full" size="large">
         {!hideInfoBox && (
           <Alert
-            style={{
-              alignItems: 'flex-start',
-              justifyContent: 'flex-start',
-              padding: 12,
-            }}
+            className="items-start justify-start p-3"
             message={
-              <Layout
-                style={{ flexDirection: 'column', gap: 4, padding: 0, background: 'transparent' }}
-              >
-                <Layout
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 8,
-                    background: 'transparent',
-                  }}
-                >
-                  <InfoCircleOutlined style={{ fontSize: 16, color: '#1890ff' }} />
-                  <Text style={{ fontSize: 13, fontWeight: 400, background: 'transparent' }}>
-                    {infoMessage}
-                  </Text>
+              <Layout className="flex flex-col gap-1 p-0 bg-transparent">
+                <Layout className="flex flex-row items-center gap-2 bg-transparent">
+                  <InfoCircleOutlined className="text-lg text-blue-500" />
+                  <Text className="text-sm font-normal bg-transparent">{infoMessage}</Text>
                 </Layout>
               </Layout>
             }
@@ -224,14 +202,14 @@ const GenerateAgentPropertiesModal: React.FC<GenerateAgentPropertiesModalProps> 
           />
         )}
 
-        <div style={{ width: '100%', display: 'flex', gap: '6px', alignItems: 'stretch' }}>
-          <div style={{ flex: 1 }}>
+        <div className="w-full flex gap-1 items-stretch">
+          <div className="flex-1">
             <Input.TextArea
               placeholder="Describe the agent you want to create..."
               value={userDescription}
               onChange={(e) => setUserDescription(e.target.value)}
               autoSize={{ minRows: 3, maxRows: 5 }}
-              style={{ width: '100%', height: '100%' }}
+              className="w-full h-full"
               onKeyDown={(e) => {
                 // trigger on generate on ctrl/cmd + enter
                 if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
@@ -242,21 +220,12 @@ const GenerateAgentPropertiesModal: React.FC<GenerateAgentPropertiesModalProps> 
           </div>
           <Button
             type="primary"
-            style={{
-              width: 'clamp(36px, 5%, 50px)',
-              backgroundColor: '#52c41a',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '4px',
-              height: 'auto',
-              position: 'relative',
-            }}
+            className="w-[clamp(36px,5%,50px)] bg-green-500 flex items-center justify-center p-1 h-auto relative"
             icon={
               isGenerating ? (
-                <LoadingOutlined style={{ color: '#fff', fontSize: '150%' }} />
+                <LoadingOutlined className="text-white text-2xl" />
               ) : (
-                <PlayCircleOutlined style={{ color: '#fff', fontSize: '150%' }} />
+                <PlayCircleOutlined className="text-white text-2xl" />
               )
             }
             onClick={handleGenerate}
@@ -265,48 +234,27 @@ const GenerateAgentPropertiesModal: React.FC<GenerateAgentPropertiesModalProps> 
           />
         </div>
 
-        <Space direction="vertical" style={{ width: '100%' }}>
+        <Space direction="vertical" className="w-full">
           {parsedSuggestions.role && (
             <Alert
               message={
-                <Layout
-                  style={{
-                    flexDirection: 'column',
-                    gap: 12,
-                    padding: 0,
-                    background: 'transparent',
-                  }}
-                >
-                  <Layout
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 8,
-                      background: 'transparent',
-                      paddingLeft: '12px',
-                      paddingTop: '12px',
-                    }}
-                  >
-                    <CheckCircleOutlined style={{ fontSize: 20, color: '#52c41a' }} />
-                    <Text style={{ fontSize: 16, fontWeight: 500, background: 'transparent' }}>
-                      Generated Properties
-                    </Text>
+                <Layout className="flex flex-col gap-3 p-0 bg-transparent">
+                  <Layout className="flex flex-row items-center gap-2 bg-transparent pl-3 pt-3">
+                    <CheckCircleOutlined className="text-xl text-green-500" />
+                    <Text className="text-lg font-medium bg-transparent">Generated Properties</Text>
                   </Layout>
-                  <Space
-                    direction="vertical"
-                    style={{ width: '100%', padding: '12px', gap: '6px' }}
-                  >
+                  <Space direction="vertical" className="w-full p-3 gap-1">
                     <div>
-                      <Text style={{ fontWeight: 'bold' }}>Role: </Text>
-                      <Text style={{ fontWeight: 'normal' }}>{parsedSuggestions.role}</Text>
+                      <Text className="font-bold">Role: </Text>
+                      <Text className="font-normal">{parsedSuggestions.role}</Text>
                     </div>
                     <div>
-                      <Text style={{ fontWeight: 'bold' }}>Goal: </Text>
-                      <Text style={{ fontWeight: 'normal' }}>{parsedSuggestions.goal}</Text>
+                      <Text className="font-bold">Goal: </Text>
+                      <Text className="font-normal">{parsedSuggestions.goal}</Text>
                     </div>
                     <div>
-                      <Text style={{ fontWeight: 'bold' }}>Backstory: </Text>
-                      <Text style={{ fontWeight: 'normal' }}>{parsedSuggestions.backstory}</Text>
+                      <Text className="font-bold">Backstory: </Text>
+                      <Text className="font-normal">{parsedSuggestions.backstory}</Text>
                     </div>
                   </Space>
                 </Layout>
@@ -318,20 +266,10 @@ const GenerateAgentPropertiesModal: React.FC<GenerateAgentPropertiesModalProps> 
           {parsedSuggestions.error && (
             <Alert
               message={
-                <Layout
-                  style={{ flexDirection: 'column', gap: 4, padding: 0, background: 'transparent' }}
-                >
-                  <Layout
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 8,
-                      background: 'transparent',
-                      padding: '12px',
-                    }}
-                  >
-                    <ExclamationCircleOutlined style={{ fontSize: 18, color: '#faad14' }} />
-                    <Text style={{ fontSize: 13, fontWeight: 200, background: 'transparent' }}>
+                <Layout className="flex flex-col gap-1 p-0 bg-transparent">
+                  <Layout className="flex flex-row items-center gap-2 bg-transparent p-3">
+                    <ExclamationCircleOutlined className="text-lg text-yellow-500" />
+                    <Text className="text-sm font-light bg-transparent">
                       {parsedSuggestions.error}
                     </Text>
                   </Layout>

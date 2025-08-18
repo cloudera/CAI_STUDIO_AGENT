@@ -1,28 +1,18 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Button, Card, Input, Layout, Typography, Alert, Spin } from 'antd';
-import { getWorkflowInputs } from '@/app/lib/workflow';
-import { useGetWorkflowByIdQuery, useTestWorkflowMutation } from '@/app/workflows/workflowsApi';
-import { useListTasksQuery } from '@/app/tasks/tasksApi';
+import React, { useEffect, useRef } from 'react';
+import { Layout } from 'antd';
+import { useTestWorkflowMutation } from '@/app/workflows/workflowsApi';
 import { useAppDispatch, useAppSelector } from '@/app/lib/hooks/hooks';
 import {
   addedChatMessage,
   selectWorkflowAppChatMessages,
   selectWorkflowAppChatUserInput,
-  selectWorkflowAppStandardInputs,
-  selectWorkflowCrewOutput,
   selectWorkflowIsRunning,
-  updatedAppInputs,
   updatedChatUserInput,
   updatedCurrentTraceId,
   updatedIsRunning,
   clearedChatMessages,
 } from '@/app/workflows/workflowAppSlice';
-import {
-  AgentMetadata,
-  CrewAITaskMetadata,
-  ToolInstance,
-  Workflow,
-} from '@/studio/proto/agent_studio';
+import { CrewAITaskMetadata, Workflow } from '@/studio/proto/agent_studio';
 import ChatMessages from '../ChatMessages';
 import {
   selectWorkflowConfiguration,
@@ -31,19 +21,16 @@ import {
 import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
 import { useGlobalNotification } from '../Notifications';
 
-const { Title, Text } = Typography;
-
 export interface WorkflowAppChatViewProps {
   workflow?: Workflow;
   tasks?: CrewAITaskMetadata[];
 }
 
-const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow, tasks }) => {
+const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow }) => {
   const userInput = useAppSelector(selectWorkflowAppChatUserInput);
   const dispatch = useAppDispatch();
   const isRunning = useAppSelector(selectWorkflowIsRunning);
   const [testWorkflow] = useTestWorkflowMutation();
-  const crewOutput = useAppSelector(selectWorkflowCrewOutput);
   const workflowGenerationConfig = useAppSelector(selectWorkflowGenerationConfig);
   const workflowConfiguration = useAppSelector(selectWorkflowConfiguration);
   const notificationApi = useGlobalNotification();
@@ -68,13 +55,7 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow, tas
     return <></>;
   }
 
-  const handleInputChange = (key: string, value: string) => {
-    dispatch(
-      updatedAppInputs({
-        [key]: value,
-      }),
-    );
-  };
+  // removed unused handleInputChange
 
   const base64Encode = (obj: any): string => {
     return Buffer.from(JSON.stringify(obj)).toString('base64');
@@ -162,13 +143,7 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow, tas
 
   return (
     <>
-      <Layout
-        style={{
-          padding: 1,
-          background: 'transparent',
-          flex: 1,
-        }}
-      >
+      <Layout className="p-px bg-transparent flex-1">
         <ChatMessages
           messages={messages}
           handleTestWorkflow={handleCrewKickoff}

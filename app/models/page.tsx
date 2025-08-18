@@ -17,19 +17,9 @@ const ModelsRegisterHeader: React.FC = () => {
   const dispatch = useAppDispatch();
 
   return (
-    <Layout
-      style={{
-        background: 'transparent',
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexGrow: 0,
-        padding: '12px 0',
-      }}
-    >
+    <Layout className="bg-transparent flex flex-row items-center justify-between flex-grow-0 p-3">
       {/* Descriptive Text */}
-      <Typography.Text style={{ fontWeight: 400, margin: 0 }}>
+      <Typography.Text className="font-normal m-0">
         Register language models which will be used to build agents and workflows.
       </Typography.Text>
 
@@ -41,7 +31,7 @@ const ModelsRegisterHeader: React.FC = () => {
           dispatch(setIsRegisterDrawerOpen(true));
           dispatch(resetModelRegisterDetails());
         }}
-        style={{ margin: '0 0 0 16px' }}
+        className="ml-4"
       >
         Register New Model
       </Button>
@@ -68,9 +58,9 @@ const ModelsPageContent: React.FC = () => {
     <>
       <ModelTestDrawer />
       <ModelRegisterDrawer />
-      <Layout style={{ flex: 1, padding: '16px 24px 22px', flexDirection: 'column' }}>
+      <Layout className="flex-1 p-4 md:p-6 lg:p-6 flex flex-col">
         <CommonBreadCrumb items={[{ title: 'Language Models' }]} />
-        <Title level={2} style={{ marginTop: '16px' }}>
+        <Title level={2} className="mt-4">
           Models
         </Title>
         <ModelsRegisterHeader />

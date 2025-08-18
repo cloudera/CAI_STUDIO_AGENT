@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Handle, Position, NodeProps, Node, NodeToolbar } from '@xyflow/react';
 import { Avatar, Image, Typography, Button, Tooltip } from 'antd';
 import { UsergroupAddOutlined, UserOutlined, EditOutlined } from '@ant-design/icons';
-import { useImageAssetsData } from '@/app/lib/hooks/useAssetData';
 import { useAppDispatch } from '@/app/lib/hooks/hooks';
 import {
   updatedEditorAgentViewOpen,

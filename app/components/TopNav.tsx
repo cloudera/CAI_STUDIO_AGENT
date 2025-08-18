@@ -1,11 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Layout } from 'antd';
 import { useGetWorkflowDataQuery } from '../workflows/workflowAppApi';
 import StudioTopNav from './StudioTopNav';
 
-const { Header } = Layout;
+// Removed unused Header
 
 const TopNav: React.FC = () => {
   const { data: workflowData, isLoading } = useGetWorkflowDataQuery();

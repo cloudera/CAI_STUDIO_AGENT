@@ -76,14 +76,7 @@ const McpTemplateViewPage: React.FC = () => {
 
   if (isMcpTemplateLoading) {
     return (
-      <Layout
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-        }}
-      >
+      <Layout className="flex justify-center items-center h-screen">
         <Spin size="large" />
       </Layout>
     );
@@ -96,9 +89,7 @@ const McpTemplateViewPage: React.FC = () => {
         description="MCP Template not found."
         type="error"
         showIcon
-        style={{
-          margin: '16px',
-        }}
+        className="m-4"
       />
     );
   }
@@ -220,34 +211,16 @@ const McpTemplateViewPage: React.FC = () => {
   };
 
   return (
-    <Layout style={{ flex: 1, padding: '16px 24px 22px', flexDirection: 'column' }}>
+    <Layout className="flex-1 p-4 pt-4 pb-[22px] flex flex-col">
       <CommonBreadCrumb
         items={[
           { title: 'Tool Catalog', href: '/tools?section=mcp' },
           { title: isEditMode ? 'Edit MCP Server' : 'View MCP Server' },
         ]}
       />
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          borderBottom: '1px solid #f0f0f0',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div
-            style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              background: '#f1f1f1',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
+      <div className="flex flex-row items-center justify-between border-b border-[#f0f0f0]">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-[#f1f1f1] flex items-center justify-center">
             <img
               src={
                 mcpTemplate?.image_uri
@@ -255,15 +228,10 @@ const McpTemplateViewPage: React.FC = () => {
                   : '/mcp-icon.svg'
               }
               alt={mcpTemplate?.name}
-              style={{
-                width: '24px',
-                height: '24px',
-                objectFit: 'cover',
-                borderRadius: '2px',
-              }}
+              className="w-6 h-6 object-cover rounded"
             />
           </div>
-          <Title level={4} style={{ margin: 0 }}>
+          <Title level={4} className="m-0">
             {mcpName || 'Unknown MCP'}
           </Title>
         </div>
@@ -274,19 +242,12 @@ const McpTemplateViewPage: React.FC = () => {
           trigger={['click']}
           placement="bottomRight"
         >
-          <Button
-            style={{
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-            }}
-          >
+          <Button className="text-[14px] flex items-center gap-1">
             Actions <DownOutlined />
           </Button>
         </Dropdown>
       </div>
-      <Layout style={{ marginTop: '20px' }}>
+      <Layout className="mt-5">
         <McpTemplateView
           mcpTemplateDetails={mcpTemplate}
           mode={isEditMode ? 'edit' : 'view'}

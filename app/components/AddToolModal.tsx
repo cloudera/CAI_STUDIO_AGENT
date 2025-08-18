@@ -6,7 +6,6 @@ import {
   List,
   Layout,
   Typography,
-  notification,
   Button,
   Divider,
   Form,
@@ -17,7 +16,7 @@ import {
 } from 'antd';
 import { useListGlobalToolTemplatesQuery } from '@/app/tools/toolTemplatesApi';
 import { ToolTemplate } from '@/studio/proto/agent_studio';
-import { EditOutlined, DeleteOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { QuestionCircleOutlined } from '@ant-design/icons';
 import { useGlobalNotification } from '../components/Notifications';
 import { useImageAssetsData } from '@/app/lib/hooks/useAssetData';
 import Editor from '@monaco-editor/react';
@@ -32,11 +31,7 @@ interface AddToolModalProps {
 const { Text } = Typography;
 const { TextArea } = Input;
 
-// Utility function to truncate text to a specified number of words
-const truncateText = (text: string, maxWords: number) => {
-  const words = text.split(' ');
-  return words.length > maxWords ? `${words.slice(0, maxWords).join(' ')}...` : text;
-};
+// Removed unused truncateText helper
 
 const AddToolModal: React.FC<AddToolModalProps> = ({
   visible,
@@ -92,79 +87,36 @@ const AddToolModal: React.FC<AddToolModalProps> = ({
     return (
       <List.Item>
         <div
-          style={{
-            borderRadius: '4px',
-            border: 'solid 1px #f0f0f0',
-            backgroundColor: selectedToolTemplate === item.id ? '#e6ffe6' : '#fff',
-            width: '100%',
-            height: '160px',
-            padding: '16px',
-            display: 'flex',
-            flexDirection: 'column',
-            cursor: isConfigured ? 'not-allowed' : 'pointer',
-            transition: 'transform 0.2s, box-shadow 0.2s',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-            opacity: isConfigured ? 0.5 : 1,
-          }}
+          className={`rounded border border-[#f0f0f0] ${
+            selectedToolTemplate === item.id ? 'bg-[#e6ffe6]' : 'bg-white'
+          } w-full h-[160px] p-4 flex flex-col ${
+            isConfigured
+              ? 'cursor-not-allowed opacity-50'
+              : 'cursor-pointer hover:scale-[1.03] hover:shadow-lg'
+          } transition-transform shadow duration-200`}
           onClick={() => !isConfigured && handleSelectTool(item)}
-          onMouseEnter={(e: React.MouseEvent<HTMLElement>) => {
-            if (!isConfigured) {
-              e.currentTarget.style.transform = 'scale(1.03)';
-              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
-            }
-          }}
-          onMouseLeave={(e: React.MouseEvent<HTMLElement>) => {
-            e.currentTarget.style.transform = 'scale(1)';
-            e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
-          }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+          <div className="flex items-center mb-2">
             {item.tool_image_uri && imageData[item.tool_image_uri] && (
-              <div
-                style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '50%',
-                  background: '#f1f1f1',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginRight: '8px',
-                }}
-              >
+              <div className="w-6 h-6 rounded-full bg-[#f1f1f1] flex items-center justify-center mr-2">
                 <Image
                   src={imageData[item.tool_image_uri]}
                   alt={item.name}
                   width={16}
                   height={16}
                   preview={false}
-                  style={{ borderRadius: '2px', objectFit: 'cover' }}
+                  className="rounded-[2px] object-cover"
                 />
               </div>
             )}
             <Text
-              style={{
-                fontSize: '14px',
-                fontWeight: 400,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
+              className="text-sm font-normal whitespace-nowrap overflow-hidden text-ellipsis"
               title={item.name}
             >
               {item.name}
             </Text>
           </div>
-          <Text
-            style={{
-              fontSize: '11px',
-              opacity: 0.45,
-              fontWeight: 400,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-          >
+          <Text className="text-[11px] text-black/45 font-normal whitespace-nowrap overflow-hidden text-ellipsis">
             {item.tool_description || 'N/A'}
           </Text>
         </div>
@@ -178,7 +130,7 @@ const AddToolModal: React.FC<AddToolModalProps> = ({
       open={visible}
       onCancel={onCancel}
       width="98%"
-      style={{ height: '95vh', top: 0 }}
+      rootClassName="!top-0"
       footer={[
         <Button key="cancel" onClick={onCancel}>
           Cancel
@@ -188,16 +140,9 @@ const AddToolModal: React.FC<AddToolModalProps> = ({
         </Button>,
       ]}
     >
-      <div style={{ overflowY: 'auto', height: 'calc(95vh - 108px)', position: 'relative' }}>
-        <Layout
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            height: '100%',
-            backgroundColor: '#fff',
-          }}
-        >
-          <Layout style={{ flex: 1, overflowY: 'auto', padding: '16px', backgroundColor: '#fff' }}>
+      <div className="overflow-y-auto h-[calc(95vh-108px)] relative">
+        <Layout className="flex flex-row h-full bg-white">
+          <Layout className="flex-1 overflow-y-auto p-4 bg-white">
             <List
               loading={loadingTemplates}
               grid={{ gutter: 16, column: 2 }}
@@ -205,9 +150,9 @@ const AddToolModal: React.FC<AddToolModalProps> = ({
               renderItem={renderToolTemplate}
             />
           </Layout>
-          <Divider type="vertical" style={{ height: 'auto', backgroundColor: '#f0f0f0' }} />
-          <Layout style={{ flex: 1, backgroundColor: '#fff', padding: '16px', overflowY: 'auto' }}>
-            <Typography.Title level={5} style={{ marginBottom: '8px', fontSize: '14px' }}>
+          <Divider type="vertical" className="h-auto bg-[#f0f0f0]" />
+          <Layout className="flex-1 bg-white p-4 overflow-y-auto">
+            <Typography.Title level={5} className="mb-2 text-sm">
               Tool Details
             </Typography.Title>
             <Form layout="vertical">
@@ -216,7 +161,7 @@ const AddToolModal: React.FC<AddToolModalProps> = ({
                   <Space>
                     Tool Name
                     <Tooltip title="The name of the tool">
-                      <QuestionCircleOutlined style={{ color: '#666' }} />
+                      <QuestionCircleOutlined className="text-[#666]" />
                     </Tooltip>
                   </Space>
                 }
@@ -228,7 +173,7 @@ const AddToolModal: React.FC<AddToolModalProps> = ({
                   <Space>
                     Tool Description
                     <Tooltip title="Detailed description of what the tool does">
-                      <QuestionCircleOutlined style={{ color: '#666' }} />
+                      <QuestionCircleOutlined className="text-[#666]" />
                     </Tooltip>
                   </Space>
                 }
@@ -244,7 +189,7 @@ const AddToolModal: React.FC<AddToolModalProps> = ({
                   <Space>
                     tool.py
                     <Tooltip title="The Python code that defines the tool's functionality and interface">
-                      <QuestionCircleOutlined style={{ color: '#666' }} />
+                      <QuestionCircleOutlined className="text-[#666]" />
                     </Tooltip>
                   </Space>
                 }
@@ -262,7 +207,7 @@ const AddToolModal: React.FC<AddToolModalProps> = ({
                   <Space>
                     requirements.txt
                     <Tooltip title="Python package dependencies required by this tool">
-                      <QuestionCircleOutlined style={{ color: '#666' }} />
+                      <QuestionCircleOutlined className="text-[#666]" />
                     </Tooltip>
                   </Space>
                 }

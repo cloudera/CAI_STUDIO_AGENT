@@ -11,45 +11,28 @@ export const renderAlert = (
 ) => {
   const icon =
     type === 'warning' ? (
-      <WarningOutlined style={{ fontSize: 16, color: '#faad14' }} />
+      <WarningOutlined className="text-yellow-500 text-lg" />
     ) : type === 'loading' ? (
-      <LoadingOutlined style={{ fontSize: 16, color: '#1890ff' }} />
+      <LoadingOutlined className="text-blue-500 text-lg" />
     ) : (
-      <InfoCircleOutlined style={{ fontSize: 16, color: '#1890ff' }} />
+      <InfoCircleOutlined className="text-blue-500 text-lg" />
     );
 
   const alertType = type === 'loading' ? 'info' : type;
 
   return (
     <Alert
-      style={{
-        alignItems: 'flex-start',
-        justifyContent: 'flex-start',
-        padding: 12,
-      }}
+      className="items-start justify-start p-3"
       message={
-        <Layout style={{ flexDirection: 'column', gap: 4, padding: 0, background: 'transparent' }}>
-          <Layout
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 8,
-              background: 'transparent',
-            }}
-          >
+        <Layout className="flex-col gap-1 p-0 bg-transparent">
+          <Layout className="flex-row items-center gap-2 bg-transparent">
             {icon}
-            <Text style={{ fontSize: 13, fontWeight: 600, background: 'transparent' }}>
-              {message}
-            </Text>
+            <Text className="text-sm font-semibold bg-transparent">{message}</Text>
           </Layout>
-          <Text style={{ fontSize: 13, fontWeight: 400, background: 'transparent' }}>
-            {description}
-          </Text>
+          <Text className="text-sm font-normal bg-transparent">{description}</Text>
         </Layout>
       }
       type={alertType}
-      showIcon={false}
-      closable={false}
     />
   );
 };

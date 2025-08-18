@@ -2,28 +2,15 @@ import {
   resetEditor,
   selectEditorCurrentStep,
   selectEditorWorkflow,
-  selectEditorWorkflowIsConversational,
   selectWorkflowConfiguration,
   selectWorkflowGenerationConfig,
   updatedEditorStep,
   updatedEditorWorkflowId,
 } from '../../workflows/editorSlice';
-import {
-  Button,
-  Descriptions,
-  Layout,
-  message,
-  Modal,
-  Checkbox,
-  notification,
-  Alert,
-  Tooltip,
-} from 'antd';
-import { Typography } from 'antd';
+import { Button, Layout, Modal, Checkbox, Tooltip } from 'antd';
 import {
   ArrowLeftOutlined,
   ArrowRightOutlined,
-  SaveOutlined,
   CloseOutlined,
   QuestionCircleOutlined,
 } from '@ant-design/icons';
@@ -46,10 +33,6 @@ import { clearedWorkflowApp } from '../../workflows/workflowAppSlice';
 import { hasValidToolConfiguration } from './WorkflowEditorConfigureInputs';
 import { useListToolInstancesQuery } from '../../tools/toolInstancesApi';
 import { useListAgentsQuery } from '../../agents/agentApi';
-
-const { Header, Content } = Layout;
-const { Title, Text } = Typography;
-
 interface WorkflowNavigationProps {
   workflowId: string;
 }
@@ -73,7 +56,6 @@ const WorkflowNavigation: React.FC<WorkflowNavigationProps> = ({ workflowId }) =
   const { data: deployedWorkflows = [] } = useListDeployedWorkflowsQuery({});
   const { data: tasks } = useListTasksQuery({ workflow_id: workflowId });
   const [getWorkflow] = useGetWorkflowMutation();
-  const [workflow, setWorkflow] = useState<any>(null);
   const [hasAgents, setHasAgents] = useState<boolean>(false);
   const [hasTasks, setHasTasks] = useState<boolean>(false);
   const [hasUnassignedTasks, setHasUnassignedTasks] = useState<boolean>(false);
@@ -105,7 +87,6 @@ const WorkflowNavigation: React.FC<WorkflowNavigationProps> = ({ workflowId }) =
       if (workflowState.workflowId) {
         try {
           const workflow = await getWorkflow({ workflow_id: workflowState.workflowId }).unwrap();
-          setWorkflow(workflow);
 
           // Use optional chaining and nullish coalescing to handle undefined
           setHasAgents((workflow.crew_ai_workflow_metadata?.agent_id?.length ?? 0) > 0);
@@ -153,7 +134,7 @@ const WorkflowNavigation: React.FC<WorkflowNavigationProps> = ({ workflowId }) =
       const workflowId = workflowState.workflowId!;
 
       if (saveWorkflowAsTemplate) {
-        const addedWorkflowTemplateId = await addWorkflowTemplate({
+        const _addedWorkflowTemplateId = await addWorkflowTemplate({
           workflow_id: workflowId,
           agent_template_ids: [],
           task_template_ids: [], // TODO: make optional so we don't need to pass
@@ -204,34 +185,10 @@ const WorkflowNavigation: React.FC<WorkflowNavigationProps> = ({ workflowId }) =
 
   return (
     <>
-      <Layout
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-around',
-          alignItems: 'center',
-          background: 'transparent',
-          flexGrow: 0,
-          flexShrink: 0,
-          height: '40px',
-        }}
-      >
-        <Layout
-          style={{
-            flexDirection: 'row',
-            flex: 1,
-            alignItems: 'center',
-            justifyContent: 'flex-start',
-          }}
-        >
+      <Layout className="flex flex-row justify-around items-center bg-transparent flex-grow-0 flex-shrink-0 h-10">
+        <Layout className="flex flex-row flex-1 items-center justify-start">
           <Button
-            style={{
-              background: 'transparent',
-              border: 'none',
-              boxShadow: 'none',
-              flexGrow: 0,
-              height: '40px',
-              alignItems: 'bottom',
-            }}
+            className="bg-transparent border-none shadow-none flex-grow-0 h-10"
             onClick={() => {
               saveWorkflowDraft();
               dispatch(resetEditor());
@@ -244,17 +201,10 @@ const WorkflowNavigation: React.FC<WorkflowNavigationProps> = ({ workflowId }) =
           </Button>
         </Layout>
         {currentStep === 'Agents' ? (
-          <Layout
-            style={{
-              flexDirection: 'row',
-              flex: 1,
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-            }}
-          >
+          <Layout className="flex flex-row flex-1 items-center justify-end">
             <Button
               type="primary"
-              style={{ flexGrow: 0, height: '40px' }}
+              className="flex-grow-0 h-10"
               onClick={() => {
                 dispatch(updatedEditorStep('Tasks'));
                 saveWorkflowDraft();
@@ -264,24 +214,16 @@ const WorkflowNavigation: React.FC<WorkflowNavigationProps> = ({ workflowId }) =
             </Button>
           </Layout>
         ) : currentStep === 'Tasks' ? (
-          <Layout
-            style={{
-              flexDirection: 'row',
-              flex: 1,
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              gap: 16,
-            }}
-          >
+          <Layout className="flex flex-row flex-1 items-center justify-end gap-4">
             <Button
-              style={{ flexGrow: 0, height: '40px' }}
+              className="flex-grow-0 h-10"
               onClick={() => dispatch(updatedEditorStep('Agents'))}
             >
               <ArrowLeftOutlined /> Add Agents
             </Button>
             <Button
               type="primary"
-              style={{ flexGrow: 0, height: '40px' }}
+              className="flex-grow-0 h-10"
               onClick={() => {
                 dispatch(updatedEditorStep('Configure'));
                 saveWorkflowDraft();
@@ -291,17 +233,9 @@ const WorkflowNavigation: React.FC<WorkflowNavigationProps> = ({ workflowId }) =
             </Button>
           </Layout>
         ) : currentStep === 'Configure' ? (
-          <Layout
-            style={{
-              flexDirection: 'row',
-              flex: 1,
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              gap: 16,
-            }}
-          >
+          <Layout className="flex flex-row flex-1 items-center justify-end gap-4">
             <Button
-              style={{ flexGrow: 0, height: '40px' }}
+              className="flex-grow-0 h-10"
               onClick={() => dispatch(updatedEditorStep('Tasks'))}
             >
               <ArrowLeftOutlined /> Add Tasks
@@ -313,7 +247,7 @@ const WorkflowNavigation: React.FC<WorkflowNavigationProps> = ({ workflowId }) =
             >
               <Button
                 type="primary"
-                style={{ flexGrow: 0, height: '40px' }}
+                className="flex-grow-0 h-10"
                 onClick={() => {
                   dispatch(clearedWorkflowApp());
                   dispatch(updatedEditorStep('Test'));
@@ -324,17 +258,9 @@ const WorkflowNavigation: React.FC<WorkflowNavigationProps> = ({ workflowId }) =
             </Tooltip>
           </Layout>
         ) : currentStep === 'Test' ? (
-          <Layout
-            style={{
-              flexDirection: 'row',
-              flex: 1,
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              gap: 16,
-            }}
-          >
+          <Layout className="flex flex-row flex-1 items-center justify-end gap-4">
             <Button
-              style={{ flexGrow: 0, height: '40px' }}
+              className="flex-grow-0 h-10"
               onClick={() => dispatch(updatedEditorStep('Configure'))}
             >
               <ArrowLeftOutlined /> Configure
@@ -342,7 +268,7 @@ const WorkflowNavigation: React.FC<WorkflowNavigationProps> = ({ workflowId }) =
             <Tooltip title={!isValid ? 'Required tool parameters are missing' : ''}>
               <Button
                 type="primary"
-                style={{ flexGrow: 0, height: '40px' }}
+                className="flex-grow-0 h-10"
                 onClick={() => {
                   dispatch(clearedWorkflowApp());
                   dispatch(updatedEditorStep('Deploy'));
@@ -353,17 +279,9 @@ const WorkflowNavigation: React.FC<WorkflowNavigationProps> = ({ workflowId }) =
             </Tooltip>
           </Layout>
         ) : currentStep === 'Deploy' ? (
-          <Layout
-            style={{
-              flexDirection: 'row',
-              flex: 1,
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              gap: 16,
-            }}
-          >
+          <Layout className="flex flex-row flex-1 items-center justify-end gap-4">
             <Button
-              style={{ flexGrow: 0, height: '40px' }}
+              className="flex-grow-0 h-10"
               onClick={() => {
                 dispatch(clearedWorkflowApp());
                 dispatch(updatedEditorStep('Test'));
@@ -372,7 +290,7 @@ const WorkflowNavigation: React.FC<WorkflowNavigationProps> = ({ workflowId }) =
               <ArrowLeftOutlined /> Test
             </Button>
             <Button
-              style={{ flexGrow: 0, height: '40px' }}
+              className="flex-grow-0 h-10"
               onClick={async () => {
                 try {
                   await addWorkflowTemplate({
@@ -406,7 +324,7 @@ const WorkflowNavigation: React.FC<WorkflowNavigationProps> = ({ workflowId }) =
             <Tooltip title={!isValid ? 'Required tool parameters are missing' : ''}>
               <Button
                 type="primary"
-                style={{ flexGrow: 0, height: '40px' }}
+                className="flex-grow-0 h-10"
                 disabled={
                   !isValid ||
                   !defaultModel ||
@@ -448,7 +366,7 @@ const WorkflowNavigation: React.FC<WorkflowNavigationProps> = ({ workflowId }) =
           A workflow once deployed is not editable. You may optionally save this workflow as a
           reusable template for future use
         </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '10px' }}>
+        <div className="flex flex-col gap-4 mt-2.5">
           <Checkbox
             checked={saveWorkflowAsTemplate}
             onChange={(e) => setSaveWorkflowAsTemplate(e.target.checked)}
@@ -460,7 +378,7 @@ const WorkflowNavigation: React.FC<WorkflowNavigationProps> = ({ workflowId }) =
                 'as a starting point when creating new workflows.'
               }
             >
-              <QuestionCircleOutlined style={{ color: '#666', marginLeft: '8px' }} />
+              <QuestionCircleOutlined className="text-[#666] ml-2" />
             </Tooltip>
           </Checkbox>
         </div>

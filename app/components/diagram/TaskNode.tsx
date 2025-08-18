@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { Handle, Position, NodeProps, Node, useReactFlow } from '@xyflow/react';
-import { Avatar, Layout, Typography, Button, Tooltip } from 'antd';
-import { FileDoneOutlined, UserOutlined, EditOutlined } from '@ant-design/icons';
-import { BaseNode } from '@/components/base-node';
-import { AgentMetadata, CrewAITaskMetadata } from '@/studio/proto/agent_studio';
+import { Handle, Position, NodeProps, Node } from '@xyflow/react';
+import { Avatar, Typography, Button, Tooltip } from 'antd';
+import { FileDoneOutlined, EditOutlined } from '@ant-design/icons';
+import { CrewAITaskMetadata } from '@/studio/proto/agent_studio';
 
-const { Text, Paragraph } = Typography;
+const { Paragraph } = Typography;
 
 type TaskNode = Node<
   {

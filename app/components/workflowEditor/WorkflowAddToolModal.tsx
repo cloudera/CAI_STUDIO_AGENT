@@ -34,10 +34,7 @@ import {
   CheckCircleOutlined,
   ExclamationCircleOutlined,
 } from '@ant-design/icons';
-import {
-  useListGlobalToolTemplatesQuery,
-  useAddToolTemplateMutation,
-} from '@/app/tools/toolTemplatesApi';
+import { useListGlobalToolTemplatesQuery } from '@/app/tools/toolTemplatesApi';
 import { useGetToolInstanceMutation } from '@/app/tools/toolInstancesApi';
 import { useImageAssetsData } from '@/app/lib/hooks/useAssetData';
 import { Editor } from '@monaco-editor/react';
@@ -78,14 +75,11 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
   open,
   onCancel,
 }) => {
-  const { data: toolTemplates = [], refetch } = useListGlobalToolTemplatesQuery({});
+  const { data: toolTemplates = [] } = useListGlobalToolTemplatesQuery({});
   const { data: parentProjectDetails } = useGetParentProjectDetailsQuery({});
   const [selectedToolTemplate, setSelectedToolTemplate] = useState<string | null>(null);
   const [isEditable, setIsEditable] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [addToolTemplate] = useAddToolTemplateMutation();
   const workflowName = useSelector(selectEditorWorkflowName);
-  const listRef = useRef<HTMLDivElement>(null);
   const dispatch = useDispatch();
   const existingToolTemplateIds = useSelector(selectEditorAgentViewCreateAgentToolTemplates) || [];
   const notificationApi = useGlobalNotification(); // Initialize the notification API
@@ -111,7 +105,6 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
   const [playgroundEnabled, setPlaygroundEnabled] = useState(false);
   const [userParams, setUserParams] = useState<{ [key: string]: string }>({});
   const [toolParams, setToolParams] = useState<{ [key: string]: string }>({});
-  const [traceId, setTraceId] = useState<string>('');
   const [logs, setLogs] = useState<any[]>([]);
   const [isTesting, setIsTesting] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -149,7 +142,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
     return [...new Set([...templateUris, ...instanceUris])].filter(Boolean);
   }, [toolTemplates, toolInstancesMap]);
 
-  const { imageData: toolIconsData, refetch: refetchImages } = useImageAssetsData(allImageUris);
+  const { imageData: toolIconsData } = useImageAssetsData(allImageUris);
 
   // Fix: Only preselect first template if modal is open, no template is selected, and isCreateSelected is false
   useEffect(() => {
@@ -442,7 +435,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
         description: 'Tool details have been refreshed.',
         placement: 'topRight',
       });
-    } catch (error) {
+    } catch (_error) {
       notificationApi.error({
         message: 'Refresh Failed',
         description: 'Failed to refresh tool details.',
@@ -465,15 +458,6 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
         description: 'Saving tool changes...',
         placement: 'topRight',
       });
-
-      const toolMetadata: {
-        user_params_metadata?: Record<string, { required: boolean }>;
-        tool_params_metadata?: Record<string, { required: boolean }>;
-        [key: string]: any;
-      } =
-        typeof toolInstance.tool_metadata === 'string'
-          ? JSON.parse(toolInstance.tool_metadata)
-          : toolInstance.tool_metadata || {};
 
       await updateToolInstance({
         tool_instance_id: selectedToolInstance,
@@ -523,51 +507,29 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
   const renderToolTemplate = (template: any) => {
     const isDisabled = existingToolTemplateIds.includes(template.id);
 
+    // Tailwind conversion for the card
+    const cardBg =
+      selectedToolTemplate === template.id && !selectedToolInstance ? 'bg-green-50' : 'bg-white';
+    const cardCursor = isDisabled ? 'cursor-not-allowed' : 'cursor-pointer';
+    const cardOpacity = isDisabled ? 'opacity-50' : 'opacity-100';
     return (
       <List.Item>
         <div
-          style={{
-            borderRadius: '4px',
-            border: 'solid 1px #f0f0f0',
-            backgroundColor:
-              selectedToolTemplate === template.id && !selectedToolInstance ? '#e6ffe6' : '#fff',
-            width: '100%',
-            height: '100px',
-            padding: '16px',
-            display: 'flex',
-            flexDirection: 'column',
-            cursor: isDisabled ? 'not-allowed' : 'pointer',
-            transition: 'transform 0.2s, box-shadow 0.2s',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-            opacity: isDisabled ? 0.5 : 1,
-          }}
+          className={`rounded border border-[#f0f0f0] w-full h-[100px] p-4 flex flex-col transition-transform duration-200 ${cardBg} ${cardCursor} ${cardOpacity}`}
           onClick={() => {
             if (!isDisabled) {
               handleSelectToolTemplate(template.id);
             }
           }}
           onMouseEnter={(e: React.MouseEvent<HTMLElement>) => {
-            e.currentTarget.style.transform = 'scale(1.03)';
-            e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+            e.currentTarget.classList.add('scale-[1.03]', 'shadow-lg');
           }}
           onMouseLeave={(e: React.MouseEvent<HTMLElement>) => {
-            e.currentTarget.style.transform = 'scale(1)';
-            e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+            e.currentTarget.classList.remove('scale-[1.03]', 'shadow-lg');
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-            <div
-              style={{
-                width: '24px',
-                height: '24px',
-                borderRadius: '50%',
-                background: '#f1f1f1',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginRight: '8px',
-              }}
-            >
+          <div className="flex items-center mb-2">
+            <div className="w-6 h-6 rounded-full bg-[#f1f1f1] flex items-center justify-center mr-2">
               <Image
                 src={
                   template.tool_image_uri && toolIconsData[template.tool_image_uri]
@@ -578,23 +540,12 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                 width={16}
                 height={16}
                 preview={false}
-                style={{
-                  borderRadius: '2px',
-                  objectFit: 'cover',
-                }}
+                className="rounded object-cover w-4 h-4"
               />
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', flex: 1, gap: '4px' }}>
+            <div className="flex items-center flex-1 gap-1">
               <Text
-                style={{
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  maxWidth: '70%',
-                  display: 'inline-block',
-                }}
+                className="text-[14px] font-semibold whitespace-nowrap overflow-hidden text-ellipsis max-w-[70%] inline-block"
                 title={template.name}
               >
                 {template.name}
@@ -613,39 +564,15 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                 }
               >
                 {template.is_valid ? (
-                  <CheckCircleOutlined
-                    style={{
-                      color: '#52c41a',
-                      fontSize: '15px',
-                      fontWeight: 1000,
-                      marginLeft: '4px',
-                    }}
-                  />
+                  <CheckCircleOutlined className="text-green-500 text-[15px] font-extrabold ml-1" />
                 ) : (
-                  <ExclamationCircleOutlined
-                    style={{
-                      color: '#faad14',
-                      fontSize: '15px',
-                      fontWeight: 1000,
-                      marginLeft: '4px',
-                    }}
-                  />
+                  <ExclamationCircleOutlined className="text-yellow-500 text-[15px] font-extrabold ml-1" />
                 )}
               </Tooltip>
             </div>
           </div>
           <Tooltip title={template.tool_description || 'N/A'}>
-            <Text
-              style={{
-                fontSize: '11px',
-                opacity: 0.45,
-                fontWeight: 400,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                cursor: 'help',
-              }}
-            >
+            <Text className="text-[11px] opacity-45 font-normal whitespace-nowrap overflow-hidden text-ellipsis cursor-help">
               {template.tool_description || 'N/A'}
             </Text>
           </Tooltip>
@@ -664,54 +591,22 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
     const imageUri = toolInstance.tool_image_uri || toolTemplate?.tool_image_uri;
     const description = toolInstance.tool_description || toolTemplate?.tool_description || 'N/A';
 
+    const cardBg = selectedToolInstance === toolInstanceId ? 'bg-green-50' : 'bg-white';
     return (
       <List.Item>
         <div
-          style={{
-            borderRadius: '4px',
-            border: 'solid 1px #f0f0f0',
-            backgroundColor: selectedToolInstance === toolInstanceId ? '#e6ffe6' : '#fff',
-            width: '100%',
-            height: '100px',
-            padding: '16px',
-            display: 'flex',
-            flexDirection: 'column',
-            cursor: 'pointer',
-            transition: 'transform 0.2s, box-shadow 0.2s',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-            position: 'relative',
-          }}
+          className={`rounded border border-[#f0f0f0] w-full h-[100px] p-4 flex flex-col transition-transform duration-200 relative ${cardBg} cursor-pointer`}
           onClick={() => handleSelectToolInstance(toolInstanceId)}
           onMouseEnter={(e: React.MouseEvent<HTMLElement>) => {
-            e.currentTarget.style.transform = 'scale(1.03)';
-            e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+            e.currentTarget.classList.add('scale-[1.03]', 'shadow-lg');
           }}
           onMouseLeave={(e: React.MouseEvent<HTMLElement>) => {
-            e.currentTarget.style.transform = 'scale(1)';
-            e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+            e.currentTarget.classList.remove('scale-[1.03]', 'shadow-lg');
           }}
         >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              marginBottom: '8px',
-              justifyContent: 'space-between',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <div
-                style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '50%',
-                  background: '#f1f1f1',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginRight: '8px',
-                }}
-              >
+          <div className="flex items-center mb-2 justify-between">
+            <div className="flex items-center">
+              <div className="w-6 h-6 rounded-full bg-[#f1f1f1] flex items-center justify-center mr-2">
                 <Image
                   src={
                     imageUri && toolIconsData[imageUri]
@@ -722,23 +617,12 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                   width={16}
                   height={16}
                   preview={false}
-                  style={{
-                    borderRadius: '2px',
-                    objectFit: 'cover',
-                  }}
+                  className="rounded object-cover"
                 />
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div className="flex items-center gap-1">
                 <Text
-                  style={{
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    maxWidth: '150px',
-                    display: 'inline-block',
-                  }}
+                  className="text-[14px] font-semibold whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px] inline-block"
                   title={toolInstance.name}
                 >
                   {toolInstance.name}
@@ -757,23 +641,9 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                   }
                 >
                   {toolInstance.is_valid ? (
-                    <CheckCircleOutlined
-                      style={{
-                        color: '#52c41a',
-                        fontSize: '15px',
-                        fontWeight: 1000,
-                        marginLeft: '4px',
-                      }}
-                    />
+                    <CheckCircleOutlined className="text-green-500 text-[15px] font-extrabold ml-1" />
                   ) : (
-                    <ExclamationCircleOutlined
-                      style={{
-                        color: '#faad14',
-                        fontSize: '15px',
-                        fontWeight: 1000,
-                        marginLeft: '4px',
-                      }}
-                    />
+                    <ExclamationCircleOutlined className="text-yellow-500 text-[15px] font-extrabold ml-1" />
                   )}
                 </Tooltip>
               </div>
@@ -790,34 +660,16 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
             >
               <Button
                 type="link"
-                icon={<DeleteOutlined style={{ color: '#ff4d4f' }} />}
+                icon={<DeleteOutlined className="text-[#ff4d4f]" />}
                 onClick={(e) => e.stopPropagation()}
                 disabled={isLoading}
                 size="small"
-                style={{
-                  width: '20px',
-                  height: '20px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: 0,
-                  minWidth: 'auto',
-                }}
+                className="w-5 h-5 flex items-center justify-center p-0 min-w-0"
               />
             </Popconfirm>
           </div>
           <Tooltip title={description}>
-            <Text
-              style={{
-                fontSize: '11px',
-                opacity: 0.45,
-                fontWeight: 400,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                cursor: 'help',
-              }}
-            >
+            <Text className="text-[11px] opacity-45 font-normal whitespace-nowrap overflow-hidden text-ellipsis cursor-help">
               {description}
             </Text>
           </Tooltip>
@@ -840,8 +692,8 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
         : toolInstance.tool_metadata || {};
 
     return (
-      <Layout style={{ flex: 1, backgroundColor: '#fff', padding: '0px', overflowY: 'auto' }}>
-        <Typography.Title level={5} style={{ marginBottom: '16px' }}>
+      <Layout className="flex-1 bg-white p-0 overflow-y-auto">
+        <Typography.Title level={5} className="mb-4">
           Tool Details
         </Typography.Title>
 
@@ -851,7 +703,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
               <Space>
                 Tool Name
                 <Tooltip title="The name of the tool, used to identify the tool in the workflow">
-                  <QuestionCircleOutlined style={{ color: '#666' }} />
+                  <QuestionCircleOutlined className="text-[#666]" />
                 </Tooltip>
               </Space>
             }
@@ -864,7 +716,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
           </Form.Item>
 
           {selectedToolInstance && toolInstancesMap[selectedToolInstance]?.is_valid === false && (
-            <div style={{ marginBottom: '16px' }}>
+            <div className="mb-4">
               {renderAlert(
                 'Tool Validation Error',
                 `This tool instance is in an invalid state: ${
@@ -882,9 +734,9 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
           )}
 
           <Form.Item>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}>
-                <div style={{ minWidth: '80px' }}>Playground</div>
+            <div className="flex items-center justify-between">
+              <div className="flex flex-row gap-2.5 min-w-[80px]">
+                <div className="min-w-[80px]">Playground</div>
                 <Switch
                   checked={playgroundEnabled}
                   onChange={(checked) => {
@@ -895,8 +747,8 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                   }}
                 />
               </div>
-              <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-                <div style={{ minWidth: '80px' }}>Tool Icon</div>
+              <div className="flex flex-row items-center">
+                <div className="min-w-[80px]">Tool Icon</div>
                 <div>
                   <Upload
                     accept=".png,.jpg,.jpeg"
@@ -919,7 +771,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                   {selectedFile && (
                     <Button
                       icon={<DeleteOutlined />}
-                      style={{ marginLeft: '8px' }}
+                      className="ml-2"
                       onClick={() => {
                         setSelectedFile(null);
                         setUploadedFilePath('');
@@ -933,15 +785,13 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
 
           {playgroundEnabled ? (
             <>
-              <Divider style={{ margin: '8px 0 11px 0' }} />
+              <Divider className="my-2.5 mb-[11px]" />
               {Object.keys(toolMetadata.user_params_metadata || {}).length > 0 && (
-                <Typography.Text
-                  style={{ fontWeight: 600, fontSize: 14, marginBottom: 8, display: 'block' }}
-                >
+                <Typography.Text className="font-semibold text-sm mb-2 block">
                   User Parameters
                 </Typography.Text>
               )}
-              <Row gutter={16} style={{ marginBottom: 0 }}>
+              <Row gutter={16} className="mb-0">
                 {Object.entries(toolMetadata.user_params_metadata || {}).map(([key, meta]) => (
                   <Col span={12} key={key}>
                     <Form.Item label={key} required={meta.required}>
@@ -956,13 +806,11 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
               </Row>
 
               {Object.keys(toolMetadata.tool_params_metadata || {}).length > 0 && (
-                <Typography.Text
-                  style={{ fontWeight: 600, fontSize: 14, marginBottom: 8, display: 'block' }}
-                >
+                <Typography.Text className="font-semibold text-sm mb-2 block">
                   Tool Parameters
                 </Typography.Text>
               )}
-              <Row gutter={16} style={{ marginBottom: 4 }}>
+              <Row gutter={16} className="mb-1">
                 {Object.entries(toolMetadata.tool_params_metadata || {}).map(([key, meta]) => (
                   <Col span={12} key={key}>
                     <Form.Item label={key} required={meta.required}>
@@ -974,7 +822,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                   </Col>
                 ))}
               </Row>
-              <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+              <div className="flex gap-2 flex-shrink-0">
                 <Button
                   type="primary"
                   block
@@ -995,7 +843,6 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                         user_params: userParams,
                         tool_params: toolParams,
                       }).unwrap();
-                      setTraceId(resp.trace_id);
 
                       // Start polling for events
                       intervalRef.current = setInterval(async () => {
@@ -1042,7 +889,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                             }
                             setIsTesting(false);
                           }
-                        } catch (err) {
+                        } catch (_err) {
                           // Optionally handle error
                         }
                       }, 1000);
@@ -1067,41 +914,36 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                     }
                   }}
                   disabled={isTesting}
-                  style={{ flex: 1 }}
+                  className="flex-1"
                 >
                   {isTesting ? 'Testing...' : 'Test Tool'}
                 </Button>
               </div>
               {logs.length > 0 && (
-                <div style={{ marginTop: 4 }}>
+                <div className="mt-1">
                   {logs.map((event, idx) => (
                     <Card
                       key={idx}
                       title={event.type}
-                      style={{
-                        backgroundColor: /error|fail/i.test(event.type)
-                          ? '#ffeaea'
-                          : event.type === 'ToolTestCompleted'
-                            ? '#a2f5bf'
-                            : 'white',
-                        fontSize: '9px',
-                        maxWidth: '100%',
-                        overflow: 'hidden',
-                        flexShrink: 0,
-                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.4)',
-                        marginBottom: 8,
-                      }}
+                      className={`
+                        text-[9px]
+                        max-w-full
+                        overflow-hidden
+                        shrink-0
+                        shadow-[0_2px_4px_rgba(0,0,0,0.4)]
+                        mb-2
+                        ${
+                          /error|fail/i.test(event.type)
+                            ? 'bg-[#ffeaea]'
+                            : event.type === 'ToolTestCompleted'
+                              ? 'bg-[#a2f5bf]'
+                              : 'bg-white'
+                        }
+                      `}
                       headStyle={{ fontSize: '14px' }}
                       bodyStyle={{ fontSize: '9px', padding: '12px', overflow: 'auto' }}
                     >
-                      <pre
-                        style={{
-                          fontSize: '9px',
-                          margin: 0,
-                          overflow: 'auto',
-                          maxWidth: '100%',
-                        }}
-                      >
+                      <pre className="text-[9px] m-0 overflow-auto max-w-full">
                         {JSON.stringify(event, null, 2)}
                       </pre>
                     </Card>
@@ -1109,30 +951,17 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                 </div>
               )}
               {testError && (
-                <Alert
-                  type="error"
-                  message={testError}
-                  showIcon
-                  style={{ fontSize: 12, marginTop: 8 }}
-                />
+                <Alert type="error" message={testError} showIcon className="text-[12px] mt-2" />
               )}
             </>
           ) : (
             <>
-              <div style={{ marginBottom: '24px' }}>
-                <div
-                  style={{
-                    width: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: '8px',
-                  }}
-                >
+              <div className="mb-6">
+                <div className="w-full flex items-center justify-between mb-2">
                   <Space>
-                    <Text style={{ fontWeight: 'normal' }}>tool.py</Text>
+                    <Text className="font-normal">tool.py</Text>
                     <Tooltip title="The Python code that defines the tool's functionality and interface">
-                      <QuestionCircleOutlined style={{ color: '#666' }} />
+                      <QuestionCircleOutlined className="text-[#666]" />
                     </Tooltip>
                   </Space>
                   <Space>
@@ -1169,7 +998,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                   <Space>
                     requirements.txt
                     <Tooltip title="Python package dependencies required by this tool">
-                      <QuestionCircleOutlined style={{ color: '#666' }} />
+                      <QuestionCircleOutlined className="text-[#666]" />
                     </Tooltip>
                   </Space>
                 }
@@ -1190,22 +1019,15 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
     );
   };
 
-  const alertStyle = {
-    alignItems: 'flex-start',
-    justifyContent: 'flex-start',
-    padding: 12,
-    marginBottom: 12,
-  };
-
   const renderCreateNewToolForm = () => (
-    <Layout style={{ flex: 1, backgroundColor: '#fff', padding: '0px', overflowY: 'auto' }}>
+    <Layout className="flex-1 bg-white p-0 overflow-y-auto">
       <Form form={form} layout="vertical">
         <Form.Item
           label={
             <Space>
               Tool Name
               <Tooltip title="Enter the name for the new tool">
-                <QuestionCircleOutlined style={{ color: '#666' }} />
+                <QuestionCircleOutlined className="text-[#666]" />
               </Tooltip>
             </Space>
           }
@@ -1220,25 +1042,14 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
           />
         </Form.Item>
         <Alert
-          style={alertStyle}
+          className="items-start justify-start p-3 mb-3"
           message={
-            <Layout
-              style={{ flexDirection: 'column', gap: 4, padding: 0, background: 'transparent' }}
-            >
-              <Layout
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 8,
-                  background: 'transparent',
-                }}
-              >
-                <InfoCircleOutlined style={{ fontSize: 16, color: '#1890ff' }} />
-                <Text style={{ fontSize: 13, fontWeight: 600, background: 'transparent' }}>
-                  Default Code
-                </Text>
+            <Layout className="flex flex-col gap-1 p-0 bg-transparent">
+              <Layout className="flex flex-row items-center gap-2 bg-transparent">
+                <InfoCircleOutlined className="text-blue-500 text-base" />
+                <Text className="text-sm font-semibold bg-transparent">Default Code</Text>
               </Layout>
-              <Text style={{ fontSize: 13, fontWeight: 400, background: 'transparent' }}>
+              <Text className="text-sm font-normal bg-transparent">
                 Every new tool will be initialized with this default code. You can modify the tool's
                 code or other properties after it has been created.
               </Text>
@@ -1253,7 +1064,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
             <Space>
               tool.py
               <Tooltip title="The default python implementation of the tool">
-                <QuestionCircleOutlined style={{ color: '#666' }} />
+                <QuestionCircleOutlined className="text-[#666]" />
               </Tooltip>
             </Space>
           }
@@ -1271,7 +1082,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
             <Space>
               requirements.txt
               <Tooltip title="Default Python package dependencies required by this tool">
-                <QuestionCircleOutlined style={{ color: '#666' }} />
+                <QuestionCircleOutlined className="text-[#666]" />
               </Tooltip>
             </Space>
           }
@@ -1302,7 +1113,6 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
 
   const resetPlaygroundState = () => {
     setLogs([]);
-    setTraceId('');
     setUserParams({});
     setToolParams({});
     setIsTesting(false);
@@ -1394,11 +1204,11 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
       onCancel={!isLoading ? onCancel : undefined}
       centered
       width="98%"
-      style={{ height: '95vh' }}
+      className="h-[95vh]"
       maskClosable={!isLoading}
       keyboard={!isLoading}
       footer={[
-        <Button key="cancel" onClick={onCancel} disabled={loading || isLoading}>
+        <Button key="cancel" onClick={onCancel} disabled={isLoading}>
           Close
         </Button>,
         // Show either the create button or update button, not both
@@ -1407,7 +1217,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
             key="create"
             type="primary"
             onClick={() => handleCreateToolInstance(undefined)}
-            disabled={loading || isLoading}
+            disabled={isLoading}
           >
             {getButtonText()}
           </Button>
@@ -1430,7 +1240,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
               key="add"
               type="primary"
               onClick={() => handleCreateToolInstance(selectedToolTemplate)}
-              disabled={loading || isLoading || !selectedTool?.is_valid}
+              disabled={isLoading || !selectedTool?.is_valid}
               loading={isLoading}
             >
               {getButtonText()}
@@ -1441,111 +1251,42 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
             key="update"
             type="primary"
             onClick={handleUpdateToolInstance}
-            disabled={loading || isLoading}
+            disabled={isLoading}
           >
             {getButtonText()}
           </Button>
         ) : null,
       ]}
     >
-      <div style={{ position: 'relative' }}>
+      <div className="relative">
         {isLoading && (
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(255, 255, 255, 0.6)',
-              zIndex: 1000,
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              cursor: 'not-allowed',
-            }}
-          >
+          <div className="absolute top-0 left-0 right-0 bottom-0 bg-white bg-opacity-60 z-1000 flex items-center justify-center cursor-not-allowed">
             <Spin size="large" />
           </div>
         )}
-        {loading ? (
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              height: '100%',
-            }}
-          >
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full">
             <Spin size="large" />
           </div>
         ) : (
-          <div style={{ overflowY: 'auto', height: 'calc(95vh - 108px)' }}>
-            <Divider style={{ margin: 0, backgroundColor: '#f0f0f0' }} />
-            <Layout
-              style={{
-                display: 'flex',
-                flexDirection: 'row',
-                height: '100%',
-                backgroundColor: '#fff',
-              }}
-            >
-              <Layout
-                style={{ flex: 1, overflowY: 'auto', padding: '16px', backgroundColor: '#fff' }}
-              >
+          <div className="overflow-y-auto h-[calc(95vh-108px)]">
+            <Divider className="m-0 bg-[#f0f0f0]" />
+            <Layout className="flex flex-row h-full bg-white">
+              <Layout className="flex-1 overflow-y-auto p-4 bg-white">
                 <div
-                  style={{
-                    marginBottom: 16,
-                    cursor: 'pointer',
-                    boxShadow: isCreateSelected ? '0 4px 8px rgba(0, 0, 0, 0.2)' : 'none',
-                    width: '100%',
-                    border: 'solid 1px #f0f0f0',
-                    borderRadius: '4px',
-                    padding: '16px',
-                    backgroundColor: isCreateSelected ? '#edf7ff' : '#fff',
-                  }}
+                  className={`mb-4 cursor-pointer border border-[#f0f0f0] rounded p-4 ${isCreateSelected ? 'shadow-lg bg-[#edf7ff]' : 'shadow-none bg-white'}`}
                   onClick={handleCreateCardSelect}
                 >
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                    }}
-                  >
+                  <div className="flex items-center justify-between">
                     <Space size={16}>
-                      <div
-                        style={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: '50%',
-                          backgroundColor: '#edf7ff',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <PlusOutlined style={{ fontSize: '16px', color: '#1890ff' }} />
+                      <div className="w-8 h-8 rounded-full bg-[#edf7ff] flex items-center justify-center">
+                        <PlusOutlined className="text-base text-blue-500" />
                       </div>
                       <div>
-                        <div
-                          style={{
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                          }}
-                        >
+                        <div className="whitespace-nowrap overflow-hidden text-ellipsis">
                           Create New Tool
                         </div>
-                        <Text
-                          style={{
-                            fontSize: '11px',
-                            opacity: 0.45,
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                          }}
-                        >
+                        <Text className="text-[11px] opacity-45 whitespace-nowrap overflow-hidden text-ellipsis">
                           Create a new custom tool from scratch
                         </Text>
                       </div>
@@ -1553,17 +1294,10 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                   </div>
                 </div>
 
-                <Layout
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    backgroundColor: '#fff',
-                    marginBottom: '8px',
-                  }}
-                >
-                  <Layout style={{ flex: 1, backgroundColor: '#fff', paddingRight: '16px' }}>
-                    <Space direction="vertical" style={{ width: '100%', marginBottom: '0px' }}>
-                      <Typography.Title level={5} style={{ marginBottom: '8px' }}>
+                <Layout className="flex flex-row bg-white mb-2">
+                  <Layout className="flex-1 bg-white pr-4">
+                    <Space direction="vertical" className="w-full mb-0">
+                      <Typography.Title level={5} className="mb-2">
                         Edit Agent Tools
                       </Typography.Title>
                       <Input
@@ -1575,9 +1309,9 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                       />
                     </Space>
                   </Layout>
-                  <Layout style={{ flex: 1, backgroundColor: '#fff', paddingLeft: '16px' }}>
-                    <Space direction="vertical" style={{ width: '100%', marginBottom: '0px' }}>
-                      <Typography.Title level={5} style={{ marginBottom: '8px' }}>
+                  <Layout className="flex-1 bg-white pl-4">
+                    <Space direction="vertical" className="w-full mb-0">
+                      <Typography.Title level={5} className="mb-2">
                         Create Tool From Template
                       </Typography.Title>
                       <Input
@@ -1591,40 +1325,18 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                   </Layout>
                 </Layout>
 
-                <Layout
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    height: '100%',
-                    backgroundColor: '#fff',
-                    marginTop: '8px',
-                  }}
-                >
-                  <Layout
-                    style={{
-                      flex: 1,
-                      overflowY: 'auto',
-                      backgroundColor: '#fff',
-                      paddingRight: '16px',
-                    }}
-                  >
+                <Layout className="flex flex-row h-full bg-white mt-2">
+                  <Layout className="flex-1 overflow-y-auto bg-white pr-4">
                     <List
-                      style={{ marginTop: '8px' }}
+                      className="mt-2"
                       grid={{ gutter: 16, column: 1 }}
                       dataSource={filterToolInstances(createAgentState?.tools || [])}
                       renderItem={(toolId) => renderToolInstance(toolId)}
                     />
                   </Layout>
-                  <Layout
-                    style={{
-                      flex: 1,
-                      overflowY: 'auto',
-                      backgroundColor: '#fff',
-                      paddingLeft: '16px',
-                    }}
-                  >
+                  <Layout className="flex-1 overflow-y-auto bg-white pl-4">
                     <List
-                      style={{ marginTop: '8px' }}
+                      className="mt-2"
                       grid={{ gutter: 16, column: 1 }}
                       dataSource={filterToolTemplates(toolTemplates)}
                       renderItem={(item) => renderToolTemplate(item)}
@@ -1633,18 +1345,16 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                 </Layout>
               </Layout>
 
-              <Divider type="vertical" style={{ height: 'auto', backgroundColor: '#f0f0f0' }} />
+              <Divider type="vertical" className="h-auto bg-[#f0f0f0]" />
 
-              <Layout
-                style={{ flex: 1, backgroundColor: '#fff', padding: '16px', overflowY: 'auto' }}
-              >
+              <Layout className="flex-1 bg-white p-4 overflow-y-auto">
                 {isCreateSelected ? (
                   renderCreateNewToolForm()
                 ) : selectedToolInstance ? (
                   renderToolInstanceDetails()
                 ) : selectedTool ? (
                   <>
-                    <Typography.Title level={5} style={{ marginBottom: '16px' }}>
+                    <Typography.Title level={5} className="mb-4">
                       Tool Details
                     </Typography.Title>
                     <Form layout="vertical">
@@ -1653,12 +1363,12 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                           <Space>
                             Tool Name
                             <Tooltip title="The name of the tool">
-                              <QuestionCircleOutlined style={{ color: '#666' }} />
+                              <QuestionCircleOutlined className="text-[#666]" />
                             </Tooltip>
                           </Space>
                         }
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div className="flex items-center gap-2">
                           <Input value={selectedTool?.name} readOnly={!isEditable} />
                           <Tooltip
                             title={
@@ -1674,18 +1384,16 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                             }
                           >
                             {selectedTool.is_valid ? (
-                              <CheckCircleOutlined style={{ color: '#52c41a', fontSize: '15px' }} />
+                              <CheckCircleOutlined className="text-green-500 text-base" />
                             ) : (
-                              <ExclamationCircleOutlined
-                                style={{ color: '#faad14', fontSize: '15px' }}
-                              />
+                              <ExclamationCircleOutlined className="text-yellow-500 text-base" />
                             )}
                           </Tooltip>
                         </div>
                       </Form.Item>
 
                       {selectedTool && !selectedTool.is_valid && (
-                        <div style={{ marginBottom: '16px' }}>
+                        <div className="mb-4">
                           {renderAlert(
                             'Tool Validation Error',
                             `This tool template is in an invalid state: ${
@@ -1707,7 +1415,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                           <Space>
                             tool.py
                             <Tooltip title="The Python code that defines the tool's functionality and interface">
-                              <QuestionCircleOutlined style={{ color: '#666' }} />
+                              <QuestionCircleOutlined className="text-[#666]" />
                             </Tooltip>
                           </Space>
                         }
@@ -1726,7 +1434,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                           <Space>
                             requirements.txt
                             <Tooltip title="Python package dependencies required by this tool">
-                              <QuestionCircleOutlined style={{ color: '#666' }} />
+                              <QuestionCircleOutlined className="text-[#666]" />
                             </Tooltip>
                           </Space>
                         }
@@ -1745,7 +1453,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                 ) : null}
               </Layout>
             </Layout>
-            <Divider style={{ margin: 0, backgroundColor: '#f0f0f0' }} />
+            <Divider className="m-0 bg-[#f0f0f0]" />
           </div>
         )}
       </div>

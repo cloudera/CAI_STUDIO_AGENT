@@ -81,26 +81,14 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({ workflowId }) => {
   }
 
   return (
-    <Layout
-      style={{
-        flex: 1,
-        padding: '16px 24px 22px',
-        flexDirection: 'column',
-      }}
-    >
+    <Layout className="flex-1 p-4 md:p-6 lg:p-6 flex flex-col">
       <CommonBreadCrumb
         items={[
           { title: 'Agentic Workflows', href: '/workflows' },
           { title: workflowId ? 'Edit Workflow' : 'Create Workflow' },
         ]}
       />
-      <Layout
-        style={{
-          flex: 1,
-          flexDirection: 'column',
-          gap: '24px',
-        }}
-      >
+      <Layout className="flex-1 flex flex-col gap-6">
         <WorkflowEditorName workflowId={workflowId} />
         <WorkflowStepView />
         {currentStep === 'Agents' ? (

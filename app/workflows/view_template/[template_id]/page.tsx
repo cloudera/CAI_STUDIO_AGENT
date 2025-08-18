@@ -1,26 +1,22 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Button, Typography, Layout, Alert, Spin, Dropdown, Space, MenuProps } from 'antd';
 import {
   DownOutlined,
-  EditOutlined,
   DeleteOutlined,
-  ExperimentOutlined,
   PlayCircleOutlined,
-  CopyOutlined,
   DownloadOutlined,
 } from '@ant-design/icons';
 import { useParams, useRouter } from 'next/navigation';
 import WorkflowTemplateOverview from '@/app/components/workflows/WorkflowTemplateOverview';
 import {
-  useAddWorkflowTemplateMutation,
   useAddWorkflowMutation,
   useExportWorkflowTemplateMutation,
   useGetWorkflowTemplateByIdQuery,
 } from '@/app/workflows/workflowsApi';
 import CommonBreadCrumb from '@/app/components/CommonBreadCrumb';
-import { resetEditor, updatedEditorStep } from '@/app/workflows/editorSlice';
+import { resetEditor } from '@/app/workflows/editorSlice';
 import { useAppDispatch } from '@/app/lib/hooks/hooks';
 import DeleteWorkflowModal from '@/app/components/workflows/DeleteWorkflowModal';
 import { useGlobalNotification } from '@/app/components/Notifications';
@@ -39,9 +35,8 @@ const WorkflowTemplateContent: React.FC<WorkflowTemplateContentProps> = ({ templ
   const dispatch = useAppDispatch();
   const [removeWorkflowTemplate] = useRemoveWorkflowTemplateMutation();
   const notificationApi = useGlobalNotification();
-  const [error, setError] = useState<string | null>(null);
+  const [error, _setError] = useState<string | null>(null);
   const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [addWorkflowTemplate] = useAddWorkflowTemplateMutation();
   const [addWorkflow] = useAddWorkflowMutation();
   const [exportWorkflowTemplate] = useExportWorkflowTemplateMutation();
   const [downloadingTemplate, setDownloadingTemplate] = useState(false);
@@ -156,51 +151,24 @@ const WorkflowTemplateContent: React.FC<WorkflowTemplateContentProps> = ({ templ
 
   if (loading) {
     return (
-      <Layout
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-        }}
-      >
+      <Layout className="flex justify-center items-center h-screen">
         <Spin size="large" />
       </Layout>
     );
   }
 
   if (error) {
-    return (
-      <Alert
-        message="Error"
-        description={error}
-        type="error"
-        showIcon
-        style={{
-          margin: '16px',
-        }}
-      />
-    );
+    return <Alert message="Error" description={error} type="error" showIcon className="m-4" />;
   }
 
   return (
     <>
-      <Layout style={{ flex: 1, padding: '16px 24px 22px', flexDirection: 'column' }}>
+      <Layout className="flex-1 p-4 md:p-6 lg:p-6 flex flex-col">
         <CommonBreadCrumb
           items={[{ title: 'Workflows', href: '/workflows' }, { title: 'View Template' }]}
         />
-        <Layout
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            borderBottom: '1px solid #f0f0f0',
-            flexGrow: 0,
-            flexShrink: 0,
-          }}
-        >
-          <Title level={4} style={{ margin: 0 }}>
+        <Layout className="flex flex-row items-center justify-between border-b border-gray-200 flex-grow-0 flex-shrink-0">
+          <Title level={4} className="m-0">
             {template?.name || 'Unknown Template'}
           </Title>
           <Dropdown
@@ -208,23 +176,12 @@ const WorkflowTemplateContent: React.FC<WorkflowTemplateContentProps> = ({ templ
             trigger={['click']}
             placement="bottomRight"
           >
-            <Button
-              style={{
-                fontSize: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}
-            >
+            <Button className="text-sm flex items-center gap-1">
               Actions <DownOutlined />
             </Button>
           </Dropdown>
         </Layout>
-        <Layout
-          style={{
-            marginTop: '10px',
-          }}
-        >
+        <Layout className="mt-2.5">
           <WorkflowTemplateOverview workflowTemplateId={templateId as string} />
         </Layout>
         <DeleteWorkflowModal

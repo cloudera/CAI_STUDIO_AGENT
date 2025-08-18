@@ -21,7 +21,6 @@ import {
   useListGlobalMcpTemplatesQuery,
 } from '../mcp/mcpTemplatesApi';
 import MCPTemplateList from '../components/MCPTemplateList';
-import { useGetWorkflowDataQuery } from '../workflows/workflowAppApi';
 const { Text } = Typography;
 const { TabPane } = Tabs;
 
@@ -31,7 +30,7 @@ const ToolsTabContent = () => {
   const [addToolTemplate] = useAddToolTemplateMutation();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, _setSearchQuery] = useState('');
 
   const notificationApi = useGlobalNotification();
   const router = useRouter();
@@ -107,70 +106,26 @@ const ToolsTabContent = () => {
     router.push(`/tools/view/${templateId}?edit=true`);
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
-
   const filteredTools = tools?.filter((tool) =>
     tool.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
     <>
-      <Layout
-        style={{
-          background: '#fff',
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexGrow: 0,
-          padding: '16px',
-        }}
-      >
-        <div
-          style={{
-            width: '66px',
-            height: '66px',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            overflow: 'hidden',
-            backgroundColor: '#fff4cd',
-            margin: '0px',
-          }}
-        >
+      <Layout className="bg-white flex flex-row items-center justify-between flex-grow-0 p-4">
+        <div className="w-16 h-16 rounded-full flex items-center justify-center overflow-hidden bg-yellow-100 m-0">
           <Image src="/ic-brand-tools.svg" alt="Tool Template Icon" />
         </div>
-        <Layout
-          style={{
-            background: 'transparent',
-            flex: 1,
-            marginLeft: '12px',
-            flexDirection: 'column',
-            display: 'flex',
-          }}
-        >
-          <Text style={{ fontWeight: 600, fontSize: '18px' }}>Create Tool Template</Text>
-          <Text style={{ fontWeight: 350 }}>
+        <Layout className="bg-transparent flex-1 ml-3 flex-col flex">
+          <Text className="font-semibold text-lg">Create Tool Template</Text>
+          <Text className="font-light">
             Build custom Python tools to enhance your AI agents capabilities and supercharge your
             workflows.
           </Text>
         </Layout>
         <Button
           type="primary"
-          style={{
-            marginLeft: '20px',
-            marginRight: '16px',
-            marginTop: '20px',
-            marginBottom: '20px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            flexDirection: 'row-reverse',
-          }}
+          className="ml-5 mr-4 mt-5 mb-5 flex items-center justify-center gap-2 flex-row-reverse"
           icon={<ArrowRightOutlined />}
           onClick={() => setIsModalOpen(true)}
         >
@@ -212,7 +167,6 @@ const MCPTabContent = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const notificationApi = useGlobalNotification();
-  const router = useRouter();
 
   const handleRegisterMCP = async (
     mcpName: string,
@@ -235,16 +189,13 @@ const MCPTabContent = () => {
         .map((arg) => arg.trim());
 
       // Call the addToolTemplate mutation and wait for the response
-      const response = await addMcpTemplate({
+      await addMcpTemplate({
         name: mcpName,
         type: mcpType,
         args: mcpArgsArray,
         env_names: envNames,
         tmp_mcp_image_path: iconPath,
       }).unwrap();
-
-      // Extract tool_template_id from the response
-      const mcp_template_id = response;
 
       // Notify success and close the modal
       notificationApi.success({
@@ -288,43 +239,13 @@ const MCPTabContent = () => {
 
   return (
     <>
-      <Layout
-        style={{
-          background: '#fff',
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexGrow: 0,
-          padding: '16px',
-        }}
-      >
-        <div
-          style={{
-            width: '66px',
-            height: '66px',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            overflow: 'hidden',
-            backgroundColor: '#cdd5ff',
-            margin: '0px',
-          }}
-        >
-          <Image src="/mcp-icon.svg" alt="MCP Icon" style={{ padding: '12px' }} />
+      <Layout className="bg-white flex flex-row items-center justify-between flex-grow-0 p-4">
+        <div className="w-[66px] h-[66px] rounded-full flex items-center justify-center overflow-hidden bg-[#cdd5ff] m-0">
+          <Image src="/mcp-icon.svg" alt="MCP Icon" className="p-3" />
         </div>
-        <Layout
-          style={{
-            background: 'transparent',
-            flex: 1,
-            marginLeft: '12px',
-            flexDirection: 'column',
-            display: 'flex',
-          }}
-        >
-          <Text style={{ fontWeight: 600, fontSize: '18px' }}>Register a MCP Server</Text>
-          <Text style={{ fontWeight: 350 }}>
+        <Layout className="bg-transparent flex-1 ml-3 flex-col flex">
+          <Text className="font-semibold text-lg">Register a MCP Server</Text>
+          <Text className="font-light">
             Register a MCP Server to use in your AI agents. Learn more about Model Context Protocol{' '}
             <a
               href="https://modelcontextprotocol.io/introduction"
@@ -338,17 +259,7 @@ const MCPTabContent = () => {
         </Layout>
         <Button
           type="primary"
-          style={{
-            marginLeft: '20px',
-            marginRight: '16px',
-            marginTop: '20px',
-            marginBottom: '20px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            flexDirection: 'row-reverse',
-          }}
+          className="ml-5 mr-4 mt-5 mb-5 flex items-center justify-center gap-2 flex-row-reverse"
           icon={<ArrowRightOutlined />}
           onClick={() => setIsModalOpen(true)}
         >
@@ -391,9 +302,9 @@ const ToolsPageContent = () => {
   }
 
   return (
-    <Layout style={{ flex: 1, padding: '16px 24px 22px', flexDirection: 'column' }}>
+    <Layout className="flex-1 p-4 pt-4 pb-[22px] flex flex-col">
       <CommonBreadCrumb items={[{ title: 'Tools Catalog' }]} />
-      <Tabs activeKey={section} style={{ marginTop: '0px' }} onChange={handleTabChange}>
+      <Tabs activeKey={section} className="mt-0" onChange={handleTabChange}>
         <TabPane tab="Agent Studio Tools" key="tools">
           <ToolsTabContent />
         </TabPane>

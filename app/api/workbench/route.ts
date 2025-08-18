@@ -20,7 +20,7 @@ const getUrlScheme = () => {
   return process.env.AGENT_STUDIO_WORKBENCH_TLS_ENABLED === 'true' ? 'https' : 'http';
 };
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   const agent = createAgent();
   const scheme = getUrlScheme();
 

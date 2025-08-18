@@ -40,7 +40,7 @@ export const modelsApi = apiSlice.injectEndpoints({
       },
     }),
     getDefaultModel: builder.query<Model | undefined, void>({
-      query: (request) => ({
+      query: (_request) => ({
         url: '/grpc/listModels',
         method: 'POST',
         body: {},
@@ -78,7 +78,7 @@ export const modelsApi = apiSlice.injectEndpoints({
       transformResponse: (response: UpdateModelResponse) => {
         return response.model_id;
       },
-      invalidatesTags: (result, error, { model_id }) => [
+      invalidatesTags: (_result, _error, { model_id }) => [
         { type: 'Model', id: 'LIST' },
         { type: 'Model', id: model_id },
       ],

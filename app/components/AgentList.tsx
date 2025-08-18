@@ -48,7 +48,7 @@ const AgentList: React.FC<AgentTemplateListProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [toolTemplateCache, setToolTemplateCache] = useState<Record<string, any>>({});
-  const [loading, setLoading] = useState(false);
+  const [loading, _setLoading] = useState(false);
   const { data: toolTemplates = [] } = useListGlobalToolTemplatesQuery({});
   const router = useRouter();
 
@@ -80,17 +80,8 @@ const AgentList: React.FC<AgentTemplateListProps> = ({
   );
 
   return (
-    <Layout
-      style={{
-        flex: 1,
-        flexDirection: 'column',
-        height: '100%',
-        overflow: 'auto',
-        width: '100%',
-        background: 'transparent',
-      }}
-    >
-      <Space direction="vertical" style={{ width: '100%', marginBottom: 16 }}>
+    <Layout className="flex flex-col h-full overflow-auto w-full bg-transparent">
+      <Space direction="vertical" className="w-full mb-4">
         <Search
           placeholder="Search agent templates by name"
           allowClear
@@ -106,105 +97,30 @@ const AgentList: React.FC<AgentTemplateListProps> = ({
         renderItem={(item) => (
           <List.Item>
             <Layout
-              style={{
-                borderRadius: '4px',
-                border: 'solid 1px #f0f0f0',
-                backgroundColor: '#fff',
-                width: '400px',
-                height: '190px',
-                margin: '0px 12px 16px 0px',
-                padding: '0',
-                display: 'flex',
-                flexDirection: 'column',
-                cursor: 'pointer',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-              }}
+              className="rounded border border-[#f0f0f0] bg-white w-[400px] h-[190px] mr-3 mb-4 p-0 flex flex-col cursor-pointer transition-transform duration-200 ease-in-out shadow-md hover:shadow-lg hover:scale-[1.03]"
               onClick={() => router.push(`agents/edit/${item.id}`)}
-              onMouseEnter={(e: React.MouseEvent<HTMLElement>) => {
-                e.currentTarget.style.transform = 'scale(1.03)';
-                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
-              }}
-              onMouseLeave={(e: React.MouseEvent<HTMLElement>) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
-              }}
             >
-              <Layout
-                style={{
-                  flex: 1,
-                  background: 'transparent',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  overflow: 'auto',
-                }}
-              >
+              <Layout className="flex-1 bg-transparent flex flex-col overflow-auto">
                 <Text
-                  style={{
-                    paddingTop: '24px',
-                    paddingLeft: '24px',
-                    paddingRight: '24px',
-                    fontSize: '14px',
-                    fontWeight: 400,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
+                  className="pt-6 px-6 text-[14px] font-normal whitespace-nowrap overflow-hidden text-ellipsis"
                   title={item.name}
                 >
                   {item.name}
                 </Text>
-                <Text
-                  style={{
-                    paddingTop: '4px',
-                    paddingLeft: '24px',
-                    paddingRight: '24px',
-                    fontSize: '11px',
-                    opacity: 0.45,
-                    fontWeight: 400,
-                  }}
-                >
+                <Text className="pt-1 px-6 text-[11px] opacity-45 font-normal">
                   Goal:{' '}
-                  <span
-                    style={{
-                      color: 'black', // Black for the agent goal
-                      fontWeight: 400,
-                    }}
-                  >
+                  <span className="text-black font-normal">
                     {truncateText(item.goal || 'N/A', 5)}
                   </span>
                 </Text>
-                <Text
-                  style={{
-                    paddingTop: '4px',
-                    paddingLeft: '24px',
-                    paddingRight: '24px',
-                    fontSize: '11px',
-                    opacity: 0.45,
-                    fontWeight: 400,
-                  }}
-                >
+                <Text className="pt-1 px-6 text-[11px] opacity-45 font-normal">
                   Backstory:{' '}
-                  <span
-                    style={{
-                      color: 'black', // Black for the agent goal
-                      fontWeight: 400,
-                    }}
-                  >
+                  <span className="text-black font-normal">
                     {truncateText(item.backstory || 'N/A', 5)}
                   </span>
                 </Text>
                 {item.tool_template_ids?.length > 0 && (
-                  <Space
-                    style={{
-                      marginTop: '12px',
-                      paddingLeft: '24px',
-                      paddingRight: '24px',
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: '10px',
-                    }}
-                  >
+                  <Space className="mt-3 px-6 flex flex-wrap gap-[10px]">
                     {loading ? (
                       <Spin size="small" />
                     ) : (
@@ -213,16 +129,7 @@ const AgentList: React.FC<AgentTemplateListProps> = ({
                         return toolTemplate ? (
                           <Tooltip title={toolTemplate.name} key={toolTemplateId} placement="top">
                             <div
-                              style={{
-                                width: '24px',
-                                height: '24px',
-                                borderRadius: '50%',
-                                background: '#f1f1f1',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                cursor: 'pointer',
-                              }}
+                              className="w-6 h-6 rounded-full bg-[#f1f1f1] flex items-center justify-center cursor-pointer"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <Image
@@ -235,10 +142,7 @@ const AgentList: React.FC<AgentTemplateListProps> = ({
                                 width={16}
                                 height={16}
                                 preview={false}
-                                style={{
-                                  borderRadius: '2px',
-                                  objectFit: 'cover',
-                                }}
+                                className="rounded-sm object-cover"
                               />
                             </div>
                           </Tooltip>
@@ -248,26 +152,17 @@ const AgentList: React.FC<AgentTemplateListProps> = ({
                   </Space>
                 )}
               </Layout>
-              <Divider style={{ flexGrow: 0, margin: '0px' }} type="horizontal" />
-              <Layout
-                style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  flexGrow: 0,
-                  background: 'transparent',
-                  justifyContent: 'space-around',
-                  alignItems: 'center',
-                }}
-              >
+              <Divider className="flex-grow-0 m-0" type="horizontal" />
+              <Layout className="flex flex-row flex-grow-0 bg-transparent justify-around items-center">
                 <Button
-                  style={{ border: 'none' }}
-                  icon={<EditOutlined style={{ opacity: 0.45 }} />}
+                  className="border-none"
+                  icon={<EditOutlined className="opacity-45" />}
                   onClick={(e) => {
                     e.stopPropagation();
                     editExistingAgentTemplate(item.id);
                   }}
                 />
-                <Divider style={{ flexGrow: 0, margin: '12px 0px' }} type="vertical" />
+                <Divider className="flex-grow-0 my-3" type="vertical" />
                 <Popconfirm
                   title={`Delete ${item.name}?`}
                   okText="Confirm"
@@ -278,15 +173,15 @@ const AgentList: React.FC<AgentTemplateListProps> = ({
                   }}
                 >
                   <Button
-                    style={{ border: 'none' }}
-                    icon={<DeleteOutlined style={{ opacity: 0.45 }} />}
+                    className="border-none"
+                    icon={<DeleteOutlined className="opacity-45" />}
                     onClick={(e) => e.stopPropagation()}
                   />
                 </Popconfirm>
-                <Divider style={{ flexGrow: 0, margin: '12px 0px' }} type="vertical" />
+                <Divider className="flex-grow-0 my-3" type="vertical" />
                 <Button
-                  style={{ border: 'none' }}
-                  icon={<ExperimentOutlined style={{ opacity: 0.45 }} />}
+                  className="border-none"
+                  icon={<ExperimentOutlined className="opacity-45" />}
                   onClick={(e) => {
                     e.stopPropagation();
                     testAgentTemplate(item.id);

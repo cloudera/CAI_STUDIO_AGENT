@@ -27,46 +27,14 @@ const WarningMessageBox: React.FC<WarningMessageBoxProps> = ({
   };
 
   return (
-    <Layout
-      style={{
-        background: '#fff2f0',
-        border: '1px solid #ffccc7',
-        borderRadius: '6px',
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexGrow: 0,
-        padding: '10px 16px',
-        marginTop: 8,
-        marginLeft: 24,
-        marginRight: 24,
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'flex-start', flex: 1 }}>
-        <WarningOutlined
-          style={{
-            fontSize: '22px',
-            color: '#ff4d4f',
-          }}
-        />
-        <Text
-          style={{
-            marginLeft: '12px',
-            color: '#434343',
-          }}
-        >
-          {message}
-        </Text>
+    <Layout className="bg-[#fff2f0] border-solid border-[#ffccc7] rounded-md flex flex-row items-center justify-between flex-none px-4 py-2 mt-2 mx-6">
+      <div className="flex items-start flex-1">
+        <WarningOutlined className="text-[22px] text-[#ff4d4f]" />
+        <Text className="ml-3 text-[#434343] font-semibold">{message}</Text>
       </div>
       <CloseOutlined
         onClick={handleClose}
-        style={{
-          fontSize: '16px',
-          color: '#bfbfbf',
-          cursor: 'pointer',
-          marginLeft: 16,
-        }}
+        className="text-[16px] text-[#bfbfbf] cursor-pointer ml-4"
         aria-label="Close warning message"
       />
     </Layout>

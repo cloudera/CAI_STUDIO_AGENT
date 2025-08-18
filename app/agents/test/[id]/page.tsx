@@ -4,14 +4,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
-import { Layout, Typography, Input, Button, Alert, Avatar, Card, Tag, Spin } from 'antd';
-import {
-  HomeOutlined,
-  SendOutlined,
-  UserOutlined,
-  RobotOutlined,
-  DownloadOutlined,
-} from '@ant-design/icons';
+import { Layout, Input, Button, Alert, Avatar, Tag, Spin } from 'antd';
+import { SendOutlined, UserOutlined, DownloadOutlined } from '@ant-design/icons';
 import { jsPDF } from 'jspdf';
 import { useParams } from 'next/navigation';
 import { useTestAgentMutation, useGetAgentQuery } from '@/app/agents/agentApi';
@@ -19,21 +13,7 @@ import OpsIFrame from '@/app/components/OpsIFrame';
 import CommonBreadCrumb from '@/app/components/CommonBreadCrumb';
 const { Content } = Layout;
 
-const MarkdownContent = ({ content }: { content: string }) => {
-  return (
-    <div
-      style={{
-        padding: '8px',
-        backgroundColor: 'transparent',
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '14px',
-        lineHeight: '1.6',
-      }}
-    >
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-    </div>
-  );
-};
+// Removed unused MarkdownContent component
 
 const TestAgentPage: React.FC = () => {
   const params = useParams();
@@ -108,29 +88,13 @@ const TestAgentPage: React.FC = () => {
   };
 
   return (
-    <Layout style={{ padding: '16px 24px', flexDirection: 'column' }}>
+    <Layout className="px-6 py-4 flex flex-col">
       <CommonBreadCrumb
         items={[{ title: 'Test Catalog', href: '/agents' }, { title: 'Test Agent' }]}
       />
-      <Layout
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          width: '100%',
-          height: '100vh',
-        }}
-      >
+      <Layout className="flex flex-row w-full h-screen">
         {/* Left Side - Chat */}
-        <Content
-          style={{
-            flex: 1,
-            padding: '24px',
-            display: 'flex',
-            flexDirection: 'column',
-            borderRight: '1px solid #f0f0f0',
-            background: '#fff',
-          }}
-        >
+        <Content className="flex-1 p-6 flex flex-col border-r border-[#f0f0f0] bg-white">
           {!agentId ? (
             <Alert
               message="Error"
@@ -148,128 +112,58 @@ const TestAgentPage: React.FC = () => {
                   showIcon
                   closable
                   onClose={() => setError(null)}
-                  style={{ marginBottom: '16px' }}
+                  className="mb-4"
                 />
               )}
 
               {/* Fixed Agent Name Tag */}
-              <div
-                style={{
-                  position: 'sticky',
-                  top: 0,
-                  zIndex: 10,
-                  backgroundColor: '#fff',
-                  padding: '8px 0',
-                  borderBottom: '1px solid #f0f0f0',
-                }}
-              >
+              <div className="sticky top-0 z-10 bg-white py-2 border-b border-[#f0f0f0]">
                 {fetchingAgent ? (
                   <Spin />
                 ) : (
-                  <Tag color="#008cff" style={{ fontSize: '14px', padding: '5px 10px' }}>
+                  <Tag color="#008cff" className="text-sm py-[5px] px-[10px]">
                     {`${agentName || 'Unknown Agent'}`}
                   </Tag>
                 )}
               </div>
 
               {/* Chat Messages */}
-              <div
-                style={{
-                  flex: 1,
-                  overflowY: 'auto',
-                  marginTop: '16px',
-                  marginBottom: '16px',
-                  position: 'relative',
-                }}
-              >
+              <div className="flex-1 overflow-y-auto my-4 relative">
                 {messages.length === 0 && (
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      height: '100%',
-                      color: '#d9d9d9',
-                      fontSize: '24px',
-                      fontWeight: 'lighter',
-                    }}
-                  >
+                  <div className="flex justify-center items-center h-full text-[#d9d9d9] text-2xl font-extralight">
                     Say Hello
                   </div>
                 )}
 
                 {messages.map((message, index) => (
-                  <div
-                    key={index}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      marginBottom: '12px',
-                    }}
-                  >
+                  <div key={index} className="flex items-start mb-3">
                     <Avatar
                       icon={
                         message.role === 'user' ? (
-                          <UserOutlined style={{ fontSize: '15px' }} />
+                          <UserOutlined className="text-[15px]" />
                         ) : (
-                          <UserOutlined style={{ fontSize: '15px' }} />
+                          <UserOutlined className="text-[15px]" />
                         )
                       }
-                      style={{
-                        marginRight: '8px',
-                        backgroundColor: message.role === 'user' ? '#87d068' : '#1890ff',
-                        width: '25px', // Fixed width
-                        height: '25px', // Fixed height
-                        fontSize: '15px', // Adjust icon size
-                        display: 'flex',
-                      }}
+                      size={25}
+                      className={`${message.role === 'user' ? 'bg-[#87d068]' : 'bg-[#1890ff]'} mr-2 flex`}
                     />
                     {message.role === 'assistant' ? (
-                      <Layout
-                        style={{
-                          background: '#fff',
-                          borderRadius: '8px',
-                          maxWidth: '95%',
-                          position: 'relative',
-                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                          padding: '0 4px',
-                        }}
-                      >
+                      <Layout className="bg-white rounded-lg max-w-[95%] relative shadow-md px-1">
                         <Button
                           icon={<DownloadOutlined />}
                           size="small"
-                          style={{
-                            position: 'absolute',
-                            top: '8px',
-                            right: '8px',
-                            zIndex: 1,
-                          }}
+                          className="absolute top-2 right-2 z-[1]"
                           onClick={() => handleDownloadPdf(message.content)}
                         />
-                        <div
-                          className="prose prose-lg max-w-none m-4"
-                          style={{
-                            fontSize: '14px',
-                            padding: '0px',
-                            fontFamily:
-                              '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-                          }}
-                        >
+                        <div className="prose max-w-none m-4 text-sm">
                           <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
                             {message.content}
                           </ReactMarkdown>
                         </div>
                       </Layout>
                     ) : (
-                      <Layout
-                        style={{
-                          background: '#fff',
-                          maxWidth: '95%',
-                          position: 'relative',
-                        }}
-                      >
-                        {message.content}
-                      </Layout>
+                      <Layout className="bg-white max-w-[95%] relative">{message.content}</Layout>
                     )}
                   </div>
                 ))}
@@ -277,19 +171,13 @@ const TestAgentPage: React.FC = () => {
               </div>
 
               {/* Input Field */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  marginTop: 'auto',
-                }}
-              >
+              <div className="flex items-center mt-auto">
                 <Input
                   placeholder="Type your message"
                   value={userInput}
                   onChange={(e) => setUserInput(e.target.value)}
                   onPressEnter={handleTestAgent}
-                  style={{ flex: 1, marginRight: '8px' }}
+                  className="flex-1 mr-2"
                 />
                 <Button
                   type="primary"
@@ -303,23 +191,8 @@ const TestAgentPage: React.FC = () => {
         </Content>
 
         {/* Right Side - Ops Server */}
-        <Content
-          style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: '#fafafa',
-            marginLeft: '10px',
-          }}
-        >
-          <div
-            style={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-            }}
-          >
+        <Content className="flex-1 flex items-center justify-center bg-[#fafafa] ml-[10px]">
+          <div className="w-full h-full flex">
             <OpsIFrame />
           </div>
         </Content>

@@ -2,7 +2,6 @@ import {
   ListDeployedWorkflowsRequest,
   ListDeployedWorkflowsResponse,
   DeployedWorkflow,
-  DeployWorkflowRequest,
   UndeployWorkflowRequest,
 } from '@/studio/proto/agent_studio';
 

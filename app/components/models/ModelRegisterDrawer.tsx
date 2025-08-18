@@ -89,7 +89,7 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
     populateModelDetails();
   }, [modelRegisterId]);
 
-  const onSubmit = async (values: any) => {
+  const onSubmit = async (_values: any) => {
     try {
       if (drawerMode === 'edit') {
         if (!modelRegisterId) throw new Error('Model ID not specified for updating model.');
@@ -181,14 +181,7 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
     const type = modelRegisterType;
     const modelIdentifierHeader = (
       <>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            paddingTop: '16px',
-            paddingBottom: '8px',
-          }}
-        >
+        <div className="flex items-center pt-4 pb-2">
           Model Identifier
           <Tooltip
             title={
@@ -199,7 +192,7 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
                   : 'Enter the provider-specific model identifier (e.g., gpt-4o for OpenAI).'
             }
           >
-            <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+            <QuestionCircleOutlined className="ml-2 cursor-pointer" />
           </Tooltip>
         </div>
       </>
@@ -249,7 +242,7 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
         <>
           {modelIdentifierHeader}
           <Select
-            style={{ width: '100%' }}
+            className="w-full"
             placeholder="Select the model identifier"
             value={modelRegisterProviderModel}
             onChange={(value) => dispatch(setModelRegisterProviderModel(value))}
@@ -275,7 +268,7 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
   return (
     <Drawer
       title={
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="flex justify-between items-center">
           <span>{drawerMode === 'edit' ? 'Edit Model' : 'Register Model'}</span>
           {(drawerMode === 'register' || drawerMode === 'edit') && (
             <Button type="primary" htmlType="submit" onClick={onSubmit}>
@@ -289,16 +282,14 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
       footer={null}
       width={600}
     >
-      <div
-        style={{ display: 'flex', alignItems: 'center', paddingTop: '16px', paddingBottom: '8px' }}
-      >
+      <div className="flex items-center pt-4 pb-2">
         Model Provider
         <Tooltip title="Choose the model provider, such as OpenAI, OpenAI Compatible, Azure OpenAI, Google Gemini, Anthropic, or Cloudera AI Inference.">
-          <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+          <QuestionCircleOutlined className="ml-2 cursor-pointer" />
         </Tooltip>
       </div>
       <Select
-        style={{ width: '100%' }}
+        className="w-full"
         disabled={drawerMode === 'edit'}
         value={modelRegisterType}
         onChange={(value: string) => {
@@ -308,74 +299,48 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
         }}
       >
         <Option value="CAII">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <img
-              src="/llm_providers/caii.svg"
-              alt="Cloudera AI Inference"
-              style={{ width: '16px', height: '16px' }}
-            />
+          <div className="flex items-center gap-2">
+            <img src="/llm_providers/caii.svg" alt="Cloudera AI Inference" className="w-4 h-4" />
             Cloudera AI Inference
           </div>
         </Option>
         <Option value="OPENAI">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <img
-              src="/llm_providers/openai.svg"
-              alt="OpenAI"
-              style={{ width: '16px', height: '16px' }}
-            />
+          <div className="flex items-center gap-2">
+            <img src="/llm_providers/openai.svg" alt="OpenAI" className="w-4 h-4" />
             OpenAI
           </div>
         </Option>
         <Option value="OPENAI_COMPATIBLE">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <img
-              src="/llm_providers/generic-llm.svg"
-              alt="OpenAI Compatible"
-              style={{ width: '16px', height: '16px' }}
-            />
+          <div className="flex items-center gap-2">
+            <img src="/llm_providers/generic-llm.svg" alt="OpenAI Compatible" className="w-4 h-4" />
             OpenAI Compatible
           </div>
         </Option>
         <Option value="AZURE_OPENAI">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <img
-              src="/llm_providers/azure-openai.svg"
-              alt="Azure OpenAI"
-              style={{ width: '16px', height: '16px' }}
-            />
+          <div className="flex items-center gap-2">
+            <img src="/llm_providers/azure-openai.svg" alt="Azure OpenAI" className="w-4 h-4" />
             Azure OpenAI
           </div>
         </Option>
         <Option value="GEMINI">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <img
-              src="/llm_providers/gemini.svg"
-              alt="Google Gemini"
-              style={{ width: '16px', height: '16px' }}
-            />
+          <div className="flex items-center gap-2">
+            <img src="/llm_providers/gemini.svg" alt="Google Gemini" className="w-4 h-4" />
             Google Gemini
           </div>
         </Option>
         <Option value="ANTHROPIC">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <img
-              src="/llm_providers/anthropic.svg"
-              alt="Anthropic"
-              style={{ width: '16px', height: '16px' }}
-            />
+          <div className="flex items-center gap-2">
+            <img src="/llm_providers/anthropic.svg" alt="Anthropic" className="w-4 h-4" />
             Anthropic
           </div>
         </Option>
       </Select>
 
       {/* Model Alias */}
-      <div
-        style={{ display: 'flex', alignItems: 'center', paddingTop: '16px', paddingBottom: '8px' }}
-      >
+      <div className="flex items-center pt-4 pb-2">
         Model Alias
         <Tooltip title="Enter a unique name for your model to be referenced across the studio.">
-          <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+          <QuestionCircleOutlined className="ml-2 cursor-pointer" />
         </Tooltip>
       </div>
       <Input
@@ -391,17 +356,10 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
       {/* API Base */}
       {(modelRegisterType === 'OPENAI_COMPATIBLE' || modelRegisterType === 'AZURE_OPENAI') && (
         <>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              paddingTop: '16px',
-              paddingBottom: '8px',
-            }}
-          >
+          <div className="flex items-center pt-4 pb-2">
             API Base
             <Tooltip title="Enter the base URL for the model's API.">
-              <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+              <QuestionCircleOutlined className="ml-2 cursor-pointer" />
             </Tooltip>
           </div>
           <Input
@@ -416,17 +374,10 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
       {/* CAII API Base */}
       {modelRegisterType === 'CAII' && (
         <>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              paddingTop: '16px',
-              paddingBottom: '8px',
-            }}
-          >
+          <div className="flex items-center pt-4 pb-2">
             API Base
             <Tooltip title="Go to the Cloudera AI Model Endpoint details page to find the endpoint URL">
-              <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+              <QuestionCircleOutlined className="ml-2 cursor-pointer" />
             </Tooltip>
           </div>
           <Input
@@ -440,9 +391,7 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
       )}
 
       {/* API Key */}
-      <div
-        style={{ display: 'flex', alignItems: 'center', paddingTop: '16px', paddingBottom: '8px' }}
-      >
+      <div className="flex items-center pt-4 pb-2">
         API Key
         <Tooltip
           title={
@@ -451,7 +400,7 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
               : "Provide the API key for accessing the model's service."
           }
         >
-          <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+          <QuestionCircleOutlined className="ml-2 cursor-pointer" />
         </Tooltip>
       </div>
       <Input.Password
@@ -471,33 +420,23 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
       {/* Set as default toggle (Only in case of new model registration) */}
       {drawerMode === 'register' && (
         <>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              paddingTop: '16px',
-              paddingBottom: '8px',
-            }}
-          >
+          <div className="flex items-center pt-4 pb-2">
             Default Model
             <Tooltip title="Set this model as the default model for the studio">
-              <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+              <QuestionCircleOutlined className="ml-2 cursor-pointer" />
             </Tooltip>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="flex items-center gap-2">
             <Switch
               checked={setAsDefault || (models && models.length === 0)}
               onChange={(checked) => dispatch(setModelRegisterSetAsDefault(checked))}
               disabled={models && models.length === 0}
-              style={{
-                backgroundColor:
-                  setAsDefault || (models && models.length === 0) ? '#52c41a' : undefined,
-              }}
+              className={`${setAsDefault || (models && models.length === 0) ? 'bg-green-500' : ''}`}
             />
             <span>Set as default</span>
             {models && models.length === 0 && (
               <Tooltip title="First model is automatically set as default">
-                <QuestionCircleOutlined style={{ cursor: 'pointer' }} />
+                <QuestionCircleOutlined className="cursor-pointer" />
               </Tooltip>
             )}
           </div>
@@ -507,20 +446,11 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
       <Collapse
         bordered={false}
         ghost
-        style={{
-          margin: -10,
-          padding: 0,
-          paddingTop: '16px',
-          backgroundColor: 'transparent',
-        }}
+        className="-m-2 p-0 pt-4 bg-transparent"
         items={[
           {
             key: '1',
-            style: {
-              margin: 0,
-              padding: 0,
-              backgroundColor: 'transparent',
-            },
+            className: 'm-0 p-0 bg-transparent',
             label: (
               <>
                 <h4>Advanced Options</h4>

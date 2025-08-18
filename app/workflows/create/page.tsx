@@ -44,7 +44,7 @@ const CreateWorkflowPage: React.FC = () => {
   return (
     <Suspense
       fallback={
-        <Layout style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Layout className="flex-1 justify-center items-center">
           <Spin size="large" />
         </Layout>
       }
