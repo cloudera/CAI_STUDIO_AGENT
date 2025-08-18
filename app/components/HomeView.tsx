@@ -107,13 +107,7 @@ export interface HomeViewAgentToolTextCardProps {
   borderType: string;
 }
 
-const HomeViewAgentToolTextCard: React.FC<HomeViewAgentToolTextCardProps> = ({
-  _itemBackgroundColor,
-  _itemBorderColor,
-  _textColor,
-  text,
-  _borderType,
-}) => {
+const HomeViewAgentToolTextCard: React.FC<HomeViewAgentToolTextCardProps> = ({ text }) => {
   return (
     <>
       <Text className="h-[22px] text-xs bg-[rgba(0,0,0,0.02)] text-[rgba(0,0,0,0.88)] p-[1px_8px] flex-shrink-0 rounded border-solid border-[1px] border-[#d9d9d9]">
@@ -131,7 +125,6 @@ export interface HomeViewAgentToolCardProps {
 }
 
 const HomeViewDiagramAgentToolCard: React.FC<HomeViewAgentToolCardProps> = ({
-  _borderColor,
   itemBackgroundColor,
   itemBorderColor,
   textColor,
