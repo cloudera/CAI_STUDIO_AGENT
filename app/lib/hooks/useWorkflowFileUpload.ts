@@ -7,7 +7,7 @@ import {
   updatedWorkflowSessionDirectory,
 } from '@/app/workflows/editorSlice';
 import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
-import { getWorkflowDirectory, uploadFileToWorkflowSession } from '../workflowFileUpload';
+import { uploadFileToWorkflowSession } from '../workflowFileUpload';
 import { useGlobalNotification } from '@/app/components/Notifications';
 import { createSessionForWorkflow } from '@/app/lib/session';
 
@@ -19,7 +19,7 @@ export interface UseWorkflowFileUploadOptions {
 export const useWorkflowFileUpload = (options: UseWorkflowFileUploadOptions) => {
   const { workflow, renderMode } = options;
   const [uploading, setUploading] = useState(false);
-  const [uploadingCount, setUploadingCount] = useState(0);
+  const [_uploadingCount, setUploadingCount] = useState(0);
   const abortControllersRef = useState<Record<string, AbortController>>({})[0];
   const dispatch = useAppDispatch();
   const sessionId = useAppSelector(selectWorkflowSessionId);

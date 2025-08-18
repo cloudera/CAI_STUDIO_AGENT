@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Card, Input, Layout, Typography, Alert, Spin, Menu, Dropdown, Tag } from 'antd';
+import { Button, Input, Layout, Typography, Alert, Spin, Menu, Dropdown, Tag } from 'antd';
 import ThoughtsBox, { ThoughtEntry } from './ThoughtsBox';
 import { getWorkflowInputs } from '@/app/lib/workflow';
 import { useTestWorkflowMutation } from '@/app/workflows/workflowsApi';
@@ -15,11 +15,9 @@ import {
   selectCurrentEvents,
 } from '@/app/workflows/workflowAppSlice';
 import {
-  PauseCircleOutlined,
   SendOutlined,
   DownloadOutlined,
   MoreOutlined,
-  UploadOutlined,
 } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -37,7 +35,6 @@ import {
 import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
 import { useGlobalNotification } from '../Notifications';
 import FileUploadButton from '../FileUploadButton';
-import { getWorkflowDirectory } from '@/app/lib/workflowFileUpload';
 
 const { Title, Text } = Typography;
 

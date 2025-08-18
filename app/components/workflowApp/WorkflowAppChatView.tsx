@@ -14,7 +14,7 @@ import {
 } from '@/app/workflows/workflowAppSlice';
 import { CrewAITaskMetadata, Workflow } from '@/studio/proto/agent_studio';
 import ChatMessages from '../ChatMessages';
-import ThoughtsBox, { ThoughtEntry } from './ThoughtsBox';
+import { ThoughtEntry } from './ThoughtsBox';
 import {
   selectWorkflowConfiguration,
   selectWorkflowGenerationConfig,
@@ -39,11 +39,11 @@ export interface WorkflowAppChatViewProps {
 
 const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({
   workflow,
-  tasks,
+  tasks: _tasks,
   onOpenArtifacts,
-  thoughts = [],
-  thoughtsCollapsed = false,
-  onToggleThoughts = () => {},
+  thoughts: _thoughts = [],
+  thoughtsCollapsed: _thoughtsCollapsed = false,
+  onToggleThoughts: _onToggleThoughts = () => {},
   thoughtSessions = [],
   onToggleThoughtSession = () => {},
 }) => {

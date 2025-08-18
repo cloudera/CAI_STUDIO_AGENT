@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
-import { Input, Button, Avatar, Layout, Spin, Tooltip, Menu, Dropdown, Tag } from 'antd';
+import { Input, Button, Avatar, Layout, Spin, Menu, Dropdown, Tag } from 'antd';
 import {
   UserOutlined,
   SendOutlined,
@@ -83,9 +83,9 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
 }) => {
   const userInput = useAppSelector(selectWorkflowAppChatUserInput);
   const sessionFiles = useAppSelector(selectWorkflowAppSessionFiles);
-  const sessionId = useAppSelector(selectWorkflowSessionId);
+  const _sessionId = useAppSelector(selectWorkflowSessionId);
   const sessionDirectory = useAppSelector(selectWorkflowSessionDirectory);
-  const { data: workflowData } = useGetWorkflowDataQuery();
+  const { data: _workflowData } = useGetWorkflowDataQuery();
   const dispatch = useAppDispatch();
   const [previewVisible, setPreviewVisible] = useState<boolean>(false);
   const [selectedFile, setSelectedFile] = useState<ArtifactFileInfo | null>(null);

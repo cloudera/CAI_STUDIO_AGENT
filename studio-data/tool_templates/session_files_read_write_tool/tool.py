@@ -229,13 +229,13 @@ def estimate_token_count(text: str) -> int:
     return len(text) // 4
 
 
-def truncate_content_for_llm(content: str, max_tokens: int = 10000) -> tuple[str, bool, dict]:
+def truncate_content_for_llm(content: str, max_tokens: int = 5000) -> tuple[str, bool, dict]:
     """
     Truncate content based on estimated token count to prevent LLM API failures.
     
     Args:
         content: The content to check and potentially truncate
-        max_tokens: Maximum number of tokens allowed (default: 10000)
+        max_tokens: Maximum number of tokens allowed (default: 5000)
         
     Returns:
         Tuple of (truncated_content, was_truncated, truncation_info)

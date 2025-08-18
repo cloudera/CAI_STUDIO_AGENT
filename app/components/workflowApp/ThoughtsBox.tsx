@@ -63,7 +63,7 @@ const ThoughtsBox: React.FC<ThoughtsBoxProps> = ({
   }
   const sessionDirectory = useAppSelector(selectWorkflowSessionDirectory);
   const [files, setFiles] = React.useState<FileInfo[]>([]);
-  const [loading, setLoading] = React.useState<boolean>(false);
+  const [_loading, setLoading] = React.useState<boolean>(false);
   const initialPathsRef = React.useRef<Set<string>>(new Set());
   const artifactsScrollRef = React.useRef<HTMLDivElement | null>(null);
   const [previewVisible, setPreviewVisible] = React.useState<boolean>(false);
@@ -197,41 +197,7 @@ const ThoughtsBox: React.FC<ThoughtsBoxProps> = ({
     if (active) fetchFiles();
   }, [sessionKey, artifacts]);
 
-  const isTextBasedFile = (fileName: string): boolean => {
-    const textExt = [
-      'txt',
-      'log',
-      'md',
-      'json',
-      'py',
-      'js',
-      'ts',
-      'tsx',
-      'jsx',
-      'css',
-      'html',
-      'xml',
-      'yaml',
-      'yml',
-      'ini',
-      'conf',
-      'config',
-      'csv',
-      'sql',
-      'java',
-      'cpp',
-      'c',
-      'h',
-      'cs',
-      'php',
-      'rb',
-      'go',
-      'rs',
-      'sh',
-    ];
-    const ext = fileName.split('.').pop()?.toLowerCase();
-    return textExt.includes(ext || '');
-  };
+  
 
   const openPreview = (file: FileInfo) => {
     setSelectedFile(file);

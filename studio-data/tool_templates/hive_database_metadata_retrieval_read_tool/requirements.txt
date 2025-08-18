@@ -1,3 +1,4 @@
 pydantic
 impyla
 pandas
+tiktoken

@@ -18,7 +18,7 @@ automatically: CSV if the result sets can be combined into a single table, other
 TXT. The file extension is forced to .csv or .txt regardless of the provided name.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel, Field
 import json
 import argparse
@@ -27,6 +27,10 @@ import re
 import os
 from datetime import datetime
 import csv
+try:
+    import tiktoken  # type: ignore
+except Exception:
+    tiktoken = None  # type: ignore
 
 
 class UserParameters(BaseModel):
@@ -194,6 +198,125 @@ def _record_sql_attempt(sql: str, status: str, has_data: bool) -> None:
         pass
 
 
+TOKEN_INLINE_THRESHOLD: int = 500
+
+
+def _estimate_tokens_from_text(text: str, model: Optional[str] = None) -> int:
+    """
+    Estimate token count for the given text.
+    Prefer tiktoken if available; fallback to heuristic combining word/punct count and bytes/4.
+    """
+    if not text:
+        return 0
+    try:
+        if tiktoken is not None:  # type: ignore
+            enc = None
+            if model:
+                try:
+                    enc = tiktoken.encoding_for_model(model)  # type: ignore
+                except Exception:
+                    pass
+            if enc is None:
+                enc = tiktoken.get_encoding("cl100k_base")  # type: ignore
+            return len(enc.encode(text))  # type: ignore
+    except Exception:
+        pass
+    tokens_like = re.findall(r"[A-Za-z0-9]+|[^\sA-Za-z0-9]", text)
+    approx_by_words = len(tokens_like)
+    approx_by_bytes = (len(text.encode("utf-8")) + 3) // 4
+    return max(approx_by_words, approx_by_bytes)
+
+
+def _estimate_tokens_from_json(obj: Union[Dict[str, Any], List[Any]]) -> int:
+    try:
+        compact = json.dumps(obj, ensure_ascii=False, separators=(",", ":"))
+    except Exception:
+        compact = str(obj)
+    return _estimate_tokens_from_text(compact)
+
+
+def _trim_rows_to_token_limit(columns: List[str], rows: List[Dict[str, Any]], token_limit: int) -> Dict[str, Any]:
+    """
+    Return a preview object {"columns", "rows"} with rows trimmed to fit within token_limit.
+    Ensures at least one row if available.
+    """
+    if not rows:
+        return {"columns": columns, "rows": []}
+    low = 1
+    high = min(len(rows), 50)
+    best_obj = {"columns": columns, "rows": rows[:low]}
+    # Binary search-ish increase to fit as many rows as possible under the limit
+    while low <= high:
+        mid = (low + high) // 2
+        candidate = {"columns": columns, "rows": rows[:mid]}
+        if _estimate_tokens_from_json(candidate) <= token_limit:
+            best_obj = candidate
+            low = mid + 1
+        else:
+            high = mid - 1
+    return best_obj
+
+
+def _trim_results_payload(results: List[Dict[str, Any]], base_meta: Dict[str, Any], token_limit: int) -> Dict[str, Any]:
+    """
+    Build a trimmed preview payload for TXT output.
+    Tries to include up to all statements, but trims rows per statement to fit token limit.
+    """
+    # Start with 10 rows per statement and reduce if needed
+    max_rows_per_stmt = 10
+    selected_results = results
+
+    def build_preview(max_rows: int) -> Dict[str, Any]:
+        trimmed: List[Dict[str, Any]] = []
+        for entry in selected_results:
+            if "rows" in entry and "columns" in entry:
+                trimmed.append(
+                    {
+                        "statement_index": entry.get("statement_index"),
+                        "statement": entry.get("statement"),
+                        "columns": entry.get("columns"),
+                        "rows": entry.get("rows", [])[:max_rows],
+                    }
+                )
+            else:
+                trimmed.append(
+                    {
+                        "statement_index": entry.get("statement_index"),
+                        "statement": entry.get("statement"),
+                        "status": entry.get("status"),
+                        "rowcount": entry.get("rowcount"),
+                    }
+                )
+        payload = {**base_meta, "results": trimmed}
+        return payload
+
+    preview = build_preview(max_rows_per_stmt)
+    if _estimate_tokens_from_json(preview) <= token_limit:
+        return preview
+
+    # Reduce rows per statement down to at least 1
+    while max_rows_per_stmt > 1:
+        max_rows_per_stmt = max(1, max_rows_per_stmt // 2)
+        preview = build_preview(max_rows_per_stmt)
+        if _estimate_tokens_from_json(preview) <= token_limit:
+            return preview
+
+    # If still over, include only first N statements progressively
+    left = 1
+    right = len(results)
+    best = build_preview(max_rows_per_stmt)
+    while left <= right:
+        mid = (left + right) // 2
+        selected_results = results[:mid]
+        preview = build_preview(max_rows_per_stmt)
+        if _estimate_tokens_from_json(preview) <= token_limit:
+            best = preview
+            left = mid + 1
+        else:
+            right = mid - 1
+    return best
+
+
 def run_tool(config: UserParameters, args: ToolParameters) -> Any:
     results: List[Dict[str, Any]] = []
     has_any_data: bool = False
@@ -304,7 +427,23 @@ def run_tool(config: UserParameters, args: ToolParameters) -> Any:
 
         # Return object with basename and statements count
         _record_sql_attempt(args.sql, status="success", has_data=has_any_data)
-        return {"output_file": os.path.basename(unique_path), "statements_count": len(statements)}
+        response: Dict[str, Any] = {"output_file": os.path.basename(unique_path), "statements_count": len(statements)}
+
+        # Inline preview up to token threshold
+        try:
+            if can_csv:
+                preview_obj = _trim_rows_to_token_limit(csv_columns, combined_rows, TOKEN_INLINE_THRESHOLD)
+                response["inline_preview_tokens"] = _estimate_tokens_from_json(preview_obj)
+                response["inline_preview"] = {"format": "csv", **preview_obj}
+            else:
+                base_meta = {"database": database_to_use, "statements_count": len(statements)}
+                preview_obj = _trim_results_payload(results, base_meta, TOKEN_INLINE_THRESHOLD)
+                response["inline_preview_tokens"] = _estimate_tokens_from_json(preview_obj)
+                response["inline_preview"] = {"format": "txt", **preview_obj}
+        except Exception:
+            pass
+
+        return response
     except Exception as error:  # noqa: BLE001
         _record_sql_attempt(args.sql, status="error", has_data=False)
         return {"error": f"SQL execution failed: {error}"}

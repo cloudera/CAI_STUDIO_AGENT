@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  List,
   Empty,
   Spin,
   Alert,
@@ -18,14 +17,11 @@ import {
   EyeOutlined,
   FolderOutlined,
   ReloadOutlined,
-  ExportOutlined,
   ClockCircleOutlined,
-  CloseOutlined,
   FilePdfOutlined,
   FileImageOutlined,
   FileTextOutlined,
   CodeOutlined,
-  FileSearchOutlined,
   FileExcelOutlined,
   FileWordOutlined,
   FileZipOutlined,
@@ -310,20 +306,7 @@ const WorkflowAppArtifactsView: React.FC<WorkflowAppArtifactsViewProps> = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   };
 
-  // Format date
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'Unknown date';
-    try {
-      const date = new Date(dateString);
-      return (
-        date.toLocaleDateString() +
-        ' ' +
-        date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      );
-    } catch {
-      return 'Invalid date';
-    }
-  };
+  
 
   // Handle file preview (shared modal handles fetching/rendering)
   const handlePreview = (file: FileInfo) => {

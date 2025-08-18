@@ -36,6 +36,12 @@ from math import sqrt
 from typing import cast
 import time
 import uuid
+from typing import Union
+
+try:
+    import tiktoken  # type: ignore
+except Exception:
+    tiktoken = None  # type: ignore
 
 
 class UserParameters(BaseModel):
@@ -136,6 +142,37 @@ def _get_session_dir_abs() -> str:
     if not session_dir:
         raise ValueError("Environment variable SESSION_DIRECTORY is not set")
     return os.path.abspath(session_dir)
+
+
+# ---------- Heuristic configuration ----------
+# Stopwords and low-signal tokens. Keep short but focused; do not drop domain terms entirely.
+STOPWORDS: set = {
+    "the",
+    "and",
+    "or",
+    "of",
+    "for",
+    "to",
+    "in",
+    "on",
+}
+
+# Column/type hinting for numeric rate-like and date/time semantics
+RATE_HINT_SUFFIXES: Tuple[str, ...] = ("_rate", "_pct", "_percentage", "_ratio")
+DATE_TYPE_HINTS: Tuple[str, ...] = ("date", "timestamp")
+
+# Field weights for BM25F-like token replication
+TABLE_FIELD_WEIGHTS: Dict[str, int] = {
+    "name": 5,          # table name
+    "desc": 2,          # table description
+}
+
+COLUMN_FIELD_WEIGHTS: Dict[str, int] = {
+    "table": 2,
+    "column": 5,
+    "type": 1,
+    "desc": 2,
+}
 
 
 # ---------- Metadata search specific cache helpers ----------
@@ -273,33 +310,62 @@ def _fetch_table_metadata(cursor: Any, metadata_db: str, metadata_table: str, de
     return out
 
 
-def _bm25_prepare(docs: List[str]) -> Dict[str, Any]:
+def _bm25_prepare(docs: List[str], df_stopword_threshold: Optional[float] = None) -> Dict[str, Any]:
+    # First pass: compute DF across all tokens
+    raw_tokens_per_doc: List[List[str]] = []
     token_df: Dict[str, int] = {}
-    per_doc_tf: List[Dict[str, int]] = []
-    doc_len: List[int] = []
     for text in docs:
         tokens = _normalize_tokens(text)
-        tf: Dict[str, int] = {}
-        for t in tokens:
-            tf[t] = tf.get(t, 0) + 1
-        per_doc_tf.append(tf)
-        doc_len.append(len(tokens))
+        raw_tokens_per_doc.append(tokens)
         for t in set(tokens):
             token_df[t] = token_df.get(t, 0) + 1
-    avgdl = float(sum(doc_len) / max(1, len(doc_len)))
+
+    num_docs = len(docs)
+    # Compute dynamic stopword set by DF threshold if provided
+    stopwords: set = set()
+    if df_stopword_threshold is not None and num_docs > 0:
+        for t, df in token_df.items():
+            if (df / float(num_docs)) >= df_stopword_threshold:
+                stopwords.add(t)
+
+    # Second pass: build per-doc TF without stopwords
+    per_doc_tf: List[Dict[str, int]] = []
+    doc_len: List[int] = []
+    for tokens in raw_tokens_per_doc:
+        filtered = [t for t in tokens if t not in stopwords]
+        tf: Dict[str, int] = {}
+        for t in filtered:
+            tf[t] = tf.get(t, 0) + 1
+        per_doc_tf.append(tf)
+        doc_len.append(len(filtered))
+    avgdl = float(sum(doc_len) / max(1, num_docs))
     return {
         "per_doc_tf": per_doc_tf,
         "doc_len": doc_len,
         "token_df": token_df,
-        "num_docs": len(docs),
+        "num_docs": num_docs,
         "avgdl": avgdl,
+        "stopwords": list(stopwords),
     }
 
 
-def _bm25_scores(query: str, prepared: Dict[str, Any]) -> List[float]:
+def _bm25_scores(query: str, prepared: Dict[str, Any], expand_tokens: Optional[Dict[str, List[str]]] = None, proximity_window: int = 0) -> List[float]:
     k1 = 1.2
     b = 0.75
-    q_tokens = list(set(_normalize_tokens(query)))
+    # Expand keywords with external synonyms (if provided) and phrases
+    base = _normalize_tokens(query)
+    # include phrases like "same day" if present in original
+    qtext = query.lower().replace("-", " ")
+    if "same day" in qtext and "same day" not in base:
+        base.append("same day")
+    expanded: List[str] = list(base)
+    if expand_tokens:
+        for tok in list(base):
+            if tok in expand_tokens:
+                expanded.extend(expand_tokens[tok])
+    # Drop dynamic stopwords captured in prepared model
+    dyn_stop = set(prepared.get("stopwords", []))
+    q_tokens = list(set([t for t in expanded if t not in dyn_stop]))
     token_df = prepared["token_df"]
     per_doc_tf = prepared["per_doc_tf"]
     doc_len = prepared["doc_len"]
@@ -317,8 +383,68 @@ def _bm25_scores(query: str, prepared: Dict[str, Any]) -> List[float]:
             tf_i = tf.get(term, 0)
             denom = tf_i + k1 * (1 - b + b * (dl / max(1.0, avgdl)))
             score += (idf * (tf_i * (k1 + 1))) / max(1.0, denom)
+        # Optional lightweight proximity within doc text
+        if proximity_window > 0 and i < len(per_doc_tf) and len(q_tokens) >= 2:
+            # Build a fake token list from tf (approximate)
+            # We rely on overlap: if both terms appear in doc, give a tiny bonus
+            present = [t for t in q_tokens if tf.get(t, 0) > 0]
+            if len(present) >= 2:
+                score += 0.05
         scores.append(float(score))
     return scores
+
+
+TOKEN_INLINE_THRESHOLD: int = 5000
+
+
+def _estimate_tokens_from_text(text: str, model: Optional[str] = None) -> int:
+    """
+    Estimate token count for the given text.
+    - Uses tiktoken if available (model-aware when possible)
+    - Falls back to a robust heuristic when tiktoken is unavailable
+    Heuristic: max(words_and_punct, utf8_bytes/4) where words_and_punct tokenizes
+    similar to BPE granularity by splitting on alphanumerics and single non-space punct.
+    """
+    if not text:
+        return 0
+    # Preferred: tiktoken if available
+    try:
+        if tiktoken is not None:  # type: ignore
+            enc = None
+            if model:
+                try:
+                    enc = tiktoken.encoding_for_model(model)  # type: ignore
+                except Exception:
+                    pass
+            if enc is None:
+                enc = tiktoken.get_encoding("cl100k_base")  # type: ignore
+            return len(enc.encode(text))  # type: ignore
+    except Exception:
+        # Fall through to heuristic
+        pass
+
+    # Heuristic fallback: combine a word/punct count with bytes/4 approximation
+    # Count alphanumerics and individual punctuation tokens
+    # Example regex will capture words OR single non-space punctuation
+    tokens_like = re.findall(r"[A-Za-z0-9]+|[^\sA-Za-z0-9]", text)
+    approx_by_words = len(tokens_like)
+    # Byte-length based
+    byte_len = len(text.encode("utf-8"))
+    approx_by_bytes = (byte_len + 3) // 4
+    return max(approx_by_words, approx_by_bytes)
+
+
+def _estimate_tokens_from_json(obj: Union[Dict[str, Any], List[Any]]) -> int:
+    """
+    Serialize with compact separators to get a conservative token estimate and
+    run through the tokenizer estimator.
+    """
+    try:
+        compact = json.dumps(obj, ensure_ascii=False, separators=(",", ":"))
+    except Exception:
+        # Fallback to string repr if something is not JSON-serializable
+        compact = str(obj)
+    return _estimate_tokens_from_text(compact)
 
 
 def _metadata_search_flow(
@@ -328,6 +454,7 @@ def _metadata_search_flow(
     metadata_table: str,
     keywords: List[str],
     output_file: str,
+    tool_params: Optional[ToolParameters] = None,
 ) -> Dict[str, Any]:
     # Prepare debug log
     debug_log = _debug_log_path()
@@ -365,13 +492,29 @@ def _metadata_search_flow(
                 "description": d,
             })
 
-    # Prepare docs for scoring
+    # Resolve dynamic config from tool_params for weights and thresholds
+    tp = tool_params
+    tbl_name_w = TABLE_FIELD_WEIGHTS.get("name", 5)
+    tbl_desc_w = TABLE_FIELD_WEIGHTS.get("desc", 2)
+    col_name_w = COLUMN_FIELD_WEIGHTS.get("column", 5)
+    col_tbl_w = COLUMN_FIELD_WEIGHTS.get("table", 2)
+    col_type_w = COLUMN_FIELD_WEIGHTS.get("type", 1)
+    col_desc_w = COLUMN_FIELD_WEIGHTS.get("desc", 2)
+    df_stop_thr = 0.8
+    prox_win = 3
+    # Optional synonym map
+    syn_map: Optional[Dict[str, List[str]]] = None
+
+    # Prepare docs for scoring with BM25F-like replication
     table_names = sorted(set(list(table_desc.keys()) + [ce["table"] for ce in column_entries]))
     table_docs: List[str] = []
     for t in table_names:
         d = table_desc.get(t, "")
-        table_docs.append(f"{t} {d}")
-    table_prepared = _bm25_prepare(table_docs)
+        name_rep = (f"{t} ") * tbl_name_w
+        desc_rep = (f"{d} ") * tbl_desc_w
+        name_exp = t.replace("_", " ")
+        table_docs.append(f"{name_rep}{name_exp} {desc_rep}")
+    table_prepared = _bm25_prepare(table_docs, df_stopword_threshold=df_stop_thr)
 
     # Score tables and columns per keyword and keep per-item best score+keyword
     per_table_best: Dict[str, Tuple[float, str]] = {t: (0.0, "") for t in table_names}
@@ -383,16 +526,30 @@ def _metadata_search_flow(
         e["keyword"] = ""
         per_column_best.append(e)
 
-    for kw in (keywords or []):
-        tbl_scores = _bm25_scores(kw, table_prepared)
+    raw_keywords = keywords or []
+    for kw in raw_keywords:
+        tbl_scores = _bm25_scores(kw, table_prepared, expand_tokens=syn_map, proximity_window=prox_win)
         for t, sc in zip(table_names, tbl_scores):
             if sc > per_table_best[t][0]:
                 per_table_best[t] = (float(sc), kw)
 
         # Column docs scored per keyword
-        col_docs = [f"{e['table']}.{e['column']} {e.get('description','')}" for e in column_entries]
-        col_prepared = _bm25_prepare(col_docs)
-        col_scores = _bm25_scores(kw, col_prepared)
+        # Build column docs with BM25F-style replication using dynamic weights
+        col_docs = []
+        for e in column_entries:
+            tbl = e["table"]
+            col = e["column"]
+            desc = e.get("description", "")
+            doc = (
+                (f"{col} ") * col_name_w +
+                (f"{tbl} ") * col_tbl_w +
+                (f"{e.get('type','')} ") * col_type_w +
+                (f"{desc} ") * col_desc_w +
+                col.replace("_", " ") + " " + tbl.replace("_", " ")
+            )
+            col_docs.append(doc)
+        col_prepared = _bm25_prepare(col_docs, df_stopword_threshold=df_stop_thr)
+        col_scores = _bm25_scores(kw, col_prepared, expand_tokens=syn_map, proximity_window=prox_win)
         for e, sc in zip(per_column_best, col_scores):
             if sc > e.get("score", 0.0):
                 e["score"] = float(sc)
@@ -409,7 +566,7 @@ def _metadata_search_flow(
 
     # Build ranked lists per keyword for tables
     per_kw_table_lists: List[List[Dict[str, Any]]] = []
-    for kw in (keywords or []):
+    for kw in (raw_keywords):
         tbl_scores = _bm25_scores(kw, table_prepared)
         tbl_pairs = list(zip(table_names, tbl_scores))
         tbl_pairs.sort(key=lambda x: x[1], reverse=True)
@@ -418,19 +575,41 @@ def _metadata_search_flow(
             for t, sc in tbl_pairs
         ])
     # Quotas: distribute 5 tables across keywords as evenly as possible
-    n = max(1, len(keywords or []))
+    # Gate keywords with zero-signal
+    gated_keywords: List[str] = []
+    for idx, kw in enumerate(raw_keywords):
+        has_signal = False
+        if idx < len(per_kw_table_lists) and per_kw_table_lists[idx]:
+            if per_kw_table_lists[idx][0].get("score", 0.0) > 0.0:
+                has_signal = True
+        if has_signal:
+            gated_keywords.append(kw)
+    n = max(1, len(gated_keywords) if gated_keywords else len(raw_keywords))
     base_q_tables = 5 // n
     remainder_tables = 5 - base_q_tables * n
     table_quotas = [base_q_tables + (1 if i < remainder_tables else 0) for i in range(n)]
-    table_top = pick_per_keyword(per_kw_table_lists, table_quotas)
+    effective_per_kw_tables = per_kw_table_lists if not gated_keywords else [
+        per_kw_table_lists[(raw_keywords.index(kw))] for kw in gated_keywords
+    ]
+    table_top = pick_per_keyword(effective_per_kw_tables, table_quotas)
     table_top.sort(key=lambda x: x.get("score", 0.0), reverse=True)
-    table_top_5 = table_top[:5]
+    # Ensure distinct tables and try to cover different keywords
+    seen_tbls: set = set()
+    table_top_5: List[Dict[str, Any]] = []
+    for item in table_top:
+        t = item.get("table", "")
+        if not t or t in seen_tbls:
+            continue
+        seen_tbls.add(t)
+        table_top_5.append(item)
+        if len(table_top_5) >= 5:
+            break
 
     # Build ranked lists per keyword for columns
     base_col_docs = [f"{e['table']}.{e['column']} {e.get('description','')}" for e in column_entries]
     base_col_prepared = _bm25_prepare(base_col_docs)
     per_kw_col_lists: List[List[Dict[str, Any]]] = []
-    for kw in (keywords or []):
+    for kw in (raw_keywords):
         col_scores = _bm25_scores(kw, base_col_prepared)
         pairs = list(zip(column_entries, col_scores))
         pairs.sort(key=lambda x: x[1], reverse=True)
@@ -448,9 +627,22 @@ def _metadata_search_flow(
     base_q_columns = 25 // n
     remainder_columns = 25 - base_q_columns * n
     column_quotas = [base_q_columns + (1 if i < remainder_columns else 0) for i in range(n)]
-    col_top = pick_per_keyword(per_kw_col_lists, column_quotas)
+    effective_per_kw_cols = per_kw_col_lists if not gated_keywords else [
+        per_kw_col_lists[(raw_keywords.index(kw))] for kw in gated_keywords
+    ]
+    col_top = pick_per_keyword(effective_per_kw_cols, column_quotas)
     col_top.sort(key=lambda x: x.get("score", 0.0), reverse=True)
-    top_columns = col_top[:25]
+    # Deduplicate column results and cap at 25
+    seen_col_pairs: set = set()
+    top_columns: List[Dict[str, Any]] = []
+    for e in col_top:
+        key = (e.get("table", ""), e.get("column", ""))
+        if key in seen_col_pairs:
+            continue
+        seen_col_pairs.add(key)
+        top_columns.append(e)
+        if len(top_columns) >= 25:
+            break
 
     # For top tables, include all of their column names
     table_to_columns_map: Dict[str, List[str]] = {}
@@ -471,24 +663,61 @@ def _metadata_search_flow(
         tname = item.get("table", "")
         enriched = dict(item)
         enriched["columns"] = table_to_columns_map.get(tname, [])
+        # Joinability hints: simple id/_id columns present in this table
+        enriched["join_hints"] = [c for c in enriched["columns"] if c == "id" or c.endswith("_id")]
         top_tables_with_columns.append(enriched)
 
     # Per-keyword views intentionally omitted from output
 
     # Write JSON
     unique_path = _ensure_unique_output_path(output_file, ".json")
+    # Build additional guidance for downstream LLMs
+    # Suggested joins between top tables based on simple id/_id alignment
+    suggested_joins: List[Dict[str, Any]] = []
+    try:
+        top_tbl_names = [t.get("table", "") for t in top_tables_with_columns]
+        for i in range(len(top_tbl_names)):
+            for j in range(i + 1, len(top_tbl_names)):
+                a = top_tbl_names[i]
+                b = top_tbl_names[j]
+                a_cols = set(table_to_columns_map.get(a, []))
+                b_cols = set(table_to_columns_map.get(b, []))
+                # Common join keys heuristic
+                candidates = []
+                for c in a_cols:
+                    if c == "id" or c.endswith("_id"):
+                        if c in b_cols or c == f"{b.split('.')[-1]}_id" or c == f"{a.split('.')[-1]}_id":
+                            candidates.append(c)
+                if candidates:
+                    suggested_joins.append({
+                        "left_table": a,
+                        "right_table": b,
+                        "keys": sorted(list(set(candidates))),
+                    })
+    except Exception:
+        suggested_joins = []
+
     out_payload = {
         "top_tables": top_tables_with_columns,
         "top_columns": top_columns,
+        "suggested_joins": suggested_joins,
     }
     with open(unique_path, "w", encoding="utf-8") as f_out:
         json.dump(out_payload, f_out, ensure_ascii=False, indent=2)
 
-    return {
+    response: Dict[str, Any] = {
         "output_file": os.path.basename(unique_path),
         "tables_returned": len(top_tables_with_columns),
         "columns_returned": len(top_columns),
     }
+    try:
+        token_count = _estimate_tokens_from_json(out_payload)
+        response["inline_json_tokens"] = token_count
+        if token_count <= TOKEN_INLINE_THRESHOLD:
+            response["inline_json"] = out_payload
+    except Exception:
+        pass
+    return response
 
 
 def _load_or_fetch_metadata_rows(
@@ -560,7 +789,15 @@ def _metadata_list_tables_flow(
     with open(unique_path, "w", encoding="utf-8") as f_out:
         json.dump(out_payload, f_out, ensure_ascii=False, indent=2)
 
-    return {"output_file": os.path.basename(unique_path), "tables_returned": len(items)}
+    response: Dict[str, Any] = {"output_file": os.path.basename(unique_path), "tables_returned": len(items)}
+    try:
+        token_count = _estimate_tokens_from_json(out_payload)
+        response["inline_json_tokens"] = token_count
+        if token_count <= TOKEN_INLINE_THRESHOLD:
+            response["inline_json"] = out_payload
+    except Exception:
+        pass
+    return response
 
 
 def _metadata_describe_table_flow(
@@ -606,10 +843,18 @@ def _metadata_describe_table_flow(
     with open(unique_path, "w", encoding="utf-8") as f_out:
         json.dump(out_payload, f_out, ensure_ascii=False, indent=2)
 
-    return {
+    response: Dict[str, Any] = {
         "output_file": os.path.basename(unique_path),
         "columns_returned": len(columns),
     }
+    try:
+        token_count = _estimate_tokens_from_json(out_payload)
+        response["inline_json_tokens"] = token_count
+        if token_count <= TOKEN_INLINE_THRESHOLD:
+            response["inline_json"] = out_payload
+    except Exception:
+        pass
+    return response
 
 
 def _cache_path(connection_name: str, db_scope: str) -> str:
@@ -788,6 +1033,7 @@ def _build_search_text(entry: Dict[str, Any]) -> str:
     # Help lexical matching by expanding underscores into separate tokens
     parts.append(" ".join(column.replace("_", " ").split()))
     parts.append(" ".join(table.replace("_", " ").split()))
+    # Keep raw concatenation here (BM25F replication is applied at call site using dynamic weights)
     return " ".join([p for p in parts if p])
 
 
@@ -809,8 +1055,12 @@ def _rank_with_lexical(query: str, meta: Dict[str, Any], column_entries: List[Di
     b = 0.75
 
     query_tokens = _normalize_tokens(query)
-    # Collapse duplicates in query to reduce work
-    unique_query_tokens = list(set(query_tokens))
+    # Collapse duplicates in query to reduce work; keep only intrinsic phrase if present
+    expanded: List[str] = list(query_tokens)
+    qtext = query.lower().replace("-", " ")
+    if "same day" in qtext and "same day" not in expanded:
+        expanded.append("same day")
+    unique_query_tokens = list(set(expanded))
 
     scores: List[Tuple[int, float]] = []
     for idx, tf in enumerate(per_doc_tf):
@@ -835,12 +1085,39 @@ def _rank_with_lexical(query: str, meta: Dict[str, Any], column_entries: List[Di
         if tblname in unique_query_tokens:
             score += 0.5
 
-        # Lightweight substring bonus if still zero
+        # Proximity/substring bonus across prepared document text
         if score == 0.0 and idx < len(documents):
             doc_text = documents[idx].lower()
             for qt in unique_query_tokens:
                 if len(qt) >= 3 and qt in doc_text:
                     score += 0.1
+            # Bigram proximity: small window for multi-term queries
+            if len(unique_query_tokens) >= 2:
+                tokens = doc_text.split()
+                positions: Dict[str, List[int]] = {}
+                for pos, tok in enumerate(tokens):
+                    if tok in unique_query_tokens:
+                        positions.setdefault(tok, []).append(pos)
+                # reward if any two query tokens appear within window 3
+                window = 3
+                found_close = False
+                for a in unique_query_tokens:
+                    for b in unique_query_tokens:
+                        if a >= b:
+                            continue
+                        for pa in positions.get(a, []):
+                            for pb in positions.get(b, []):
+                                if abs(pa - pb) <= window:
+                                    found_close = True
+                                    break
+                            if found_close:
+                                break
+                        if found_close:
+                            break
+                    if found_close:
+                        break
+                if found_close:
+                    score += 0.2
         scores.append((idx, float(score)))
 
     scores.sort(key=lambda x: x[1], reverse=True)
@@ -1043,6 +1320,7 @@ def run_tool(config: UserParameters, args: ToolParameters) -> Any:
                 metadata_table=config.metadata_table,
                 keywords=args.keywords,
                 output_file=args.output_file,
+                tool_params=args,
             )
 
         # Otherwise, run the original relationship discovery flow (legacy) if database provided
@@ -1085,10 +1363,18 @@ def run_tool(config: UserParameters, args: ToolParameters) -> Any:
         with open(unique_path, "w", encoding="utf-8") as f_out:
             json.dump(output_payload, f_out, ensure_ascii=False, indent=2)
 
-        return {
+        response: Dict[str, Any] = {
             "output_file": os.path.basename(unique_path),
             "relationships_count": len(relationships.get("relationships", [])),
         }
+        try:
+            token_count = _estimate_tokens_from_json(output_payload)
+            response["inline_json_tokens"] = token_count
+            if token_count <= TOKEN_INLINE_THRESHOLD:
+                response["inline_json"] = output_payload
+        except Exception:
+            pass
+        return response
     except Exception as error:  # noqa: BLE001
         return {"error": f"Analysis failed: {error}"}
     finally:

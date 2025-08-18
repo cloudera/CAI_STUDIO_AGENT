@@ -34,7 +34,6 @@ import {
   setModelRegisterName,
   setModelRegisterApiBase,
   setModelRegisterApiKey,
-  setModelRegisterExtraHeaders,
   setModelRegisterSetAsDefault,
   updateModelStatus,
   // Bedrock-specific selectors and actions

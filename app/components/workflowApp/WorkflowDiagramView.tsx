@@ -16,7 +16,6 @@ import {
   BugOutlined,
   ExportOutlined,
   EyeOutlined,
-  MonitorOutlined,
   FolderOutlined,
 } from '@ant-design/icons';
 import OpsIFrame from '../OpsIFrame';

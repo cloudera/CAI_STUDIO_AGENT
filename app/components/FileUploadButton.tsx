@@ -1,7 +1,6 @@
 import React, { useRef } from 'react';
-import { Button, Upload, Tooltip } from 'antd';
+import { Button, Tooltip } from 'antd';
 import { UploadOutlined, PlusOutlined } from '@ant-design/icons';
-import { UploadProps } from 'antd/es/upload';
 import { useWorkflowFileUpload } from '@/app/lib/hooks/useWorkflowFileUpload';
 
 interface FileUploadButtonProps {
@@ -27,7 +26,7 @@ const FileUploadButton: React.FC<FileUploadButtonProps> = ({
   onFilesAdded,
   onFileUploaded,
 }) => {
-  const { uploadFile, uploadMultipleFiles, uploading, cancelUpload } = useWorkflowFileUpload({
+  const { uploadMultipleFiles, uploading, cancelUpload } = useWorkflowFileUpload({
     workflow,
     renderMode,
   });
