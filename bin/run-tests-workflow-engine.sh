@@ -1,4 +1,6 @@
 export APP_DIR="$(pwd)"
+export AGENT_STUDIO_DEPLOY_MODE=amp 
+
 # Run pytest and generate coverage.
 
 cd studio/workflow_engine/

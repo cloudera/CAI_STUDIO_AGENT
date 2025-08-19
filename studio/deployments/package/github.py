@@ -85,4 +85,4 @@ def package_github_for_deployment(
                 print(f"arcname: {arcname}")
                 tar.add(full_path, arcname=arcname)
 
-    return DeploymentArtifact(project_location=deployment_artifact_path)
+    return DeploymentArtifact(artifact_path=deployment_artifact_path)

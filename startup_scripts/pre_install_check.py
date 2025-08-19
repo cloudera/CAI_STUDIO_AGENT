@@ -1,7 +1,21 @@
+"""
+This script is used to check workbench environment requirements for Agent Studio. Specifically,
+it checks if the workspace is TLS-enabled and if unauthenticated access to the app is enabled.
+If TLS is not enabled, then unathenticated access to applications in the workbench must be enabled.
+
+This script is meant to run from the APP_DIR as it's dependent on the startup_scripts
+package being available on the path.
+"""
+
 import urllib.request
 from urllib.parse import urlparse
 import sys, base64, json, ssl
 import os
+from startup_scripts.startup_utils import load_dotenv_file, ensure_correct_base_path
+
+# Load environment and execution directory.
+load_dotenv_file()
+ensure_correct_base_path()
 
 
 def check_for_tls_workspace() -> bool:

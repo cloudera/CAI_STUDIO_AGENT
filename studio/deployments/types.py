@@ -86,9 +86,9 @@ class DeploymentArtifact(BaseModel):
     that don't need a project relative location (like a packaged model registry model).
     """
 
-    project_location: Optional[str] = None
+    artifact_path: Optional[str] = None
     """
-    Project-relative location of the deployment target. This is the artifact
+    Path of the deployment workflow artifact. This is the artifact
     that is packaged and ready to be deployed to any one of our deployment targets.
     """
 

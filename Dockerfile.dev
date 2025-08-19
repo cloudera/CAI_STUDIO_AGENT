@@ -1,0 +1,47 @@
+FROM docker.repository.cloudera.com/cloudera/cdsw/ml-runtime-pbj-workbench-python3.10-standard:2025.06.1-b5
+
+# Developer-focused Dockerfile for Agent Studio. This is used to simulate the runtime
+# environment for development purposes.
+
+USER root
+
+# Install curl and wget if not already available
+RUN apt-get update && apt-get install -y \
+    curl \
+    wget \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Increase system limits for Node.js development
+RUN echo 'fs.inotify.max_user_watches=524288' >> /etc/sysctl.conf && \
+    echo 'fs.inotify.max_user_instances=512' >> /etc/sysctl.conf && \
+    echo 'fs.file-max=2097152' >> /etc/sysctl.conf
+
+# Set ulimits in limits.conf
+RUN echo '* soft nofile 65536' >> /etc/security/limits.conf && \
+    echo '* hard nofile 65536' >> /etc/security/limits.conf && \
+    echo '* soft memlock unlimited' >> /etc/security/limits.conf && \
+    echo '* hard memlock unlimited' >> /etc/security/limits.conf
+
+USER cdsw
+
+# Install oh-my-bash for enhanced terminal experience
+# https://ohmybash.nntoan.com/
+RUN bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)" || true
+
+# Install Atuin for magical shell history
+# https://atuin.sh/
+RUN cd ~ && (curl --proto '=https' --tlsv1.2 -LsSf https://setup.atuin.sh | sh) && \
+    echo 'export PATH=~/.atuin/bin:$PATH' >> ~/.bashrc
+
+# # Install SQLite command line tools from source
+# # (does not yet ship natively within a CML runtime)
+# RUN cd /tmp && \
+#     wget https://www.sqlite.org/2024/sqlite-autoconf-3460100.tar.gz && \
+#     tar -xzf sqlite-autoconf-3460100.tar.gz && \
+#     cd sqlite-autoconf-3460100 && \
+#     ./configure --prefix=/usr/local && \
+#     make -j$(nproc) && \
+#     make install && \
+#     cd / && \
+#     rm -rf /tmp/sqlite-autoconf-3460100*

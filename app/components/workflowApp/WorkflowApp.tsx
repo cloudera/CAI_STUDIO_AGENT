@@ -242,7 +242,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
     const fetchEvents = async () => {
       try {
         const { events: newEvents } = await getEvents({
-          traceId: currentTraceId,
+          trace_id: currentTraceId,
         }).unwrap();
         dispatch(addedCurrentEvents(newEvents));
 
@@ -258,7 +258,6 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
             stopPolling();
             dispatch(updatedCrewOutput(crewCompleteEvent.output || crewCompleteEvent.error));
             dispatch(updatedIsRunning(false));
-            dispatch(addedCurrentEvents(newEvents));
 
             if (workflow?.is_conversational) {
               dispatch(

@@ -62,17 +62,6 @@ tasks:
     environment:
       TASK_TYPE: CREATE/RUN_JOB
   - type: start_application
-    name: "Agent Studio - Agent Ops & Metrics"
-    short_summary: View observability data from agents running on AI studio.
-    bypass_authentication: true
-    subdomain: cai-agent-studio-ops
-    script: startup_scripts/uv_start-agent-ops-server.py
-    long_summary: This application launches an oservability platform for insight and visibility into how agentic crews, agents, and tools are performing during their respective lifecycles.
-    cpu: 2
-    memory: 8
-    environment_variables:
-      TASK_TYPE: START_APPLICATION
-  - type: start_application
     name: "Agent Studio"
     short_summary: Start Cloudera AI Agent Studio
     subdomain: cai-agent-studio

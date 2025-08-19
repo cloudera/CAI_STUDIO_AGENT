@@ -70,7 +70,7 @@ def test_package_workflow_for_deployment(
     artifact = workflows.package_workflow_for_deployment(payload, deployment, session, cml)
 
     assert isinstance(artifact, DeploymentArtifact)
-    assert artifact.project_location.endswith("artifact.tar.gz")
+    assert artifact.artifact_path.endswith("artifact.tar.gz")
 
     mock_os_makedirs.assert_called()
     mock_copytree.assert_called()

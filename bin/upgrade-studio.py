@@ -1,15 +1,31 @@
+import os
 import subprocess
 import sys
 
 def ensure_correct_base_path():
     import os
     is_composable: bool = os.getenv("IS_COMPOSABLE", "false").lower() == "true"
+    is_runtime = os.getenv("AGENT_STUDIO_DEPLOY_MODE", "amp").lower() == "runtime"
     if is_composable:
-        subdirectory = "agent-studio"
-        working_dir = os.path.join("/home/cdsw", subdirectory)
-        print(f"Changing working directory to '{working_dir}'")
-        os.chdir(working_dir)
+        app_data_dir = "/home/cdsw/agent-studio"
+    else:
+        app_data_dir = "/home/cdsw"
+
+    if is_runtime:
+        app_dir = os.getenv("APP_DIR")
+    else:
+        app_dir = app_data_dir
+    
+    os.environ["APP_DIR"] = app_dir
+    os.environ["APP_DATA_DIR"] = app_data_dir
+
+    print(f"Changing working directory to '{app_data_dir}'")
+    os.chdir(app_data_dir)
 ensure_correct_base_path()
+
+if os.getenv("AGENT_STUDIO_DEPLOY_MODE", "amp").lower() == "runtime":
+    print("Upgrade job not supported in runtime mode. Skipping upgrade.")
+    sys.exit(0)
 
 try:        
     out = subprocess.run(

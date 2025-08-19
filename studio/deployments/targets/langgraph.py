@@ -27,10 +27,10 @@ def deploy_artifact_to_langgraph_server(
         shutil.rmtree(deployable_application_dir)
     os.makedirs(deployable_application_dir)
 
-    shutil.copy(artifact.project_location, deployable_application_dir)
+    shutil.copy(artifact.artifact_path, deployable_application_dir)
 
     # Take the tar.gz and extract it into the deployable workflow directory
-    with tarfile.open(artifact.project_location, "r:gz") as tar:
+    with tarfile.open(artifact.artifact_path, "r:gz") as tar:
         tar.extractall(deployable_application_dir)
 
     deployment_metadata = json.loads(deployment.deployment_metadata)

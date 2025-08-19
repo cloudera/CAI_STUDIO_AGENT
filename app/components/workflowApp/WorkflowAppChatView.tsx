@@ -40,7 +40,7 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow }) =
   const renderMode = workflowData?.renderMode;
   const workflowModelUrl = workflowData?.workflowModelUrl;
 
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const messages = useAppSelector(selectWorkflowAppChatMessages);
 
   const scrollToBottom = () => {
@@ -148,7 +148,7 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow }) =
           messages={messages}
           handleTestWorkflow={handleCrewKickoff}
           isProcessing={isRunning || false}
-          messagesEndRef={messagesEndRef}
+          messagesEndRef={messagesEndRef as React.RefObject<HTMLDivElement>}
           clearMessages={handleClearMessages}
           workflowName={workflow.name}
         />

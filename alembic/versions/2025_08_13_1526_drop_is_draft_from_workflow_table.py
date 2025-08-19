@@ -18,7 +18,7 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
-def upgrade() -> None:
+def upgrade_impl() -> None:
     # Get database connection to check if we're using SQLite
     conn = op.get_bind()
     is_sqlite = conn.dialect.name == 'sqlite'
@@ -102,8 +102,13 @@ def upgrade() -> None:
         safe_drop_column('workflows', 'is_draft')
         safe_drop_column('deployed_workflow_instance', 'is_stale')
 
+def upgrade() -> None:
+    try:
+        upgrade_impl()
+    except Exception as e:
+        print(f"Skipping revision {revision} upgrade: {str(e)}")
 
-def downgrade() -> None:
+def downgrade_impl() -> None:
     # If we need to downgrade, re-add the columns
     # Helper to add a column if it doesn't exist (best effort for SQLite/dev)
     def safe_add_column(table, column):
@@ -115,3 +120,9 @@ def downgrade() -> None:
     # Try to add columns, skip if they already exist
     safe_add_column('workflows', sa.Column('is_draft', sa.Boolean(), nullable=True))
     safe_add_column('deployed_workflow_instance', sa.Column('is_stale', sa.Boolean(), nullable=True))
+
+def downgrade() -> None:
+    try:
+        downgrade_impl()
+    except Exception as e:
+        print(f"Skipping revision {revision} downgrade: {str(e)}")

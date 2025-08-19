@@ -16,5 +16,10 @@ wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
 nvm install 22
 nvm use 22
 
+# Extract workflow engine from tar.gz if it exists
+echo "Extracting workflow_engine.tar.gz to base directory..."
+tar -xzvf workflow_engine.tar.gz -C .
+echo "Workflow engine extracted successfully"
+
 # Install engine code
 pip install .

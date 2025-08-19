@@ -123,7 +123,7 @@ def test_package_workflow_target_type_artifact():
         artifact = package_workflow_target(payload, deployment, session, cml)
 
         assert isinstance(artifact, DeploymentArtifact)
-        assert artifact.project_location == "/my/project/location"
+        assert artifact.artifact_path == "/my/project/location"
         assert deployment.status == DeploymentStatus.PACKAGED
 
 

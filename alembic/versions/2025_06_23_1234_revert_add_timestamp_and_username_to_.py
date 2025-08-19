@@ -18,7 +18,7 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
-def upgrade() -> None:
+def upgrade_impl() -> None:
     # SQLite doesn't support DROP COLUMN in older versions, so we'll recreate the tables
     # without the timestamp and username columns
     
@@ -112,9 +112,15 @@ def upgrade() -> None:
         safe_drop_column('workflow_templates', 'created_by_username')
         safe_drop_column('workflow_templates', 'updated_at')
         safe_drop_column('workflow_templates', 'created_at')
+    
 
+def upgrade() -> None:
+    try:
+        upgrade_impl()
+    except Exception as e:
+        print(f"Skipping revision {revision} upgrade: {str(e)}")
 
-def downgrade() -> None:
+def downgrade_impl() -> None:
     # If we need to downgrade this revert, re-add the columns
     # Helper to add a column if it doesn't exist (best effort for SQLite/dev)
     def safe_add_column(table, column):
@@ -163,3 +169,9 @@ def downgrade() -> None:
             updated_at = COALESCE(updated_at, CURRENT_TIMESTAMP)
         """
     )
+
+def downgrade() -> None:
+    try:
+        downgrade_impl()
+    except Exception as e:
+        print(f"Skipping revision {revision} downgrade: {str(e)}")
