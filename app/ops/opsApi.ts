@@ -13,22 +13,21 @@ export interface KickoffCrewRequest {
 }
 
 export interface GetOpsEventsRequest {
-  traceId: string;
+  trace_id: string;
 }
 
 export interface GetOpsEventsResponse {
-  projectId: string;
   events: any[];
 }
 
 export const opsApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getOpsData: builder.query<OpsData, void>({
-      query: () => '/ops',
+      query: () => '/opsdata',
     }),
     getEvents: builder.mutation<GetOpsEventsResponse, GetOpsEventsRequest>({
       query: (request) => ({
-        url: `/ops/events?traceId=${request.traceId}`,
+        url: `/opsdata/events?trace_id=${request.trace_id}`,
         method: 'GET',
       }),
     }),

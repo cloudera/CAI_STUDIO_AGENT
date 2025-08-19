@@ -1,6 +1,6 @@
 import os
-import shutil
 import json
+import tarfile
 from typing import Optional
 import requests
 
@@ -10,12 +10,11 @@ import cmlapi
 from cmlapi import CMLServiceApi
 
 import studio.consts as consts
-from studio.cross_cutting.apiv2 import get_api_key_from_env, validate_api_key
+from studio.cross_cutting.apiv2 import get_api_key_from_env, validate_api_key, upload_file_to_project
 from studio.deployments.types import DeploymentArtifact, DeploymentPayload
-from studio.deployments.utils import copy_workflow_engine
 from studio.db.model import DeployedWorkflowInstance
 from studio.workflow.utils import is_custom_model_root_dir_feature_enabled
-from studio.cross_cutting.utils import get_studio_subdirectory, deploy_cml_model, get_cml_project_number_and_id
+from studio.cross_cutting.utils import deploy_cml_model, get_cml_project_number_and_id
 import studio.cross_cutting.utils as cc_utils
 from studio.deployments.applications import create_application_for_deployed_workflow, get_application_deep_link
 from studio.deployments.utils import update_deployment_metadata
@@ -33,37 +32,56 @@ sys.path.append(os.path.join(app_dir, "studio", "workflow_engine", "src"))
 from engine.ops import get_ops_endpoint
 
 
-def get_workbench_model_config(deployable_workflow_dir: str, artifact: DeploymentArtifact) -> dict:
+def get_application_ops_url(application_subdomain: str) -> str:
+    """
+    Construct the ops endpoint URL for an application.
+    Format: {application.subdomain}.{CDSW_DOMAIN}/api/ops
+    """
+    cdsw_domain = os.getenv("CDSW_DOMAIN")
+    if not cdsw_domain:
+        raise EnvironmentError("CDSW_DOMAIN environment variable is not set.")
+
+    scheme = cc_utils.get_url_scheme()
+    return f"{scheme}://{application_subdomain}.{cdsw_domain}/api/ops"
+
+
+def get_workbench_model_config(deployment_target_project_dir: str, artifact: DeploymentArtifact) -> dict:
+    model_config = {}
     if is_custom_model_root_dir_feature_enabled():
-        return {
-            "model_root_dir": os.path.join(get_studio_subdirectory(), deployable_workflow_dir),
-            "model_file_path": "src/engine/entry/workbench.py",
-            "workflow_artifact_location": os.path.join("/home/cdsw", os.path.basename(artifact.project_location)),
+        model_config = {
+            "model_root_dir": deployment_target_project_dir,
+            "model_file_path": "workbench.py",
+            "workflow_artifact_location": os.path.join("/home/cdsw", os.path.basename(artifact.artifact_path)),
             "model_execution_dir": "/home/cdsw",
         }
     else:
-        return {
+        model_config = {
             "model_root_dir": None,
-            "model_file_path": os.path.join(
-                get_studio_subdirectory(), deployable_workflow_dir, "src/engine/entry/workbench.py"
-            ),
+            "model_file_path": os.path.join(deployment_target_project_dir, "workbench.py"),
             "workflow_artifact_location": os.path.join(
                 "/home/cdsw",
-                get_studio_subdirectory(),
-                deployable_workflow_dir,
-                os.path.basename(artifact.project_location),
+                deployment_target_project_dir,
+                os.path.basename(artifact.artifact_path),
             ),
-            "model_execution_dir": os.path.join("/home/cdsw", get_studio_subdirectory(), deployable_workflow_dir),
+            "model_execution_dir": os.path.join("/home/cdsw", deployment_target_project_dir),
         }
+
+    # For runtime mode, we only copy over the workbench driver file. All other files
+    # and python packages are part of the runtime image itself.
+    if os.getenv("AGENT_STUDIO_DEPLOY_MODE", "amp").lower() == "runtime":
+        model_config["model_file_path"] = "workbench.py"
+
+    return model_config
 
 
 def prepare_env_vars_for_workbench(
     cml,
-    deployable_workflow_dir: str,
+    deployment_target_project_dir: str,
     artifact: DeploymentArtifact,
     payload: DeploymentPayload,
     deployment: DeployedWorkflowInstance,
     session: Session,
+    ops_endpoint: Optional[str] = None,
 ) -> dict:
     # Start with base dict
     env_vars_dict = {}
@@ -81,16 +99,17 @@ def prepare_env_vars_for_workbench(
             "CML API v2 key validation has failed. You need to rotate the CML API v2 key for Agent Studio to deploy your workflow."
         )
 
-    workbench_model_config = get_workbench_model_config(deployable_workflow_dir, artifact)
+    workbench_model_config = get_workbench_model_config(deployment_target_project_dir, artifact)
 
     env_vars_dict.update(
         {
-            "AGENT_STUDIO_OPS_ENDPOINT": get_ops_endpoint(),
+            "AGENT_STUDIO_OPS_ENDPOINT": ops_endpoint or get_ops_endpoint(),
             "AGENT_STUDIO_WORKFLOW_ARTIFACT": workbench_model_config["workflow_artifact_location"],
             "AGENT_STUDIO_WORKFLOW_DEPLOYMENT_CONFIG": json.dumps(payload.deployment_config.model_dump()),
             "AGENT_STUDIO_MODEL_EXECUTION_DIR": workbench_model_config["model_execution_dir"],
             "CDSW_APIV2_KEY": key_value,  # Pass the validated API key
             "CDSW_PROJECT_ID": os.getenv("CDSW_PROJECT_ID"),  # Pass the project ID
+            "AGENT_STUDIO_DEPLOY_MODE": os.getenv("AGENT_STUDIO_DEPLOY_MODE", "amp"),
             "CREWAI_DISABLE_TELEMETRY": "true",  # disable crewai telemetry for the workflow engine
             "AGENT_STUDIO_WORKBENCH_TLS_ENABLED": os.getenv("AGENT_STUDIO_WORKBENCH_TLS_ENABLED", "true"),
         }
@@ -143,6 +162,93 @@ def create_new_cml_model(
     return model_id
 
 
+def prepare_deployment_target_dir(
+    cml: cmlapi.CMLServiceApi, deployment: DeployedWorkflowInstance, artifact: DeploymentArtifact
+) -> str:
+    """
+    Create a deployment directory for this deployment. Note that we store sensitive
+    logs information in this directory .phoenix/.
+
+    Returns the relative path of the deployment directory from within the project filesystem.
+    """
+
+    # Relative to the project filesystem.
+    deployment_target_dir = os.path.join(os.getenv("APP_DATA_DIR"), consts.DEPLOYABLE_WORKFLOWS_LOCATION, deployment.id)
+    deployment_target_project_dir = os.path.relpath(deployment_target_dir, "/home/cdsw")
+
+    # Upload the model artifact to the project.
+    upload_file_to_project(
+        cml,
+        os.getenv("CDSW_PROJECT_ID"),
+        os.path.join(deployment_target_project_dir, os.path.basename(artifact.artifact_path)),
+        artifact.artifact_path,
+    )
+
+    # Upload the workbench driver file to the project.
+    upload_file_to_project(
+        cml,
+        os.getenv("CDSW_PROJECT_ID"),
+        os.path.join(deployment_target_project_dir, "workbench.py"),
+        os.path.join(app_dir, "studio", "workflow_engine", "src", "engine", "entry", "workbench.py"),
+    )
+
+    # Upload the application driver to the workbench. Note: once we are able
+    # to drive applications from files that don't exist within the project filesystem, we can
+    # simply specify the startup script directly from the APP_DIR.
+    upload_file_to_project(
+        cml,
+        os.getenv("CDSW_PROJECT_ID"),
+        os.path.join(deployment_target_project_dir, "run-app.py"),
+        os.path.join(app_dir, "startup_scripts", "run-app.py"),
+    )
+
+    # Lastly, bundle and add our workflow engine code to the deployment directory.
+    prepare_workflow_engine_package(cml, deployment, deployment_target_project_dir)
+
+    return deployment_target_project_dir
+
+
+def prepare_workflow_engine_package(
+    cml: cmlapi.CMLServiceApi, deployment: DeployedWorkflowInstance, deployment_target_project_dir: str
+) -> None:
+    """
+    Create a tar.gz package of the workflow_engine directory (excluding .venv)
+    and upload it to the project along with the cdsw-build.sh script.
+    """
+    # Create workflow_engine.tar.gz excluding .venv directory
+    workflow_engine_dir = os.path.join(app_dir, "studio", "workflow_engine")
+    tar_filename = "workflow_engine.tar.gz"
+    tar_path = os.path.join("/tmp", tar_filename)
+
+    def tar_filter(tarinfo):
+        # Skip .venv directory and its contents
+        if ".venv" in tarinfo.name or ".ruff_cache" in tarinfo.name or "__pycache__" in tarinfo.name:
+            return None
+        return tarinfo
+
+    with tarfile.open(tar_path, "w:gz") as tar:
+        tar.add(workflow_engine_dir, arcname=".", filter=tar_filter)
+
+    # Upload workflow_engine.tar.gz to the project
+    upload_file_to_project(
+        cml,
+        os.getenv("CDSW_PROJECT_ID"),
+        os.path.join(deployment_target_project_dir, tar_filename),
+        tar_path,
+    )
+
+    # Upload the cdsw-build.sh script to the deployment directory separately.
+    upload_file_to_project(
+        cml,
+        os.getenv("CDSW_PROJECT_ID"),
+        os.path.join(deployment_target_project_dir, "cdsw-build.sh"),
+        os.path.join(app_dir, "studio", "workflow_engine", "cdsw-build.sh"),
+    )
+
+    # Clean up temporary tar file
+    os.remove(tar_path)
+
+
 def deploy_artifact_to_workbench(
     artifact: DeploymentArtifact,
     payload: DeploymentPayload,
@@ -161,18 +267,11 @@ def deploy_artifact_to_workbench(
         # Get cmlapi client
         cml = cmlapi.default_client()
 
-        # Create a deployment staging area
-        deployable_workflow_dir = os.path.join(consts.DEPLOYABLE_WORKFLOWS_LOCATION, deployment.id)
-        if os.path.isdir(deployable_workflow_dir):
-            shutil.rmtree(deployable_workflow_dir)
-        os.makedirs(deployable_workflow_dir)
+        # Prepare the target directory. The returned directory is a RELATIVE path
+        # relative to the project filesystem.
+        deployment_target_project_dir = prepare_deployment_target_dir(cml, deployment, artifact)
 
-        # Copy model artifact and engine code
-        shutil.copy(artifact.project_location, deployable_workflow_dir)
-        copy_workflow_engine(deployable_workflow_dir)
-
-        # Determine whether we are creating a new workbench model or if we
-        # are deploying to an existing model.
+        # STEP 1: Create CML model (without deployment)
         deployment_metadata = json.loads(deployment.deployment_metadata)
         if payload.deployment_target.auto_redeploy_to_type and deployment_metadata.get("cml_model_id"):
             print(f"Auto-redeploying to CML model with ID {deployment_metadata.get('cml_model_id')}")
@@ -180,13 +279,43 @@ def deploy_artifact_to_workbench(
         else:
             cml_model_id = create_new_cml_model(deployment, cml)
 
-        # Create env vars of the workbench model
+        # Update deployment metadata with model ID so application can access it
+        update_deployment_metadata(deployment, {"cml_model_id": cml_model_id})
+        deployment.cml_deployed_model_id = cml_model_id  # keep for legacy reasons
+        session.commit()
+
+        # STEP 2: Create application (with model ID available in deployment metadata)
+        application_ops_url = None
+        if payload.deployment_target.deploy_application:
+            deployment_metadata = json.loads(deployment.deployment_metadata)
+            if not deployment_metadata.get("application_id"):
+                application: cmlapi.Application = create_application_for_deployed_workflow(
+                    deployment_target_project_dir, deployment, False, cml
+                )
+                deep_link = get_application_deep_link(application.name)
+                update_deployment_metadata(
+                    deployment,
+                    {
+                        "application_id": application.id,
+                        "application_deep_link": deep_link,
+                        "application_subdomain": application.subdomain,
+                    },
+                )
+                session.commit()
+
+                # Construct the ops URL for this application
+                application_subdomain = application.subdomain
+                application_ops_url = get_application_ops_url(application_subdomain)
+                print("APPLICATION OPS URL", application_ops_url)
+
+        # STEP 3: Deploy the CML model with application URL as ops endpoint
+        # Create env vars with the application ops URL
         workbench_model_env_vars = prepare_env_vars_for_workbench(
-            cml, deployable_workflow_dir, artifact, payload, deployment, session
+            cml, deployment_target_project_dir, artifact, payload, deployment, session, application_ops_url
         )
 
         # Get the workbench deployment config
-        workbench_model_config = get_workbench_model_config(deployable_workflow_dir, artifact)
+        workbench_model_config = get_workbench_model_config(deployment_target_project_dir, artifact)
 
         # Deploy workbench model
         cml_model_id, model_build_id = deploy_cml_model(
@@ -205,28 +334,17 @@ def deploy_artifact_to_workbench(
                 replicas=payload.deployment_target.workbench_resource_profile.num_replicas,
             ),
         )
+
+        # Update deployment metadata with build info and deep link
         workbench_model_deep_link = get_workbench_model_deep_link(cml_model_id)
         update_deployment_metadata(
             deployment,
             {
-                "cml_model_id": cml_model_id,
                 "cml_model_build_id": model_build_id,
                 "cml_model_deep_link": workbench_model_deep_link,
             },
         )
-        deployment.cml_deployed_model_id = cml_model_id  # keep for legacy reasons
         session.commit()
-
-        # Create application if applicable (or pull this out elsewhere)
-        if payload.deployment_target.deploy_application:
-            deployment_metadata = json.loads(deployment.deployment_metadata)
-            if not deployment_metadata.get("application_id"):
-                application = create_application_for_deployed_workflow(deployment, False, cml)
-                deep_link = get_application_deep_link(application.name)
-                update_deployment_metadata(
-                    deployment, {"application_id": application.id, "application_deep_link": deep_link}
-                )
-                session.commit()
 
         # Monitor application status and deployment status
         monitor_workbench_deployment_for_completion(payload, deployment, session, cml)

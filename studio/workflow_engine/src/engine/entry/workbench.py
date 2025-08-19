@@ -19,6 +19,12 @@ CDSW_DOMAIN = os.getenv("CDSW_DOMAIN")
 WORKFLOW_DIRECTORY = os.path.abspath("workflow")
 sys.path.append(WORKFLOW_DIRECTORY)
 
+# If we are running in runtime mode, our actual core logic is in the runtime
+# image itself which we need to ensure is on the path.
+if os.getenv("AGENT_STUDIO_DEPLOY_MODE", "amp").lower() == "runtime":
+    app_dir = os.getenv("APP_DIR")
+    sys.path.append(os.path.join(app_dir, "studio", "workflow_engine", "src"))
+
 # Install the cmlapi. This is a required dependency for cross-cutting util modules
 # and ops modules that are used in a workflow.
 from engine.utils import get_url_scheme

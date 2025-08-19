@@ -24,6 +24,7 @@ const StudioTopNav: React.FC = () => {
     { key: '/workflows', label: 'Agentic Workflows' },
     { key: '/tools', label: 'Tools Catalog' },
     { key: '/models', label: 'LLMs' },
+    { key: '/ops', label: 'Ops' },
     {
       key: '/feedback',
       label: (
@@ -46,6 +47,7 @@ const StudioTopNav: React.FC = () => {
     '/workflows': () => router.push('/workflows'),
     '/tools': () => router.push('/tools?section=tools'),
     '/models': () => router.push('/models'),
+    '/ops': () => router.push('/ops'),
     '/feedback': () => {},
   };
 

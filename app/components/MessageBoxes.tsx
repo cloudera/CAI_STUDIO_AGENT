@@ -80,7 +80,6 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ upgradeStatus, isOpen, setI
       <Modal
         open={isOpen}
         onCancel={() => !upgradePressed && setIsOpen(false)}
-        onClose={() => !upgradePressed && setIsOpen(false)}
         onOk={handleUpgrade}
         footer={
           !upgradePressed

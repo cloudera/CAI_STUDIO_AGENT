@@ -17,7 +17,7 @@ const createAgent = () => {
 
   if (isTlsEnabled) {
     return new https.Agent({
-      ca: fs.readFileSync('/etc/ssl/certs/ca-certificates.crt'),
+      ca: fs.readFileSync(process.env.REQUESTS_CA_BUNDLE || ''),
     });
   } else {
     return new http.Agent();

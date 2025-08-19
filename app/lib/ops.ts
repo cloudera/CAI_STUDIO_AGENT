@@ -44,7 +44,7 @@ export const fetchOpsUrl = async (): Promise<string | null> => {
 
   try {
     const response = await fetch(
-      `${scheme}://${CDSW_DOMAIN}/api/v2/projects/${CDSW_PROJECT_ID}/applications?page_size=100`,
+      `${scheme}://${CDSW_DOMAIN}/api/v2/projects/${CDSW_PROJECT_ID}/applications?page_size=500`,
       {
         headers: {
           authorization: `Bearer ${CDSW_APIV2_KEY}`,
@@ -107,14 +107,20 @@ export const fetchOpsUrl = async (): Promise<string | null> => {
  */
 export const getCrewEvents = async (traceId: string) => {
   const agent = createAgent();
-  const opsUrl = await fetchOpsUrl();
-  const response = await fetch(`${opsUrl}/events?trace_id=${traceId}`, {
-    headers: {
-      authorization: `Bearer ${process.env.CDSW_APIV2_KEY}`,
-    },
-    agent,
-  });
 
-  const events: any[] = (await response.json()) as any;
-  return events;
+  if (process.env.AGENT_STUDIO_LEGACY_WORKFLOW_APP === 'true') {
+    const opsUrl = await fetchOpsUrl();
+    const response = await fetch(`${opsUrl}/events?trace_id=${traceId}`, {
+      headers: {
+        authorization: `Bearer ${process.env.CDSW_APIV2_KEY}`,
+      },
+      agent,
+    });
+    const events: any[] = (await response.json()) as any;
+    return events;
+  } else {
+    const response = await fetch(`http://localhost:50052/events?trace_id=${traceId}`);
+    const events: any[] = (await response.json()) as any;
+    return events;
+  }
 };

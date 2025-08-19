@@ -38,6 +38,7 @@ def deploy_artifact(
     that the deployment artifact itself has already gone through necessary validation
     steps and that we are ready to deploy.
     """
+    print(f"Deploying artifact: {artifact}")
 
     deployment.status = DeploymentStatus.DEPLOYING
     session.commit()
@@ -53,6 +54,8 @@ def deploy_artifact(
 
     deployment.status = DeploymentStatus.DEPLOYED
     session.commit()
+
+    print(f"Deployment status: {deployment.status}")
 
     return
 
@@ -70,9 +73,14 @@ def package_workflow_target(
 
     if payload.workflow_target.type == WorkflowTargetType.WORKFLOW:
         artifact: DeploymentArtifact = package_workflow_for_deployment(payload, deployment, session, cml)
+
+    # For workflow targets of project-relative artifacts, we assume that this process is running with a
+    # project filesystem mount. In the future, we should instead make proper CMLAPI calls to pull
+    # project-relative workflow artifacts, which will eventually also allow for a direct upload surface
+    # rather than requiring a project upload first.
     elif payload.workflow_target.type == WorkflowTargetType.WORKFLOW_ARTIFACT:
         artifact: DeploymentArtifact = DeploymentArtifact(
-            project_location=payload.workflow_target.workflow_artifact_location
+            artifact_path=payload.workflow_target.workflow_artifact_location
         )
     elif payload.workflow_target.type == WorkflowTargetType.GITHUB:
         artifact: DeploymentArtifact = package_github_for_deployment(payload, deployment, session, cml)
@@ -83,6 +91,8 @@ def package_workflow_target(
 
     deployment.status = DeploymentStatus.PACKAGED
     session.commit()
+
+    print(f"Packaged artifact: {artifact}")
 
     return artifact
 

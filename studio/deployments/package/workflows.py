@@ -29,6 +29,12 @@ import engine.types as input_types
 
 
 def studio_data_workflow_ignore_factory(workflow_directory_name: str):
+    """
+    Ignore function for packing workflow artifacts. In the future, if we
+    decide to allow packaging up pre-build tool venvs, we should update
+    the ignore logic appropriately.
+    """
+
     def ignore(src, names):
         base = os.path.basename(src)
         if base == "studio-data":
@@ -61,7 +67,9 @@ def package_workflow_for_deployment(
     # Grab the corresponding workflow for this deployed workflow instance
     workflow: Workflow = deployment.workflow
 
-    # Ignore logic for copying over our studio-data/ directory
+    # Ignore logic for copying over our studio-data/ directory. NOTE: this is currently an issue with how we store
+    # workflows in our DB. We assume that consts.ALL_STUDIO_DATA_LOCATION is the root of the workflow, so we need
+    # some complex ignore logic to ensure we are only copying the workflow data directly.
     ignore_fn = studio_data_workflow_ignore_factory(os.path.basename(workflow.directory))
     shutil.copytree(consts.ALL_STUDIO_DATA_LOCATION, os.path.join(packaging_directory, "studio-data"), ignore=ignore_fn)
     # Create the collated input.
@@ -93,4 +101,4 @@ def package_workflow_for_deployment(
                 tar.add(full_path, arcname=arcname)
 
     # Return the packaged artifact.
-    return DeploymentArtifact(project_location=deployment_artifact_path)
+    return DeploymentArtifact(artifact_path=deployment_artifact_path)

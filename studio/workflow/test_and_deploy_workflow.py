@@ -224,13 +224,13 @@ def undeploy_workflow(
                 if application:  # Only try to cleanup if application exists
                     cleanup_deployed_workflow_application(cml, application)
             except Exception as e:
-                print(f"Could not delete deployed workflow application: {e}")
+                print(f"Could not delete deployed workflow application: {str(e)}")
 
             session.delete(deployed_workflow_instance)
             session.commit()
-            deployable_workflow_dir = os.path.join(consts.DEPLOYABLE_WORKFLOWS_LOCATION, deployed_workflow_instance.id)
-            if os.path.exists(deployable_workflow_dir):
-                shutil.rmtree(deployable_workflow_dir)
+            deployment_target_dir = os.path.join(consts.DEPLOYABLE_WORKFLOWS_LOCATION, deployed_workflow_instance.id)
+            if os.path.exists(deployment_target_dir):
+                shutil.rmtree(deployment_target_dir)
         return UndeployWorkflowResponse()
     except SQLAlchemyError as e:
         raise RuntimeError(f"Database error occured while undeploying workflow: {str(e)}")

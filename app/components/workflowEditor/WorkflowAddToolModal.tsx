@@ -848,7 +848,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({
                       intervalRef.current = setInterval(async () => {
                         try {
                           const { events: newEvents } = await getEvents({
-                            traceId: resp.trace_id,
+                            trace_id: resp.trace_id,
                           }).unwrap();
 
                           // Always deduplicate by a unique key (timestamp+type+output+error)

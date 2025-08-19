@@ -182,6 +182,13 @@ def check_studio_upgrade_status(
     Compares either the local semantic version vs. the most recent remote version
     OR the local commit vs. the remote HEAD commit (for main or other branches).
     """
+    # If we are running in runtime mode, then this upgrade logic is not needed.
+    if os.getenv("AGENT_STUDIO_DEPLOY_MODE") == "runtime":
+        return CheckStudioUpgradeStatusResponse(
+            local_version="",
+            newest_version="",
+        )
+
     # 1) Fetch from remote
     git_fetch()
 

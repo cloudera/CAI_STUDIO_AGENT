@@ -16,14 +16,14 @@ def get_ops_provider() -> str:
 
 def get_ops_endpoint() -> str:
     """
-    Get the current operational endpoint of the
-    Agent observability server. This can be overridden
-    by an endpoint specified in an environment variable. If this
-    env variable does not exist, extract the endpoint information
-    from the running ops application directly. This env var override
-    option is to make sure CML models can also reach the ops endpoint.
+    Get the current ops endpoint for this deployed workflow. Currently
+    only supported via setting in the environment.
     """
     # Check for required environment variables
+    ops_endpoint = os.getenv("AGENT_STUDIO_OPS_ENDPOINT")
+    if ops_endpoint:
+        return ops_endpoint
+
     domain = os.getenv("CDSW_DOMAIN")
     api_key = os.getenv("CDSW_APIV2_KEY")
     if not domain:

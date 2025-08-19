@@ -21,12 +21,14 @@ dependencies = [
     "protobuf==5.29.4",
     "psutil==7.0.0",
     "pydantic==2.11.1",
+    "python-dotenv==1.0.1",
     "pysqlite3-binary==0.5.4; platform_system == 'Linux'",
     "sqlalchemy==2.0.40",
     "uv==0.5.29",
     "alembic==1.15.2",
     "kombu==5.5.2",
     "openinference-instrumentation-langchain>=0.1.43",
+    "requests-toolbelt>=1.0.0",
 ]
 
 [dependency-groups]
