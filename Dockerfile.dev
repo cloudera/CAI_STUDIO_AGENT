@@ -12,17 +12,6 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Increase system limits for Node.js development
-RUN echo 'fs.inotify.max_user_watches=524288' >> /etc/sysctl.conf && \
-    echo 'fs.inotify.max_user_instances=512' >> /etc/sysctl.conf && \
-    echo 'fs.file-max=2097152' >> /etc/sysctl.conf
-
-# Set ulimits in limits.conf
-RUN echo '* soft nofile 65536' >> /etc/security/limits.conf && \
-    echo '* hard nofile 65536' >> /etc/security/limits.conf && \
-    echo '* soft memlock unlimited' >> /etc/security/limits.conf && \
-    echo '* hard memlock unlimited' >> /etc/security/limits.conf
-
 USER cdsw
 
 # Install oh-my-bash for enhanced terminal experience

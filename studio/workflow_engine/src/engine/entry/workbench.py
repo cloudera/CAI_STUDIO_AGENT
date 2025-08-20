@@ -4,6 +4,9 @@ import os
 import sys
 import subprocess
 
+# Set UV_LINK_MODE to copy to avoid hardlinking issues on filesystems with link limits
+os.environ["UV_LINK_MODE"] = "copy"
+
 # Restore the original stdio file objects so the
 # jupyter kernel doesn't swallow our print statements
 sys.stdout = sys.__stdout__
