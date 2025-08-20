@@ -266,7 +266,14 @@ def run_workflow(
                 print(f"[AutoSync] Error during drain/stop: {e}")
     finally:
         detach(token)
-        for mcp_object in crewai_objects.mcps.values():
+        # Guard against create failure before crewai_objects is assigned
+        try:
+            objects = crewai_objects
+        except UnboundLocalError:
+            objects = None
+        if objects is None:
+            return
+        for mcp_object in objects.mcps.values():
             try:
                 mcp_object.local_session.__exit__(None, None, None)
             except Exception as e:

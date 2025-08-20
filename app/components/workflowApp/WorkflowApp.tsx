@@ -109,7 +109,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
     type: 'thought' | 'tool' | 'coworker';
     thought?: string;
     name?: string;
-    status?: 'in_progress' | 'completed';
+    status?: 'in_progress' | 'completed' | 'error';
     indentationLevel: number;
     toolRunKey?: string;
   }
@@ -402,7 +402,10 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
         setThoughtEntries((prev) => [...prev, entry]);
       }
     };
-    const updateEntryToolStatus = (entryId: string, status: 'completed') => {
+    const updateEntryToolStatus = (
+      entryId: string,
+      status: 'in_progress' | 'completed' | 'error',
+    ) => {
       if (workflow?.is_conversational) {
         setThoughtSessions((prev) => {
           if (prev.length === 0) return prev;
@@ -450,9 +453,14 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
               addEntry(entry);
             });
 
-          // Handle tool and coworker usage events using started/finished; dedupe by event id/timestamp+key
+          // Handle tool and coworker usage events using started/finished/error; dedupe by event id/timestamp+key
           newEvents
-            .filter((e: any) => e?.type === 'tool_usage_started' || e?.type === 'tool_usage_finished')
+            .filter(
+              (e: any) =>
+                e?.type === 'tool_usage_started' ||
+                e?.type === 'tool_usage_finished' ||
+                e?.type === 'tool_usage_error',
+            )
             .forEach((e: any) => {
               const eventKey = e.id || `${e.timestamp || ''}-${e.type}-${e.tool_name || ''}-${getToolRunKey(e)}`;
               if (processedEventIdsRef.current.has(eventKey)) return;
@@ -512,6 +520,22 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
                   const ids = toolRunKeyToEntryIdsRef.current.get(toolKey) || [];
                   const lastId = ids.pop();
                   if (lastId) updateEntryToolStatus(lastId, 'completed');
+                  toolRunKeyToEntryIdsRef.current.set(toolKey, ids);
+                }
+              } else if (e.type === 'tool_usage_error') {
+                if (isCoworker) {
+                  // Pop coworker context on error as well
+                  coworkerStackRef.current.pop();
+                  // Mark latest coworker entry as error
+                  const ids = toolRunKeyToEntryIdsRef.current.get(toolKey) || [];
+                  const lastId = ids.pop();
+                  if (lastId) updateEntryToolStatus(lastId, 'error');
+                  toolRunKeyToEntryIdsRef.current.set(toolKey, ids);
+                } else {
+                  // Mark latest matching tool entry as error
+                  const ids = toolRunKeyToEntryIdsRef.current.get(toolKey) || [];
+                  const lastId = ids.pop();
+                  if (lastId) updateEntryToolStatus(lastId, 'error');
                   toolRunKeyToEntryIdsRef.current.set(toolKey, ids);
                 }
               }

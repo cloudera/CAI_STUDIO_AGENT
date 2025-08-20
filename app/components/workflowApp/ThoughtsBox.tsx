@@ -16,6 +16,7 @@ import {
   DownOutlined,
   LoadingOutlined,
   CheckCircleFilled,
+  CloseCircleFilled,
 } from '@ant-design/icons';
 import { useAppSelector } from '@/app/lib/hooks/hooks';
 import { selectWorkflowSessionDirectory } from '@/app/workflows/editorSlice';
@@ -27,7 +28,7 @@ export interface ThoughtEntry {
   type: 'thought' | 'tool' | 'coworker';
   thought?: string; // present when type === 'thought'
   name?: string; // tool or coworker display name
-  status?: 'in_progress' | 'completed'; // for type tool/coworker
+  status?: 'in_progress' | 'completed' | 'error'; // for type tool/coworker
   indentationLevel: number; // 0 for root, increases within coworker contexts
   toolRunKey?: string; // stable key to reconcile start/finish
 }
@@ -315,6 +316,9 @@ const ThoughtsBox: React.FC<ThoughtsBoxProps> = ({
                         )}
                         {entry.status === 'completed' && (
                           <CheckCircleFilled style={{ color: '#52c41a', fontSize: 12 }} />
+                        )}
+                        {entry.status === 'error' && (
+                          <CloseCircleFilled style={{ color: '#ff4d4f', fontSize: 12 }} />
                         )}
                       </Tag>
                     </div>

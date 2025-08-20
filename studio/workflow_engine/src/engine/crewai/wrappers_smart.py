@@ -383,6 +383,7 @@ class AgentStudioManagerCrewAILLM(LLM):
     )
     manager_agents_info: Optional[List[Dict[str, str]]] = None
     planning_enabled: bool = False
+    planning_permanently_disabled: bool = False
 
     def __init__(self, agent_studio_id: str, *args, session_directory: Optional[str] = None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -733,26 +734,62 @@ class AgentStudioManagerCrewAILLM(LLM):
                             if idx != -1:
                                 text = text[:idx].rstrip()
                             plan_instruction = (
-                                "Based on the available coworkers and their capabilities (see system context), create a concise, non-overloaded plan to achieve the Current Task.\n\n"
-                                "1. Deliverables and coworker selection:\n"
-                                "   • Identify the deliverables implied by the user’s request (e.g., retrieve information, perform calculations, produce visual materials, summarize findings, etc.).  \n"
-                                "   • Select the minimal set of coworkers whose documented capabilities cover those deliverables. Do not include any coworker whose capabilities are not required.  \n"
-                                "   • When one coworker can complete all necessary actions to produce the requested outputs, assign those actions to that coworker alone.\n\n"
-                                "2. Step granularity:\n"
-                                "   • Each step should represent a single atomic action or objective that a single coworker can perform end‑to‑end.  \n"
-                                "   • Fuse micro‑actions into one step if they share the same coworker, data scope, and objective (e.g., identifying relevant fields and executing a query within one data source when both can be done together).  \n"
-                                "   • Split steps when the coworker, data scope, or objective differs, or when the user clearly requests distinct deliverables.\n\n"
-                                "3. Multiple intents:\n"
-                                "   • If the user’s request contains multiple distinct tasks (e.g., separated by “then,” “and,” “also”), plan them as separate sequences. Reuse the same coworker across steps only when appropriate.\n\n"
-                                "4. Keep plans short and outcome‑focused:\n"
-                                "   • Prefer 1–4 steps unless the task clearly requires more.  \n"
-                                "   • Don’t fragment a coworker’s natural workflow into unnecessary steps.  \n"
-                                "   • Don’t overload a single step with unrelated objectives or data sources.\n\n"
-                                "5. Output schema and rules:\n"
-                                "   • Return STRICTLY valid JSON only, no prose, using the schema:\n"
-                                "     {\"steps\":[{\"step_number\":\"1\",\"description\":\"<brief description>\",\"status\":\"NOT STARTED\",\"coworker\":\"<Agent role>\"}],\"next_step\":\"\"}\n"
-                                "   • step_number values are strings (\"1\", \"2\", …); description must be concise and atomic; status must be \"NOT STARTED\" for all steps; include at least one step; set next_step to the first step; coworker must match an available role name exactly (case‑sensitive).\n\n"
-                                "Before emitting the plan, confirm that each step is necessary (no redundant coworkers), that steps are fused or split appropriately, and that the plan aligns with the requested outputs."
+                                "You are the Planner. Your task is to generate a structured step-by-step plan in STRICT JSON only.\n\n"
+                                "PLANNING PRINCIPLES\n"
+                                "1. Deliverables & coworker selection\n"
+                                "   • Infer the deliverables implied by the Current Task (e.g., retrieve data, compute, visualize, summarize).  \n"
+                                "   • Select the minimal set of coworkers whose documented capabilities cover those deliverables.  \n"
+                                "   • If one coworker can complete everything, use only that coworker.\n\n"
+                                "2. Step granularity\n"
+                                "   • Each step = one atomic, end-to-end objective that one coworker can complete.  \n"
+                                "   • Fuse micro-actions if they share the same coworker, scope, and objective.  \n"
+                                "   • Split when coworker, scope, or objective differs, or when user requested distinct outputs.\n\n"
+                                "3. Multiple intents\n"
+                                "   • If the request has multiple distinct tasks (‘then’, ‘and’, ‘also’), create steps for each in order.  \n"
+                                "   • Reuse the same coworker across steps only if natural.\n\n"
+                                "4. Clarity & detail\n"
+                                "   • Each description must be CLEAR, SPECIFIC, and ACTIONABLE.  \n"
+                                "     – Include the main action, the target data/object, and intended output.  \n"
+                                "     – Example (bad): \"Query sales data\".  \n"
+                                "     – Example (good): \"Query total monthly sales for 2024 from the orders table including amount and category\".  \n"
+                                "   • Prefer 1–4 steps unless clearly more are needed.  \n"
+                                "   • No vague, placeholder, or underspecified descriptions.\n\n"
+                                "OUTPUT FORMAT (STRICT)\n"
+                                "Return ONLY valid JSON, nothing else, exactly in this schema:\n"
+                                "{\n"
+                                "  \"steps\": [\n"
+                                "    {\n"
+                                "      \"step_number\": \"1\",\n"
+                                "      \"description\": \"<clear, specific action>\",\n"
+                                "      \"status\": \"NOT STARTED\",\n"
+                                "      \"coworker\": \"<Exact coworker name>\"\n"
+                                "    }\n"
+                                "  ],\n"
+                                "  \"next_step\": \"1\"\n"
+                                "}\n\n"
+                                "RULES\n"
+                                "• step_number values are strings (\"1\",\"2\",...).  \n"
+                                "• status MUST be \"NOT STARTED\" for all steps.  \n"
+                                "• At least one step.  \n"
+                                "• next_step MUST equal the first step_number.  \n"
+                                "• coworker MUST match an available role name EXACTLY (case-sensitive).  \n"
+                                "• If no coworker can do the task, output a single step with coworker = \"NONE\" and description = \"No available coworker can fulfill the task.\"  \n\n"
+                                "VALIDATION BEFORE EMITTING\n"
+                                "• Remove redundant steps.  \n"
+                                "• Ensure fusion/splitting is appropriate.  \n"
+                                "• Ensure descriptions are clear, specific, and actionable.  \n"
+                                "• Output strictly valid JSON only.\n\n"
+                                "FEW-SHOT EXAMPLES\n\n"
+                                "# Example A\n"
+                                "Current Task: \"Summarize the key points from the provided text.\"\n"
+                                "Coworkers: [\"Research Analyst\",\"SQL Agent\",\"Visualization Agent\"]\n"
+                                "Output:\n"
+                                "{\"steps\":[{\"step_number\":\"1\",\"description\":\"Read the provided text and create a concise bullet-point summary of the main ideas\",\"status\":\"NOT STARTED\",\"coworker\":\"Research Analyst\"}],\"next_step\":\"1\"}\n\n"
+                                "# Example B\n"
+                                "Current Task: \"Get total sales by month for 2024 and plot a line chart.\"\n"
+                                "Coworkers: [\"SQL Agent\",\"Visualization Agent\",\"Writer\"]\n"
+                                "Output:\n"
+                                "{\"steps\":[{\"step_number\":\"1\",\"description\":\"Query total monthly sales for 2024 from the orders table with amounts aggregated by month\",\"status\":\"NOT STARTED\",\"coworker\":\"SQL Agent\"},{\"step_number\":\"2\",\"description\":\"Generate a line chart of monthly sales using the query results\",\"status\":\"NOT STARTED\",\"coworker\":\"Visualization Agent\"}],\"next_step\":\"1\"}"
                             )
                             return (text + ("\n\n" if not text.endswith("\n") else "\n") + plan_instruction).strip()
 
@@ -858,10 +895,11 @@ class AgentStudioManagerCrewAILLM(LLM):
                             plan_call_messages = plan_messages
                             if attempts > 1:
                                 fix_hint = {
-                                    "role": "system",
+                                    "role": "user",
                                     "content": "Previous output was not valid JSON matching the required schema. Return ONLY valid JSON per schema {\"steps\":[{\"step_number\":\"1\",\"description\":\"...\",\"status\":\"NOT STARTED\",\"coworker\":\"<Agent role>\"}],\"next_step\":\"\"}. No prose.",
                                 }
-                                plan_call_messages = [fix_hint] + plan_messages
+                                # Append the validation instruction as a user message at the bottom
+                                plan_call_messages = plan_messages + [fix_hint]
                             plan_result = super().call(
                                 plan_call_messages, tools=None, callbacks=callbacks, available_functions=available_functions
                             )
@@ -894,6 +932,26 @@ class AgentStudioManagerCrewAILLM(LLM):
                                 plan_created_this_call = True
                             except Exception:
                                 pass
+                        elif attempts >= 3 and plan_obj is None:
+                            # After 3 failed attempts, permanently disable planning and evaluation for this session
+                            try:
+                                self.planning_permanently_disabled = True
+                                self.planning_enabled = False
+                            except Exception:
+                                pass
+                            # Append a bottom user message indicating planning has been disabled
+                            try:
+                                disable_note = {
+                                    "role": "user",
+                                    "content": (
+                                        "Planning could not produce valid JSON after 3 retries. "
+                                        "Disabling planning and evaluation for the rest of this session."
+                                    ),
+                                }
+                                if isinstance(base_messages, list):
+                                    base_messages.append(disable_note)
+                            except Exception:
+                                pass
                     except Exception:
                         pass
 
@@ -902,7 +960,7 @@ class AgentStudioManagerCrewAILLM(LLM):
                 pass
 
         # Evaluation (if plan exists and not just created)
-        if bool(getattr(self, "planning_enabled", False)):
+        if bool(getattr(self, "planning_enabled", False)) and not bool(getattr(self, "planning_permanently_disabled", False)):
             try:
                 if plan_path and os.path.exists(plan_path) and os.path.getsize(plan_path) > 0 and not skip_planning_and_injection and not plan_created_this_call:
                     print("[SmartManagerPlanEval] Triggering evaluation call")
@@ -1262,8 +1320,8 @@ class AgentStudioManagerCrewAILLM(LLM):
 
         messages_with_suffix = AgentStudioCrewAILLM._append_artifacts_instruction(base_messages)
 
-        # If planning is disabled, skip planning/eval logic but keep sanitization, state injection and artifacts suffix
-        if not bool(getattr(self, "planning_enabled", False)):
+        # If planning is disabled or permanently disabled, skip planning/eval logic but keep sanitization, state injection and artifacts suffix
+        if not bool(getattr(self, "planning_enabled", False)) or bool(getattr(self, "planning_permanently_disabled", False)):
             return super().call(
                 messages_with_suffix,
                 tools=tools,
