@@ -14,8 +14,9 @@ ensure_correct_base_path()
 
 try:        
     app_dir = os.getenv("APP_DIR", os.getcwd())
+    os.chdir(app_dir)
     out = subprocess.run(
-        [f"VIRTUAL_ENV={app_dir}/.venv uv run {app_dir}/bin/initialize-project-defaults.py"], 
+        [f"VIRTUAL_ENV=.venv uv run bin/initialize-project-defaults.py"], 
         shell=True, 
         capture_output=True, 
         text=True
