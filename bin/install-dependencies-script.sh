@@ -9,6 +9,10 @@
 # the duration of this script.
 export UV_HTTP_TIMEOUT=3600
 
+# Set UV_LINK_MODE to copy to avoid hardlinking issues on filesystems with link limits
+export UV_LINK_MODE=copy
+echo "UV_LINK_MODE set to: $UV_LINK_MODE"
+
 # Install python dependencies in uv created environment
 # This uses pyproject.toml & uv.lock file to install dependencies
 # this should create a subdirectory called .venv (if it doesn't exist)

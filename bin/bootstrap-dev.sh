@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Set UV_LINK_MODE to copy to avoid hardlinking issues on filesystems with link limits
+export UV_LINK_MODE=copy
+echo "UV_LINK_MODE set to: $UV_LINK_MODE"
+
 # Bootstrap development environment for Agent Studio runtime/container. This only needs to be ran 
 # every time the dev container is rebuilt. 
 # 

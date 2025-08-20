@@ -15,7 +15,7 @@ def get_sqlite_db_location():
     """
     if os.environ.get("AGENT_STUDIO_SQLITE_DB"):
         return os.environ.get("AGENT_STUDIO_SQLITE_DB")
-    return DEFAULT_SQLITE_DB_LOCATION
+    return os.path.join(os.getenv("APP_DATA_DIR"), DEFAULT_SQLITE_DB_LOCATION)
 
 
 def delete_database() -> None:

@@ -127,6 +127,10 @@ if ! uv --version > /dev/null 2>&1; then
   python startup_scripts/ensure-uv-package-manager.py
 fi
 
+# Set UV_LINK_MODE to copy to avoid hardlinking issues on filesystems with link limits
+export UV_LINK_MODE=copy
+echo "UV_LINK_MODE set to: $UV_LINK_MODE"
+
 
 # Initialization logic for studio mode.
 if [ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]; then
@@ -137,7 +141,7 @@ if [ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]; then
   if [[ "$APP_DIR" != "$APP_DATA_DIR" ]]; then
       echo "Copying studio-data from $APP_DIR/studio-data to $APP_DATA_DIR/studio-data..."
       mkdir -p $APP_DATA_DIR/studio-data/
-      cp -ar $APP_DIR/studio-data/ $APP_DATA_DIR/studio-data/
+      cp -ar $APP_DIR/studio-data/* $APP_DATA_DIR/studio-data/
   fi
 
   # Initialize project defaults. These defaults ship with Agent Studio and the user
