@@ -34,6 +34,7 @@ trap cleanup EXIT
 # and frontend process are started from $APP_DIR to give us extra features,
 # like file watching for FastAPI and Node builds.
 cd $APP_DIR
+export PYTHONPATH=$APP_DIR:$PYTHONPATH
 
 # Load environment variables from .env files if they exist
 if [ -f "$APP_DIR/.env" ]; then
@@ -119,6 +120,13 @@ else
   export AGENT_STUDIO_WORKBENCH_TLS_ENABLED=false
 fi
 
+# Checking for uv installation.
+echo "Confirming uv installation..."
+if ! uv --version > /dev/null 2>&1; then
+  echo "uv is not installed. Installing uv..."
+  python startup_scripts/ensure-uv-package-manager.py
+fi
+
 
 # Initialization logic for studio mode.
 if [ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]; then
@@ -128,6 +136,7 @@ if [ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]; then
   # AGENT_STUDIO_RENDER_MODE is equal to studio.
   if [[ "$APP_DIR" != "$APP_DATA_DIR" ]]; then
       echo "Copying studio-data from $APP_DIR/studio-data to $APP_DATA_DIR/studio-data..."
+      mkdir -p $APP_DATA_DIR/studio-data/
       cp -ar $APP_DIR/studio-data/ $APP_DATA_DIR/studio-data/
   fi
 
@@ -147,7 +156,7 @@ if [ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]; then
 
   # Run alembic upgrades once to ensure we are at head.
   echo "Upgrading DB..."
-  VIRTUAL_ENV=$APP_DIR/.venv uv run python -m alembic upgrade head
+  VIRTUAL_ENV=.venv uv run python -m alembic upgrade head
 
 fi
 
@@ -189,10 +198,10 @@ if [ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]; then
     { # Try to start up the server
       if [ "$AGENT_STUDIO_DEPLOYMENT_CONFIG" = "dev" ]; then
         echo "Starting up the gRPC server with a debug port at $DEFAULT_AS_DEBUG_PORT..."
-        VIRTUAL_ENV=$APP_DIR/.venv uv run -m debugpy --listen $DEFAULT_AS_DEBUG_PORT $APP_DIR/bin/start-grpc-server.py &
+        VIRTUAL_ENV=.venv uv run -m debugpy --listen $DEFAULT_AS_DEBUG_PORT $APP_DIR/bin/start-grpc-server.py &
       else 
         echo "Starting up the gRPC server..."
-        VIRTUAL_ENV=$APP_DIR/.venv PYTHONUNBUFFERED=1 uv run $APP_DIR/bin/start-grpc-server.py &
+        VIRTUAL_ENV=.venv PYTHONUNBUFFERED=1 uv run $APP_DIR/bin/start-grpc-server.py &
       fi
     } || {
       echo "gRPC server initialization script failed. Is there already a local server running in the pod?"
@@ -223,7 +232,7 @@ fi
 # Start up the ops server. 
 if [[ "$AGENT_STUDIO_OPS_PROVIDER" = "phoenix" && "$AGENT_STUDIO_LEGACY_WORKFLOW_APP" = "false" ]]; then
   echo "Starting up embedded Phoenix ops server..."
-  VIRTUAL_ENV=$APP_DIR/.venv uv run python $APP_DIR/bin/start-agent-ops-server-embedded.py $DEFAULT_AS_PHOENIX_OPS_PLATFORM_PORT &
+  VIRTUAL_ENV=.venv uv run python $APP_DIR/bin/start-agent-ops-server-embedded.py $DEFAULT_AS_PHOENIX_OPS_PLATFORM_PORT &
 fi
 
 # If running in development mode, run the dev server so we get live
@@ -236,5 +245,13 @@ else
   npm run start --prefix $APP_DIR
 fi
 
-# Force cleanup everything
-cleanup
+# If we hit this point in the script, then something went wrong with our
+# npm server (this behavior has only been observed in dev mode). Please
+# kill your application with ctrl+C and try again.
+echo "================================================"
+echo "Something went wrong with our npm server."
+if [ "$AGENT_STUDIO_DEPLOYMENT_CONFIG" = "dev" ]; then
+  echo "Please kill your application with ctrl+C and try again."
+  echo "Waiting for kill signal..."
+  wait
+fi

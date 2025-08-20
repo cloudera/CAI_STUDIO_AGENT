@@ -101,6 +101,7 @@ RUN export NVM_DIR="/studio_app/.nvm" && \
 ARG RT_SHORT_VERSION=unspecified
 ARG RT_GIT_HASH=unspecified
 ARG RT_GBN=unspecified
+ARG ML_RUNTIME_EDITION="Agent Studio"
 # Set environment variables
 ENV AGENT_STUDIO_DEPLOY_MODE=runtime
 ENV IS_COMPOSABLE=true
@@ -108,7 +109,7 @@ ENV APP_DIR=/studio_app
 ENV PATH="/studio_app/.venv/bin:$PATH"
 ENV APP_DATA_DIR=/home/cdsw/agent-studio
 
-ENV ML_RUNTIME_EDITION="Agent Studio" \
+ENV ML_RUNTIME_EDITION=$ML_RUNTIME_EDITION \
     ML_RUNTIME_DESCRIPTION="Agent Studio runtime provided by Cloudera" \
     ML_RUNTIME_KERNEL="Agent Studio" \
     ML_RUNTIME_METADATA_VERSION=2 \ 

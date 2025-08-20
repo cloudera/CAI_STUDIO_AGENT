@@ -43,7 +43,7 @@ python startup_scripts/ensure-uv-package-manager.py
 # in $APP_DIR and in $APP_DIR/studio/workflow_engine/. The reason we don't use the 
 # install-dependencies.py script directly is because we don't want to build the frontend.
 export UV_HTTP_TIMEOUT=3600
-uv sync --all-extras
+VIRTUAL_ENV=.venv uv sync --all-extras
 
 # Install Node. Note: because this is for bootstrapping our dev environment, we wanto to install
 # node in our APP_DIR, which will be where our package.json is, etc. However, during execution time,
@@ -61,7 +61,4 @@ npm install
 # Build the workflow engine
 cd $APP_DIR/studio/workflow_engine
 VIRTUAL_ENV=.venv uv sync --all-extras
-
-# Initialize the project defaults and a starting $APP_DATA_DIR/.app/state.db.
 cd $APP_DIR
-python startup_scripts/uv_initialize-project-defaults.py
