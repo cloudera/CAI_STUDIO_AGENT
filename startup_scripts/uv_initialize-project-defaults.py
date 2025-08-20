@@ -10,10 +10,11 @@ from startup_scripts.startup_utils import load_dotenv_file, ensure_correct_base_
 
 # Load environment and execution directory.
 load_dotenv_file()
-ensure_correct_base_path()
+app_data_dir, app_dir = ensure_correct_base_path()
+os.environ["APP_DIR"] = app_dir
+os.environ["APP_DATA_DIR"] = app_data_dir
 
 try:        
-    app_dir = os.getenv("APP_DIR", os.getcwd())
     os.chdir(app_dir)
     out = subprocess.run(
         [f"VIRTUAL_ENV=.venv uv run bin/initialize-project-defaults.py"], 
