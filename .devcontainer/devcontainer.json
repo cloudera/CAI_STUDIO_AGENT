@@ -9,10 +9,7 @@
     "options": ["--platform=linux/amd64"]
   },
   "runArgs": [
-    "--platform=linux/amd64",
-    "--ulimit", "nofile=65536:65536",
-    "--ulimit", "memlock=-1:-1",
-    "--shm-size=16g"
+    "--platform=linux/amd64"
   ],
   "workspaceMount": "source=${localWorkspaceFolder},target=/home/cdsw/agent-studio,type=bind",
   "workspaceFolder": "/home/cdsw/agent-studio",
@@ -25,7 +22,6 @@
     "REQUESTS_CA_BUNDLE": "/etc/ssl/certs/ca-certificates.crt",
     "SSL_CERT_FILE": "/etc/ssl/certs/ca-certificates.crt",
     "CDSW_IP_ADDRESS": "127.0.0.1",
-    "NODE_OPTIONS": "--max-old-space-size=8192",
     "CHOKIDAR_USEPOLLING": "false",
     "WATCHPACK_POLLING": "false"
   },
