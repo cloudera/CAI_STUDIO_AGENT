@@ -649,6 +649,10 @@ message AddWorkflowRequest {
   optional string workflow_template_id = 4;
   // Description of the workflow
   optional string description = 5;
+  // Enable planning mode (only valid when a manager agent is configured)
+  optional bool planning = 6;
+  // Enable smart workflow features
+  optional bool smart_workflow = 7;
 }
 
 message AddWorkflowResponse {
@@ -687,6 +691,10 @@ message UpdateWorkflowRequest {
   bool is_conversational = 4;
   // Updated description of the workflow
   string description = 5;
+  // Enable planning mode (only valid when a manager agent is configured)
+  bool planning = 6;
+  // Enable smart workflow features
+  bool smart_workflow = 7;
 }
 
 message UpdateWorkflowResponse {}
@@ -840,6 +848,10 @@ message Workflow {
   string description = 7;
   // Directory
   optional string directory = 8;
+  // Planning mode (only true if manager agent exists)
+  bool planning = 9;
+  // Smart workflow toggle
+  bool smart_workflow = 10;
 }
 
 message CrewAIWorkflowMetadata {
@@ -1102,6 +1114,10 @@ message AddWorkflowTemplateRequest {
   // tying the new templates to the new workflow template. These 
   // dedicated template resources to not appear as global templates.
   optional string workflow_id = 9;
+  // Enable planning mode (only valid when a manager agent is configured)
+  optional bool planning = 10;
+  // Enable smart workflow features
+  optional bool smart_workflow = 11;
 }
 
 message AddWorkflowTemplateResponse {
@@ -1133,6 +1149,10 @@ message WorkflowTemplateMetadata {
   bool is_conversational = 9;
   // Is the template shipped as part of the studio
   bool pre_packaged = 10;
+  // Planning mode (only true if template defines a manager agent)
+  bool planning = 11;
+  // Smart workflow toggle
+  bool smart_workflow = 12;
 }
 
 message ExportWorkflowTemplateRequest {

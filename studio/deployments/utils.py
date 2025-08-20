@@ -144,6 +144,16 @@ def initialize_deployment(payload: DeploymentPayload, session: Session, cml: CML
         deployment.deployment_metadata = "{}"
         session.commit()
 
+    # Persist workflow flags to deployment metadata for visibility
+    update_deployment_metadata(
+        deployment,
+        {
+            "planning": bool(getattr(workflow, "planning", False)),
+            "smart_workflow": bool(getattr(workflow, "smart_workflow", False)),
+        },
+    )
+    session.commit()
+
     return deployment
 
 

@@ -181,42 +181,9 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
       tasks,
     });
 
-    // Add the onEditManager callback and showEditButton flag based on renderMode
-    const nodesWithCallbacks = freshDiagramState.nodes.map((node) => {
-      if (node.type === 'agent' && node.data.manager && renderMode === 'studio') {
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            onEditManager: handleEditManager,
-            showEditButton: true,
-          },
-        };
-      }
-      if (node.type === 'task' && renderMode === 'studio') {
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            onEditTask: handleEditTask,
-          },
-        };
-      }
-      if (node.type === 'agent' || node.type === 'tool') {
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            showEditButton: renderMode === 'studio',
-          },
-        };
-      }
-      return node;
-    });
-
     dispatch(
       updatedDiagramState({
-        nodes: nodesWithCallbacks,
+        nodes: freshDiagramState.nodes,
         edges: freshDiagramState.edges,
         hasCustomPositions: false,
       }),
@@ -250,32 +217,9 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
         tasks,
       });
 
-      // Add the onEditManager callback to manager agent nodes (only in studio mode)
-      const nodesWithCallbacks = freshDiagramState.nodes.map((node) => {
-        if (node.type === 'agent' && node.data.manager && renderMode === 'studio') {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              onEditManager: handleEditManager,
-            },
-          };
-        }
-        if (node.type === 'task' && renderMode === 'studio') {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              onEditTask: handleEditTask,
-            },
-          };
-        }
-        return node;
-      });
-
       dispatch(
         updatedDiagramState({
-          nodes: nodesWithCallbacks,
+          nodes: freshDiagramState.nodes,
           edges: freshDiagramState.edges,
           hasCustomPositions: false,
         }),
@@ -341,41 +285,9 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
         });
       }
 
-      // Add the onEditManager callback and showEditButton flag based on renderMode
-      const nodesWithCallbacks = nodesToUse.map((node) => {
-        if (node.type === 'agent' && node.data.manager && renderMode === 'studio') {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              onEditManager: handleEditManager,
-              showEditButton: true,
-            },
-          };
-        }
-        if (node.type === 'task' && renderMode === 'studio') {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              onEditTask: handleEditTask,
-            },
-          };
-        }
-        if (node.type === 'agent' || node.type === 'tool') {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              showEditButton: renderMode === 'studio',
-            },
-          };
-        }
-        return node;
-      });
       dispatch(
         updatedDiagramState({
-          nodes: nodesWithCallbacks,
+          nodes: nodesToUse,
           edges: freshDiagramState.edges,
           hasCustomPositions: shouldPreservePositions ? existingHasCustomPositions : false, // Reset flag when new nodes added
         }),
@@ -422,17 +334,10 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
           activeTool: activeNode?.activeTool,
           info: activeNode?.info,
           infoType: activeNode?.infoType,
-          // Always use fresh callbacks to prevent stale references (only in studio mode)
-          onEditManager:
-            node.type === 'agent' && node.data.manager && renderMode === 'studio'
-              ? handleEditManager
-              : undefined,
-          onEditTask: node.type === 'task' && renderMode === 'studio' ? handleEditTask : undefined,
-          showEditButton: renderMode === 'studio',
         },
       };
     });
-  }, [nodes, processedState.activeNodes, handleEditManager, handleEditTask, renderMode]);
+  }, [nodes, processedState.activeNodes]);
 
   // Always fit view after nodes/edges change
   useEffect(() => {

@@ -223,6 +223,10 @@ class Workflow(Base, MappedProtobuf, MappedDict):
         String, nullable=True)  # Manager LLM Model Provider ID
     # Is Workflow Conversational
     is_conversational = Column(Boolean, nullable=True)
+    # Planning mode for manager-directed planning
+    planning = Column(Boolean, default=False)
+    # Smart workflow toggle
+    smart_workflow = Column(Boolean, default=False)
     # directory location of the workflow
     directory = Column(String, nullable=True)
 
@@ -280,6 +284,10 @@ class WorkflowTemplate(Base, MappedProtobuf, MappedDict):
     is_conversational = Column(Boolean, default=False)
     # Is the template shipped as part of the studio
     pre_packaged = Column(Boolean, default=False)
+
+    # Planning and smart workflow flags for templates
+    planning = Column(Boolean, default=False)
+    smart_workflow = Column(Boolean, default=False)
 
 
     # Manual dict middleman to handle JSON -> repeated string conversions

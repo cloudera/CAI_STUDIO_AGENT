@@ -982,17 +982,29 @@ class TestAgentResponse(_message.Message):
     def __init__(self, response: _Optional[str] = ...) -> None: ...
 
 class AddWorkflowRequest(_message.Message):
-    __slots__ = ("name", "crew_ai_workflow_metadata", "is_conversational", "workflow_template_id", "description")
+    __slots__ = (
+        "name",
+        "crew_ai_workflow_metadata",
+        "is_conversational",
+        "workflow_template_id",
+        "description",
+        "planning",
+        "smart_workflow",
+    )
     NAME_FIELD_NUMBER: _ClassVar[int]
     CREW_AI_WORKFLOW_METADATA_FIELD_NUMBER: _ClassVar[int]
     IS_CONVERSATIONAL_FIELD_NUMBER: _ClassVar[int]
     WORKFLOW_TEMPLATE_ID_FIELD_NUMBER: _ClassVar[int]
     DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
+    PLANNING_FIELD_NUMBER: _ClassVar[int]
+    SMART_WORKFLOW_FIELD_NUMBER: _ClassVar[int]
     name: str
     crew_ai_workflow_metadata: CrewAIWorkflowMetadata
     is_conversational: bool
     workflow_template_id: str
     description: str
+    planning: bool
+    smart_workflow: bool
     def __init__(
         self,
         name: _Optional[str] = ...,
@@ -1000,6 +1012,8 @@ class AddWorkflowRequest(_message.Message):
         is_conversational: bool = ...,
         workflow_template_id: _Optional[str] = ...,
         description: _Optional[str] = ...,
+        planning: bool = ...,
+        smart_workflow: bool = ...,
     ) -> None: ...
 
 class AddWorkflowResponse(_message.Message):
@@ -1031,17 +1045,29 @@ class GetWorkflowResponse(_message.Message):
     def __init__(self, workflow: _Optional[_Union[Workflow, _Mapping]] = ...) -> None: ...
 
 class UpdateWorkflowRequest(_message.Message):
-    __slots__ = ("workflow_id", "name", "crew_ai_workflow_metadata", "is_conversational", "description")
+    __slots__ = (
+        "workflow_id",
+        "name",
+        "crew_ai_workflow_metadata",
+        "is_conversational",
+        "description",
+        "planning",
+        "smart_workflow",
+    )
     WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
     CREW_AI_WORKFLOW_METADATA_FIELD_NUMBER: _ClassVar[int]
     IS_CONVERSATIONAL_FIELD_NUMBER: _ClassVar[int]
     DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
+    PLANNING_FIELD_NUMBER: _ClassVar[int]
+    SMART_WORKFLOW_FIELD_NUMBER: _ClassVar[int]
     workflow_id: str
     name: str
     crew_ai_workflow_metadata: CrewAIWorkflowMetadata
     is_conversational: bool
     description: str
+    planning: bool
+    smart_workflow: bool
     def __init__(
         self,
         workflow_id: _Optional[str] = ...,
@@ -1049,6 +1075,8 @@ class UpdateWorkflowRequest(_message.Message):
         crew_ai_workflow_metadata: _Optional[_Union[CrewAIWorkflowMetadata, _Mapping]] = ...,
         is_conversational: bool = ...,
         description: _Optional[str] = ...,
+        planning: bool = ...,
+        smart_workflow: bool = ...,
     ) -> None: ...
 
 class UpdateWorkflowResponse(_message.Message):
@@ -1343,6 +1371,8 @@ class Workflow(_message.Message):
         "is_conversational",
         "description",
         "directory",
+        "planning",
+        "smart_workflow",
     )
     WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
@@ -1352,6 +1382,8 @@ class Workflow(_message.Message):
     IS_CONVERSATIONAL_FIELD_NUMBER: _ClassVar[int]
     DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
     DIRECTORY_FIELD_NUMBER: _ClassVar[int]
+    PLANNING_FIELD_NUMBER: _ClassVar[int]
+    SMART_WORKFLOW_FIELD_NUMBER: _ClassVar[int]
     workflow_id: str
     name: str
     crew_ai_workflow_metadata: CrewAIWorkflowMetadata
@@ -1360,6 +1392,8 @@ class Workflow(_message.Message):
     is_conversational: bool
     description: str
     directory: str
+    planning: bool
+    smart_workflow: bool
     def __init__(
         self,
         workflow_id: _Optional[str] = ...,
@@ -1370,6 +1404,8 @@ class Workflow(_message.Message):
         is_conversational: bool = ...,
         description: _Optional[str] = ...,
         directory: _Optional[str] = ...,
+        planning: bool = ...,
+        smart_workflow: bool = ...,
     ) -> None: ...
 
 class CrewAIWorkflowMetadata(_message.Message):
@@ -1866,6 +1902,8 @@ class AddWorkflowTemplateRequest(_message.Message):
         "use_default_manager",
         "is_conversational",
         "workflow_id",
+        "planning",
+        "smart_workflow",
     )
     NAME_FIELD_NUMBER: _ClassVar[int]
     DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
@@ -1876,6 +1914,8 @@ class AddWorkflowTemplateRequest(_message.Message):
     USE_DEFAULT_MANAGER_FIELD_NUMBER: _ClassVar[int]
     IS_CONVERSATIONAL_FIELD_NUMBER: _ClassVar[int]
     WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
+    PLANNING_FIELD_NUMBER: _ClassVar[int]
+    SMART_WORKFLOW_FIELD_NUMBER: _ClassVar[int]
     name: str
     description: str
     process: str
@@ -1885,6 +1925,8 @@ class AddWorkflowTemplateRequest(_message.Message):
     use_default_manager: bool
     is_conversational: bool
     workflow_id: str
+    planning: bool
+    smart_workflow: bool
     def __init__(
         self,
         name: _Optional[str] = ...,
@@ -1896,6 +1938,8 @@ class AddWorkflowTemplateRequest(_message.Message):
         use_default_manager: bool = ...,
         is_conversational: bool = ...,
         workflow_id: _Optional[str] = ...,
+        planning: bool = ...,
+        smart_workflow: bool = ...,
     ) -> None: ...
 
 class AddWorkflowTemplateResponse(_message.Message):
@@ -1926,6 +1970,8 @@ class WorkflowTemplateMetadata(_message.Message):
         "use_default_manager",
         "is_conversational",
         "pre_packaged",
+        "planning",
+        "smart_workflow",
     )
     ID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
@@ -1937,6 +1983,8 @@ class WorkflowTemplateMetadata(_message.Message):
     USE_DEFAULT_MANAGER_FIELD_NUMBER: _ClassVar[int]
     IS_CONVERSATIONAL_FIELD_NUMBER: _ClassVar[int]
     PRE_PACKAGED_FIELD_NUMBER: _ClassVar[int]
+    PLANNING_FIELD_NUMBER: _ClassVar[int]
+    SMART_WORKFLOW_FIELD_NUMBER: _ClassVar[int]
     id: str
     name: str
     description: str
@@ -1947,6 +1995,8 @@ class WorkflowTemplateMetadata(_message.Message):
     use_default_manager: bool
     is_conversational: bool
     pre_packaged: bool
+    planning: bool
+    smart_workflow: bool
     def __init__(
         self,
         id: _Optional[str] = ...,
@@ -1959,6 +2009,8 @@ class WorkflowTemplateMetadata(_message.Message):
         use_default_manager: bool = ...,
         is_conversational: bool = ...,
         pre_packaged: bool = ...,
+        planning: bool = ...,
+        smart_workflow: bool = ...,
     ) -> None: ...
 
 class ExportWorkflowTemplateRequest(_message.Message):

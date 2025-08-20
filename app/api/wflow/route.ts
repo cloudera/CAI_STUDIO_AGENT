@@ -231,6 +231,9 @@ export async function GET(_request: NextRequest) {
         }))
       : [];
 
+    const smartWorkflow = !!configuration.workflow.smart_workflow;
+    const planning = smartWorkflow && !!configuration.workflow.planning;
+
     const workflow: Workflow = {
       workflow_id: configuration.workflow.id,
       name: configuration.workflow.name,
@@ -244,6 +247,8 @@ export async function GET(_request: NextRequest) {
       is_valid: true,
       is_ready: true,
       is_conversational: configuration.workflow.is_conversational,
+      planning: planning,
+      smart_workflow: smartWorkflow,
     };
 
     const deployedWorkflow: DeployedWorkflow & { workflow_directory?: string } = {

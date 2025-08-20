@@ -121,6 +121,8 @@ class Input__Workflow(BaseModel):
     manager_agent_id: Optional[str] = None
     llm_provider_model_id: Optional[str] = None
     is_conversational: bool
+    planning: bool = False
+    smart_workflow: bool = False
     created_at: Optional[datetime] = None
 
 

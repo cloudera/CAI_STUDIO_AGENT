@@ -29,6 +29,8 @@ export interface WorkflowState {
   description?: string;
   workflowMetadata: WorkflowMetadataState;
   isConversational?: boolean;
+  planning?: boolean;
+  smartWorkflow?: boolean;
 }
 
 export interface CreateAgentState {
@@ -127,6 +129,8 @@ export const editorSlice = createSlice({
         name: workflow.name,
         description: workflow.description,
         isConversational: workflow.is_conversational,
+        smartWorkflow: (workflow as any).smart_workflow,
+        planning: ((workflow as any).planning && (workflow as any).smart_workflow) || false,
         workflowMetadata: {
           agentIds: workflow.crew_ai_workflow_metadata?.agent_id,
           taskIds: workflow.crew_ai_workflow_metadata?.task_id,
@@ -165,6 +169,14 @@ export const editorSlice = createSlice({
 
     updatedEditorWorkflowIsConversational: (state, action: PayloadAction<boolean | undefined>) => {
       state.workflow.isConversational = action.payload;
+    },
+
+    updatedEditorWorkflowPlanning: (state, action: PayloadAction<boolean | undefined>) => {
+      state.workflow.planning = action.payload;
+    },
+
+    updatedEditorWorkflowSmartWorkflow: (state, action: PayloadAction<boolean | undefined>) => {
+      state.workflow.smartWorkflow = action.payload;
     },
 
     updatedEditorWorkflowManagerAgentId: (state, action: PayloadAction<string | undefined>) => {
@@ -361,6 +373,8 @@ export const {
   updatedEditorWorkflowDescription,
   updatedEditorWorkflowProcess,
   updatedEditorWorkflowIsConversational,
+  updatedEditorWorkflowPlanning,
+  updatedEditorWorkflowSmartWorkflow,
   updatedEditorWorkflowManagerAgentId,
   // updatedEditorWorkflowManagerModelId,
   updatedEditorWorkflowAgentIds,
@@ -407,6 +421,10 @@ export const selectEditorWorkflowProcess = (state: RootState) =>
   state.editor.workflow.workflowMetadata.process;
 export const selectEditorWorkflowIsConversational = (state: RootState) =>
   state.editor.workflow.isConversational;
+export const selectEditorWorkflowPlanning = (state: RootState) =>
+  state.editor.workflow.planning;
+export const selectEditorWorkflowSmartWorkflow = (state: RootState) =>
+  state.editor.workflow.smartWorkflow;
 export const selectEditorWorkflowAgentIds = (state: RootState) =>
   state.editor.workflow.workflowMetadata.agentIds;
 export const selectEditorWorkflowTaskIds = (state: RootState) =>

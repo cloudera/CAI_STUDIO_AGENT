@@ -6,6 +6,7 @@ import cmlapi
 from uuid import uuid4
 
 from typing import Dict, Any
+from datetime import datetime
 from opentelemetry.context import attach, detach
 
 from engine.crewai.trace_context import set_trace_id
@@ -174,6 +175,13 @@ def run_workflow(
                 session_directory = f"/home/cdsw/{session_directory.lstrip('/')}"
             print(f"Using session directory: {session_directory}")
 
+        print(
+            f"[Engine] Creating CrewAI objects | smart={bool(getattr(collated_input.workflow, 'smart_workflow', False))} "
+            f"process={getattr(collated_input.workflow, 'crew_ai_process', None)} "
+            f"agents={len(collated_input.agents)} tasks={len(collated_input.tasks)} "
+            f"manager_agent_id={getattr(collated_input.workflow, 'manager_agent_id', None)}\n"
+            f"models={len(collated_input.language_models)} tools={len(collated_input.tool_instances)} mcps={len(collated_input.mcp_instances)}"
+        )
         crewai_objects = create_crewai_objects(
             workflow_directory,
             collated_input,
@@ -182,7 +190,71 @@ def run_workflow(
             llm_config,
             session_directory,
         )
+        print(
+            f"[Engine] Crew objects created | agents={len(crewai_objects.agents)} tasks={len(crewai_objects.tasks)} "
+            f"crews={len(crewai_objects.crews)}"
+        )
         crew = crewai_objects.crews[collated_input.workflow.id]
+        try:
+            mgr_id = getattr(collated_input.workflow, 'manager_agent_id', None)
+            if mgr_id:
+                mgr = crewai_objects.agents.get(mgr_id)
+                print(
+                    f"[Engine] Manager present | id={mgr_id} has_tools={bool(getattr(mgr, 'tools', None))} "
+                    f"llm_set={bool(getattr(mgr, 'llm', None))}"
+                )
+        except Exception:
+            pass
+        # Initialize state.json/plan.json only for smart workflows
+        try:
+            is_smart_workflow = bool(getattr(collated_input.workflow, 'smart_workflow', False))
+            if is_smart_workflow and session_directory:
+                os.makedirs(session_directory, exist_ok=True)
+                state_json_path = f"{session_directory}/state.json"
+
+                def _find_context_slot(obj):
+                    # Returns a tuple (container, key, value) where 'key' is 'context' (case-insensitive)
+                    if isinstance(obj, dict):
+                        for k, v in obj.items():
+                            if str(k).lower() == "context":
+                                return (obj, k, v)
+                            found = _find_context_slot(v)
+                            if found is not None:
+                                return found
+                    elif isinstance(obj, list):
+                        for item in obj:
+                            found = _find_context_slot(item)
+                            if found is not None:
+                                return found
+                    return None
+
+                found_slot = _find_context_slot(inputs)
+                # Write initial state.json as a list with a context entry if available
+                try:
+                    entries = []
+                    if found_slot is not None and found_slot[2] is not None and str(found_slot[2]) != "":
+                        entries.append({
+                            "timestamp": datetime.utcnow().isoformat() + "Z",
+                            "response": str(found_slot[2])
+                        })
+                        # Clear the context value in-place so kickoff inputs have an empty context
+                        container, key, _ = found_slot
+                        container[key] = ""
+                    with open(state_json_path, "w", encoding="utf-8") as f:
+                        import json as _json
+                        _json.dump(entries, f, ensure_ascii=False, indent=2)
+                except Exception:
+                    # Fallback to empty list
+                    with open(state_json_path, "w", encoding="utf-8") as f:
+                        f.write("[]")
+
+                # Also initialize an empty plan.json file in the session directory
+                plan_json_path = f"{session_directory}/plan.json"
+                with open(plan_json_path, "w", encoding="utf-8") as plan_file:
+                    plan_file.write("")
+        except Exception as e:
+            print(f"Warning: unable to initialize state.json/plan.json: {e}")
+        print(f"[Engine] Kickoff | inputs_keys={list(inputs.keys())}")
         crew.kickoff(inputs=dict(inputs))
 
         # After kickoff completes, stop autosync after ensuring a final drain

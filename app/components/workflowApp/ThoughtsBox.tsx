@@ -14,6 +14,8 @@ import {
   DatabaseOutlined,
   RightOutlined,
   DownOutlined,
+  LoadingOutlined,
+  CheckCircleFilled,
 } from '@ant-design/icons';
 import { useAppSelector } from '@/app/lib/hooks/hooks';
 import { selectWorkflowSessionDirectory } from '@/app/workflows/editorSlice';
@@ -22,9 +24,12 @@ import ArtifactPreviewModal from '@/app/components/workflowApp/ArtifactPreviewMo
 export interface ThoughtEntry {
   id: string;
   timestamp?: string;
-  thought: string;
-  tool?: string;
-  coworker?: string;
+  type: 'thought' | 'tool' | 'coworker';
+  thought?: string; // present when type === 'thought'
+  name?: string; // tool or coworker display name
+  status?: 'in_progress' | 'completed'; // for type tool/coworker
+  indentationLevel: number; // 0 for root, increases within coworker contexts
+  toolRunKey?: string; // stable key to reconcile start/finish
 }
 
 interface ThoughtsBoxProps {
@@ -280,35 +285,43 @@ const ThoughtsBox: React.FC<ThoughtsBoxProps> = ({
             {entries.length === 0 && (
               <div style={{ fontSize: 10, opacity: 0.8, color: '#000' }}>No thoughts yet…</div>
             )}
-            {entries.map((entry) => (
-              <div key={entry.id} style={{ marginBottom: 6 }}>
-                <div
-                  style={{ fontSize: 10, lineHeight: 1.4, whiteSpace: 'pre-wrap', color: '#000' }}
-                >
-                  {entry.thought}
+            {entries.map((entry) => {
+              const paddingLeft = Math.max(0, (entry.indentationLevel ?? 0) * 16);
+              return (
+                <div key={entry.id} style={{ marginBottom: 6, paddingLeft }}>
+                  {entry.type === 'thought' && entry.thought && (
+                    <div
+                      style={{ fontSize: 10, lineHeight: 1.4, whiteSpace: 'pre-wrap', color: '#000' }}
+                    >
+                      {entry.thought}
+                    </div>
+                  )}
+                  {(entry.type === 'tool' || entry.type === 'coworker') && (
+                    <div>
+                      <Tag
+                        style={{
+                          fontSize: 10,
+                          padding: '0 6px',
+                          lineHeight: '16px',
+                          height: 18,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 6,
+                        }}
+                      >
+                        <span>{entry.name}</span>
+                        {entry.status === 'in_progress' && (
+                          <LoadingOutlined style={{ fontSize: 12 }} spin />
+                        )}
+                        {entry.status === 'completed' && (
+                          <CheckCircleFilled style={{ color: '#52c41a', fontSize: 12 }} />
+                        )}
+                      </Tag>
+                    </div>
+                  )}
                 </div>
-                {entry.tool && (
-                  <div style={{ marginTop: 12 }}>
-                    <span style={{ fontSize: 10, opacity: 0.9, marginRight: 4, color: '#000' }}>
-                      Using Tool
-                    </span>
-                    <Tag style={{ fontSize: 10, padding: '0 6px', lineHeight: '16px', height: 18 }}>
-                      {entry.tool}
-                    </Tag>
-                  </div>
-                )}
-                {entry.coworker && (
-                  <div style={{ marginTop: 12 }}>
-                    <span style={{ fontSize: 10, opacity: 0.9, marginRight: 4, color: '#000' }}>
-                      Using Coworker
-                    </span>
-                    <Tag style={{ fontSize: 10, padding: '0 6px', lineHeight: '16px', height: 18 }}>
-                      {entry.coworker}
-                    </Tag>
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
           {/* Vertical divider */}
           <div style={{ width: 1, background: '#e8e8e8' }} />

@@ -65,6 +65,8 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({ workflowId }) => {
         name: workflow.name,
         description: workflow.description,
         is_conversational: workflow.is_conversational,
+        planning: (workflow as any).planning ?? false,
+        smart_workflow: (workflow as any).smart_workflow ?? false,
         crew_ai_workflow_metadata: workflow.crew_ai_workflow_metadata,
       }).unwrap();
     };

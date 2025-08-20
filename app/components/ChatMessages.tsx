@@ -43,6 +43,7 @@ import {
 import showdown from 'showdown';
 import FileUploadButton from './FileUploadButton';
 import ThoughtsBox, { ThoughtEntry } from './workflowApp/ThoughtsBox';
+import PlanBox from './workflowApp/PlanBox';
 import ArtifactPreviewModal, {
   FileInfo as ArtifactFileInfo,
 } from '@/app/components/workflowApp/ArtifactPreviewModal';
@@ -603,7 +604,19 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                   flex: 1,
                 }}
               >
-                <div style={{ padding: 0 }}>{message.content}</div>
+                <div
+                  style={{
+                    padding: 0,
+                    fontSize: '12px',
+                    lineHeight: 1.5,
+                    color: '#000',
+                    fontFamily:
+                      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                    whiteSpace: 'pre-wrap',
+                  }}
+                >
+                  {message.content}
+                </div>
                 {message.attachments && message.attachments.length > 0 && (
                   <div
                     style={{
@@ -642,6 +655,12 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                   if (!session) return null;
                   return (
                     <div style={{ marginTop: 8, width: '100%' }}>
+                      <PlanBox
+                        active={isProcessing && userIndex === thoughtSessions.length - 1}
+                        sessionKey={session.id}
+                        isCollapsed={session.collapsed}
+                        onToggle={(next) => onToggleThoughtSession(session.id, next)}
+                      />
                       <ThoughtsBox
                         entries={session.entries}
                         isCollapsed={session.collapsed}

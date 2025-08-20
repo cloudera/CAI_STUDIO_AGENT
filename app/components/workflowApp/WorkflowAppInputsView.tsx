@@ -35,6 +35,7 @@ import {
 import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
 import { useGlobalNotification } from '../Notifications';
 import FileUploadButton from '../FileUploadButton';
+import PlanBox from './PlanBox';
 
 const { Title, Text } = Typography;
 
@@ -547,6 +548,7 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({
         </div>
 
         {/* Thoughts above output box for non-conversational workflows */}
+        <PlanBox active={isRunning} isCollapsed={thoughtsCollapsed} onToggle={onToggleThoughts} />
         <ThoughtsBox
           entries={thoughts}
           isCollapsed={thoughtsCollapsed}

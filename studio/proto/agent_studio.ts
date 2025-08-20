@@ -648,7 +648,15 @@ export interface AddWorkflowRequest {
     | string
     | undefined;
   /** Description of the workflow */
-  description?: string | undefined;
+  description?:
+    | string
+    | undefined;
+  /** Enable planning mode (only valid when a manager agent is configured) */
+  planning?:
+    | boolean
+    | undefined;
+  /** Enable smart workflow features */
+  smart_workflow?: boolean | undefined;
 }
 
 export interface AddWorkflowResponse {
@@ -690,6 +698,10 @@ export interface UpdateWorkflowRequest {
   is_conversational: boolean;
   /** Updated description of the workflow */
   description: string;
+  /** Enable planning mode (only valid when a manager agent is configured) */
+  planning: boolean;
+  /** Enable smart workflow features */
+  smart_workflow: boolean;
 }
 
 export interface UpdateWorkflowResponse {
@@ -898,7 +910,13 @@ export interface Workflow {
   /** Workflow description */
   description: string;
   /** Directory */
-  directory?: string | undefined;
+  directory?:
+    | string
+    | undefined;
+  /** Planning mode (only true if manager agent exists) */
+  planning: boolean;
+  /** Smart workflow toggle */
+  smart_workflow: boolean;
 }
 
 export interface CrewAIWorkflowMetadata {
@@ -1206,7 +1224,15 @@ export interface AddWorkflowTemplateRequest {
    * tying the new templates to the new workflow template. These
    * dedicated template resources to not appear as global templates.
    */
-  workflow_id?: string | undefined;
+  workflow_id?:
+    | string
+    | undefined;
+  /** Enable planning mode (only valid when a manager agent is configured) */
+  planning?:
+    | boolean
+    | undefined;
+  /** Enable smart workflow features */
+  smart_workflow?: boolean | undefined;
 }
 
 export interface AddWorkflowTemplateResponse {
@@ -1238,6 +1264,10 @@ export interface WorkflowTemplateMetadata {
   is_conversational: boolean;
   /** Is the template shipped as part of the studio */
   pre_packaged: boolean;
+  /** Planning mode (only true if template defines a manager agent) */
+  planning: boolean;
+  /** Smart workflow toggle */
+  smart_workflow: boolean;
 }
 
 export interface ExportWorkflowTemplateRequest {
@@ -7893,6 +7923,8 @@ function createBaseAddWorkflowRequest(): AddWorkflowRequest {
     is_conversational: undefined,
     workflow_template_id: undefined,
     description: undefined,
+    planning: undefined,
+    smart_workflow: undefined,
   };
 }
 
@@ -7912,6 +7944,12 @@ export const AddWorkflowRequest: MessageFns<AddWorkflowRequest> = {
     }
     if (message.description !== undefined) {
       writer.uint32(42).string(message.description);
+    }
+    if (message.planning !== undefined) {
+      writer.uint32(48).bool(message.planning);
+    }
+    if (message.smart_workflow !== undefined) {
+      writer.uint32(56).bool(message.smart_workflow);
     }
     return writer;
   },
@@ -7963,6 +8001,22 @@ export const AddWorkflowRequest: MessageFns<AddWorkflowRequest> = {
           message.description = reader.string();
           continue;
         }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.planning = reader.bool();
+          continue;
+        }
+        case 7: {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.smart_workflow = reader.bool();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -7983,6 +8037,8 @@ export const AddWorkflowRequest: MessageFns<AddWorkflowRequest> = {
         ? globalThis.String(object.workflow_template_id)
         : undefined,
       description: isSet(object.description) ? globalThis.String(object.description) : undefined,
+      planning: isSet(object.planning) ? globalThis.Boolean(object.planning) : undefined,
+      smart_workflow: isSet(object.smart_workflow) ? globalThis.Boolean(object.smart_workflow) : undefined,
     };
   },
 
@@ -8003,6 +8059,12 @@ export const AddWorkflowRequest: MessageFns<AddWorkflowRequest> = {
     if (message.description !== undefined) {
       obj.description = message.description;
     }
+    if (message.planning !== undefined) {
+      obj.planning = message.planning;
+    }
+    if (message.smart_workflow !== undefined) {
+      obj.smart_workflow = message.smart_workflow;
+    }
     return obj;
   },
 
@@ -8019,6 +8081,8 @@ export const AddWorkflowRequest: MessageFns<AddWorkflowRequest> = {
     message.is_conversational = object.is_conversational ?? undefined;
     message.workflow_template_id = object.workflow_template_id ?? undefined;
     message.description = object.description ?? undefined;
+    message.planning = object.planning ?? undefined;
+    message.smart_workflow = object.smart_workflow ?? undefined;
     return message;
   },
 };
@@ -8305,7 +8369,15 @@ export const GetWorkflowResponse: MessageFns<GetWorkflowResponse> = {
 };
 
 function createBaseUpdateWorkflowRequest(): UpdateWorkflowRequest {
-  return { workflow_id: "", name: "", crew_ai_workflow_metadata: undefined, is_conversational: false, description: "" };
+  return {
+    workflow_id: "",
+    name: "",
+    crew_ai_workflow_metadata: undefined,
+    is_conversational: false,
+    description: "",
+    planning: false,
+    smart_workflow: false,
+  };
 }
 
 export const UpdateWorkflowRequest: MessageFns<UpdateWorkflowRequest> = {
@@ -8324,6 +8396,12 @@ export const UpdateWorkflowRequest: MessageFns<UpdateWorkflowRequest> = {
     }
     if (message.description !== "") {
       writer.uint32(42).string(message.description);
+    }
+    if (message.planning !== false) {
+      writer.uint32(48).bool(message.planning);
+    }
+    if (message.smart_workflow !== false) {
+      writer.uint32(56).bool(message.smart_workflow);
     }
     return writer;
   },
@@ -8375,6 +8453,22 @@ export const UpdateWorkflowRequest: MessageFns<UpdateWorkflowRequest> = {
           message.description = reader.string();
           continue;
         }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.planning = reader.bool();
+          continue;
+        }
+        case 7: {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.smart_workflow = reader.bool();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -8393,6 +8487,8 @@ export const UpdateWorkflowRequest: MessageFns<UpdateWorkflowRequest> = {
         : undefined,
       is_conversational: isSet(object.is_conversational) ? globalThis.Boolean(object.is_conversational) : false,
       description: isSet(object.description) ? globalThis.String(object.description) : "",
+      planning: isSet(object.planning) ? globalThis.Boolean(object.planning) : false,
+      smart_workflow: isSet(object.smart_workflow) ? globalThis.Boolean(object.smart_workflow) : false,
     };
   },
 
@@ -8413,6 +8509,12 @@ export const UpdateWorkflowRequest: MessageFns<UpdateWorkflowRequest> = {
     if (message.description !== "") {
       obj.description = message.description;
     }
+    if (message.planning !== false) {
+      obj.planning = message.planning;
+    }
+    if (message.smart_workflow !== false) {
+      obj.smart_workflow = message.smart_workflow;
+    }
     return obj;
   },
 
@@ -8429,6 +8531,8 @@ export const UpdateWorkflowRequest: MessageFns<UpdateWorkflowRequest> = {
         : undefined;
     message.is_conversational = object.is_conversational ?? false;
     message.description = object.description ?? "";
+    message.planning = object.planning ?? false;
+    message.smart_workflow = object.smart_workflow ?? false;
     return message;
   },
 };
@@ -10644,6 +10748,8 @@ function createBaseWorkflow(): Workflow {
     is_conversational: false,
     description: "",
     directory: undefined,
+    planning: false,
+    smart_workflow: false,
   };
 }
 
@@ -10672,6 +10778,12 @@ export const Workflow: MessageFns<Workflow> = {
     }
     if (message.directory !== undefined) {
       writer.uint32(66).string(message.directory);
+    }
+    if (message.planning !== false) {
+      writer.uint32(72).bool(message.planning);
+    }
+    if (message.smart_workflow !== false) {
+      writer.uint32(80).bool(message.smart_workflow);
     }
     return writer;
   },
@@ -10747,6 +10859,22 @@ export const Workflow: MessageFns<Workflow> = {
           message.directory = reader.string();
           continue;
         }
+        case 9: {
+          if (tag !== 72) {
+            break;
+          }
+
+          message.planning = reader.bool();
+          continue;
+        }
+        case 10: {
+          if (tag !== 80) {
+            break;
+          }
+
+          message.smart_workflow = reader.bool();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -10768,6 +10896,8 @@ export const Workflow: MessageFns<Workflow> = {
       is_conversational: isSet(object.is_conversational) ? globalThis.Boolean(object.is_conversational) : false,
       description: isSet(object.description) ? globalThis.String(object.description) : "",
       directory: isSet(object.directory) ? globalThis.String(object.directory) : undefined,
+      planning: isSet(object.planning) ? globalThis.Boolean(object.planning) : false,
+      smart_workflow: isSet(object.smart_workflow) ? globalThis.Boolean(object.smart_workflow) : false,
     };
   },
 
@@ -10797,6 +10927,12 @@ export const Workflow: MessageFns<Workflow> = {
     if (message.directory !== undefined) {
       obj.directory = message.directory;
     }
+    if (message.planning !== false) {
+      obj.planning = message.planning;
+    }
+    if (message.smart_workflow !== false) {
+      obj.smart_workflow = message.smart_workflow;
+    }
     return obj;
   },
 
@@ -10816,6 +10952,8 @@ export const Workflow: MessageFns<Workflow> = {
     message.is_conversational = object.is_conversational ?? false;
     message.description = object.description ?? "";
     message.directory = object.directory ?? undefined;
+    message.planning = object.planning ?? false;
+    message.smart_workflow = object.smart_workflow ?? false;
     return message;
   },
 };
@@ -14149,6 +14287,8 @@ function createBaseAddWorkflowTemplateRequest(): AddWorkflowTemplateRequest {
     use_default_manager: undefined,
     is_conversational: undefined,
     workflow_id: undefined,
+    planning: undefined,
+    smart_workflow: undefined,
   };
 }
 
@@ -14180,6 +14320,12 @@ export const AddWorkflowTemplateRequest: MessageFns<AddWorkflowTemplateRequest> 
     }
     if (message.workflow_id !== undefined) {
       writer.uint32(74).string(message.workflow_id);
+    }
+    if (message.planning !== undefined) {
+      writer.uint32(80).bool(message.planning);
+    }
+    if (message.smart_workflow !== undefined) {
+      writer.uint32(88).bool(message.smart_workflow);
     }
     return writer;
   },
@@ -14263,6 +14409,22 @@ export const AddWorkflowTemplateRequest: MessageFns<AddWorkflowTemplateRequest> 
           message.workflow_id = reader.string();
           continue;
         }
+        case 10: {
+          if (tag !== 80) {
+            break;
+          }
+
+          message.planning = reader.bool();
+          continue;
+        }
+        case 11: {
+          if (tag !== 88) {
+            break;
+          }
+
+          message.smart_workflow = reader.bool();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -14291,6 +14453,8 @@ export const AddWorkflowTemplateRequest: MessageFns<AddWorkflowTemplateRequest> 
         : undefined,
       is_conversational: isSet(object.is_conversational) ? globalThis.Boolean(object.is_conversational) : undefined,
       workflow_id: isSet(object.workflow_id) ? globalThis.String(object.workflow_id) : undefined,
+      planning: isSet(object.planning) ? globalThis.Boolean(object.planning) : undefined,
+      smart_workflow: isSet(object.smart_workflow) ? globalThis.Boolean(object.smart_workflow) : undefined,
     };
   },
 
@@ -14323,6 +14487,12 @@ export const AddWorkflowTemplateRequest: MessageFns<AddWorkflowTemplateRequest> 
     if (message.workflow_id !== undefined) {
       obj.workflow_id = message.workflow_id;
     }
+    if (message.planning !== undefined) {
+      obj.planning = message.planning;
+    }
+    if (message.smart_workflow !== undefined) {
+      obj.smart_workflow = message.smart_workflow;
+    }
     return obj;
   },
 
@@ -14340,6 +14510,8 @@ export const AddWorkflowTemplateRequest: MessageFns<AddWorkflowTemplateRequest> 
     message.use_default_manager = object.use_default_manager ?? undefined;
     message.is_conversational = object.is_conversational ?? undefined;
     message.workflow_id = object.workflow_id ?? undefined;
+    message.planning = object.planning ?? undefined;
+    message.smart_workflow = object.smart_workflow ?? undefined;
     return message;
   },
 };
@@ -14515,6 +14687,8 @@ function createBaseWorkflowTemplateMetadata(): WorkflowTemplateMetadata {
     use_default_manager: false,
     is_conversational: false,
     pre_packaged: false,
+    planning: false,
+    smart_workflow: false,
   };
 }
 
@@ -14549,6 +14723,12 @@ export const WorkflowTemplateMetadata: MessageFns<WorkflowTemplateMetadata> = {
     }
     if (message.pre_packaged !== false) {
       writer.uint32(80).bool(message.pre_packaged);
+    }
+    if (message.planning !== false) {
+      writer.uint32(88).bool(message.planning);
+    }
+    if (message.smart_workflow !== false) {
+      writer.uint32(96).bool(message.smart_workflow);
     }
     return writer;
   },
@@ -14640,6 +14820,22 @@ export const WorkflowTemplateMetadata: MessageFns<WorkflowTemplateMetadata> = {
           message.pre_packaged = reader.bool();
           continue;
         }
+        case 11: {
+          if (tag !== 88) {
+            break;
+          }
+
+          message.planning = reader.bool();
+          continue;
+        }
+        case 12: {
+          if (tag !== 96) {
+            break;
+          }
+
+          message.smart_workflow = reader.bool();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -14667,6 +14863,8 @@ export const WorkflowTemplateMetadata: MessageFns<WorkflowTemplateMetadata> = {
       use_default_manager: isSet(object.use_default_manager) ? globalThis.Boolean(object.use_default_manager) : false,
       is_conversational: isSet(object.is_conversational) ? globalThis.Boolean(object.is_conversational) : false,
       pre_packaged: isSet(object.pre_packaged) ? globalThis.Boolean(object.pre_packaged) : false,
+      planning: isSet(object.planning) ? globalThis.Boolean(object.planning) : false,
+      smart_workflow: isSet(object.smart_workflow) ? globalThis.Boolean(object.smart_workflow) : false,
     };
   },
 
@@ -14702,6 +14900,12 @@ export const WorkflowTemplateMetadata: MessageFns<WorkflowTemplateMetadata> = {
     if (message.pre_packaged !== false) {
       obj.pre_packaged = message.pre_packaged;
     }
+    if (message.planning !== false) {
+      obj.planning = message.planning;
+    }
+    if (message.smart_workflow !== false) {
+      obj.smart_workflow = message.smart_workflow;
+    }
     return obj;
   },
 
@@ -14720,6 +14924,8 @@ export const WorkflowTemplateMetadata: MessageFns<WorkflowTemplateMetadata> = {
     message.use_default_manager = object.use_default_manager ?? false;
     message.is_conversational = object.is_conversational ?? false;
     message.pre_packaged = object.pre_packaged ?? false;
+    message.planning = object.planning ?? false;
+    message.smart_workflow = object.smart_workflow ?? false;
     return message;
   },
 };

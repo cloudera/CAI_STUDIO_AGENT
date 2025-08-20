@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Any, Type
 import os
 
 # No top level studio.db imports allowed to support wokrflow model deployment
@@ -6,17 +6,21 @@ import litellm
 from crewai import LLM as CrewAILLM
 from engine.consts import SupportedModelTypes
 from engine.types import Input__LanguageModel, Input__LanguageModelConfig
-from engine.crewai.wrappers import AgentStudioCrewAILLM
+from engine.crewai.wrappers_smart import AgentStudioCrewAILLM, AgentStudioManagerCrewAILLM
+from engine.crewai.wrappers_plain import PlainCrewAILLM, PlainManagerCrewAILLM
 
 # Configure LiteLLM to use secure SSL verification with system CA bundle
 litellm.ssl_verify = os.environ.get("REQUESTS_CA_BUNDLE")
 
 
-def get_crewai_llm(language_model: Input__LanguageModel, llm_config_dict: Dict[str, Any]) -> CrewAILLM:
-    # Either pull model config right from the collated input, or from the input model config dict
+def _build_llm(
+    language_model: Input__LanguageModel,
+    llm_config_dict: Dict[str, Any],
+    wrapper_cls: Type[CrewAILLM],
+) -> CrewAILLM:
     llm_config: Input__LanguageModelConfig = Input__LanguageModelConfig(**llm_config_dict)
     if llm_config.model_type == SupportedModelTypes.OPENAI.value:
-        return AgentStudioCrewAILLM(
+        return wrapper_cls(
             agent_studio_id=language_model.model_id,
             model="openai/" + llm_config.provider_model,
             api_key=llm_config.api_key,
@@ -26,7 +30,7 @@ def get_crewai_llm(language_model: Input__LanguageModel, llm_config_dict: Dict[s
             extra_headers=llm_config.extra_headers,
         )
     elif llm_config.model_type == SupportedModelTypes.OPENAI_COMPATIBLE.value:
-        return AgentStudioCrewAILLM(
+        return wrapper_cls(
             agent_studio_id=language_model.model_id,
             model="openai/" + llm_config.provider_model,
             api_key=llm_config.api_key,
@@ -37,7 +41,7 @@ def get_crewai_llm(language_model: Input__LanguageModel, llm_config_dict: Dict[s
             extra_headers=llm_config.extra_headers,
         )
     elif llm_config.model_type == SupportedModelTypes.AZURE_OPENAI.value:
-        return AgentStudioCrewAILLM(
+        return wrapper_cls(
             agent_studio_id=language_model.model_id,
             model="azure/" + llm_config.provider_model,
             api_key=llm_config.api_key,
@@ -48,7 +52,7 @@ def get_crewai_llm(language_model: Input__LanguageModel, llm_config_dict: Dict[s
             extra_headers=llm_config.extra_headers,
         )
     elif llm_config.model_type == SupportedModelTypes.GEMINI.value:
-        return AgentStudioCrewAILLM(
+        return wrapper_cls(
             agent_studio_id=language_model.model_id,
             model="gemini/" + llm_config.provider_model,
             api_key=llm_config.api_key,
@@ -57,7 +61,7 @@ def get_crewai_llm(language_model: Input__LanguageModel, llm_config_dict: Dict[s
             extra_headers=llm_config.extra_headers,
         )
     elif llm_config.model_type == SupportedModelTypes.ANTHROPIC.value:
-        return AgentStudioCrewAILLM(
+        return wrapper_cls(
             agent_studio_id=language_model.model_id,
             model="anthropic/" + llm_config.provider_model,
             api_key=llm_config.api_key,
@@ -66,7 +70,7 @@ def get_crewai_llm(language_model: Input__LanguageModel, llm_config_dict: Dict[s
             extra_headers=llm_config.extra_headers,
         )
     elif llm_config.model_type == "CAII":
-        return AgentStudioCrewAILLM(
+        return wrapper_cls(
             agent_studio_id=language_model.model_id,
             model="openai/" + llm_config.provider_model,
             api_key=llm_config.api_key,
@@ -77,7 +81,7 @@ def get_crewai_llm(language_model: Input__LanguageModel, llm_config_dict: Dict[s
             extra_headers=llm_config.extra_headers,
         )
     elif llm_config.model_type == SupportedModelTypes.BEDROCK.value:
-        return AgentStudioCrewAILLM(
+        return wrapper_cls(
             agent_studio_id=language_model.model_id,
             model="bedrock/" + llm_config.provider_model,
             aws_access_key_id=llm_config.aws_access_key_id,
@@ -90,3 +94,11 @@ def get_crewai_llm(language_model: Input__LanguageModel, llm_config_dict: Dict[s
         )
     else:
         raise ValueError(f"Model type {llm_config.model_type} is not supported.")
+
+
+def get_crewai_llm(language_model: Input__LanguageModel, llm_config_dict: Dict[str, Any], smart: bool = True) -> CrewAILLM:
+    return _build_llm(language_model, llm_config_dict, AgentStudioCrewAILLM if smart else PlainCrewAILLM)
+
+
+def get_crewai_manager_llm(language_model: Input__LanguageModel, llm_config_dict: Dict[str, Any], smart: bool = True) -> CrewAILLM:
+    return _build_llm(language_model, llm_config_dict, AgentStudioManagerCrewAILLM if smart else PlainManagerCrewAILLM)

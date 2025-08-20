@@ -224,6 +224,8 @@ export const createUpdateRequestFromEditor = (workflowState: WorkflowState) => {
     name: workflowState.name!,
     description: workflowState.description!,
     is_conversational: workflowState.isConversational!,
+    planning: !!workflowState.smartWorkflow && !!workflowState.planning,
+    smart_workflow: !!workflowState.smartWorkflow,
     crew_ai_workflow_metadata: {
       agent_id: workflowState.workflowMetadata.agentIds || [],
       task_id: workflowState.workflowMetadata.taskIds || [],
@@ -244,6 +246,8 @@ export const createAddRequestFromEditor = (workflowState: WorkflowState) => {
     name: workflowState.name!,
     is_conversational: workflowState.isConversational!,
     description: workflowState.description!,
+    planning: !!workflowState.smartWorkflow && !!workflowState.planning,
+    smart_workflow: !!workflowState.smartWorkflow,
     crew_ai_workflow_metadata: {
       agent_id: workflowState.workflowMetadata.agentIds || [],
       task_id: workflowState.workflowMetadata.taskIds || [],

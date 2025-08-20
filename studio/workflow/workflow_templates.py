@@ -65,6 +65,12 @@ def add_workflow_template_from_workflow(
         workflow_template.description = workflow.description
         workflow_template.is_conversational = workflow.is_conversational
         workflow_template.process = workflow.crew_ai_process
+        # Propagate planning and smart_workflow flags from workflow
+        workflow_template.planning = bool(workflow.planning)
+        workflow_template.smart_workflow = bool(workflow.smart_workflow)
+        # Enforce: planning requires smart_workflow
+        if not workflow_template.smart_workflow and workflow_template.planning:
+            workflow_template.planning = False
 
         # If we have a default manager, mark a default manager in the workflow template.
         if workflow.crew_ai_process == Process.hierarchical and not workflow.crew_ai_manager_agent:
@@ -264,6 +270,14 @@ def add_workflow_template(
     with dao.get_session() as session:
         workflow_template_dict = {"id": str(uuid4())}
         workflow_template_dict.update(MessageToDict(request, preserving_proto_field_name=True))
+        # Enforce: planning requires smart_workflow on input
+        try:
+            input_planning = bool(workflow_template_dict.get("planning", False))
+            input_smart = bool(workflow_template_dict.get("smart_workflow", False))
+            if input_planning and not input_smart:
+                workflow_template_dict["planning"] = False
+        except Exception:
+            pass
         workflow_template_dict["pre_packaged"] = False  # Not shipped with the studio
         # Audit fields
         now = datetime.utcnow().isoformat()

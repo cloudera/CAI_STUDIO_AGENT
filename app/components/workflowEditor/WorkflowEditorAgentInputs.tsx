@@ -60,6 +60,12 @@ import { useAddWorkflowMutation, useUpdateWorkflowMutation } from '../../workflo
 import { createUpdateRequestFromEditor, createAddRequestFromEditor } from '../../lib/workflow';
 import SelectOrAddManagerAgentModal from './SelectOrAddManagerAgentModal';
 import { useListMcpInstancesQuery } from '@/app/mcp/mcpInstancesApi';
+import {
+  selectEditorWorkflowPlanning,
+  selectEditorWorkflowSmartWorkflow,
+  updatedEditorWorkflowPlanning,
+  updatedEditorWorkflowSmartWorkflow,
+} from '../../workflows/editorSlice';
 
 const WorkflowDescriptionComponent: React.FC = () => {
   const workflowDescription = useAppSelector(selectEditorWorkflowDescription);
@@ -505,6 +511,8 @@ const SettingsComponent: React.FC<SettingsComponentProps> = ({ workflowId }) => 
   const managerAgentId = useAppSelector(selectEditorWorkflowManagerAgentId);
   const process = useAppSelector(selectEditorWorkflowProcess);
   const hasManagerAgent: boolean = process === 'hierarchical';
+  const planning = useAppSelector(selectEditorWorkflowPlanning);
+  const smartWorkflow = useAppSelector(selectEditorWorkflowSmartWorkflow);
   const notificationApi = useGlobalNotification();
   const workflowState = useAppSelector(selectEditorWorkflow);
   const [updateWorkflow] = useUpdateWorkflowMutation();
@@ -547,7 +555,7 @@ const SettingsComponent: React.FC<SettingsComponentProps> = ({ workflowId }) => 
   return (
     <>
       <Layout className="gap-2.5 flex-grow-0 flex-shrink-0 flex-col bg-transparent">
-        <Space>
+        <Space wrap>
           <Switch
             checked={isConversational}
             onChange={async (checked) => {
@@ -641,6 +649,49 @@ const SettingsComponent: React.FC<SettingsComponentProps> = ({ workflowId }) => 
             <QuestionCircleOutlined className="text-gray-600" />
           </Tooltip>
         </Space>
+
+        <Space>
+          <Switch
+            checked={smartWorkflow ?? false}
+            onChange={async (checked) => {
+              dispatch(updatedEditorWorkflowSmartWorkflow(checked));
+              if (!checked) {
+                dispatch(updatedEditorWorkflowPlanning(false));
+              }
+              const updatedWorkflowState = {
+                ...workflowState,
+                smartWorkflow: checked,
+                planning: checked ? workflowState.planning : false,
+              };
+              await updateWorkflow(createUpdateRequestFromEditor(updatedWorkflowState)).unwrap();
+            }}
+          ></Switch>
+          <Text className="text-base font-semibold">Smart Workflow</Text>
+          <Tooltip title="Enable enhanced workflow behaviors." placement="right">
+            <QuestionCircleOutlined className="text-gray-600" />
+          </Tooltip>
+        </Space>
+
+        {smartWorkflow && (
+          <Space>
+            <Switch
+              disabled={!hasManagerAgent}
+              checked={planning ?? false}
+              onChange={async (checked) => {
+                dispatch(updatedEditorWorkflowPlanning(checked));
+                const updatedWorkflowState = {
+                  ...workflowState,
+                  planning: checked,
+                };
+                await updateWorkflow(createUpdateRequestFromEditor(updatedWorkflowState)).unwrap();
+              }}
+            ></Switch>
+            <Text className="text-base font-semibold">Planning</Text>
+            <Tooltip title="Planning requires a Manager Agent." placement="right">
+              <QuestionCircleOutlined className="text-gray-600" />
+            </Tooltip>
+          </Space>
+        )}
 
         <ManagerAgentCheckComponent workflowId={workflowId} isDisabled={false} />
         {hasManagerAgent && !managerAgentId && (

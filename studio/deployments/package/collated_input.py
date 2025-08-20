@@ -187,6 +187,8 @@ def create_input_workflow(workflow: Workflow, session: Session, deployment_creat
         manager_agent_id=workflow.crew_ai_manager_agent or None,
         llm_provider_model_id=llm_provider_model_id,
         is_conversational=workflow.is_conversational,
+        planning=bool(getattr(workflow, "planning", False)),
+        smart_workflow=bool(getattr(workflow, "smart_workflow", False)),
         created_at=deployment_created_at if deployment_created_at is not None else datetime.now(timezone.utc),
     )
 

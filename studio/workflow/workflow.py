@@ -133,6 +133,12 @@ def add_workflow_from_template(
         workflow.description = workflow_template.description
         workflow.crew_ai_process = workflow_template.process
         workflow.is_conversational = workflow_template.is_conversational
+        # Propagate flags from template when available, else default False
+        workflow.planning = bool(getattr(workflow_template, "planning", False))
+        workflow.smart_workflow = bool(getattr(workflow_template, "smart_workflow", False))
+        # Enforce: planning requires smart_workflow
+        if not workflow.smart_workflow and workflow.planning:
+            workflow.planning = False
         wf_dir = workflow_utils.get_fresh_workflow_directory(workflow.name)
         workflow.directory = wf_dir
         os.makedirs(wf_dir, exist_ok=True)
@@ -206,6 +212,10 @@ def add_workflow_from_template(
             session.add(agent)
             workflow.crew_ai_manager_agent = agent.id
 
+        # Enforce: planning only if there is a manager agent
+        if workflow.planning and not workflow.crew_ai_manager_agent:
+            workflow.planning = False
+
         mcp_instance_ids: list[str] = []
         for _, agent_id in agent_templates_to_created_agent_id.items():
             agent: db_model.Agent = session.query(db_model.Agent).filter_by(id=agent_id).one()
@@ -261,8 +271,18 @@ def add_workflow(request: AddWorkflowRequest, cml: CMLServiceApi, dao: AgentStud
                 crew_ai_manager_agent=manager_agent_id,
                 crew_ai_llm_provider_model_id=manager_llm_model_provider_id,
                 is_conversational=request.is_conversational,
+                planning=bool(request.planning) if hasattr(request, "planning") else False,
+                smart_workflow=bool(request.smart_workflow) if hasattr(request, "smart_workflow") else False,
                 directory=wf_dir,
             )
+
+            # Enforce: planning requires smart_workflow
+            if workflow.planning and not workflow.smart_workflow:
+                workflow.planning = False
+
+            # Enforce: planning only if there is a manager agent
+            if workflow.planning and not (manager_agent_id and manager_agent_id.strip()):
+                workflow.planning = False
             session.add(workflow)
             session.commit()
             return AddWorkflowResponse(workflow_id=workflow.id)
@@ -302,6 +322,8 @@ def list_workflows(
                         ),
                         is_ready=False,
                         is_conversational=workflow.is_conversational or False,
+                        planning=workflow.planning or False,
+                        smart_workflow=workflow.smart_workflow or False,
                         directory=workflow.directory or "",
                     )
                 )
@@ -338,6 +360,8 @@ def get_workflow(request: GetWorkflowRequest, cml: CMLServiceApi, dao: AgentStud
                 ),
                 is_ready=workflow_utils.is_workflow_ready(workflow.id, session),
                 is_conversational=workflow.is_conversational or False,
+                planning=workflow.planning or False,
+                smart_workflow=workflow.smart_workflow or False,
                 directory=workflow.directory or "",
             )
             return GetWorkflowResponse(workflow=workflow_metadata)
@@ -412,6 +436,22 @@ def update_workflow(
                 if is_field_set(metadata, "process"):
                     _validate_process(metadata, cml, dao)
                     workflow.crew_ai_process = metadata.process
+
+            # Update smart_workflow if provided
+            if hasattr(request, "smart_workflow"):
+                workflow.smart_workflow = bool(request.smart_workflow)
+                # turning off smart_workflow disables planning
+                if not workflow.smart_workflow:
+                    workflow.planning = False
+
+            # Update planning if provided, but only allow true when there is a manager agent and smart_workflow is enabled
+            if hasattr(request, "planning"):
+                planning_requested = bool(request.planning)
+                if planning_requested:
+                    has_manager = bool(workflow.crew_ai_manager_agent and workflow.crew_ai_manager_agent.strip())
+                    workflow.planning = planning_requested and has_manager and bool(workflow.smart_workflow)
+                else:
+                    workflow.planning = False
 
             # Any deployed workflow instances have now entered a stale state.
             deployed_workflow_instances = (

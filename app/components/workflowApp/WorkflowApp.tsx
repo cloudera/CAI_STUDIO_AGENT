@@ -106,9 +106,12 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
   interface ThoughtEntry {
     id: string;
     timestamp?: string;
-    thought: string;
-    tool?: string;
-    coworker?: string;
+    type: 'thought' | 'tool' | 'coworker';
+    thought?: string;
+    name?: string;
+    status?: 'in_progress' | 'completed';
+    indentationLevel: number;
+    toolRunKey?: string;
   }
   type FileInfo = { name: string; path: string; size: number; lastModified: string | null };
   const [thoughtEntries, setThoughtEntries] = useState<ThoughtEntry[]>([]); // non-conversational view
@@ -117,9 +120,13 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
     { id: string; entries: ThoughtEntry[]; collapsed: boolean; artifacts: FileInfo[] }[]
   >([]); // conversational per-turn boxes
   const processedThoughtEventIdsRef = useRef<Set<string>>(new Set());
+  const processedEventIdsRef = useRef<Set<string>>(new Set());
   const artifactsBaselineRef = useRef<Map<string, Set<string>>>(new Map());
   const artifactsSeenRef = useRef<Map<string, Set<string>>>(new Map());
   const thoughtSessionsRef = useRef<typeof thoughtSessions>(thoughtSessions);
+  // Coworker nesting and tool run tracking across event polling cycles
+  const coworkerStackRef = useRef<string[]>([]);
+  const toolRunKeyToEntryIdsRef = useRef<Map<string, string[]>>(new Map());
 
   // keep a live ref of sessions to avoid stale closures inside polling effect
   useEffect(() => {
@@ -321,63 +328,93 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
     // Set the interval function
     const parseThoughtFromResponse = (
       raw: string,
-    ): { thought?: string; tool?: string; coworker?: string } => {
+    ): { thought?: string } => {
       try {
         const text = String(raw || '');
 
-        // Primary: explicit Thought: ... until Action:/Final Answer:/end
+        // Strict: only capture content explicitly between Thought: and Action:/Final Answer:
         const thoughtMatch = text.match(
           /Thought:\s*([\s\S]*?)(?:\n\s*Action:|\n\s*Final Answer:|$)/i,
         );
-        let thought = thoughtMatch ? thoughtMatch[1].trim() : undefined;
+        const thought = thoughtMatch ? thoughtMatch[1].trim() : undefined;
 
-        // Fallback: if no explicit Thought:, take text before first Action:/Final Answer:
-        if (!thought) {
-          const boundaryMatch = text.match(/\n\s*(Action:|Final Answer:)/i);
-          if (boundaryMatch && boundaryMatch.index !== undefined) {
-            const preamble = text.slice(0, boundaryMatch.index).trim();
-            if (preamble) thought = preamble;
-          } else {
-            // If no boundaries at all, use entire text as thought
-            const trimmed = text.trim();
-            if (trimmed) thought = trimmed;
-          }
-        }
-
-        let tool: string | undefined;
-        let coworker: string | undefined;
-
-        const actionMatch = text.match(/Action:\s*([^\n]+)(?:\n|$)/i);
-        if (actionMatch) {
-          const actionName = actionMatch[1].trim();
-          // Attempt to parse Action Input and extract coworker if present
-          const inputMatch = text.match(/Action Input:\s*([\s\S]*?)(?:\n\n|$)/i);
-          if (inputMatch) {
-            const possibleJson = inputMatch[1].trim();
-            try {
-              const parsed = JSON.parse(possibleJson);
-              if (parsed && typeof parsed === 'object') {
-                if (parsed.coworker) {
-                  coworker = String(parsed.coworker);
-                }
-              }
-            } catch {
-              // ignore json parse errors, not always strict JSON
-              const coworkerInline = possibleJson.match(/\"?coworker\"?\s*:\s*\"([^\"]+)\"/i);
-              if (coworkerInline) {
-                coworker = coworkerInline[1];
-              }
-            }
-          }
-
-          if (!coworker) {
-            tool = actionName;
-          }
-        }
-
-        return { thought, tool, coworker };
+        return { thought };
       } catch {
         return {};
+      }
+    };
+
+    // Helpers for tool and coworker tracking
+    const parseToolArgs = (args: any): any => {
+      if (!args) return {};
+      try {
+        if (typeof args === 'string') return JSON.parse(args);
+        if (typeof args === 'object') return args;
+      } catch {}
+      return {};
+    };
+
+    const stableStringify = (obj: any): string => {
+      const sortKeys = (o: any): any => {
+        if (Array.isArray(o)) return o.map(sortKeys);
+        if (o && typeof o === 'object') {
+          return Object.keys(o)
+            .sort()
+            .reduce((acc: any, k: string) => {
+              acc[k] = sortKeys(o[k]);
+              return acc;
+            }, {});
+        }
+        return o;
+      };
+      try {
+        return JSON.stringify(sortKeys(obj));
+      } catch {
+        return String(obj ?? '');
+      }
+    };
+
+    const getToolRunKey = (e: any): string => {
+      const name = String(e?.tool_name || '');
+      const argsObj = parseToolArgs(e?.tool_args);
+      return `${name}|${stableStringify(argsObj)}`;
+    };
+
+    const isCoworkerTool = (name?: string) => /coworker/i.test(String(name || ''));
+    const getActiveSessionId = () =>
+      workflow?.is_conversational && thoughtSessionsRef.current.length > 0
+        ? thoughtSessionsRef.current[thoughtSessionsRef.current.length - 1]?.id
+        : null;
+    const addEntry = (entry: ThoughtEntry) => {
+      if (workflow?.is_conversational) {
+        const activeSessionId = getActiveSessionId();
+        if (!activeSessionId) return;
+        setThoughtSessions((prev) => {
+          if (prev.length === 0) return prev;
+          const next = [...prev];
+          const lastIdx = next.length - 1;
+          const last = { ...next[lastIdx] };
+          last.entries = [...last.entries, entry];
+          next[lastIdx] = last;
+          return next;
+        });
+      } else {
+        setThoughtEntries((prev) => [...prev, entry]);
+      }
+    };
+    const updateEntryToolStatus = (entryId: string, status: 'completed') => {
+      if (workflow?.is_conversational) {
+        setThoughtSessions((prev) => {
+          if (prev.length === 0) return prev;
+          const next = [...prev];
+          const lastIdx = next.length - 1;
+          const last = { ...next[lastIdx] };
+          last.entries = last.entries.map((en) => (en.id === entryId ? { ...en, status } : en));
+          next[lastIdx] = last;
+          return next;
+        });
+      } else {
+        setThoughtEntries((prev) => prev.map((en) => (en.id === entryId ? { ...en, status } : en)));
       }
     };
 
@@ -391,7 +428,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
         if (newEvents && newEvents.length > 0) {
           allEventsRef.current = [...allEventsRef.current, ...newEvents];
 
-          // Extract thoughts from completed LLM calls
+          // Extract thoughts from completed LLM calls (strict Thought: ... until Action:/Final Answer:)
           newEvents
             .filter((e: any) => e?.type === 'llm_call_completed')
             .forEach((e: any) => {
@@ -400,31 +437,82 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
                 `${e.timestamp || ''}-${e.type}-${e.agent_studio_id || ''}-${(e.response || '').length}`;
               if (processedThoughtEventIdsRef.current.has(key)) return;
               processedThoughtEventIdsRef.current.add(key);
-              const { thought, tool, coworker } = parseThoughtFromResponse(e.response || '');
-              if (thought && thought.length > 0) {
-                if (workflow?.is_conversational) {
-                  setThoughtSessions((prev) => {
-                    if (prev.length === 0) return prev;
-                    const next = [...prev];
-                    const last = { ...next[next.length - 1] };
-                    last.entries = [
-                      ...last.entries,
-                      { id: key, timestamp: e.timestamp, thought, tool, coworker },
-                    ];
-                    next[next.length - 1] = last;
-                    return next;
+              const { thought } = parseThoughtFromResponse(e.response || '');
+              if (!thought || thought.length === 0) return;
+              const indentationLevel = Math.max(0, coworkerStackRef.current.length);
+              const entry: ThoughtEntry = {
+                id: key,
+                timestamp: e.timestamp,
+                type: 'thought',
+                thought,
+                indentationLevel,
+              };
+              addEntry(entry);
+            });
+
+          // Handle tool and coworker usage events using started/finished; dedupe by event id/timestamp+key
+          newEvents
+            .filter((e: any) => e?.type === 'tool_usage_started' || e?.type === 'tool_usage_finished')
+            .forEach((e: any) => {
+              const eventKey = e.id || `${e.timestamp || ''}-${e.type}-${e.tool_name || ''}-${getToolRunKey(e)}`;
+              if (processedEventIdsRef.current.has(eventKey)) return;
+              processedEventIdsRef.current.add(eventKey);
+              const name = String(e.tool_name || '');
+              const isCoworker = isCoworkerTool(name);
+              const args = parseToolArgs(e.tool_args);
+              const toolKey = getToolRunKey(e);
+              if (e.type === 'tool_usage_started') {
+                if (isCoworker) {
+                  // Push coworker context
+                  const coworkerName = String(args.coworker || args.Coworker || 'Coworker');
+                  coworkerStackRef.current.push(coworkerName);
+                  // Add coworker entry with spinner; indentation reflects pre-push depth
+                  const indentationLevel = Math.max(0, coworkerStackRef.current.length - 1);
+                  const entryId = `${e.timestamp}-coworker-${toolKey}`;
+                  addEntry({
+                    id: entryId,
+                    timestamp: e.timestamp,
+                    type: 'coworker',
+                    name: coworkerName,
+                    status: 'in_progress',
+                    indentationLevel,
+                    toolRunKey: toolKey,
                   });
+                  const ids = toolRunKeyToEntryIdsRef.current.get(toolKey) || [];
+                  ids.push(entryId);
+                  toolRunKeyToEntryIdsRef.current.set(toolKey, ids);
                 } else {
-                  setThoughtEntries((prev) => [
-                    ...prev,
-                    {
-                      id: key,
-                      timestamp: e.timestamp,
-                      thought,
-                      tool,
-                      coworker,
-                    },
-                  ]);
+                  // Tool entry with spinner, nested if under coworker context
+                  const entryId = `${e.timestamp}-tool-${toolKey}`;
+                  const indentationLevel = Math.max(0, coworkerStackRef.current.length);
+                  addEntry({
+                    id: entryId,
+                    timestamp: e.timestamp,
+                    type: 'tool',
+                    name,
+                    status: 'in_progress',
+                    indentationLevel,
+                    toolRunKey: toolKey,
+                  });
+                  const ids = toolRunKeyToEntryIdsRef.current.get(toolKey) || [];
+                  ids.push(entryId);
+                  toolRunKeyToEntryIdsRef.current.set(toolKey, ids);
+                }
+              } else if (e.type === 'tool_usage_finished') {
+                if (isCoworker) {
+                  // Pop coworker context
+                  coworkerStackRef.current.pop();
+                  // Mark the latest matching coworker entry as completed
+                  const ids = toolRunKeyToEntryIdsRef.current.get(toolKey) || [];
+                  const lastId = ids.pop();
+                  if (lastId) updateEntryToolStatus(lastId, 'completed');
+                  toolRunKeyToEntryIdsRef.current.set(toolKey, ids);
+                } else {
+                  // Mark latest matching tool entry as completed
+                  const ids = toolRunKeyToEntryIdsRef.current.get(toolKey) || [];
+                  const lastId = ids.pop();
+                  if (lastId) updateEntryToolStatus(lastId, 'completed');
+                  toolRunKeyToEntryIdsRef.current.set(toolKey, ids);
                 }
               }
             });
@@ -521,6 +609,9 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
       // Reset thoughts for new run and expand
       setThoughtEntries([]);
       processedThoughtEventIdsRef.current.clear();
+      processedEventIdsRef.current.clear();
+      coworkerStackRef.current = [];
+      toolRunKeyToEntryIdsRef.current = new Map();
       setAreThoughtsCollapsed(false);
       if (workflow?.is_conversational) {
         const sessionKey = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
