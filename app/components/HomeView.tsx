@@ -32,8 +32,8 @@ const HomeViewBannerCard: React.FC<HomeViewBannerCardProps> = ({ title, icon, co
       <Layout className="bg-transparent flex flex-row gap-2 p-0">
         <div className="flex-shrink-0">{icon}</div>
         <Layout className="flex-col bg-transparent gap-2">
-          <Text className="h-6 text-lg font-normal">{title}</Text>
-          <Text className="h-6 text-base font-normal">{content}</Text>
+          <Text className="h-[24px] text-[16px] font-[400]">{title}</Text>
+          <Text className="h-[24px] text-[14px] font-[400]">{content}</Text>
         </Layout>
       </Layout>
     </>
@@ -57,7 +57,7 @@ const HomeViewBannerContent: React.FC = () => {
       <Title level={2} className="text-[#120046] text-6xl font-semibold pb-2 m-0 font-sans">
         Agent Studio
       </Title>
-      <Paragraph className="text-sm font-normal p-0 m-0">
+      <Paragraph className="text-[14px] font-[400] p-0 m-0">
         A dedicated platform within the Cloudera AI ecosystem that empowers users to design, test,
         and deploy multi-agent workflows.
       </Paragraph>
@@ -107,10 +107,23 @@ export interface HomeViewAgentToolTextCardProps {
   borderType: string;
 }
 
-const HomeViewAgentToolTextCard: React.FC<HomeViewAgentToolTextCardProps> = ({ text }) => {
+const HomeViewAgentToolTextCard: React.FC<HomeViewAgentToolTextCardProps> = ({
+  itemBackgroundColor,
+  itemBorderColor,
+  textColor,
+  text,
+  borderType,
+}) => {
   return (
     <>
-      <Text className="h-[22px] text-xs bg-[rgba(0,0,0,0.02)] text-[rgba(0,0,0,0.88)] p-[1px_8px] flex-shrink-0 rounded border-solid border-[1px] border-[#d9d9d9]">
+      <Text
+        className="h-[22px] text-[12px] px-2 py-[1px] shrink-0 rounded-[4px] border"
+        style={{
+          backgroundColor: `${itemBackgroundColor}`,
+          color: `${textColor}`,
+          border: `${borderType} 1px ${itemBorderColor}`,
+        }}
+      >
         {text}
       </Text>
     </>
@@ -125,13 +138,17 @@ export interface HomeViewAgentToolCardProps {
 }
 
 const HomeViewDiagramAgentToolCard: React.FC<HomeViewAgentToolCardProps> = ({
+  borderColor,
   itemBackgroundColor,
   itemBorderColor,
   textColor,
 }) => {
   return (
     <>
-      <Layout className="flex flex-col justify-center items-center flex-grow-0 w-1/2 gap-2">
+      <Layout
+        className={`flex flex-col justify-center items-start grow-0 shrink-0 rounded-[10px] p-[8px] gap-[8px]`}
+        style={{ border: `solid 1px ${borderColor}` }}
+      >
         <HomeViewAgentToolTextCard
           itemBorderColor={itemBorderColor}
           itemBackgroundColor={itemBackgroundColor}
@@ -237,14 +254,14 @@ const HomeViewDiagramContent: React.FC = () => {
             />
           </Layout>
           <Layout className="bg-transparent justify-end flex-grow-0 flex-shrink-0 flex-row pt-6 gap-2">
-            <Text className="text-xs font-light">
+            <Text className="text-[8px] font-[300]">
               What are the most customer service complaints?
             </Text>
             <Avatar icon={<UserOutlined />} size={14} className="bg-[#f7c200] flex-shrink-0" />
           </Layout>
           <Layout className="bg-transparent justify-start items-start flex-grow-0 flex-shrink-0 flex-row pt-6 gap-2">
             <Avatar icon={<UserOutlined />} size={14} className="bg-[#008cff] flex-shrink-0" />
-            <Paragraph className="text-xs font-light bg-[#f4f5f6] rounded p-1">
+            <Paragraph className="text-[8px] font-[300] bg-[#f4f5f6] rounded-[3px] p-1">
               Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
               incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
               exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
@@ -254,7 +271,7 @@ const HomeViewDiagramContent: React.FC = () => {
 
         <Layout className="rounded bg-white shadow-md w-[317.8px] h-[40.1px] flex-grow-0 mt-3 flex-row gap-1.5 p-2.5 items-center">
           <Input
-            className="bg-[#f4f5f6] h-[22.3px] text-[10px] border-none rounded w-[22.3px] flex-shrink-0"
+            className="bg-[#f4f5f6] h-[22.3px] text-[10px] border-none rounded-[3px]"
             placeholder="Ask your question here"
           />
           <Button
