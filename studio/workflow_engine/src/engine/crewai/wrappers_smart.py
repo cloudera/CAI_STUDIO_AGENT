@@ -629,26 +629,56 @@ class AgentStudioManagerCrewAILLM(LLM):
                         decision_users = [m for m in original_list_for_decision if m.get("role") == "user"]
                         decision_messages: List[Dict[str, Any]] = []
                         decision_messages.extend(decision_systems)
-                        # Inject state above last user
+
+                        # Insert coworker context as assistant messages (one per coworker) right after system prompts
+                        try:
+                            agents_info_decision: List[Dict[str, str]] = getattr(self, "manager_agents_info", None) or []
+                            for agent_info in agents_info_decision:
+                                role = str(agent_info.get("role", "")).strip()
+                                backstory = str(agent_info.get("backstory", "")).strip()
+                                goal = str(agent_info.get("goal", "")).strip()
+                                aid = str(agent_info.get("id", "")).strip()
+                                content_lines_dec = [
+                                    f"AGENT CONTEXT ({aid})",
+                                    f"role: {role}",
+                                    f"backstory: {backstory}",
+                                    f"goal: {goal}",
+                                ]
+                                decision_messages.append({"role": "assistant", "content": "\n".join(content_lines_dec).strip()})
+                        except Exception:
+                            pass
+
+                        # Inject state.json conversation assistant message(s) just before the last user
                         state_assistant_for_decision: List[Dict[str, Any]] = []
                         try:
                             if self.session_directory:
-                                _state_path_decision = os.path.join(self.session_directory, "state.txt")
-                                if os.path.exists(_state_path_decision):
-                                    with open(_state_path_decision, "r", encoding="utf-8") as _sf:
-                                        _state_text_for_decision = _sf.read().strip()
-                                    if _state_text_for_decision:
-                                        state_assistant_for_decision = [{"role": "assistant", "content": _state_text_for_decision}]
+                                _state_json_path_decision = os.path.join(self.session_directory, "state.json")
+                                if os.path.exists(_state_json_path_decision):
+                                    with open(_state_json_path_decision, "r", encoding="utf-8") as _sf:
+                                        try:
+                                            _entries_dec = json.load(_sf) or []
+                                        except Exception:
+                                            _entries_dec = []
+                                    if isinstance(_entries_dec, list) and _entries_dec:
+                                        last_entry_dec = _entries_dec[-1]
+                                        tsd = str(last_entry_dec.get("timestamp", "")).strip()
+                                        contentd = str(last_entry_dec.get("response", "")).strip()
+                                        if contentd:
+                                            headerd = (
+                                                f"CONTEXT: This is the last agent output at {tsd}."
+                                                if tsd
+                                                else "CONTEXT: This is a prior agent output."
+                                            )
+                                            state_assistant_for_decision = [{"role": "assistant", "content": headerd + "\n" + contentd}]
                         except Exception:
                             state_assistant_for_decision = []
+
                         if decision_users:
                             decision_messages.extend(decision_users[:-1])
                             decision_messages.extend(state_assistant_for_decision)
                             decision_messages.append(decision_users[-1])
                         else:
                             decision_messages.extend(state_assistant_for_decision)
-                        if coworkers_overview_text:
-                            decision_messages.append({"role": "assistant", "content": coworkers_overview_text})
                         decision_instruction = (
                             "Determine whether the user's latest request can be answered directly from the conversation above without additional planning.\n"
                             "If it CAN be answered directly, return ONLY valid JSON: {\"result\":\"<concise direct answer>\"}.\n"
@@ -698,6 +728,39 @@ class AgentStudioManagerCrewAILLM(LLM):
                         decision_obj = _extract_json_obj_decision(decision_text)
                         if isinstance(decision_obj, dict) and isinstance(decision_obj.get("result"), str):
                             skip_planning_and_injection = True
+                            # Inject the planning decision directly into the last user message content
+                            try:
+                                result_desc = str(decision_obj.get("result", "")).strip()
+                                decision_block = (
+                                    "PLANNING DECISION: Planning is not needed.\n"
+                                    "RESULT DESCRIPTION:\n" + result_desc + "\n"
+                                )
+                                if isinstance(base_messages, list) and base_messages:
+                                    last_user_idx = None
+                                    for i in range(len(base_messages) - 1, -1, -1):
+                                        if base_messages[i].get("role") == "user":
+                                            last_user_idx = i
+                                            break
+                                    if last_user_idx is not None:
+                                        try:
+                                            user_content = base_messages[last_user_idx].get("content")
+                                            if isinstance(user_content, str):
+                                                marker = "This is the expected criteria for your final answer"
+                                                lower_content = user_content.lower()
+                                                pos = lower_content.find(marker.lower())
+                                                if pos != -1:
+                                                    before = user_content[:pos].rstrip()
+                                                    after = user_content[pos:].lstrip()
+                                                    new_content = (before + "\n\n" + decision_block + "\n" + after).strip()
+                                                else:
+                                                    sep = "\n\n" if not user_content.endswith("\n") else "\n"
+                                                    new_content = (user_content + sep + decision_block).strip()
+                                                base_messages[last_user_idx] = dict(base_messages[last_user_idx])
+                                                base_messages[last_user_idx]["content"] = new_content
+                                        except Exception:
+                                            pass
+                            except Exception:
+                                pass
                     except Exception:
                         pass
 
@@ -882,9 +945,9 @@ class AgentStudioManagerCrewAILLM(LLM):
                                     return False
                                 if not isinstance(s.get("coworker"), str):
                                     return False
-                                if str(s.get("status")).upper() != "NOT STARTED":
+                                if str(s.get("status")).upper() not in {"NOT STARTED", "IN PROGRESS", "COMPLETED", "FAILED"}:
                                     return False
-                            if "next_step" in obj and not isinstance(obj.get("next_step"), (str, int)):
+                            if "next_step" in obj and not isinstance(obj.get("next_step"), (str, int, type(None))):
                                 return False
                             return True
 
@@ -896,7 +959,7 @@ class AgentStudioManagerCrewAILLM(LLM):
                             if attempts > 1:
                                 fix_hint = {
                                     "role": "user",
-                                    "content": "Previous output was not valid JSON matching the required schema. Return ONLY valid JSON per schema {\"steps\":[{\"step_number\":\"1\",\"description\":\"...\",\"status\":\"NOT STARTED\",\"coworker\":\"<Agent role>\"}],\"next_step\":\"\"}. No prose.",
+                                    "content": "Previous output was not valid JSON matching the required schema. Return ONLY valid JSON per schema {\"steps\":[{\"step_number\":\"1\",\"description\":\"...\",\"status\":\"NOT STARTED|IN PROGRESS|COMPLETED|FAILED\",\"coworker\":\"<Agent role>\"}],\"next_step\":\"<string or empty>\"}. No prose.",
                                 }
                                 # Append the validation instruction as a user message at the bottom
                                 plan_call_messages = plan_messages + [fix_hint]
@@ -983,43 +1046,35 @@ class AgentStudioManagerCrewAILLM(LLM):
                             "Inputs you will receive:\n"
                             "• Conversation evidence: only assistant messages above.\n"
                             "• System context (coworkers & their capabilities) is available in earlier messages.\n"
-                            "• The user's Current Task and the 'Current Plan JSON' (schema: {\"steps\":[{\"step_number\":\"1\",\"description\":\"...\",\"status\":\"NOT STARTED|IN PROGRESS|COMPLETED\",\"coworker\":\"<Agent role>\"}],\"next_step\":\"<string>\"}).\n\n"
+                            "• The user's Current Task and the 'Current Plan JSON' (schema: {\"steps\":[{\"step_number\":\"1\",\"description\":\"...\",\"status\":\"NOT STARTED|IN PROGRESS|COMPLETED|FAILED\",\"coworker\":\"<Agent role>\"}],\"next_step\":\"<string>\"}).\n\n"
                             "Your job, in order:\n"
-                            "A) Evidence & expectation check:\n"
+                            "A) Evidence, expectation & failure check:\n"
                             "   1) From the conversation evidence, determine what outputs or deliverables were actually produced.\n"
-                            "   2) Compare against the Current Task’s implied deliverables. If any deliverable is missing or only partially covered, mark related steps as NOT fully complete.\n"
-                            "   3) If any coworker/step appears overloaded (too broad, spanning multiple distinct objectives, partial outputs, stalled progress), treat this as a planning defect requiring repair.\n\n"
+                            "   2) Compare against the Current Task’s implied deliverables. If any deliverable is missing or partial, mark related steps as not fully complete.\n"
+                            "   3) Identify any step that has failed (e.g., repeated tool errors, impossible prerequisites, hard blockers).\n"
+                            "      • Decide whether the failure is CRITICAL (blocks remaining steps) or NON-BLOCKING (independent steps can proceed).\n"
+                            "   4) If any coworker/step appears overloaded, treat this as a planning defect requiring repair.\n\n"
                             "B) Status update on existing plan:\n"
-                            "   • For each step in 'Current Plan JSON', update only the 'status' field using exactly one of: 'NOT STARTED', 'IN PROGRESS', 'COMPLETED'.\n"
-                            "   • Mark 'COMPLETED' only if the step’s objective is fully achieved.\n"
-                            "   • Mark 'IN PROGRESS' if started but unfinished.\n"
-                            "   • Otherwise, keep 'NOT STARTED'.\n"
+                            "   • For each step in 'Current Plan JSON', update only the 'status' using exactly one of: 'NOT STARTED', 'IN PROGRESS', 'COMPLETED', 'FAILED'.\n"
+                            "   • Use 'FAILED' when the step cannot be completed by the assigned coworker given current constraints.\n"
+                            "   • Mark 'COMPLETED' only if the objective is fully achieved.\n"
+                            "   • Mark 'IN PROGRESS' if started but unfinished; else keep 'NOT STARTED'.\n"
                             "   • For 'next_step' (string):\n"
-                            "       - If any step is 'IN PROGRESS', set next_step to the lowest-numbered 'IN PROGRESS' step.\n"
-                            "       - Else set next_step to the lowest-numbered 'NOT STARTED' step.\n"
-                            "       - Never set next_step to a 'COMPLETED' step.\n\n"
+                            "       - If there is a NON-BLOCKING 'FAILED' step, choose the lowest-numbered feasible independent next step.\n"
+                            "       - If any step is 'IN PROGRESS', prefer the lowest-numbered 'IN PROGRESS' step.\n"
+                            "       - Else set to the lowest-numbered 'NOT STARTED' step.\n"
+                            "       - If there is a CRITICAL failure that blocks progress, set next_step to an empty string ("") to signal no next step.\n\n"
                             "C) Plan repair (only if needed):\n"
                             "   If expectations are unmet OR any step/coworker is overloaded OR coworker selection is suboptimal, REWRITE the plan to be concise and non-overloaded.\n"
                             "   Rules for repair:\n"
-                            "   1) Deliverables & coworker selection:\n"
-                            "      • Identify the deliverables implied by the Current Task.\n"
-                            "      • Choose the minimal set of coworkers whose capabilities cover those deliverables.\n"
-                            "      • If one coworker can handle all actions, assign them alone.\n"
-                            "   2) Step granularity:\n"
-                            "      • Each step is a single atomic objective a single coworker can perform end-to-end.\n"
-                            "      • Fuse micro-actions for the same coworker/data scope/objective.\n"
-                            "      • Split steps when objectives, scopes, or coworkers differ, or when overload is detected.\n"
-                            "   3) Multiple intents:\n"
-                            "      • If the task has clearly distinct parts, plan them separately.\n"
-                            "   4) Keep plans short and outcome-focused:\n"
-                            "      • Prefer 1–4 steps unless more are clearly needed.\n"
-                            "      • Avoid unnecessary fragmentation or overload.\n"
+                            "   1) Deliverables & coworker selection: identify deliverables and choose minimal coworkers that cover them; prefer a single capable coworker if possible.\n"
+                            "   2) Step granularity: each step must be atomic and executable end-to-end by a single coworker; fuse micro-actions and split overloaded steps.\n"
+                            "   3) Multiple intents: plan distinct parts separately.\n"
+                            "   4) Keep plans short and outcome-focused (1–4 steps unless more are clearly needed).\n"
                             "   5) Output schema:\n"
-                            "      • Return STRICTLY valid JSON only (no prose, no code fences) using this schema:\n"
-                            "        {\"steps\":[{\"step_number\":\"1\",\"description\":\"<brief, atomic>\",\"status\":\"NOT STARTED|IN PROGRESS|COMPLETED\",\"coworker\":\"<Agent role>\"}],\"next_step\":\"<string>\"}\n"
-                            "      • step_number values are strings ('1','2',...). Descriptions concise and actionable. Coworker must match an available role name exactly (case-sensitive).\n"
-                            "      • Keep completed steps as 'COMPLETED'; new steps should start 'NOT STARTED' unless already underway.\n"
-                            "      • Set next_step according to the rules above.\n\n"
+                            "      • Return STRICTLY valid JSON only (no prose, no code fences) as:\n"
+                            "        {\"steps\":[{\"step_number\":\"1\",\"description\":\"<brief, atomic>\",\"status\":\"NOT STARTED|IN PROGRESS|COMPLETED|FAILED\",\"coworker\":\"<Agent role>\"}],\"next_step\":\"<string>\"}\n"
+                            "      • step_number values are strings ('1','2',...). Descriptions concise and actionable. Coworker must match an available role name exactly (case-sensitive).\n\n"
                             "D) Emission rule:\n"
                             "   • If no repair is needed, output the updated original plan (statuses + next_step only).\n"
                             "   • If repair is needed, output the NEW repaired plan as STRICT JSON.\n\n"
@@ -1091,7 +1146,7 @@ class AgentStudioManagerCrewAILLM(LLM):
                             steps = obj.get("steps")
                             if not isinstance(steps, list) or len(steps) == 0:
                                 return False
-                            allowed_status = {"NOT STARTED", "IN PROGRESS", "COMPLETED"}
+                            allowed_status = {"NOT STARTED", "IN PROGRESS", "COMPLETED", "FAILED"}
                             for s in steps:
                                 if not isinstance(s, dict):
                                     return False
@@ -1247,15 +1302,50 @@ class AgentStudioManagerCrewAILLM(LLM):
                                                 except Exception:
                                                     all_completed = False
 
+                                                # Detect failures and criticality
+                                                try:
+                                                    any_failed = bool(steps_for_status) and any(
+                                                        isinstance(s, dict)
+                                                        and str(s.get("status", "")).strip().upper() == "FAILED"
+                                                        for s in steps_for_status
+                                                    )
+                                                except Exception:
+                                                    any_failed = False
+                                                # Heuristic for critical failure: FAILED present and no next_step
+                                                try:
+                                                    ns_val = plan_obj_injection.get("next_step") if isinstance(plan_obj_injection, dict) else None
+                                                    ns_clean = str(ns_val).strip() if ns_val is not None else ""
+                                                    critical_failure = any_failed and (ns_clean == "")
+                                                except Exception:
+                                                    critical_failure = False
+
                                                 if all_completed:
                                                     note_text = (
                                                         "All plan steps are COMPLETED. You should now provide the Final Answer. "
                                                         "Use the required response format from the system message and include any necessary evidence/artifacts."
                                                     )
+                                                elif critical_failure:
+                                                    # Find failed step description for clarity
+                                                    failed_desc = ""
+                                                    try:
+                                                        for s in steps_for_status:
+                                                            if isinstance(s, dict) and str(s.get("status", "")).strip().upper() == "FAILED":
+                                                                failed_desc = str(s.get("description", "")).strip()
+                                                                if failed_desc:
+                                                                    break
+                                                    except Exception:
+                                                        failed_desc = ""
+                                                    note_text = (
+                                                        "CRITICAL FAILURE detected: coworkers cannot complete a required step"
+                                                        + (f" — '{failed_desc}'. " if failed_desc else ". ")
+                                                        + "Provide the Final Answer now as a failure report: briefly summarize the failure,"
+                                                        " list what was achieved so far (any completed or partial outputs), and present any useful interim results."
+                                                    )
                                                 else:
                                                     note_text = (
                                                         "IMPORTANT NOTE: You have NOT yet achieved the Final Answer. Do NOT provide a final answer now. "
-                                                        "Continue working step-by-step toward the plan's deliverables, and respond only with Thought: ...... Action..... :—not a final result."
+                                                        "If any step has FAILED but is non-blocking, proceed to the next feasible independent step. "
+                                                        "Continue working step-by-step toward the plan's deliverables, and respond only with Thought: ...... Action..... — not a final result."
                                                     )
 
                                                 # Append system message content under the note

@@ -212,8 +212,8 @@ def api_wrapper(args: Union[dict, str]) -> str:
         if workflow_project_file_directory and workflow_project_file_directory.startswith("/home/cdsw/"):
             workflow_project_file_directory = workflow_project_file_directory[len("/home/cdsw/") :]
 
-        # Get the base configuration and add workflow_directory
-        configuration = collated_input.model_dump()
+        # Get the base configuration (serialize enums and complex types as JSON-friendly)
+        configuration = collated_input.model_dump(mode="json")
         configuration["workflow_directory"] = workflow_project_file_directory
 
         return {"configuration": configuration}
