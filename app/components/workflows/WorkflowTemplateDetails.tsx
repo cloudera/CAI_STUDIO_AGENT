@@ -81,7 +81,7 @@ const WorkflowTemplateDetails: React.FC<WorkflowTemplateDetailsProps> = ({ templ
                   key={toolTemplateId}
                   placement="top"
                 >
-                  <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center cursor-pointer">
+                  <div className="w-6 h-6 rounded-full bg-gray-200 flex justify-center cursor-pointer">
                     <Image
                       src={imageSrc}
                       alt={toolTemplate?.name || toolTemplateId}
