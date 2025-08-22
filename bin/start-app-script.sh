@@ -148,7 +148,7 @@ if [ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]; then
   # does not have the ability to override them.
   echo "Initializing project defaults..."
   cd $APP_DIR
-  uv run startup_scripts/uv_initialize-project-defaults.py
+  VIRTUAL_ENV=.venv uv run startup_scripts/uv_initialize-project-defaults.py
 
   # Install cmlapi in both the base and workflow engine venvs.
   echo "Installing cmlapi in both the base and workflow engine venvs..."
