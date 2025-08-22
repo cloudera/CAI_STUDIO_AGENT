@@ -11,11 +11,12 @@ VERSION ?= latest
 RT_SHORT_VERSION ?= 1.0.0
 RT_GIT_HASH ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 RT_GBN ?=
-
+BUILD_NUMBER := $(shell echo "$(VERSION)" | awk -F'-b' '{print $$2}')
 # Build arguments for Docker
 BUILD_ARGS = --build-arg RT_SHORT_VERSION=$(RT_SHORT_VERSION) \
              --build-arg RT_GIT_HASH=$(RT_GIT_HASH) \
-             --build-arg RT_GBN=$(RT_GBN)
+             --build-arg RT_GBN=$(RT_GBN) \
+             --build-arg RT_BUILD_NUMBER=$(BUILD_NUMBER)
 
 # Phony targets (targets that don't create files)
 .PHONY: build test test-studio test-workflow-engine test-all lint lint-check lint-fix clean
