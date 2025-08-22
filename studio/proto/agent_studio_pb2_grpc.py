@@ -335,6 +335,18 @@ class AgentStudioStub(object):
             response_deserializer=studio_dot_proto_dot_agent__studio__pb2.ListDeployedWorkflowsResponse.FromString,
             _registered_method=True,
         )
+        self.SuspendDeployedWorkflow = channel.unary_unary(
+            "/agent_studio.AgentStudio/SuspendDeployedWorkflow",
+            request_serializer=studio_dot_proto_dot_agent__studio__pb2.SuspendDeployedWorkflowRequest.SerializeToString,
+            response_deserializer=studio_dot_proto_dot_agent__studio__pb2.SuspendDeployedWorkflowResponse.FromString,
+            _registered_method=True,
+        )
+        self.ResumeDeployedWorkflow = channel.unary_unary(
+            "/agent_studio.AgentStudio/ResumeDeployedWorkflow",
+            request_serializer=studio_dot_proto_dot_agent__studio__pb2.ResumeDeployedWorkflowRequest.SerializeToString,
+            response_deserializer=studio_dot_proto_dot_agent__studio__pb2.ResumeDeployedWorkflowResponse.FromString,
+            _registered_method=True,
+        )
         self.TemporaryFileUpload = channel.stream_unary(
             "/agent_studio.AgentStudio/TemporaryFileUpload",
             request_serializer=studio_dot_proto_dot_agent__studio__pb2.FileChunk.SerializeToString,
@@ -790,6 +802,18 @@ class AgentStudioServicer(object):
         context.set_details("Method not implemented!")
         raise NotImplementedError("Method not implemented!")
 
+    def SuspendDeployedWorkflow(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
+    def ResumeDeployedWorkflow(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
     def TemporaryFileUpload(self, request_iterator, context):
         """Utility functions"""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -1187,6 +1211,16 @@ def add_AgentStudioServicer_to_server(servicer, server):
             servicer.ListDeployedWorkflows,
             request_deserializer=studio_dot_proto_dot_agent__studio__pb2.ListDeployedWorkflowsRequest.FromString,
             response_serializer=studio_dot_proto_dot_agent__studio__pb2.ListDeployedWorkflowsResponse.SerializeToString,
+        ),
+        "SuspendDeployedWorkflow": grpc.unary_unary_rpc_method_handler(
+            servicer.SuspendDeployedWorkflow,
+            request_deserializer=studio_dot_proto_dot_agent__studio__pb2.SuspendDeployedWorkflowRequest.FromString,
+            response_serializer=studio_dot_proto_dot_agent__studio__pb2.SuspendDeployedWorkflowResponse.SerializeToString,
+        ),
+        "ResumeDeployedWorkflow": grpc.unary_unary_rpc_method_handler(
+            servicer.ResumeDeployedWorkflow,
+            request_deserializer=studio_dot_proto_dot_agent__studio__pb2.ResumeDeployedWorkflowRequest.FromString,
+            response_serializer=studio_dot_proto_dot_agent__studio__pb2.ResumeDeployedWorkflowResponse.SerializeToString,
         ),
         "TemporaryFileUpload": grpc.stream_unary_rpc_method_handler(
             servicer.TemporaryFileUpload,
@@ -2788,6 +2822,66 @@ class AgentStudio(object):
             "/agent_studio.AgentStudio/ListDeployedWorkflows",
             studio_dot_proto_dot_agent__studio__pb2.ListDeployedWorkflowsRequest.SerializeToString,
             studio_dot_proto_dot_agent__studio__pb2.ListDeployedWorkflowsResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def SuspendDeployedWorkflow(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/agent_studio.AgentStudio/SuspendDeployedWorkflow",
+            studio_dot_proto_dot_agent__studio__pb2.SuspendDeployedWorkflowRequest.SerializeToString,
+            studio_dot_proto_dot_agent__studio__pb2.SuspendDeployedWorkflowResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def ResumeDeployedWorkflow(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/agent_studio.AgentStudio/ResumeDeployedWorkflow",
+            studio_dot_proto_dot_agent__studio__pb2.ResumeDeployedWorkflowRequest.SerializeToString,
+            studio_dot_proto_dot_agent__studio__pb2.ResumeDeployedWorkflowResponse.FromString,
             options,
             channel_credentials,
             insecure,

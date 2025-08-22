@@ -27,6 +27,7 @@ class DeploymentStatus(str, Enum):
     DEPLOYING = "deploying"
     DEPLOYED = "deployed"
     FAILED = "failed"
+    SUSPENDED = "suspended"
 
 
 class DeploymentTargetType(str, Enum):

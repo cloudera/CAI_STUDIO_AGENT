@@ -348,7 +348,7 @@ def redeploy_single_workflow(
                 logger.error(f"No deployments found for model {deployed_workflow.cml_deployed_model_id}")
                 return
 
-            current_deployment = deployments[0]
+            current_deployment = sorted(deployments, key=lambda x: x.created_at, reverse=True)[0]
 
             # Get environment vars - fail if we can't read them
             try:

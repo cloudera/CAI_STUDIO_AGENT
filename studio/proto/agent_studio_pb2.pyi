@@ -1188,6 +1188,26 @@ class ListDeployedWorkflowsResponse(_message.Message):
     deployed_workflows: _containers.RepeatedCompositeFieldContainer[DeployedWorkflow]
     def __init__(self, deployed_workflows: _Optional[_Iterable[_Union[DeployedWorkflow, _Mapping]]] = ...) -> None: ...
 
+class SuspendDeployedWorkflowRequest(_message.Message):
+    __slots__ = ("deployed_workflow_id",)
+    DEPLOYED_WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
+    deployed_workflow_id: str
+    def __init__(self, deployed_workflow_id: _Optional[str] = ...) -> None: ...
+
+class SuspendDeployedWorkflowResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class ResumeDeployedWorkflowRequest(_message.Message):
+    __slots__ = ("deployed_workflow_id",)
+    DEPLOYED_WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
+    deployed_workflow_id: str
+    def __init__(self, deployed_workflow_id: _Optional[str] = ...) -> None: ...
+
+class ResumeDeployedWorkflowResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
 class RemoveWorkflowRequest(_message.Message):
     __slots__ = ("workflow_id",)
     WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
