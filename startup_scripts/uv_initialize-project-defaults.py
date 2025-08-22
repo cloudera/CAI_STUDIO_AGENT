@@ -17,7 +17,7 @@ os.environ["APP_DATA_DIR"] = app_data_dir
 try:        
     os.chdir(app_dir)
     out = subprocess.run(
-        [f"VIRTUAL_ENV=.venv uv run bin/initialize-project-defaults.py"], 
+        [f"VIRTUAL_ENV=.venv uv run --no-sync bin/initialize-project-defaults.py"], 
         shell=True, 
         capture_output=True, 
         text=True
