@@ -86,6 +86,8 @@ service AgentStudio {
   rpc DeployWorkflow (DeployWorkflowRequest) returns (DeployWorkflowResponse) {}
   rpc UndeployWorkflow (UndeployWorkflowRequest) returns (UndeployWorkflowResponse) {}
   rpc ListDeployedWorkflows (ListDeployedWorkflowsRequest) returns (ListDeployedWorkflowsResponse) {}
+  rpc SuspendDeployedWorkflow (SuspendDeployedWorkflowRequest) returns (SuspendDeployedWorkflowResponse) {}
+  rpc ResumeDeployedWorkflow (ResumeDeployedWorkflowRequest) returns (ResumeDeployedWorkflowResponse) {}
 
   // Utility functions
   rpc TemporaryFileUpload (stream FileChunk) returns (FileUploadResponse) {}
@@ -744,6 +746,20 @@ message ListDeployedWorkflowsResponse {
   // List of deployed workflows
   repeated DeployedWorkflow deployed_workflows = 1;
 }
+
+message SuspendDeployedWorkflowRequest {
+  // ID of the deployed workflow to suspend
+  string deployed_workflow_id = 1;
+}
+
+message SuspendDeployedWorkflowResponse {}
+
+message ResumeDeployedWorkflowRequest {
+  // ID of the deployed workflow to resume
+  string deployed_workflow_id = 1;
+}
+
+message ResumeDeployedWorkflowResponse {}
 
 // Messages for removing workflows
 message RemoveWorkflowRequest {

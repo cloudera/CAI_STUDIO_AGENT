@@ -18,8 +18,12 @@ from studio.agents.agent_templates import (
 from studio.workflow.test_and_deploy_workflow import (
     test_workflow,
     deploy_workflow,
+)
+from studio.workflow.deployed_workflows import (
     undeploy_workflow,
     list_deployed_workflows,
+    suspend_deployed_workflow,
+    resume_deployed_workflow,
 )
 from studio.workflow.workflow import (
     list_workflows,
@@ -500,6 +504,18 @@ class AgentStudioApp(AgentStudioServicer):
         List all deployed workflows.
         """
         return list_deployed_workflows(request, self.cml, dao=self.dao)
+
+    def SuspendDeployedWorkflow(self, request, context):
+        """
+        Suspend an existing deployed workflow by its ID.
+        """
+        return suspend_deployed_workflow(request, self.cml, dao=self.dao)
+
+    def ResumeDeployedWorkflow(self, request, context):
+        """
+        Resume an existing deployed workflow by its ID.
+        """
+        return resume_deployed_workflow(request, self.cml, dao=self.dao)
 
     def ListAgentTemplates(self, request, context):
         return list_agent_templates(request, self.cml, dao=self.dao)
