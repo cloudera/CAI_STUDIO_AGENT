@@ -37,7 +37,7 @@ def main():
     # pulled down agent studio and ran a fresh project-defaults. If the column does not exist, that 
     # means we are performing an upgrade.
     if Path(get_sqlite_db_location()).exists():
-        subprocess.run(["uv run alembic upgrade head"], shell=True, capture_output=True, text=True)
+        subprocess.run(["uv run --no-sync alembic upgrade head"], shell=True, capture_output=True, text=True)
 
     # Import project defaults.
     import_defaults()

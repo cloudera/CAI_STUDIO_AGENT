@@ -131,7 +131,12 @@ fi
 export UV_LINK_MODE=copy
 echo "UV_LINK_MODE set to: $UV_LINK_MODE"
 
-
+# If UV_DEFAULT_INDEX is not set, that means we are running in non air gapped environment and we can sync uv dependencies.
+# We dont want to sync uv dependencies in air gapped environment as we already have .venv directory.
+if [ -z "$UV_DEFAULT_INDEX" ]; then
+  cd $APP_DIR
+  uv sync
+fi
 # Initialization logic for studio mode.
 if [ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]; then
 
@@ -148,7 +153,7 @@ if [ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]; then
   # does not have the ability to override them.
   echo "Initializing project defaults..."
   cd $APP_DIR
-  VIRTUAL_ENV=.venv uv run startup_scripts/uv_initialize-project-defaults.py
+  VIRTUAL_ENV=.venv uv run --no-sync startup_scripts/uv_initialize-project-defaults.py
 
   # Install cmlapi in both the base and workflow engine venvs.
   echo "Installing cmlapi in both the base and workflow engine venvs..."
@@ -160,7 +165,7 @@ if [ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]; then
 
   # Run alembic upgrades once to ensure we are at head.
   echo "Upgrading DB..."
-  VIRTUAL_ENV=.venv uv run python -m alembic upgrade head
+  VIRTUAL_ENV=.venv uv run --no-sync python -m alembic upgrade head
 
 fi
 
@@ -177,13 +182,18 @@ declare -a RUNNER_PIDS=()
 
 # Spin up workflow runners.
 cd $APP_DIR/studio/workflow_engine
+# If UV_DEFAULT_INDEX is not set, that means we are running in non air gapped environment and we can sync uv dependencies.
+# We dont want to sync uv dependencies in air gapped environment as we already have .venv directory.
+if [ -z "$UV_DEFAULT_INDEX" ]; then
+  uv sync
+fi
 if [ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]; then
   for (( i=0; i<AGENT_STUDIO_NUM_WORKFLOW_RUNNERS; i++ )); do
     PORT_NUM=$((DEFAULT_WORKFLOW_RUNNER_STARTING_PORT + i))
     echo "Starting workflow runner on port $PORT_NUM..."
     
     # Launch the runner using the virtual environment's python
-    VIRTUAL_ENV=.venv uv run python -m uvicorn \
+    VIRTUAL_ENV=.venv uv run --no-sync python -m uvicorn \
      src.engine.entry.runner:app --port "$PORT_NUM" &
     
     # Save the process PID.
@@ -202,10 +212,10 @@ if [ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]; then
     { # Try to start up the server
       if [ "$AGENT_STUDIO_DEPLOYMENT_CONFIG" = "dev" ]; then
         echo "Starting up the gRPC server with a debug port at $DEFAULT_AS_DEBUG_PORT..."
-        VIRTUAL_ENV=.venv uv run -m debugpy --listen $DEFAULT_AS_DEBUG_PORT $APP_DIR/bin/start-grpc-server.py &
+        VIRTUAL_ENV=.venv uv run --no-sync -m debugpy --listen $DEFAULT_AS_DEBUG_PORT $APP_DIR/bin/start-grpc-server.py &
       else 
         echo "Starting up the gRPC server..."
-        VIRTUAL_ENV=.venv PYTHONUNBUFFERED=1 uv run $APP_DIR/bin/start-grpc-server.py &
+        VIRTUAL_ENV=.venv PYTHONUNBUFFERED=1 uv run --no-sync $APP_DIR/bin/start-grpc-server.py &
       fi
     } || {
       echo "gRPC server initialization script failed. Is there already a local server running in the pod?"
@@ -236,7 +246,7 @@ fi
 # Start up the ops server. 
 if [[ "$AGENT_STUDIO_OPS_PROVIDER" = "phoenix" && "$AGENT_STUDIO_LEGACY_WORKFLOW_APP" = "false" ]]; then
   echo "Starting up embedded Phoenix ops server..."
-  VIRTUAL_ENV=.venv uv run python $APP_DIR/bin/start-agent-ops-server-embedded.py $DEFAULT_AS_PHOENIX_OPS_PLATFORM_PORT &
+  VIRTUAL_ENV=.venv uv run --no-sync python $APP_DIR/bin/start-agent-ops-server-embedded.py $DEFAULT_AS_PHOENIX_OPS_PLATFORM_PORT &
 fi
 
 # If running in development mode, run the dev server so we get live
