@@ -27,7 +27,17 @@ class AgentStudioCrewAILLM(LLM):
         "or referenced for the current task, each with a 1–2 sentence description. "
         "Use exact filenames the evidence; do not rename, paraphrase, or alter them.\n"
         "Additionally, format your response in Markdown using best practices. Use tables where helpful. "
-        "Only use heading level 5 or 6 (##### or ######); do not use heading levels 1–4."
+        "Only use heading level 4 or 5 (#### or #####); do not use heading levels 1–3 or 6."
+    )
+    HUMAN_INPUT_SUFFIX: str = (
+        "\n\n— Human input required policy —\n"
+        "If, after reasonable attempts (including retries and using available coworkers/tools), the task cannot proceed because essential inputs are missing, unavailable, or cannot be reliably inferred, then do NOT continue with further tool calls.\n"
+        "Instead, provide a Final Answer that:\n"
+        "1) Clearly states what is blocked and why (e.g., missing credentials, dataset name, query parameters).\n"
+        "2) Summarizes what you have already tried and any partial results or evidence gathered.\n"
+        "3) Lists the exact inputs needed from the user to proceed, as bullet points with brief rationale.\n"
+        "4) Politely requests the user to supply those inputs to continue.\n"
+        "Ensure the response remains concise, model-agnostic, and formatted in Markdown.\n"
     )
 
     def __init__(self, agent_studio_id: str, *args, session_directory: Optional[str] = None, **kwargs):
@@ -166,7 +176,7 @@ class AgentStudioCrewAILLM(LLM):
             content = msg.get("content")
             if isinstance(content, str):
                 lower = content.casefold()
-                if "useful artifacts" in lower or "artifacts requirement" in lower:
+                if ("useful artifacts" in lower or "artifacts requirement" in lower) and ("human input required" in lower or "input required policy" in lower):
                     return msg
                 marker = "IMPORTANT: Use the following format in your response:"
                 idx = content.lower().find(marker.lower())
@@ -174,10 +184,10 @@ class AgentStudioCrewAILLM(LLM):
                 if idx != -1:
                     before = content[:idx]
                     after = content[idx:]
-                    msg["content"] = before + cls.ARTIFACTS_SUFFIX + after
+                    msg["content"] = before + cls.ARTIFACTS_SUFFIX + cls.HUMAN_INPUT_SUFFIX + after
                 else:
                     sep = "\n" if content.endswith("\n") else "\n\n"
-                    msg["content"] = content + sep + cls.ARTIFACTS_SUFFIX
+                    msg["content"] = content + sep + cls.ARTIFACTS_SUFFIX + cls.HUMAN_INPUT_SUFFIX
             return msg
         result: List[Dict[str, Any]] = []
         for i, m in enumerate(messages):
@@ -519,7 +529,7 @@ class AgentStudioManagerCrewAILLM(LLM):
             content = msg.get("content")
             if isinstance(content, str):
                 lower = content.casefold()
-                if "useful artifacts" in lower or "artifacts requirement" in lower:
+                if ("useful artifacts" in lower or "artifacts requirement" in lower) and ("human input required" in lower or "input required policy" in lower):
                     return msg
                 marker = "IMPORTANT: Use the following format in your response:"
                 idx = content.lower().find(marker.lower())
@@ -527,10 +537,10 @@ class AgentStudioManagerCrewAILLM(LLM):
                 if idx != -1:
                     before = content[:idx]
                     after = content[idx:]
-                    msg["content"] = before + cls.ARTIFACTS_SUFFIX + after
+                    msg["content"] = before + cls.ARTIFACTS_SUFFIX + cls.HUMAN_INPUT_SUFFIX + after
                 else:
                     sep = "\n" if content.endswith("\n") else "\n\n"
-                    msg["content"] = content + sep + cls.ARTIFACTS_SUFFIX
+                    msg["content"] = content + sep + cls.ARTIFACTS_SUFFIX + cls.HUMAN_INPUT_SUFFIX
             return msg
         result: List[Dict[str, Any]] = []
         for i, m in enumerate(messages):
@@ -605,6 +615,27 @@ class AgentStudioManagerCrewAILLM(LLM):
                                 lines.append(f"  backstory: {backstory}")
                             if goal:
                                 lines.append(f"  goal: {goal}")
+                            tools_ctx = agent_info.get("tools") or []
+                            if tools_ctx:
+                                lines.append("  tools:")
+                                for tinfo in tools_ctx:
+                                    try:
+                                        tname = str((tinfo or {}).get("name", "")).strip()
+                                    except Exception:
+                                        tname = ""
+                                    try:
+                                        tdesc = str((tinfo or {}).get("description", "")).strip()
+                                    except Exception:
+                                        tdesc = ""
+                                    try:
+                                        tpayload = str((tinfo or {}).get("payload", "")).strip()
+                                    except Exception:
+                                        tpayload = ""
+                                    if tname:
+                                        line = f"    - tool: {tname}"
+                                        if tpayload:
+                                            line += f" | payload: {tpayload}"
+                                        lines.append(line)
                         coworkers_overview_text = "\n".join(lines)
                 except Exception:
                     coworkers_overview_text = None
@@ -632,18 +663,39 @@ class AgentStudioManagerCrewAILLM(LLM):
 
                         # Insert coworker context as assistant messages (one per coworker) right after system prompts
                         try:
-                            agents_info_decision: List[Dict[str, str]] = getattr(self, "manager_agents_info", None) or []
+                            agents_info_decision: List[Dict[str, Any]] = getattr(self, "manager_agents_info", None) or []
                             for agent_info in agents_info_decision:
                                 role = str(agent_info.get("role", "")).strip()
                                 backstory = str(agent_info.get("backstory", "")).strip()
                                 goal = str(agent_info.get("goal", "")).strip()
                                 aid = str(agent_info.get("id", "")).strip()
+                                tools_ctx = agent_info.get("tools") or []
+                                tools_lines: List[str] = []
+                                try:
+                                    for tinfo in tools_ctx:
+                                        try:
+                                            tname = str((tinfo or {}).get("name", "")).strip()
+                                        except Exception:
+                                            tname = ""
+                                        try:
+                                            tpayload = str((tinfo or {}).get("payload", "")).strip()
+                                        except Exception:
+                                            tpayload = ""
+                                        if tname:
+                                            line = f"- tool: {tname}"
+                                            if tpayload:
+                                                line += f" | payload: {tpayload}"
+                                            tools_lines.append(line)
+                                except Exception:
+                                    tools_lines = []
                                 content_lines_dec = [
                                     f"AGENT CONTEXT ({aid})",
                                     f"role: {role}",
                                     f"backstory: {backstory}",
                                     f"goal: {goal}",
                                 ]
+                                if tools_lines:
+                                    content_lines_dec.append("tools:\n" + "\n".join(tools_lines))
                                 decision_messages.append({"role": "assistant", "content": "\n".join(content_lines_dec).strip()})
                         except Exception:
                             pass
@@ -808,7 +860,7 @@ class AgentStudioManagerCrewAILLM(LLM):
                                 "   • Fuse micro-actions if they share the same coworker, scope, and objective.  \n"
                                 "   • Split when coworker, scope, or objective differs, or when user requested distinct outputs.\n\n"
                                 "3. Multiple intents\n"
-                                "   • If the request has multiple distinct tasks (‘then’, ‘and’, ‘also’), create steps for each in order.  \n"
+                                "   • If the request has multiple distinct tasks ('then', 'and', 'also'), create steps for each in order.  \n"
                                 "   • Reuse the same coworker across steps only if natural.\n\n"
                                 "4. Clarity & detail\n"
                                 "   • Each description must be CLEAR, SPECIFIC, and ACTIONABLE.  \n"
@@ -861,14 +913,36 @@ class AgentStudioManagerCrewAILLM(LLM):
 
                         assistant_msgs: List[Dict[str, Any]] = []
                         try:
-                            agents_info: List[Dict[str, str]] = getattr(self, "manager_agents_info", None) or []
+                            agents_info: List[Dict[str, Any]] = getattr(self, "manager_agents_info", None) or []
                             for agent_info in agents_info:
                                 role = str(agent_info.get("role", "")).strip()
                                 backstory = str(agent_info.get("backstory", "")).strip()
                                 goal = str(agent_info.get("goal", "")).strip()
                                 aid = str(agent_info.get("id", "")).strip()
-                                content_lines = [f"AGENT CONTEXT ({aid})", f"role: {role}", f"backstory: {backstory}", f"goal: {goal}"]
-                                assistant_msgs.append({"role": "assistant", "content": "\n".join(content_lines).strip()})
+                                tools_ctx = agent_info.get("tools") or []
+                                tools_lines: List[str] = []
+                                try:
+                                    for tinfo in tools_ctx:
+                                        try:
+                                            tname = str((tinfo or {}).get("name", "")).strip()
+                                        except Exception:
+                                            tname = ""
+                                        try:
+                                            tpayload = str((tinfo or {}).get("payload", "")).strip()
+                                        except Exception:
+                                            tpayload = ""
+                                        if tname:
+                                            line = f"- tool: {tname}"
+                                            if tpayload:
+                                                line += f" | payload: {tpayload}"
+                                            tools_lines.append(line)
+                                except Exception:
+                                    tools_lines = []
+                                header = f"AGENT CONTEXT ({aid})"
+                                content_parts = [header, f"role: {role}", f"backstory: {backstory}", f"goal: {goal}"]
+                                if tools_lines:
+                                    content_parts.append("tools:\n" + "\n".join(tools_lines))
+                                assistant_msgs.append({"role": "assistant", "content": "\n".join(content_parts).strip()})
                         except Exception:
                             pass
 
@@ -1046,24 +1120,27 @@ class AgentStudioManagerCrewAILLM(LLM):
                             "Inputs you will receive:\n"
                             "• Conversation evidence: only assistant messages above.\n"
                             "• System context (coworkers & their capabilities) is available in earlier messages.\n"
-                            "• The user's Current Task and the 'Current Plan JSON' (schema: {\"steps\":[{\"step_number\":\"1\",\"description\":\"...\",\"status\":\"NOT STARTED|IN PROGRESS|COMPLETED|FAILED\",\"coworker\":\"<Agent role>\"}],\"next_step\":\"<string>\"}).\n\n"
+                            "• The user's Current Task and the 'Current Plan JSON' (schema: {\"steps\":[{\"step_number\":\"1\",\"description\":\"...\",\"status\":\"NOT STARTED|IN PROGRESS|COMPLETED|FAILED|HUMAN_INPUT_REQUIRED\",\"coworker\":\"<Agent role>\"}],\"next_step\":\"<string>\"}).\n\n"
                             "Your job, in order:\n"
                             "A) Evidence, expectation & failure check:\n"
                             "   1) From the conversation evidence, determine what outputs or deliverables were actually produced.\n"
-                            "   2) Compare against the Current Task’s implied deliverables. If any deliverable is missing or partial, mark related steps as not fully complete.\n"
+                            "   2) Compare against the Current Task's implied deliverables. If any deliverable is missing or partial, mark related steps as not fully complete.\n"
                             "   3) Identify any step that has failed (e.g., repeated tool errors, impossible prerequisites, hard blockers).\n"
                             "      • Decide whether the failure is CRITICAL (blocks remaining steps) or NON-BLOCKING (independent steps can proceed).\n"
-                            "   4) If any coworker/step appears overloaded, treat this as a planning defect requiring repair.\n\n"
+                            "   4) Identify any step requiring human input (HUMAN_INPUT_REQUIRED) when essential inputs are truly missing and cannot be inferred.\n"
+                            "   5) If any coworker/step appears overloaded, treat this as a planning defect requiring repair.\n\n"
                             "B) Status update on existing plan:\n"
-                            "   • For each step in 'Current Plan JSON', update only the 'status' using exactly one of: 'NOT STARTED', 'IN PROGRESS', 'COMPLETED', 'FAILED'.\n"
+                            "   • For each step in 'Current Plan JSON', update only the 'status' using exactly one of: 'NOT STARTED', 'IN PROGRESS', 'COMPLETED', 'FAILED', 'HUMAN_INPUT_REQUIRED'.\n"
                             "   • Use 'FAILED' when the step cannot be completed by the assigned coworker given current constraints.\n"
+                            "   • Use 'HUMAN_INPUT_REQUIRED' when essential inputs are missing and cannot be reasonably inferred or discovered.\n"
                             "   • Mark 'COMPLETED' only if the objective is fully achieved.\n"
                             "   • Mark 'IN PROGRESS' if started but unfinished; else keep 'NOT STARTED'.\n"
                             "   • For 'next_step' (string):\n"
                             "       - If there is a NON-BLOCKING 'FAILED' step, choose the lowest-numbered feasible independent next step.\n"
+                            "       - If any step is 'HUMAN_INPUT_REQUIRED' and it blocks progress, set next_step to an empty string (\"\").\n"
                             "       - If any step is 'IN PROGRESS', prefer the lowest-numbered 'IN PROGRESS' step.\n"
                             "       - Else set to the lowest-numbered 'NOT STARTED' step.\n"
-                            "       - If there is a CRITICAL failure that blocks progress, set next_step to an empty string ("") to signal no next step.\n\n"
+                            "       - If there is a CRITICAL failure that blocks progress, set next_step to an empty string (\"\") to signal no next step.\n\n"
                             "C) Plan repair (only if needed):\n"
                             "   If expectations are unmet OR any step/coworker is overloaded OR coworker selection is suboptimal, REWRITE the plan to be concise and non-overloaded.\n"
                             "   Rules for repair:\n"
@@ -1073,7 +1150,7 @@ class AgentStudioManagerCrewAILLM(LLM):
                             "   4) Keep plans short and outcome-focused (1–4 steps unless more are clearly needed).\n"
                             "   5) Output schema:\n"
                             "      • Return STRICTLY valid JSON only (no prose, no code fences) as:\n"
-                            "        {\"steps\":[{\"step_number\":\"1\",\"description\":\"<brief, atomic>\",\"status\":\"NOT STARTED|IN PROGRESS|COMPLETED|FAILED\",\"coworker\":\"<Agent role>\"}],\"next_step\":\"<string>\"}\n"
+                            "        {\"steps\":[{\"step_number\":\"1\",\"description\":\"<brief, atomic>\",\"status\":\"NOT STARTED|IN PROGRESS|COMPLETED|FAILED|HUMAN_INPUT_REQUIRED\",\"coworker\":\"<Agent role>\"}],\"next_step\":\"<string>\"}\n"
                             "      • step_number values are strings ('1','2',...). Descriptions concise and actionable. Coworker must match an available role name exactly (case-sensitive).\n\n"
                             "D) Emission rule:\n"
                             "   • If no repair is needed, output the updated original plan (statuses + next_step only).\n"
@@ -1085,26 +1162,81 @@ class AgentStudioManagerCrewAILLM(LLM):
                         # Include agent context as assistant messages (same as planning) before evaluation instruction
                         assistant_msgs_eval: List[Dict[str, Any]] = []
                         try:
-                            agents_info_eval: List[Dict[str, str]] = getattr(self, "manager_agents_info", None) or []
+                            agents_info_eval: List[Dict[str, Any]] = getattr(self, "manager_agents_info", None) or []
                             for agent_info in agents_info_eval:
                                 role = str(agent_info.get("role", "")).strip()
                                 backstory = str(agent_info.get("backstory", "")).strip()
                                 goal = str(agent_info.get("goal", "")).strip()
                                 aid = str(agent_info.get("id", "")).strip()
-                                content_lines_eval = [f"AGENT CONTEXT ({aid})", f"role: {role}", f"backstory: {backstory}", f"goal: {goal}"]
+                                tools_ctx = agent_info.get("tools") or []
+                                tools_lines: List[str] = []
+                                try:
+                                    for tinfo in tools_ctx:
+                                        try:
+                                            tname = str((tinfo or {}).get("name", "")).strip()
+                                        except Exception:
+                                            tname = ""
+                                        try:
+                                            tpayload = str((tinfo or {}).get("payload", "")).strip()
+                                        except Exception:
+                                            tpayload = ""
+                                        if tname:
+                                            line = f"- tool: {tname}"
+                                            if tpayload:
+                                                line += f" | payload: {tpayload}"
+                                            tools_lines.append(line)
+                                except Exception:
+                                    tools_lines = []
+                                content_lines_eval = [
+                                    f"AGENT CONTEXT ({aid})",
+                                    f"role: {role}",
+                                    f"backstory: {backstory}",
+                                    f"goal: {goal}",
+                                ]
+                                if tools_lines:
+                                    content_lines_eval.append("tools:\n" + "\n".join(tools_lines))
                                 assistant_msgs_eval.append({"role": "assistant", "content": "\n".join(content_lines_eval).strip()})
                         except Exception:
                             pass
 
-                        # Insert assistant context right after system messages, before any user messages
+                        # Build evaluation message set: include only system messages, the last agent output (from state.json) as assistant, and user messages
                         systems_eval = [m for m in original_list_for_eval if m.get("role") == "system"]
                         users_eval = [m for m in original_list_for_eval if m.get("role") == "user"]
-                        others_eval = [m for m in original_list_for_eval if m.get("role") not in ("system", "user")]
+                        state_assistant_eval: List[Dict[str, Any]] = []
+                        try:
+                            if self.session_directory:
+                                state_json_eval = os.path.join(self.session_directory, "state.json")
+                                if os.path.exists(state_json_eval):
+                                    with open(state_json_eval, "r", encoding="utf-8") as sf:
+                                        try:
+                                            entries_eval = json.load(sf) or []
+                                        except Exception:
+                                            entries_eval = []
+                                    if isinstance(entries_eval, list) and entries_eval:
+                                        # Add ALL entries as separate assistant messages in chronological order
+                                        for idx_entry, entry in enumerate(entries_eval):
+                                            try:
+                                                ts_eval = str(entry.get("timestamp", "")).strip()
+                                                content_eval = str(entry.get("response", "")).strip()
+                                                if not content_eval:
+                                                    continue
+                                                header_eval = (
+                                                    f"CONTEXT: Agent output at {ts_eval}."
+                                                    if ts_eval else "CONTEXT: Prior agent output."
+                                                )
+                                                state_assistant_eval.append({
+                                                    "role": "assistant",
+                                                    "content": header_eval + "\n" + content_eval,
+                                                })
+                                            except Exception:
+                                                continue
+                        except Exception:
+                            state_assistant_eval = []
+
                         eval_messages: List[Dict[str, Any]] = []
                         eval_messages.extend(systems_eval)
-                        eval_messages.extend(assistant_msgs_eval)
+                        eval_messages.extend(state_assistant_eval)
                         eval_messages.extend(users_eval)
-                        eval_messages.extend(others_eval)
                         eval_messages.append({"role": "user", "content": eval_instruction})
 
                         def _extract_json_obj_eval(text: str) -> Optional[Dict[str, Any]]:
@@ -1146,7 +1278,7 @@ class AgentStudioManagerCrewAILLM(LLM):
                             steps = obj.get("steps")
                             if not isinstance(steps, list) or len(steps) == 0:
                                 return False
-                            allowed_status = {"NOT STARTED", "IN PROGRESS", "COMPLETED", "FAILED"}
+                            allowed_status = {"NOT STARTED", "IN PROGRESS", "COMPLETED", "FAILED", "HUMAN_INPUT_REQUIRED"}
                             for s in steps:
                                 if not isinstance(s, dict):
                                     return False
@@ -1302,7 +1434,7 @@ class AgentStudioManagerCrewAILLM(LLM):
                                                 except Exception:
                                                     all_completed = False
 
-                                                # Detect failures and criticality
+                                                # Detect failures, human-input-required, and criticality
                                                 try:
                                                     any_failed = bool(steps_for_status) and any(
                                                         isinstance(s, dict)
@@ -1311,6 +1443,14 @@ class AgentStudioManagerCrewAILLM(LLM):
                                                     )
                                                 except Exception:
                                                     any_failed = False
+                                                try:
+                                                    any_hir = bool(steps_for_status) and any(
+                                                        isinstance(s, dict)
+                                                        and str(s.get("status", "")).strip().upper() == "HUMAN_INPUT_REQUIRED"
+                                                        for s in steps_for_status
+                                                    )
+                                                except Exception:
+                                                    any_hir = False
                                                 # Heuristic for critical failure: FAILED present and no next_step
                                                 try:
                                                     ns_val = plan_obj_injection.get("next_step") if isinstance(plan_obj_injection, dict) else None
@@ -1323,6 +1463,22 @@ class AgentStudioManagerCrewAILLM(LLM):
                                                     note_text = (
                                                         "All plan steps are COMPLETED. You should now provide the Final Answer. "
                                                         "Use the required response format from the system message and include any necessary evidence/artifacts."
+                                                    )
+                                                elif any_hir:
+                                                    # Build a concise, model-agnostic note to interrupt and request inputs
+                                                    hir_desc = ""
+                                                    try:
+                                                        for s in steps_for_status:
+                                                            if isinstance(s, dict) and str(s.get("status", "")).strip().upper() == "HUMAN_INPUT_REQUIRED":
+                                                                hir_desc = str(s.get("description", "")).strip()
+                                                                if hir_desc:
+                                                                    break
+                                                    except Exception:
+                                                        hir_desc = ""
+                                                    note_text = (
+                                                        "IMPORTANT NOTE: Human input is required to proceed. Interrupt the workflow now and provide your Final Answer. "
+                                                        + (f"The blocked step is: '{hir_desc}'. " if hir_desc else "")
+                                                        + "In your Final Answer: briefly explain what is blocked and why, summarize what has been done so far (partial results or evidence), and list the exact inputs needed from the user to continue."
                                                     )
                                                 elif critical_failure:
                                                     # Find failed step description for clarity

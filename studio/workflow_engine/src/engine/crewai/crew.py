@@ -124,17 +124,57 @@ def create_crewai_objects_smart(
                     except Exception:
                         pass
                 try:
-                    agents_info: list[dict[str, str]] = []
+                    agents_info: list[dict[str, object]] = []
                     for agent_id in workflow_input.agent_ids:
                         if agent_id == manager_agent_id:
                             continue
                         a = agents[agent_id]
+                        tools_context = []
+                        try:
+                            for t in (getattr(a, "tools", None) or []):
+                                try:
+                                    t_name = str(getattr(t, "name", "")).strip()
+                                except Exception:
+                                    t_name = ""
+                                try:
+                                    t_desc = str(getattr(t, "description", "")).strip()
+                                except Exception:
+                                    t_desc = ""
+                                payload_repr = ""
+                                try:
+                                    args_schema = getattr(t, "args_schema", None)
+                                    # Pydantic v2: model_fields
+                                    if args_schema is not None and hasattr(args_schema, "model_fields"):
+                                        fields = getattr(args_schema, "model_fields") or {}
+                                        pairs = []
+                                        for fname, f in fields.items():
+                                            try:
+                                                ftype = getattr(f, "annotation", None)
+                                                ftype_str = getattr(ftype, "__name__", None) or str(ftype)
+                                            except Exception:
+                                                ftype_str = ""
+                                            try:
+                                                fdesc = getattr(f, "description", None) or ""
+                                            except Exception:
+                                                fdesc = ""
+                                            pairs.append(f"{fname}: {ftype_str}{' - ' + fdesc if fdesc else ''}")
+                                        payload_repr = ", ".join(pairs)
+                                except Exception:
+                                    payload_repr = ""
+                                tools_context.append({
+                                    "name": t_name,
+                                    "description": t_desc,
+                                    "payload": payload_repr,
+                                })
+                        except Exception:
+                            tools_context = []
                         agents_info.append(
                             {
                                 "id": agent_id,
                                 "role": getattr(a, "role", "") or "",
                                 "backstory": getattr(a, "backstory", "") or "",
                                 "goal": getattr(a, "goal", "") or "",
+                                "tools": tools_context,
                             }
                         )
                     setattr(manager_llm_for_agent, "manager_agents_info", agents_info)

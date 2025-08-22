@@ -205,12 +205,13 @@ def run_workflow(
                 )
         except Exception:
             pass
-        # Initialize state.json/plan.json only for smart workflows
+        # Initialize or update state.json/plan.json only for smart workflows
         try:
             is_smart_workflow = bool(getattr(collated_input.workflow, 'smart_workflow', False))
             if is_smart_workflow and session_directory:
                 os.makedirs(session_directory, exist_ok=True)
                 state_json_path = f"{session_directory}/state.json"
+                plan_json_path = f"{session_directory}/plan.json"
 
                 def _find_context_slot(obj):
                     # Returns a tuple (container, key, value) where 'key' is 'context' (case-insensitive)
@@ -228,30 +229,93 @@ def run_workflow(
                                 return found
                     return None
 
-                found_slot = _find_context_slot(inputs)
-                # Write initial state.json as a list with a context entry if available
+                # Detect if existing plan.json includes HUMAN_INPUT_REQUIRED
+                human_input_required_present = False
+                existing_plan_obj = None
                 try:
-                    entries = []
-                    if found_slot is not None and found_slot[2] is not None and str(found_slot[2]) != "":
-                        entries.append({
-                            "timestamp": datetime.utcnow().isoformat() + "Z",
-                            "response": str(found_slot[2])
-                        })
-                        # Clear the context value in-place so kickoff inputs have an empty context
-                        container, key, _ = found_slot
-                        container[key] = ""
-                    with open(state_json_path, "w", encoding="utf-8") as f:
+                    if os.path.exists(plan_json_path) and os.path.getsize(plan_json_path) > 0:
                         import json as _json
-                        _json.dump(entries, f, ensure_ascii=False, indent=2)
+                        with open(plan_json_path, "r", encoding="utf-8") as pf:
+                            maybe_plan = _json.load(pf)
+                        if isinstance(maybe_plan, dict):
+                            existing_plan_obj = maybe_plan
+                            steps = maybe_plan.get("steps")
+                            if isinstance(steps, list):
+                                for s in steps:
+                                    if isinstance(s, dict) and str(s.get("status", "")).strip().upper() == "HUMAN_INPUT_REQUIRED":
+                                        human_input_required_present = True
+                                        break
                 except Exception:
-                    # Fallback to empty list
-                    with open(state_json_path, "w", encoding="utf-8") as f:
-                        f.write("[]")
+                    human_input_required_present = False
+                    existing_plan_obj = None
 
-                # Also initialize an empty plan.json file in the session directory
-                plan_json_path = f"{session_directory}/plan.json"
-                with open(plan_json_path, "w", encoding="utf-8") as plan_file:
-                    plan_file.write("")
+                found_slot = _find_context_slot(inputs)
+                if human_input_required_present:
+                    # Do NOT reset state.json; append context (if present) to the bottom
+                    try:
+                        import json as _json
+                        entries = []
+                        if os.path.exists(state_json_path) and os.path.getsize(state_json_path) > 0:
+                            try:
+                                with open(state_json_path, "r", encoding="utf-8") as sf:
+                                    entries = _json.load(sf) or []
+                                    if not isinstance(entries, list):
+                                        entries = []
+                            except Exception:
+                                entries = []
+                        if found_slot is not None and found_slot[2] is not None and str(found_slot[2]).strip() != "":
+                            entries.append({
+                                "timestamp": datetime.utcnow().isoformat() + "Z",
+                                "response": str(found_slot[2]).strip(),
+                            })
+                        with open(state_json_path, "w", encoding="utf-8") as f:
+                            _json.dump(entries, f, ensure_ascii=False, indent=2)
+                        # Clear the context value in inputs now that it has been persisted to state.json
+                        try:
+                            if found_slot is not None:
+                                container, key, _ = found_slot
+                                container[key] = ""
+                        except Exception:
+                            pass
+                    except Exception:
+                        pass
+                else:
+                    # Initialize fresh state.json and clear inputs context
+                    try:
+                        import json as _json
+                        entries = []
+                        if found_slot is not None and found_slot[2] is not None and str(found_slot[2]) != "":
+                            entries.append({
+                                "timestamp": datetime.utcnow().isoformat() + "Z",
+                                "response": str(found_slot[2])
+                            })
+                            container, key, _ = found_slot
+                            container[key] = ""
+                        with open(state_json_path, "w", encoding="utf-8") as f:
+                            _json.dump(entries, f, ensure_ascii=False, indent=2)
+                    except Exception:
+                        with open(state_json_path, "w", encoding="utf-8") as f:
+                            f.write("[]")
+
+                # Write plan.json: if HUMAN_INPUT_REQUIRED existed, set those step(s) to IN PROGRESS; else init empty
+                try:
+                    import json as _json
+                    if human_input_required_present and isinstance(existing_plan_obj, dict):
+                        steps = existing_plan_obj.get("steps")
+                        if isinstance(steps, list):
+                            for s in steps:
+                                try:
+                                    if isinstance(s, dict) and str(s.get("status", "")).strip().upper() == "HUMAN_INPUT_REQUIRED":
+                                        s["status"] = "IN PROGRESS"
+                                except Exception:
+                                    continue
+                        with open(plan_json_path, "w", encoding="utf-8") as plan_file:
+                            _json.dump(existing_plan_obj, plan_file, ensure_ascii=False, indent=2)
+                    else:
+                        with open(plan_json_path, "w", encoding="utf-8") as plan_file:
+                            plan_file.write("")
+                except Exception:
+                    pass
         except Exception as e:
             print(f"Warning: unable to initialize state.json/plan.json: {e}")
         print(f"[Engine] Kickoff | inputs_keys={list(inputs.keys())}")
