@@ -20,6 +20,7 @@ import { readWorkflowConfigurationFromLocalStorage } from '@/app/lib/localStorag
 import WorkflowAppTest from '@/app/components/workflowApp/WorkflowAppTest';
 import LargeCenterSpin from '@/app/components/common/LargeCenterSpin';
 import WorkflowEditorName from '@/app/components/workflowEditor/WorkflowEditorName';
+import WorkflowAddToolModal from './WorkflowAddToolModal';
 
 export interface WorkflowEditorProps {
   workflowId: string;
@@ -80,8 +81,22 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({ workflowId }) => {
     return <LargeCenterSpin />;
   }
 
+  /**
+   * List of global modals to conditionally render based on redux store.
+   * Eventually, all workflow editor modals should be moved to this component
+   * and controlled via redux.
+   */
+  const GlobalModals: React.FC = () => {
+    return (
+      <>
+        <WorkflowAddToolModal workflowId={workflowId} />
+      </>
+    );
+  };
+
   return (
     <Layout className="flex-1 p-4 md:p-6 lg:p-6 flex flex-col">
+      <GlobalModals />
       <CommonBreadCrumb
         items={[
           { title: 'Agentic Workflows', href: '/workflows' },

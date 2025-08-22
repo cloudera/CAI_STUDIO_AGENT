@@ -61,10 +61,17 @@ export interface DiagramState {
   hasCustomPositions: boolean; // Track if user has made position changes
 }
 
+export interface ToolViewState {
+  isVisible?: boolean;
+  selectedToolInstanceId?: string;
+  selectedToolTemplateId?: string;
+}
+
 interface EditorState {
   currentStep?: 'Agents' | 'Tasks' | 'Configure' | 'Test' | 'Deploy';
   workflow: WorkflowState;
   agentView: AgentViewState;
+  toolView: ToolViewState;
   workflowConfiguration: WorkflowConfigurationState;
   diagramState: DiagramState;
   editingTaskId?: string | null; // Add task editing state
@@ -80,6 +87,9 @@ const initialState: EditorState = {
   },
   agentView: {
     createAgent: {},
+  },
+  toolView: {
+    isVisible: false,
   },
   workflowConfiguration: {
     toolConfigurations: {},
@@ -298,6 +308,31 @@ export const editorSlice = createSlice({
       };
     },
 
+    updatedEditorSelectedToolInstanceId: (state, action: PayloadAction<string | undefined>) => {
+      state.toolView.selectedToolInstanceId = action.payload;
+      state.toolView.selectedToolTemplateId = undefined;
+    },
+
+    updatedEditorSelectedToolTemplateId: (state, action: PayloadAction<string | undefined>) => {
+      state.toolView.selectedToolTemplateId = action.payload;
+      state.toolView.selectedToolInstanceId = undefined;
+    },
+
+    openedEditorToolView: (state) => {
+      state.toolView.isVisible = true;
+    },
+
+    clearedEditorToolEditingState: (state) => {
+      state.toolView.selectedToolInstanceId = undefined;
+      state.toolView.selectedToolTemplateId = undefined;
+    },
+
+    closedEditorToolView: (state) => {
+      state.toolView.isVisible = false;
+      state.toolView.selectedToolInstanceId = undefined;
+      state.toolView.selectedToolTemplateId = undefined;
+    },
+
     resetEditor: (_state) => {
       return initialState;
     },
@@ -368,6 +403,11 @@ export const {
   updatedWorkflowToolParameter,
   updatedWorkflowMcpInstanceParameter,
   updatedWorkflowGenerationConfig,
+  updatedEditorSelectedToolInstanceId,
+  updatedEditorSelectedToolTemplateId,
+  openedEditorToolView,
+  closedEditorToolView,
+  clearedEditorToolEditingState,
   removedEditorToolTemplateFromAgent,
   removedEditorWorkflowTask,
   resetEditor,
@@ -417,6 +457,11 @@ export const selectEditorAgentViewCreateAgentMcpInstances = (state: RootState) =
   state.editor.agentView.createAgent.mcpInstances;
 export const selectEditorAgentViewCreateAgentState = (state: RootState): CreateAgentState =>
   state.editor.agentView.createAgent;
+export const selectEditorToolViewIsVisible = (state: RootState) => state.editor.toolView.isVisible;
+export const selectEditorSelectedToolInstanceId = (state: RootState) =>
+  state.editor.toolView.selectedToolInstanceId;
+export const selectEditorSelectedToolTemplateId = (state: RootState) =>
+  state.editor.toolView.selectedToolTemplateId;
 
 export const selectEditorTaskEditingId = (state: RootState): string | null =>
   state.editor.editingTaskId || null;
