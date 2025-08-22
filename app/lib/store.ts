@@ -36,6 +36,9 @@ export const makeStore = () => {
         .concat(workflowsApi.middleware)
         .concat(agentsApi.middleware)
         .concat(tasksApi.middleware),
+    devTools: {
+      name: 'agent-studio-redux-store',
+    },
   });
 };
 

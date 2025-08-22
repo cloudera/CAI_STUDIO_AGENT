@@ -68,11 +68,21 @@ case "$1" in
             echo "✅ npm lint check passed"
         fi
         echo ""
+
+        # Check eslint rules
+        echo "Checking eslint rules..."
+        if ! npm run lint; then
+            echo "❌ npm eslint check failed - eslint issues found"
+            EXIT_CODE=1
+        else
+            echo "✅ npm eslint check passed"
+        fi
+        echo ""
         
         if [ $EXIT_CODE -eq 0 ]; then
             echo "🎉 All formatting and linting checks passed!"
         else
-            echo "💥 Some formatting or linting checks failed. Run './bin/format.sh --run' to fix issues."
+            echo "💥 Some formatting or linting checks failed. Run './bin/format.sh --run' to fix issues. For resolving eslint issues please do required code change"
         fi
         
         exit $EXIT_CODE

@@ -3,6 +3,7 @@ import { Handle, Position, NodeProps, Node } from '@xyflow/react';
 import { Avatar, Typography, Button, Tooltip } from 'antd';
 import { FileDoneOutlined, EditOutlined } from '@ant-design/icons';
 import { CrewAITaskMetadata } from '@/studio/proto/agent_studio';
+import { useWorkflowDiagramContext } from '../workflowApp/WorkflowDiagram';
 
 const { Paragraph } = Typography;
 
@@ -13,7 +14,6 @@ type TaskNode = Node<
     isMostRecent?: boolean;
     taskId?: string; // Add task ID for edit functionality
     taskData?: CrewAITaskMetadata; // Add full task data
-    onEditTask?: (task: CrewAITaskMetadata) => void; // Add callback for task edit
     isConversational?: boolean; // Add flag for conversational workflow
   },
   'task'
@@ -21,11 +21,12 @@ type TaskNode = Node<
 
 export default function TaskNode({ data }: NodeProps<TaskNode>) {
   const [isHovered, setIsHovered] = useState(false);
+  const { onEditTask } = useWorkflowDiagramContext();
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (data.onEditTask && data.taskData) {
-      data.onEditTask(data.taskData);
+    if (onEditTask && data.taskData) {
+      onEditTask(data.taskData);
     }
   };
 
@@ -53,7 +54,7 @@ export default function TaskNode({ data }: NodeProps<TaskNode>) {
         }}
       >
         {/* Edit Button - Show for all task nodes except conversational workflows */}
-        {data.taskData && data.onEditTask && !data.isConversational && (
+        {data.taskData && !data.isConversational && onEditTask && (
           <Tooltip title="Edit Task">
             <Button
               type="text"
