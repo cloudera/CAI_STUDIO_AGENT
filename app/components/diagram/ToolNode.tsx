@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import { Handle, Position, NodeProps, Node, NodeToolbar } from '@xyflow/react';
 import { Avatar, Image, Typography, Tooltip } from 'antd';
 import { ToolOutlined, EditOutlined } from '@ant-design/icons';
-import WorkflowAddToolModal from '../workflowEditor/WorkflowAddToolModal';
 import { useAppDispatch } from '@/app/lib/hooks/hooks';
-import { updatedEditorAgentViewCreateAgentState } from '@/app/workflows/editorSlice';
+import {
+  openedEditorToolView,
+  updatedEditorAgentViewCreateAgentState,
+  updatedEditorSelectedToolInstanceId,
+} from '@/app/workflows/editorSlice';
 
 const { Paragraph } = Typography;
 
@@ -29,7 +32,6 @@ type ToolNode = Node<
 
 export default function ToolNode({ data }: NodeProps<ToolNode>) {
   const [isHovered, setIsHovered] = useState(false);
-  const [isToolModalOpen, setIsToolModalOpen] = useState(false);
   const dispatch = useAppDispatch();
 
   // Set agent context before opening modal
@@ -42,7 +44,8 @@ export default function ToolNode({ data }: NodeProps<ToolNode>) {
         tools: data.agentTools, // agentTools should be passed in data
       }),
     );
-    setIsToolModalOpen(true);
+    dispatch(updatedEditorSelectedToolInstanceId(data.toolInstanceId));
+    dispatch(openedEditorToolView());
   };
 
   return (
@@ -162,15 +165,6 @@ export default function ToolNode({ data }: NodeProps<ToolNode>) {
 
       {/* Handles for React Flow */}
       <Handle type="target" position={Position.Top} style={{ background: '#555' }} />
-      {/* Tool Modal */}
-      {isToolModalOpen && (
-        <WorkflowAddToolModal
-          workflowId={data.workflowId}
-          preSelectedToolInstanceId={data.toolInstanceId}
-          open={isToolModalOpen}
-          onCancel={() => setIsToolModalOpen(false)}
-        />
-      )}
     </div>
   );
 }

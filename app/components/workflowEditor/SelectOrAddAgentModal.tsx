@@ -53,6 +53,9 @@ import {
   selectEditorWorkflow,
   updatedEditorWorkflowAgentIds,
   updatedEditorAgentViewAgent,
+  openedEditorToolView,
+  updatedEditorSelectedToolInstanceId,
+  clearedEditorToolEditingState,
 } from '../../workflows/editorSlice';
 import {
   AgentTemplateMetadata,
@@ -63,7 +66,6 @@ import {
 } from '@/studio/proto/agent_studio';
 import { useListGlobalToolTemplatesQuery } from '@/app/tools/toolTemplatesApi';
 import { useImageAssetsData } from '@/app/lib/hooks/useAssetData';
-import WorkflowAddToolModal from './WorkflowAddToolModal';
 import WorkflowAddMcpModal from './WorkflowAddMcpModal';
 import { useSelector } from 'react-redux';
 import { useAddWorkflowMutation, useUpdateWorkflowMutation } from '../../workflows/workflowsApi';
@@ -138,9 +140,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
     toolTemplates.map((tool) => tool.tool_image_uri),
   );
   const dispatch = useAppDispatch();
-  const [isAddToolModalVisible, setAddToolModalVisible] = useState(false);
   const [isAddMcpModalVisible, setAddMcpModalVisible] = useState(false);
-  const [clickedToolInstanceId, setClickedToolInstanceId] = useState<string | undefined>(undefined);
   const [isUploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [clickedMcpInstance, setClickedMcpInstance] = useState<McpInstance | undefined>(undefined);
@@ -562,8 +562,8 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
               <div
                 className="rounded-md border border-solid border-gray-200 bg-white w-full p-4 flex flex-col cursor-pointer transition-all duration-200 shadow-sm hover:scale-[1.03] hover:shadow-md hover:bg-green-50"
                 onClick={() => {
-                  setClickedToolInstanceId(id);
-                  setAddToolModalVisible(true);
+                  dispatch(updatedEditorSelectedToolInstanceId(id));
+                  dispatch(openedEditorToolView());
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'scale(1.03)';
@@ -631,8 +631,8 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
               <div
                 className="rounded border border-gray-200 bg-white w-full p-0 flex flex-col cursor-pointer transition-all duration-200 shadow-sm hover:scale-[1.03] hover:shadow-md hover:bg-green-50"
                 onClick={() => {
-                  setClickedToolInstanceId(tool.id);
-                  setAddToolModalVisible(true);
+                  dispatch(updatedEditorSelectedToolInstanceId(tool.id));
+                  dispatch(openedEditorToolView());
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'scale(1.03)';
@@ -872,8 +872,8 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                 type="dashed"
                 icon={<PlusOutlined />}
                 onClick={() => {
-                  setClickedToolInstanceId(undefined);
-                  setAddToolModalVisible(true);
+                  dispatch(clearedEditorToolEditingState());
+                  dispatch(openedEditorToolView());
                 }}
                 className="w-full mb-4"
                 disabled={isFormDisabled}
@@ -1134,15 +1134,6 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
         </Layout>
       </Layout>
       <Divider className="m-0 bg-gray-200" />
-      <WorkflowAddToolModal
-        workflowId={workflowId}
-        preSelectedToolInstanceId={clickedToolInstanceId}
-        open={isAddToolModalVisible}
-        onCancel={() => {
-          setAddToolModalVisible(false);
-          setClickedToolInstanceId(undefined);
-        }}
-      />
       <WorkflowAddMcpModal
         workflowId={workflowId}
         preSelectedMcpInstance={clickedMcpInstance}
