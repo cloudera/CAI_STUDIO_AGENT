@@ -8,6 +8,7 @@
     "start": "next start -p $CDSW_APP_PORT -H 127.0.0.1",
     "lint-fix": "next lint --fix",
     "lint-check": "next lint",
+    "lint":"eslint ./app/ --fix",
     "format-fix": "prettier --write ./app/",
     "format-check": "prettier --check ./app/"
   },

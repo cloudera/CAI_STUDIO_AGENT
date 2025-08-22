@@ -9,6 +9,7 @@ import {
   updatedEditorAgentViewAgent,
 } from '@/app/workflows/editorSlice';
 import { AgentMetadata } from '@/studio/proto/agent_studio';
+import { useWorkflowDiagramContext } from '../workflowApp/WorkflowDiagram';
 
 const { Paragraph } = Typography;
 
@@ -24,7 +25,6 @@ type AgentNode = Node<
     agentId?: string; // Add agent ID for edit functionality
     agentData?: AgentMetadata; // Add full agent data
     isDefaultManager?: boolean; // Add flag for default manager
-    onEditManager?: (agent: AgentMetadata) => void; // Add callback for manager edit
     showEditButton?: boolean; // Control whether to show edit button
   },
   'agent'
@@ -33,6 +33,7 @@ type AgentNode = Node<
 export default function AgentNode({ data }: NodeProps<AgentNode>) {
   const [isHovered, setIsHovered] = useState(false);
   const dispatch = useAppDispatch();
+  const { onEditManager } = useWorkflowDiagramContext();
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -47,8 +48,8 @@ export default function AgentNode({ data }: NodeProps<AgentNode>) {
     e.stopPropagation();
     // For manager agents, we need to open the manager modal
     // This will be handled by the parent component through a callback
-    if (data.onEditManager && data.agentData) {
-      data.onEditManager(data.agentData);
+    if (onEditManager && data.agentData) {
+      onEditManager(data.agentData);
     }
   };
 
@@ -100,33 +101,36 @@ export default function AgentNode({ data }: NodeProps<AgentNode>) {
       )}
 
       {/* Edit Button - Show for custom manager agents (not default) */}
-      {data.manager && data.agentData && !data.isDefaultManager && data.onEditManager && (
-        <Tooltip title="Edit Manager Agent">
-          <Button
-            type="text"
-            icon={<EditOutlined style={{ color: 'white' }} />}
-            size="small"
-            onClick={handleEditManagerClick}
-            style={{
-              position: 'absolute',
-              bottom: -10, // Move to bottom right
-              right: -10,
-              zIndex: 10,
-              width: '24px',
-              height: '24px',
-              borderRadius: '50%',
-              backgroundColor: 'lightgrey',
-              border: '2px solid lightgrey',
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 0,
-              minWidth: 'auto',
-            }}
-          />
-        </Tooltip>
-      )}
+      {data.manager &&
+        data.agentData &&
+        !data.isDefaultManager &&
+        data.showEditButton !== false && (
+          <Tooltip title="Edit Manager Agent">
+            <Button
+              type="text"
+              icon={<EditOutlined style={{ color: 'white' }} />}
+              size="small"
+              onClick={handleEditManagerClick}
+              style={{
+                position: 'absolute',
+                bottom: -10, // Move to bottom right
+                right: -10,
+                zIndex: 10,
+                width: '24px',
+                height: '24px',
+                borderRadius: '50%',
+                backgroundColor: 'lightgrey',
+                border: '2px solid lightgrey',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0,
+                minWidth: 'auto',
+              }}
+            />
+          </Tooltip>
+        )}
 
       {data.info && (
         <>

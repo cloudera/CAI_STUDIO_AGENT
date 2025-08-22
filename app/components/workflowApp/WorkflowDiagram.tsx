@@ -1,4 +1,12 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Layout, Tooltip } from 'antd';
 import {
   applyEdgeChanges,
@@ -47,6 +55,11 @@ const nodeTypes: NodeTypes = {
   tool: ToolNode,
   mcp: McpNode,
 };
+
+interface WorkflowDiagramContextType {
+  onEditManager?: (agent: AgentMetadata) => void;
+  onEditTask?: (task: CrewAITaskMetadata) => void;
+}
 
 export interface WorkflowDiagramProps {
   workflowState: WorkflowState;
@@ -100,6 +113,8 @@ function getDiagramDataSignature({
   });
 }
 
+const WorkflowDiagramContext = createContext<WorkflowDiagramContextType>({});
+
 const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
   workflowState,
   toolInstances,
@@ -117,7 +132,6 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
   const [isManagerModalOpen, setIsManagerModalOpen] = useState(false);
   const router = useRouter();
   const prevDiagramSignature = useRef('');
-
   // Get image data for icons
   const { imageData: iconsData, refetch: refetchIconsData } = useImageAssetsData([
     ...(toolInstances?.map((t_) => t_.tool_image_uri) ?? []),
@@ -153,7 +167,6 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
     },
     [workflowState.workflowId, router, dispatch, renderMode],
   );
-
   // React Flow change handlers (update Redux)
   const onNodesChange = useCallback(
     (changes: any) => {
@@ -188,7 +201,6 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
           ...node,
           data: {
             ...node.data,
-            onEditManager: handleEditManager,
             showEditButton: true,
           },
         };
@@ -198,7 +210,6 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
           ...node,
           data: {
             ...node.data,
-            onEditTask: handleEditTask,
           },
         };
       }
@@ -257,7 +268,6 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
             ...node,
             data: {
               ...node.data,
-              onEditManager: handleEditManager,
             },
           };
         }
@@ -266,7 +276,6 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
             ...node,
             data: {
               ...node.data,
-              onEditTask: handleEditTask,
             },
           };
         }
@@ -348,7 +357,6 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
             ...node,
             data: {
               ...node.data,
-              onEditManager: handleEditManager,
               showEditButton: true,
             },
           };
@@ -358,7 +366,6 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
             ...node,
             data: {
               ...node.data,
-              onEditTask: handleEditTask,
             },
           };
         }
@@ -422,12 +429,6 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
           activeTool: activeNode?.activeTool,
           info: activeNode?.info,
           infoType: activeNode?.infoType,
-          // Always use fresh callbacks to prevent stale references (only in studio mode)
-          onEditManager:
-            node.type === 'agent' && node.data.manager && renderMode === 'studio'
-              ? handleEditManager
-              : undefined,
-          onEditTask: node.type === 'task' && renderMode === 'studio' ? handleEditTask : undefined,
           showEditButton: renderMode === 'studio',
         },
       };
@@ -450,46 +451,55 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
   }, []);
 
   return (
-    <Layout className="flex-shrink-0 flex-grow h-full flex flex-col p-0 bg-transparent">
-      <ReactFlow
-        nodes={nodesWithActiveStates}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        nodeTypes={nodeTypes}
-        fitView
-      >
-        <Controls>
-          <Tooltip title="Reset Diagram">
-            <ControlButton onClick={handleResetDiagram}>
-              <ReloadOutlined />
-            </ControlButton>
-          </Tooltip>
-        </Controls>
-        <Background />
-      </ReactFlow>
-      {workflowState.workflowId && renderMode === 'studio' && (
-        <SelectOrAddAgentModal
-          workflowId={workflowState.workflowId}
-          onClose={() => {
-            // Clear task editing state when agent modal is closed
-            dispatch(clearEditorTaskEditingState());
-          }}
-        />
-      )}
-      {workflowState.workflowId && renderMode === 'studio' && (
-        <SelectOrAddManagerAgentModal
-          workflowId={workflowState.workflowId}
-          isOpen={isManagerModalOpen}
-          onClose={() => {
-            setIsManagerModalOpen(false);
-            // Clear task editing state when manager modal is closed
-            dispatch(clearEditorTaskEditingState());
-          }}
-        />
-      )}
-    </Layout>
+    <WorkflowDiagramContext.Provider
+      value={{ onEditManager: handleEditManager, onEditTask: handleEditTask }}
+    >
+      <Layout className="flex-shrink-0 flex-grow h-full flex flex-col p-0 bg-transparent">
+        <ReactFlow
+          nodes={nodesWithActiveStates}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          nodeTypes={nodeTypes}
+          fitView
+        >
+          <Controls>
+            <Tooltip title="Reset Diagram">
+              <ControlButton onClick={handleResetDiagram}>
+                <ReloadOutlined />
+              </ControlButton>
+            </Tooltip>
+          </Controls>
+          <Background />
+        </ReactFlow>
+        {workflowState.workflowId && renderMode === 'studio' && (
+          <SelectOrAddAgentModal
+            workflowId={workflowState.workflowId}
+            onClose={() => {
+              // Clear task editing state when agent modal is closed
+              dispatch(clearEditorTaskEditingState());
+            }}
+          />
+        )}
+        {workflowState.workflowId && renderMode === 'studio' && (
+          <SelectOrAddManagerAgentModal
+            workflowId={workflowState.workflowId}
+            isOpen={isManagerModalOpen}
+            onClose={() => {
+              setIsManagerModalOpen(false);
+              // Clear task editing state when manager modal is closed
+              dispatch(clearEditorTaskEditingState());
+            }}
+          />
+        )}
+      </Layout>
+    </WorkflowDiagramContext.Provider>
   );
 };
 
 export default WorkflowDiagram;
+
+export const useWorkflowDiagramContext = () => {
+  const ctx = useContext(WorkflowDiagramContext);
+  return ctx;
+};
