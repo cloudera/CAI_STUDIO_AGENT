@@ -264,9 +264,17 @@ def run_workflow(
                             except Exception:
                                 entries = []
                         if found_slot is not None and found_slot[2] is not None and str(found_slot[2]).strip() != "":
+                            # Add Agent Studio event first
+                            entries.append({
+                                "timestamp": datetime.utcnow().isoformat() + "Z",
+                                "response": "new execution started",
+                                "role": "Agent Studio",
+                            })
+                            # Then append the conversation as a conversation role
                             entries.append({
                                 "timestamp": datetime.utcnow().isoformat() + "Z",
                                 "response": str(found_slot[2]).strip(),
+                                "role": "conversation",
                             })
                         with open(state_json_path, "w", encoding="utf-8") as f:
                             _json.dump(entries, f, ensure_ascii=False, indent=2)
@@ -285,9 +293,17 @@ def run_workflow(
                         import json as _json
                         entries = []
                         if found_slot is not None and found_slot[2] is not None and str(found_slot[2]) != "":
+                            # Add Agent Studio event first
                             entries.append({
                                 "timestamp": datetime.utcnow().isoformat() + "Z",
-                                "response": str(found_slot[2])
+                                "response": "new execution started",
+                                "role": "Agent Studio",
+                            })
+                            # Then add the conversation entry
+                            entries.append({
+                                "timestamp": datetime.utcnow().isoformat() + "Z",
+                                "response": str(found_slot[2]),
+                                "role": "conversation",
                             })
                             container, key, _ = found_slot
                             container[key] = ""
@@ -306,7 +322,7 @@ def run_workflow(
                             for s in steps:
                                 try:
                                     if isinstance(s, dict) and str(s.get("status", "")).strip().upper() == "HUMAN_INPUT_REQUIRED":
-                                        s["status"] = "IN PROGRESS"
+                                        s["status"] = "NOT STARTED"
                                 except Exception:
                                     continue
                         with open(plan_json_path, "w", encoding="utf-8") as plan_file:
