@@ -31,6 +31,7 @@ from studio.workflow.workflow import (
     get_workflow,
     update_workflow,
     remove_workflow,
+    clone_workflow,
 )
 from studio.task.task import list_tasks, add_task, get_task, update_task, remove_task
 from studio.cross_cutting.methods import (
@@ -480,6 +481,12 @@ class AgentStudioApp(AgentStudioServicer):
         Remove an existing workflow by its ID.
         """
         return remove_workflow(request, self.cml, dao=self.dao)
+
+    def CloneWorkflow(self, request, context):
+        """
+        Clone an existing workflow by its ID.
+        """
+        return clone_workflow(request, self.cml, dao=self.dao)
 
     def TestWorkflow(self, request, context):
         """

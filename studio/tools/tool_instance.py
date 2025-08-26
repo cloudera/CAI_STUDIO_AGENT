@@ -18,74 +18,6 @@ from studio.workflow.runners import get_workflow_runners
 from studio.proto import agent_studio_pb2
 import requests
 
-# Import engine code manually. Eventually when this code becomes
-# a separate git repo, or a custom runtime image, this path call
-# will go away and workflow engine features will be available already.
-import sys
-
-app_dir = os.getenv("APP_DIR")
-if not app_dir:
-    raise EnvironmentError("APP_DIR environment variable is not set.")
-sys.path.append(os.path.join(app_dir, "studio", "workflow_engine", "src"))
-
-from engine.crewai.tools import prepare_virtual_env_for_tool
-
-
-def prepare_tool_instance(tool_instance_id: str):
-    """
-    Prepare virtual environment for a tool instance.
-    Updates tool status throughout the process. DAO is created within
-    the method because this run on a separate thread.
-    """
-    dao: AgentStudioDao = AgentStudioDao()
-
-    try:
-        # Get tool instance info and check if we need to clean up failed state
-        with dao.get_session() as session:
-            tool_instance = session.query(db_model.ToolInstance).filter_by(id=tool_instance_id).one()
-
-            # If tool is in PREPARING state, return
-            if tool_instance.status == ToolInstanceStatus.PREPARING.value:
-                print(f"Tool instance {tool_instance_id} is already being prepared on a separate thread")
-                return
-
-            # Get the info we need for venv preparation
-            source_folder_path = tool_instance.source_folder_path
-            requirements_file_name = tool_instance.python_requirements_file_name
-            current_status = tool_instance.status
-
-            # If tool is in FAILED state, remove .venv directory entirely
-            if current_status == ToolInstanceStatus.FAILED.value:
-                venv_dir = os.path.join(source_folder_path, ".venv")
-                if os.path.exists(venv_dir):
-                    try:
-                        shutil.rmtree(venv_dir)
-                        print(f"Removed existing .venv directory for failed tool instance {tool_instance_id}")
-                    except Exception as e:
-                        print(f"Error removing .venv directory for tool instance {tool_instance_id}: {e}")
-
-            # Set status to PREPARING
-            tool_instance.status = ToolInstanceStatus.PREPARING.value
-            session.commit()
-
-            # Prepare the virtual environment
-            prepare_virtual_env_for_tool(source_folder_path, requirements_file_name)
-
-            tool_instance.status = ToolInstanceStatus.READY.value
-            session.commit()
-
-    except Exception as e:
-        print(f"Error preparing virtual environment for tool instance {tool_instance_id}: {e}")
-        # Set status to FAILED
-        try:
-            with dao.get_session() as session:
-                tool_instance = session.query(db_model.ToolInstance).filter_by(id=tool_instance_id).first()
-                if tool_instance:
-                    tool_instance.status = ToolInstanceStatus.FAILED.value
-                    session.commit()
-        except Exception as commit_error:
-            print(f"Error updating tool instance {tool_instance_id} status to FAILED: {commit_error}")
-
 
 def create_tool_instance(
     request: CreateToolInstanceRequest,
@@ -175,7 +107,7 @@ def _create_tool_instance_impl(request: CreateToolInstanceRequest, session: DbSe
     session.commit()
 
     get_thread_pool().submit(
-        prepare_tool_instance,
+        tool_utils.prepare_tool_instance,
         instance_uuid,
     )
     return CreateToolInstanceResponse(
@@ -241,7 +173,7 @@ def _update_tool_instance_impl(request: UpdateToolInstanceRequest, session: DbSe
     # Only submit venv preparation if tool is not already preparing
     if should_prepare_venv:
         get_thread_pool().submit(
-            prepare_tool_instance,
+            tool_utils.prepare_tool_instance,
             request.tool_instance_id,
         )
     else:
