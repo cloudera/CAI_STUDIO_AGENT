@@ -12,6 +12,25 @@ os.environ["UV_LINK_MODE"] = "copy"
 sys.stdout = sys.__stdout__
 sys.stderr = sys.__stderr__
 
+# Configure virtual environment if in runtime mode
+if os.getenv("AGENT_STUDIO_DEPLOY_MODE", "amp").lower() == "runtime":
+    app_dir = os.getenv("APP_DIR")
+    venv_path = os.path.join(app_dir, "studio", "workflow_engine", ".venv")
+    print(f"venv_path----------: {venv_path}")
+    if os.path.exists(venv_path):
+        os.environ["VIRTUAL_ENV"] = venv_path
+        os.environ["PATH"] = f"{venv_path}/bin:{os.environ.get('PATH', '')}"
+        # Add site-packages for common Python versions
+        python_versions = ["python3.10", "python3.11", "python3.9"]
+        for py_version in python_versions:
+            site_packages = os.path.join(venv_path, "lib", py_version, "site-packages")
+            if os.path.exists(site_packages) and site_packages not in sys.path:
+                sys.path.insert(0, site_packages)
+                print(f"Added {py_version} site-packages to sys.path: {site_packages}")
+                break
+        print(f"Configured virtual environment: {venv_path}")
+
+
 # Extract workflow parameters from the environment
 WORFKLOW_ARTIFACT = os.environ.get("AGENT_STUDIO_WORKFLOW_ARTIFACT", "/home/cdsw/workflow/artifact.tar.gz")
 WORKFLOW_DEPLOYMENT_CONFIG = os.environ.get("AGENT_STUDIO_WORKFLOW_DEPLOYMENT_CONFIG", "{}")

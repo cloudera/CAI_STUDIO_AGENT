@@ -66,11 +66,6 @@ def get_workbench_model_config(deployment_target_project_dir: str, artifact: Dep
             "model_execution_dir": os.path.join("/home/cdsw", deployment_target_project_dir),
         }
 
-    # For runtime mode, we only copy over the workbench driver file. All other files
-    # and python packages are part of the runtime image itself.
-    if os.getenv("AGENT_STUDIO_DEPLOY_MODE", "amp").lower() == "runtime":
-        model_config["model_file_path"] = "workbench.py"
-
     return model_config
 
 

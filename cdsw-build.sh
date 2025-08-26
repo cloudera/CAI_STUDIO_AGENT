@@ -9,23 +9,22 @@
 # way from the entitlement separately from the rest of the AI Studios features, we
 # need to make sure that we explicitly still check for the existence of the folder.
 
-# Ensure uv is available
-python -m pip install uv
-
-# Get node
-export NVM_DIR="$(pwd)/.nvm"
-mkdir -p $NVM_DIR
-wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-nvm install 22
-nvm use 22
 
 if [ $AGENT_STUDIO_DEPLOY_MODE = "runtime" ]; then
-    echo "This is an Agent Studio runtime build. the workflow engine is already available at /studio_app/studio/workflow_engine/."
-    pip install /studio_app/studio/workflow_engine/
+    echo "This is an Agent Studio runtime build. The dependencies are already installed in the runtime image."
 else
     echo "This is an Agent Studio AMP build. workflow engine will be in the project."
 
+    # Ensure uv is available
+    python -m pip install uv
+
+    # Get node
+    export NVM_DIR="$(pwd)/.nvm"
+    mkdir -p $NVM_DIR
+    wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+    nvm install 22
+    nvm use 22
     if [ -d "/home/cdsw/agent-studio" ]; then
         echo "agent-studio/ directory exists but model root dir feature is disabled."
         pip install /home/cdsw/agent-studio/studio/workflow_engine/
