@@ -1218,6 +1218,18 @@ class RemoveWorkflowResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
 
+class CloneWorkflowRequest(_message.Message):
+    __slots__ = ("workflow_id", "name")
+    WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    workflow_id: str
+    name: str
+    def __init__(self, workflow_id: _Optional[str] = ..., name: _Optional[str] = ...) -> None: ...
+
+class CloneWorkflowResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
 class DeployedWorkflow(_message.Message):
     __slots__ = (
         "deployed_workflow_id",

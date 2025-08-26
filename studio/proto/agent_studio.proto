@@ -81,6 +81,7 @@ service AgentStudio {
   rpc UpdateWorkflow (UpdateWorkflowRequest) returns (UpdateWorkflowResponse) {}
   rpc TestWorkflow (TestWorkflowRequest) returns (TestWorkflowResponse) {}
   rpc RemoveWorkflow (RemoveWorkflowRequest) returns (RemoveWorkflowResponse) {}
+  rpc CloneWorkflow (CloneWorkflowRequest) returns (CloneWorkflowResponse) {}
   
   // Deployed Workflow Operations
   rpc DeployWorkflow (DeployWorkflowRequest) returns (DeployWorkflowResponse) {}
@@ -768,6 +769,15 @@ message RemoveWorkflowRequest {
 }
 
 message RemoveWorkflowResponse {}
+
+message CloneWorkflowRequest {
+  // ID of the workflow to clone
+  string workflow_id = 1;
+  // Name of the new workflow
+  optional string name = 2;
+}
+
+message CloneWorkflowResponse {}
 
 message DeployedWorkflow {
   // ID of the deployed workflow

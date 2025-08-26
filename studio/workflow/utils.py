@@ -14,7 +14,7 @@ from studio.api.types import ToolInstanceStatus
 from sqlalchemy.orm.session import Session
 
 from studio.models.utils import get_model_api_key_from_env, get_model_extra_headers_from_env
-from studio.tools.tool_instance import prepare_tool_instance
+from studio.tools.utils import prepare_tool_instance
 
 
 def get_llm_config_for_workflow(workflow: Workflow, session: Session, cml: CMLServiceApi) -> dict:
