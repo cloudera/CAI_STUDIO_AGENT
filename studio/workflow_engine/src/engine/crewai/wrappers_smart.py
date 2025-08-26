@@ -39,9 +39,9 @@ class AgentStudioCrewAILLM(LLM):
     _summary_cache: Dict[str, str] = {}
     _summary_cache_capacity: int = 256
     ASSISTANT_SUMMARY_WINDOW: int = 4
-    ARTIFACTS_SUFFIX: str = load_prompt("artifacts_suffix_assistant.md")
-    HUMAN_INPUT_SUFFIX: str = load_prompt("human_input_required_suffix.md")
-    HARD_CONSTRAINT: str = load_prompt("hard_constraint.md")
+    ARTIFACTS_SUFFIX: str = load_prompt("artifacts_suffix_assistant")
+    HUMAN_INPUT_SUFFIX: str = load_prompt("human_input_required_suffix")
+    HARD_CONSTRAINT: str = load_prompt("hard_constraint")
 
     def __init__(self, agent_studio_id: str, *args, session_directory: Optional[str] = None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -151,7 +151,7 @@ class AgentStudioCrewAILLM(LLM):
                     {"role": "assistant", "content": sanitized_messages[i].get("content")}
                     for i in chunk_assistant_indices
                 ]
-                summarization_prompt = load_prompt("assistant_summarization_instruction.md")
+                summarization_prompt = load_prompt("assistant_summarization_instruction")
                 summarization_context.append({"role": "user", "content": summarization_prompt})
                 summary_result = super().call(
                     summarization_context,
@@ -229,9 +229,9 @@ class AgentStudioCrewAILLM(LLM):
 class AgentStudioManagerCrewAILLM(LLM):
     agent_studio_id: Optional[str] = None
     session_directory: Optional[str] = None
-    ARTIFACTS_SUFFIX: str = load_prompt("artifacts_suffix_manager.md")
-    HUMAN_INPUT_SUFFIX: str = load_prompt("human_input_required_suffix.md")
-    HARD_CONSTRAINT: str = load_prompt("hard_constraint.md")
+    ARTIFACTS_SUFFIX: str = load_prompt("artifacts_suffix_manager")
+    HUMAN_INPUT_SUFFIX: str = load_prompt("human_input_required_suffix")
+    HARD_CONSTRAINT: str = load_prompt("hard_constraint")
     manager_agents_info: Optional[List[Dict[str, str]]] = None
     planning_enabled: bool = False
     planning_permanently_disabled: bool = False
@@ -329,7 +329,7 @@ class AgentStudioManagerCrewAILLM(LLM):
                             # Inject the planning decision directly into the last user message content
                             try:
                                 result_desc = str(decision_obj.get("result", "")).strip()
-                                decision_tpl = load_prompt("planning_decision_block.md")
+                                decision_tpl = load_prompt("planning_decision_block")
                                 decision_block = decision_tpl.replace("{{RESULT_DESCRIPTION}}", result_desc)
                                 if isinstance(base_messages, list) and base_messages:
                                     last_user_idx = None
@@ -439,7 +439,7 @@ class AgentStudioManagerCrewAILLM(LLM):
                             try:
                                 disable_note = {
                                     "role": "user",
-                                    "content": load_prompt("planning_disable_note.md"),
+                                    "content": load_prompt("planning_disable_note"),
                                 }
                                 if isinstance(base_messages, list):
                                     base_messages.append(disable_note)
@@ -457,6 +457,10 @@ class AgentStudioManagerCrewAILLM(LLM):
             try:
                 if plan_path and os.path.exists(plan_path) and os.path.getsize(plan_path) > 0 and not skip_planning_and_injection and not plan_created_this_call:
                     print("[SmartManagerPlanEval] Triggering evaluation call")
+                    try:
+                        logger.info("[manager] Evaluation triggered | plan_path=%s bytes=%d", plan_path, os.path.getsize(plan_path))
+                    except Exception:
+                        pass
                     current_plan_obj: Optional[Dict[str, Any]] = None
                     try:
                         with open(plan_path, "r", encoding="utf-8") as pf_eval:

@@ -35,7 +35,7 @@ def build_planning_messages(
         idx = text.lower().find(marker.lower())
         if idx != -1:
             text = text[:idx].rstrip()
-        plan_instruction = load_prompt("planning_instruction.md")
+        plan_instruction = load_prompt("planning_instruction")
         return (text + ("\n\n" if not text.endswith("\n") else "\n") + plan_instruction).strip()
 
     trimmed_user_content = _trim_user_for_plan(last_user_content)

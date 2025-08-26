@@ -18,7 +18,7 @@ def build_eval_messages(
         plan_json_snippet = json.dumps(plan_obj, ensure_ascii=False, indent=2)
     except Exception:
         plan_json_snippet = str(plan_obj)
-    eval_instruction_template = load_prompt("evaluation_instruction.md")
+    eval_instruction_template = load_prompt("evaluation_instruction")
     eval_instruction = eval_instruction_template.replace("{{PLAN_JSON_SNIPPET}}", plan_json_snippet)
 
     assistant_msgs_eval: List[Dict[str, Any]] = []

@@ -24,7 +24,7 @@ def build_status_note(plan_obj: Dict[str, Any], system_text: str) -> str:
     critical_failure = any_failed and (ns_clean == "")
 
     if all_completed:
-        note_text = load_prompt("note_all_completed.md")
+        note_text = load_prompt("note_all_completed")
     elif any_hir:
         hir_desc = ""
         try:
@@ -35,7 +35,7 @@ def build_status_note(plan_obj: Dict[str, Any], system_text: str) -> str:
                         break
         except Exception:
             hir_desc = ""
-        hir_tpl = load_prompt("note_human_input_required.md")
+        hir_tpl = load_prompt("note_human_input_required")
         hir_suffix = (f"The blocked step is: '{hir_desc}'. " if hir_desc else "")
         note_text = hir_tpl.replace("{{HIR_DESC}}", hir_suffix)
     elif critical_failure:
@@ -48,14 +48,14 @@ def build_status_note(plan_obj: Dict[str, Any], system_text: str) -> str:
                         break
         except Exception:
             failed_desc = ""
-        cf_tpl = load_prompt("note_critical_failure.md")
+        cf_tpl = load_prompt("note_critical_failure")
         failed_suffix = (f" — '{failed_desc}'. " if failed_desc else ". ")
         note_text = cf_tpl.replace("{{FAILED_DESC_SUFFIX}}", failed_suffix)
     else:
-        note_text = load_prompt("note_caution_continue.md")
+        note_text = load_prompt("note_caution_continue")
 
     # Prepend anti-loop rule before copying system message
-    anti_loop = load_prompt("anti_loop_note.md")
+    anti_loop = load_prompt("anti_loop_note")
     if anti_loop.strip():
         note_text = anti_loop.strip() + "\n\n" + note_text
     if system_text.strip():

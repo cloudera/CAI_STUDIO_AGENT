@@ -23,7 +23,7 @@ def read_state_entries(session_directory: Optional[str]) -> List[Dict[str, Any]]
 
 def build_assistant_messages_from_entries(entries: List[Dict[str, Any]]) -> List[Dict[str, str]]:
     msg_list: List[Dict[str, str]] = []
-    headers_tpl = load_prompt("context_headers.md")
+    headers_tpl = load_prompt("context_headers")
     headers_lines = {}
     if headers_tpl:
         try:
@@ -82,7 +82,7 @@ def split_conversation_entries(entries: List[Dict[str, Any]]) -> (List[Dict[str,
     - New context includes any 'conversation' entries that appear AFTER the last one (usually none unless multiple runs appended later).
     - Roles other than 'conversation' are ignored.
     """
-    headers_tpl = load_prompt("context_headers.md")
+    headers_tpl = load_prompt("context_headers")
     headers_lines = {}
     if headers_tpl:
         try:
@@ -129,7 +129,7 @@ def build_any_entries_after_last_conversation(entries: List[Dict[str, Any]]) -> 
     - Entries without a 'role' (e.g., tool/agent outputs with 'agent_role') are included.
     - Messages are rendered as assistant with appropriate CONTEXT header using timestamps.
     """
-    headers_tpl = load_prompt("context_headers.md")
+    headers_tpl = load_prompt("context_headers")
     headers_lines = {}
     if headers_tpl:
         try:
@@ -195,7 +195,7 @@ def build_any_entries_up_to_last_conversation(entries: List[Dict[str, Any]]) -> 
     - Includes entries without role (e.g., tool/agent outputs).
     - If no 'conversation' entries exist, include all entries (still excluding Agent Studio).
     """
-    headers_tpl = load_prompt("context_headers.md")
+    headers_tpl = load_prompt("context_headers")
     headers_lines = {}
     if headers_tpl:
         try:
@@ -264,7 +264,7 @@ def build_all_entries_only_last_conversation(entries: List[Dict[str, Any]]) -> L
     - Conversation entries: only the last one is included and labeled as Conversation history.
     - Non-conversation entries before last conversation are labeled STEP RESULTS(OLD); after are STEP RESULTS(NEW).
     """
-    headers_tpl = load_prompt("context_headers.md")
+    headers_tpl = load_prompt("context_headers")
     # Find absolute index (in full list) of last 'conversation' role
     last_conv_abs_idx = -1
     for idx, e in enumerate(entries or []):

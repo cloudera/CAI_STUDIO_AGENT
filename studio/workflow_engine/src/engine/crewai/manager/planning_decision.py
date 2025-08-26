@@ -71,7 +71,7 @@ def build_decision_messages(
     else:
         decision_messages.extend(state_assistant_for_decision)
 
-    decision_instruction = load_prompt("planning_decision_instruction.md")
+    decision_instruction = load_prompt("planning_decision_instruction")
     decision_messages.append({"role": "user", "content": decision_instruction})
     return decision_messages
 

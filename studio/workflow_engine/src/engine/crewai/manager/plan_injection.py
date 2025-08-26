@@ -68,6 +68,6 @@ def build_plan_block(plan_obj: Dict[str, Any]) -> str:
     except Exception:
         focus_line = ""
 
-    header = load_prompt("plan_injection_header.md").rstrip("\n")
+    header = load_prompt("plan_injection_header").rstrip("\n")
     return header + "\n" + "\n".join(numbered_lines) + focus_line + "\n"
 
