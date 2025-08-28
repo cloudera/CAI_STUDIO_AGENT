@@ -52,6 +52,11 @@ class Input__LanguageModelConfig(BaseModel):
     api_base: Optional[str] = None
     api_key: Optional[str] = None
     extra_headers: Optional[Dict[str, str]] = None
+    # AWS Bedrock specific fields
+    aws_region_name: Optional[str] = None
+    aws_access_key_id: Optional[str] = None
+    aws_secret_access_key: Optional[str] = None
+    aws_session_token: Optional[str] = None
 
 
 class Input__LanguageModel(BaseModel):

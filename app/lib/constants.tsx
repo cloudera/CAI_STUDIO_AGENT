@@ -118,7 +118,48 @@ export const MODEL_IDENTIFIER_OPTIONS: Record<string, { value: string; label: st
     { value: 'claude-3-5-sonnet-latest', label: 'claude-3-5-sonnet-latest' },
     { value: 'claude-3-5-haiku-latest', label: 'claude-3-5-haiku-latest' },
   ],
+  BEDROCK: [
+    // Anthropic Claude Models
+    { value: 'anthropic.claude-3-5-sonnet-20240620-v1:0', label: 'Claude 3.5 Sonnet' },
+    { value: 'anthropic.claude-3-5-haiku-20241022-v1:0', label: 'Claude 3.5 Haiku' },
+    { value: 'anthropic.claude-3-sonnet-20240229-v1:0', label: 'Claude 3 Sonnet' },
+    { value: 'anthropic.claude-3-haiku-20240307-v1:0', label: 'Claude 3 Haiku' },
+    { value: 'anthropic.claude-3-opus-20240229-v1:0', label: 'Claude 3 Opus' },
+    // Amazon Nova Models
+    { value: 'amazon.nova-pro-v1:0', label: 'Amazon Nova Pro' },
+    { value: 'amazon.nova-lite-v1:0', label: 'Amazon Nova Lite' },
+    { value: 'amazon.nova-micro-v1:0', label: 'Amazon Nova Micro' },
+    // Meta Llama Models
+    { value: 'meta.llama3-2-90b-instruct-v1:0', label: 'Llama 3.2 90B Instruct' },
+    { value: 'meta.llama3-2-11b-instruct-v1:0', label: 'Llama 3.2 11B Instruct' },
+    { value: 'meta.llama3-1-70b-instruct-v1:0', label: 'Llama 3.1 70B Instruct' },
+    { value: 'meta.llama3-1-8b-instruct-v1:0', label: 'Llama 3.1 8B Instruct' },
+    // Mistral Models
+    { value: 'mistral.mistral-large-2407-v1:0', label: 'Mistral Large 2407' },
+    { value: 'mistral.mistral-small-2402-v1:0', label: 'Mistral Small 2402' },
+    // Cohere Models
+    { value: 'cohere.command-r-plus-v1:0', label: 'Command R+' },
+    { value: 'cohere.command-r-v1:0', label: 'Command R' },
+  ],
 };
+
+// AWS Bedrock regions commonly available across major model providers
+export const BEDROCK_REGIONS: { value: string; label: string }[] = [
+  { value: 'us-east-1', label: 'US East (N. Virginia) - us-east-1' },
+  { value: 'us-east-2', label: 'US East (Ohio) - us-east-2' },
+  { value: 'us-west-2', label: 'US West (Oregon) - us-west-2' },
+  { value: 'eu-west-1', label: 'Europe (Ireland) - eu-west-1' },
+  { value: 'eu-west-2', label: 'Europe (London) - eu-west-2' },
+  { value: 'eu-west-3', label: 'Europe (Paris) - eu-west-3' },
+  { value: 'eu-central-1', label: 'Europe (Frankfurt) - eu-central-1' },
+  { value: 'eu-north-1', label: 'Europe (Stockholm) - eu-north-1' },
+  { value: 'ap-northeast-1', label: 'Asia Pacific (Tokyo) - ap-northeast-1' },
+  { value: 'ap-northeast-2', label: 'Asia Pacific (Seoul) - ap-northeast-2' },
+  { value: 'ap-southeast-1', label: 'Asia Pacific (Singapore) - ap-southeast-1' },
+  { value: 'ap-southeast-2', label: 'Asia Pacific (Sydney) - ap-southeast-2' },
+  { value: 'ap-south-1', label: 'Asia Pacific (Mumbai) - ap-south-1' },
+  { value: 'ca-central-1', label: 'Canada (Central) - ca-central-1' },
+];
 
 export const DEFAULT_MODEL_TEST_MESSAGE = 'Greet me in 5 different languages.';
 
