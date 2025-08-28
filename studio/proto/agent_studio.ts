@@ -41,6 +41,8 @@ export interface Model {
   is_studio_default: boolean;
   /** Serialized dict of extra headers to pass to the LLM provider */
   extra_headers: string;
+  /** AWS Region for Bedrock models (not secret). Only relevant when model_type == "BEDROCK" */
+  aws_region_name: string;
 }
 
 /** Model Messages */
@@ -74,7 +76,26 @@ export interface AddModelRequest {
   /** API Key for the model */
   api_key: string;
   /** Serialized dict of extra headers to pass to the LLM provider */
-  extra_headers?: string | undefined;
+  extra_headers?:
+    | string
+    | undefined;
+  /**
+   * The following fields are only used for AWS Bedrock models and will be stored in Project_env_vars per model
+   * AWS Region for Bedrock
+   */
+  aws_region_name?:
+    | string
+    | undefined;
+  /** AWS Access Key ID for Bedrock */
+  aws_access_key_id?:
+    | string
+    | undefined;
+  /** AWS Secret Access Key for Bedrock */
+  aws_secret_access_key?:
+    | string
+    | undefined;
+  /** Optional AWS Session Token for Bedrock */
+  aws_session_token?: string | undefined;
 }
 
 export interface AddModelResponse {
@@ -102,7 +123,26 @@ export interface UpdateModelRequest {
   /** API Key for the model */
   api_key: string;
   /** Serialized dict of extra headers to pass to the LLM provider */
-  extra_headers?: string | undefined;
+  extra_headers?:
+    | string
+    | undefined;
+  /**
+   * The following fields are only used for AWS Bedrock models and will be stored in Project_env_vars per model
+   * AWS Region for Bedrock
+   */
+  aws_region_name?:
+    | string
+    | undefined;
+  /** AWS Access Key ID for Bedrock */
+  aws_access_key_id?:
+    | string
+    | undefined;
+  /** AWS Secret Access Key for Bedrock */
+  aws_secret_access_key?:
+    | string
+    | undefined;
+  /** Optional AWS Session Token for Bedrock */
+  aws_session_token?: string | undefined;
 }
 
 export interface UpdateModelResponse {
@@ -1341,6 +1381,7 @@ function createBaseModel(): Model {
     api_base: "",
     is_studio_default: false,
     extra_headers: "",
+    aws_region_name: "",
   };
 }
 
@@ -1366,6 +1407,9 @@ export const Model: MessageFns<Model> = {
     }
     if (message.extra_headers !== "") {
       writer.uint32(58).string(message.extra_headers);
+    }
+    if (message.aws_region_name !== "") {
+      writer.uint32(66).string(message.aws_region_name);
     }
     return writer;
   },
@@ -1433,6 +1477,14 @@ export const Model: MessageFns<Model> = {
           message.extra_headers = reader.string();
           continue;
         }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.aws_region_name = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1451,6 +1503,7 @@ export const Model: MessageFns<Model> = {
       api_base: isSet(object.api_base) ? globalThis.String(object.api_base) : "",
       is_studio_default: isSet(object.is_studio_default) ? globalThis.Boolean(object.is_studio_default) : false,
       extra_headers: isSet(object.extra_headers) ? globalThis.String(object.extra_headers) : "",
+      aws_region_name: isSet(object.aws_region_name) ? globalThis.String(object.aws_region_name) : "",
     };
   },
 
@@ -1477,6 +1530,9 @@ export const Model: MessageFns<Model> = {
     if (message.extra_headers !== "") {
       obj.extra_headers = message.extra_headers;
     }
+    if (message.aws_region_name !== "") {
+      obj.aws_region_name = message.aws_region_name;
+    }
     return obj;
   },
 
@@ -1492,6 +1548,7 @@ export const Model: MessageFns<Model> = {
     message.api_base = object.api_base ?? "";
     message.is_studio_default = object.is_studio_default ?? false;
     message.extra_headers = object.extra_headers ?? "";
+    message.aws_region_name = object.aws_region_name ?? "";
     return message;
   },
 };
@@ -1720,7 +1777,18 @@ export const GetModelResponse: MessageFns<GetModelResponse> = {
 };
 
 function createBaseAddModelRequest(): AddModelRequest {
-  return { model_name: "", provider_model: "", model_type: "", api_base: "", api_key: "", extra_headers: undefined };
+  return {
+    model_name: "",
+    provider_model: "",
+    model_type: "",
+    api_base: "",
+    api_key: "",
+    extra_headers: undefined,
+    aws_region_name: undefined,
+    aws_access_key_id: undefined,
+    aws_secret_access_key: undefined,
+    aws_session_token: undefined,
+  };
 }
 
 export const AddModelRequest: MessageFns<AddModelRequest> = {
@@ -1742,6 +1810,18 @@ export const AddModelRequest: MessageFns<AddModelRequest> = {
     }
     if (message.extra_headers !== undefined) {
       writer.uint32(50).string(message.extra_headers);
+    }
+    if (message.aws_region_name !== undefined) {
+      writer.uint32(58).string(message.aws_region_name);
+    }
+    if (message.aws_access_key_id !== undefined) {
+      writer.uint32(66).string(message.aws_access_key_id);
+    }
+    if (message.aws_secret_access_key !== undefined) {
+      writer.uint32(74).string(message.aws_secret_access_key);
+    }
+    if (message.aws_session_token !== undefined) {
+      writer.uint32(82).string(message.aws_session_token);
     }
     return writer;
   },
@@ -1801,6 +1881,38 @@ export const AddModelRequest: MessageFns<AddModelRequest> = {
           message.extra_headers = reader.string();
           continue;
         }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.aws_region_name = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.aws_access_key_id = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.aws_secret_access_key = reader.string();
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.aws_session_token = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1818,6 +1930,12 @@ export const AddModelRequest: MessageFns<AddModelRequest> = {
       api_base: isSet(object.api_base) ? globalThis.String(object.api_base) : "",
       api_key: isSet(object.api_key) ? globalThis.String(object.api_key) : "",
       extra_headers: isSet(object.extra_headers) ? globalThis.String(object.extra_headers) : undefined,
+      aws_region_name: isSet(object.aws_region_name) ? globalThis.String(object.aws_region_name) : undefined,
+      aws_access_key_id: isSet(object.aws_access_key_id) ? globalThis.String(object.aws_access_key_id) : undefined,
+      aws_secret_access_key: isSet(object.aws_secret_access_key)
+        ? globalThis.String(object.aws_secret_access_key)
+        : undefined,
+      aws_session_token: isSet(object.aws_session_token) ? globalThis.String(object.aws_session_token) : undefined,
     };
   },
 
@@ -1841,6 +1959,18 @@ export const AddModelRequest: MessageFns<AddModelRequest> = {
     if (message.extra_headers !== undefined) {
       obj.extra_headers = message.extra_headers;
     }
+    if (message.aws_region_name !== undefined) {
+      obj.aws_region_name = message.aws_region_name;
+    }
+    if (message.aws_access_key_id !== undefined) {
+      obj.aws_access_key_id = message.aws_access_key_id;
+    }
+    if (message.aws_secret_access_key !== undefined) {
+      obj.aws_secret_access_key = message.aws_secret_access_key;
+    }
+    if (message.aws_session_token !== undefined) {
+      obj.aws_session_token = message.aws_session_token;
+    }
     return obj;
   },
 
@@ -1855,6 +1985,10 @@ export const AddModelRequest: MessageFns<AddModelRequest> = {
     message.api_base = object.api_base ?? "";
     message.api_key = object.api_key ?? "";
     message.extra_headers = object.extra_headers ?? undefined;
+    message.aws_region_name = object.aws_region_name ?? undefined;
+    message.aws_access_key_id = object.aws_access_key_id ?? undefined;
+    message.aws_secret_access_key = object.aws_secret_access_key ?? undefined;
+    message.aws_session_token = object.aws_session_token ?? undefined;
     return message;
   },
 };
@@ -2019,7 +2153,18 @@ export const RemoveModelResponse: MessageFns<RemoveModelResponse> = {
 };
 
 function createBaseUpdateModelRequest(): UpdateModelRequest {
-  return { model_id: "", model_name: "", provider_model: "", api_base: "", api_key: "", extra_headers: undefined };
+  return {
+    model_id: "",
+    model_name: "",
+    provider_model: "",
+    api_base: "",
+    api_key: "",
+    extra_headers: undefined,
+    aws_region_name: undefined,
+    aws_access_key_id: undefined,
+    aws_secret_access_key: undefined,
+    aws_session_token: undefined,
+  };
 }
 
 export const UpdateModelRequest: MessageFns<UpdateModelRequest> = {
@@ -2041,6 +2186,18 @@ export const UpdateModelRequest: MessageFns<UpdateModelRequest> = {
     }
     if (message.extra_headers !== undefined) {
       writer.uint32(50).string(message.extra_headers);
+    }
+    if (message.aws_region_name !== undefined) {
+      writer.uint32(58).string(message.aws_region_name);
+    }
+    if (message.aws_access_key_id !== undefined) {
+      writer.uint32(66).string(message.aws_access_key_id);
+    }
+    if (message.aws_secret_access_key !== undefined) {
+      writer.uint32(74).string(message.aws_secret_access_key);
+    }
+    if (message.aws_session_token !== undefined) {
+      writer.uint32(82).string(message.aws_session_token);
     }
     return writer;
   },
@@ -2100,6 +2257,38 @@ export const UpdateModelRequest: MessageFns<UpdateModelRequest> = {
           message.extra_headers = reader.string();
           continue;
         }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.aws_region_name = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.aws_access_key_id = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.aws_secret_access_key = reader.string();
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.aws_session_token = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -2117,6 +2306,12 @@ export const UpdateModelRequest: MessageFns<UpdateModelRequest> = {
       api_base: isSet(object.api_base) ? globalThis.String(object.api_base) : "",
       api_key: isSet(object.api_key) ? globalThis.String(object.api_key) : "",
       extra_headers: isSet(object.extra_headers) ? globalThis.String(object.extra_headers) : undefined,
+      aws_region_name: isSet(object.aws_region_name) ? globalThis.String(object.aws_region_name) : undefined,
+      aws_access_key_id: isSet(object.aws_access_key_id) ? globalThis.String(object.aws_access_key_id) : undefined,
+      aws_secret_access_key: isSet(object.aws_secret_access_key)
+        ? globalThis.String(object.aws_secret_access_key)
+        : undefined,
+      aws_session_token: isSet(object.aws_session_token) ? globalThis.String(object.aws_session_token) : undefined,
     };
   },
 
@@ -2140,6 +2335,18 @@ export const UpdateModelRequest: MessageFns<UpdateModelRequest> = {
     if (message.extra_headers !== undefined) {
       obj.extra_headers = message.extra_headers;
     }
+    if (message.aws_region_name !== undefined) {
+      obj.aws_region_name = message.aws_region_name;
+    }
+    if (message.aws_access_key_id !== undefined) {
+      obj.aws_access_key_id = message.aws_access_key_id;
+    }
+    if (message.aws_secret_access_key !== undefined) {
+      obj.aws_secret_access_key = message.aws_secret_access_key;
+    }
+    if (message.aws_session_token !== undefined) {
+      obj.aws_session_token = message.aws_session_token;
+    }
     return obj;
   },
 
@@ -2154,6 +2361,10 @@ export const UpdateModelRequest: MessageFns<UpdateModelRequest> = {
     message.api_base = object.api_base ?? "";
     message.api_key = object.api_key ?? "";
     message.extra_headers = object.extra_headers ?? undefined;
+    message.aws_region_name = object.aws_region_name ?? undefined;
+    message.aws_access_key_id = object.aws_access_key_id ?? undefined;
+    message.aws_secret_access_key = object.aws_secret_access_key ?? undefined;
+    message.aws_session_token = object.aws_session_token ?? undefined;
     return message;
   },
 };
