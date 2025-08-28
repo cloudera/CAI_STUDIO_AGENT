@@ -152,6 +152,9 @@ message Model {
 
   // Serialized dict of extra headers to pass to the LLM provider
   string extra_headers = 7;
+
+  // AWS Region for Bedrock models (not secret). Only relevant when model_type == "BEDROCK"
+  string aws_region_name = 8;
 }
 
 // Model Messages
@@ -190,6 +193,16 @@ message AddModelRequest {
 
   // Serialized dict of extra headers to pass to the LLM provider
   optional string extra_headers = 6;
+
+  // The following fields are only used for AWS Bedrock models and will be stored in Project_env_vars per model
+  // AWS Region for Bedrock
+  optional string aws_region_name = 7;
+  // AWS Access Key ID for Bedrock
+  optional string aws_access_key_id = 8;
+  // AWS Secret Access Key for Bedrock
+  optional string aws_secret_access_key = 9;
+  // Optional AWS Session Token for Bedrock
+  optional string aws_session_token = 10;
 }
 
 message AddModelResponse {
@@ -222,6 +235,16 @@ message UpdateModelRequest {
 
   // Serialized dict of extra headers to pass to the LLM provider
   optional string extra_headers = 6;
+
+  // The following fields are only used for AWS Bedrock models and will be stored in Project_env_vars per model
+  // AWS Region for Bedrock
+  optional string aws_region_name = 7;
+  // AWS Access Key ID for Bedrock
+  optional string aws_access_key_id = 8;
+  // AWS Secret Access Key for Bedrock
+  optional string aws_secret_access_key = 9;
+  // Optional AWS Session Token for Bedrock
+  optional string aws_session_token = 10;
 }
 
 message UpdateModelResponse {
