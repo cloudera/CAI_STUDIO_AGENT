@@ -27,6 +27,7 @@ dependencies = [
     "alembic==1.15.2",
     "kombu==5.5.2",
     "openinference-instrumentation-langchain>=0.1.43",
+    "boto3>=1.34.0",
 ]
 
 [dependency-groups]
