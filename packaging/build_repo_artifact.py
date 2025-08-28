@@ -27,7 +27,7 @@ def main():
           "edition": "Agent Studio",
           "full_version": f"{short_pkg_version}.{MAINTENANCE_VERSION}",
           "short_version": short_pkg_version,
-          "maintenance_version": MAINTENANCE_VERSION,
+          "maintenance_version": int(MAINTENANCE_VERSION),
           "git_hash": LAST_COMMIT_ID,
           "gbn": int(GBN) if GBN else GBN
         },
