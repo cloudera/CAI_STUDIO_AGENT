@@ -1,0 +1,8 @@
+{
+  "label.createAgent": "Create Agent",
+  "label.deployedWorkflows": "Deployed Workflows",
+  "label.workflowTemplates": "Workflow Templates",
+  "label.importTemplate": "Import Template",
+  "label.viewLess": "View Less",
+  "label.viewAll": "View All"
+}
