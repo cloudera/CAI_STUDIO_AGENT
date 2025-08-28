@@ -33,7 +33,7 @@ docker-build:
 	@echo "  RT_GIT_HASH=$(RT_GIT_HASH)"
 	@echo "  RT_GBN=$(RT_GBN)"
 	docker build $(BUILD_ARGS) -t $(FULL_IMAGE_NAME):$(VERSION) .
-	PKG_VERSION=$(VERSION) LAST_COMMIT_ID=$(RT_GIT_HASH) GBN=$(RT_GBN) python3 packaging/build_repo_artifact.py packaging/repo_artifact.json
+	PKG_VERSION=$(VERSION) LAST_COMMIT_ID=$(RT_GIT_HASH) GBN=$(RT_GBN) python3 packaging/build_repo_artifact.py packaging/repo-assembly.json
 
 docker-push:
 	@echo " Pushing Docker image: $(FULL_IMAGE_NAME):$(VERSION)"
