@@ -134,14 +134,12 @@ B) Status update on existing plan (STRICT)
   CONTENT-COMPLETION RULE
   • If STEP RESULTS(NEW) contains a coherent deliverable matching the step description (doc/code/analysis/dataset/artifact/summary), mark COMPLETED (if the step is UNLOCKED).
 
-  Artifact/Evidence Gate (LLM-LEVEL, MANDATORY)
-  • A step is COMPLETED only if every required_evidence item is reasonably satisfied by content in STEP RESULTS. Evidence is freeform (e.g., links, blog posts, fenced code blocks, markdown table previews, or filenames). Do not require any specific artifact manifest.
-
-  Structured Evidence (IF APPLICABLE)
-  • If a step mentions a specific language or query, you may prefer fenced code blocks or structured snippets in STEP RESULTS(NEW). If other credible evidence exists, you may still mark progress appropriately.
-
-  Filenames (ADVISORY)
-  • If filenames are mentioned in the plan, prefer consistency, but do not block completion solely due to mismatches.
+  Artifact/Evidence Gate (HARD, DETERMINISTIC)
+  • A step may be marked COMPLETED only if STEP RESULTS(NEW) alone contains clear, direct evidence that fulfills the step’s required_evidence items.
+  • Evidence can be in any format (e.g., text, links, quotes, code snippets, tables, filenames, visual references). No specific structure or JSON is required.
+  • Do not use Conversation history or STEP RESULTS(OLD) to mark completion; they are context only.
+  • Lineage: If the step depends on upstream outputs, STEP RESULTS(NEW) must explicitly reference those upstream outputs (by name/description) to establish linkage.
+  • If any required_evidence item is missing from STEP RESULTS(NEW), do not mark COMPLETED.
 
   IN PROGRESS RULE
   • Mark IN PROGRESS only if STEP RESULTS(NEW) shows the step started but is not yet a coherent match to its description (and the step is UNLOCKED).
