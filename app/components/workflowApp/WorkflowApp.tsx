@@ -102,6 +102,39 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
   const workflowDescription = useAppSelector(selectEditorWorkflowDescription);
   const [testModel] = useTestModelMutation();
 
+  // Resizable splitter state for left/right panes when monitoring is visible
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [leftWidthPct, setLeftWidthPct] = useState<number>(40);
+  const isDraggingRef = useRef<boolean>(false);
+
+  const onSplitterDragStart = (e: React.MouseEvent<HTMLDivElement>) => {
+    isDraggingRef.current = true;
+    e.preventDefault();
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDraggingRef.current) return;
+      const container = containerRef.current;
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      const relativeX = e.clientX - rect.left;
+      const pct = Math.max(20, Math.min(80, (relativeX / rect.width) * 100));
+      setLeftWidthPct(pct);
+    };
+    const handleMouseUp = () => {
+      if (isDraggingRef.current) {
+        isDraggingRef.current = false;
+      }
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, []);
+
   // Thoughts box state
   interface ThoughtEntry {
     id: string;
@@ -816,12 +849,11 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
 
   return (
     <>
-      <Layout className="flex-1 flex flex-row bg-white rounded relative">
+      <Layout ref={containerRef} className="flex-1 flex flex-row bg-white rounded relative" style={{ overflowX: 'hidden' }}>
         {/* Left side - Workflow Inputs */}
         <Layout
-          className={`bg-transparent flex-col flex-shrink-0 h-full transition-all duration-300 ease-in-out p-4 ${
-            showMonitoring ? 'w-[40%]' : 'w-full'
-          }`}
+          className={`bg-transparent flex-col flex-shrink-0 h-full transition-all duration-300 ease-in-out p-4`}
+          style={{ width: showMonitoring ? `${leftWidthPct}%` : '100%', overflowX: 'hidden' }}
         >
           <Collapse
             bordered={false}
@@ -927,6 +959,30 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
           )}
         </Layout>
 
+        {showMonitoring && (
+          <div
+            onMouseDown={onSplitterDragStart}
+            style={{
+              width: 6,
+              cursor: 'col-resize',
+              alignSelf: 'stretch',
+              position: 'relative',
+              zIndex: 5,
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                bottom: 0,
+                left: 2,
+                width: 2,
+                background: '#e5e7eb',
+              }}
+            />
+          </div>
+        )}
+
         {/* Monitoring Button when monitoring is hidden */}
         {!showMonitoring && (
           <Tooltip title="Show Visual & Logs">
@@ -941,7 +997,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
 
         {/* Right side - Monitoring View */}
         {showMonitoring && (
-          <Layout className="bg-transparent flex-col w-[60%] flex-shrink-0 h-full m-0 pl-3 pr-3 relative">
+          <Layout className="bg-transparent flex-col flex-shrink-0 h-full m-0 pl-3 pr-3 relative" style={{ width: `${100 - leftWidthPct}%`, overflowX: 'hidden' }}>
             {/* Close button for monitoring view */}
             <Tooltip title="Close Visual & Logs">
               <Button

@@ -222,6 +222,7 @@ const ThoughtsBox: React.FC<ThoughtsBoxProps> = ({
         boxShadow: '0 1px 6px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.6)',
         borderRadius: 6,
         width: '100%',
+        overflowX: 'hidden',
         ...style,
       }}
     >
@@ -272,12 +273,13 @@ const ThoughtsBox: React.FC<ThoughtsBoxProps> = ({
         <span style={{ fontSize: 10, opacity: 0.8, color: '#000' }}>{entries.length}</span>
       </div>
       {!isCollapsed && (
-        <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+        <div style={{ display: 'flex', gap: 8, marginTop: 6, width: '100%', minWidth: 0 }}>
           {/* Left: thoughts 80% */}
           <div
             ref={listRef}
             style={{
-              flexBasis: '80%',
+              flex: '1 1 0%',
+              minWidth: 0,
               maxHeight: 160,
               overflowY: 'auto',
               paddingRight: 4,
@@ -289,10 +291,10 @@ const ThoughtsBox: React.FC<ThoughtsBoxProps> = ({
             {entries.map((entry) => {
               const paddingLeft = Math.max(0, (entry.indentationLevel ?? 0) * 16);
               return (
-                <div key={entry.id} style={{ marginBottom: 6, paddingLeft }}>
+                <div key={entry.id} style={{ marginBottom: 6, paddingLeft, width: '100%', minWidth: 0 }}>
                   {entry.type === 'thought' && entry.thought && (
                     <div
-                      style={{ fontSize: 10, lineHeight: 1.4, whiteSpace: 'pre-wrap', color: '#000' }}
+                      style={{ fontSize: 10, lineHeight: 1.4, whiteSpace: 'pre-wrap', color: '#000', wordBreak: 'break-word' }}
                     >
                       {entry.thought}
                     </div>
@@ -330,12 +332,23 @@ const ThoughtsBox: React.FC<ThoughtsBoxProps> = ({
           {/* Vertical divider */}
           <div style={{ width: 1, background: '#e8e8e8' }} />
           {/* Right: artifacts 20% */}
-          <div style={{ flexBasis: '20%', display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div
+            style={{
+              flex: '0 0 20%',
+              minWidth: 140,
+              maxWidth: 260,
+              flexShrink: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 6,
+            }}
+          >
             <div style={{ fontSize: 10, opacity: 0.9, color: '#000' }}>Artifacts</div>
             {((artifacts && artifacts.length > 0) || files.length > 0) && (
               <div
                 ref={artifactsScrollRef}
                 style={{
+                  width: '100%',
                   maxHeight: 160,
                   overflowY: 'auto',
                   paddingRight: 4,

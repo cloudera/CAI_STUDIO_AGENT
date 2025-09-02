@@ -156,6 +156,7 @@ const PlanBox: React.FC<PlanBoxProps> = ({ style, active = true, sessionKey, isC
         boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
         borderRadius: 6,
         width: '100%',
+        overflowX: 'hidden',
         marginBottom: 6,
         ...style,
       }}
@@ -175,12 +176,12 @@ const PlanBox: React.FC<PlanBoxProps> = ({ style, active = true, sessionKey, isC
         <span style={{ fontSize: 10, opacity: 0.8, color: '#000' }}>{steps.length}</span>
       </div>
       {!isCollapsed && (
-        <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 6, width: '100%', minWidth: 0 }}>
           {steps.map((step, idx) => {
             const key = String(step.step_number ?? idx + 1);
             const description = step.description || '';
             return (
-              <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', minWidth: 0 }}>
                 <div style={{ width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   {renderStatusIcon(step)}
                 </div>

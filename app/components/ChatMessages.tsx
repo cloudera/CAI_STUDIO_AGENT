@@ -490,6 +490,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
         style={{
           flex: 1,
           overflowY: 'auto',
+          overflowX: 'hidden',
           marginBottom: '16px',
           position: 'relative',
         }}
@@ -523,7 +524,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                 <Spin size="small" />
               </div>
             ) : message.role === 'assistant' ? (
-              <Layout className="bg-white rounded-lg max-w-[95%] relative shadow">
+              <Layout className="bg-white rounded-lg max-w-[95%] relative shadow" style={{ overflowX: 'hidden' }}>
                 <Button
                   type="text"
                   icon={<DownloadOutlined />}
@@ -537,6 +538,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                     padding: '0px',
                     fontFamily:
                       '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                    overflowX: 'hidden',
                   }}
                 >
                   <ReactMarkdown
@@ -602,6 +604,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                   position: 'relative',
                   paddingTop: '2px',
                   flex: 1,
+                  minWidth: 0,
                 }}
               >
                 <div
@@ -654,7 +657,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                   const session = thoughtSessions[userIndex];
                   if (!session) return null;
                   return (
-                    <div style={{ marginTop: 8, width: '100%' }}>
+                    <div style={{ marginTop: 8, width: '100%', minWidth: 0 }}>
                       <PlanBox
                         active={isProcessing && userIndex === thoughtSessions.length - 1}
                         sessionKey={session.id}

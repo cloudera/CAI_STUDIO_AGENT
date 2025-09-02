@@ -216,7 +216,7 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({
 
   return (
     <>
-      <Layout className="p-px bg-transparent flex-1">
+      <Layout className="p-px bg-transparent flex-1" style={{ overflowX: 'hidden' }}>
         <ChatMessages
           messages={messages}
           handleTestWorkflow={handleCrewKickoff}
