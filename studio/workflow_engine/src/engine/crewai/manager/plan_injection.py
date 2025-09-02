@@ -59,12 +59,23 @@ def build_plan_block(plan_obj: Dict[str, Any]) -> str:
             try:
                 for s2 in steps_sorted:
                     if isinstance(s2, dict):
-                        step_map[str(s2.get("step_number"))] = str(s2.get("description", "")).strip()
+                        step_map[str(s2.get("step_number"))] = s2
             except Exception:
                 pass
-            desc_focus = step_map.get(next_str)
-            if desc_focus:
-                focus_line = ("\nFor now you should focus on the step: " + desc_focus + "\n")
+            focused = step_map.get(next_str)
+            if isinstance(focused, dict):
+                desc_focus = str(focused.get("description", "")).strip()
+                if desc_focus:
+                    focus_line = ("\nFor now you should focus on the step: " + desc_focus + "\n")
+                # Append required_evidence list for the focused step (advisory only)
+                try:
+                    req = focused.get("required_evidence") or []
+                    if isinstance(req, list) and req:
+                        bullets = "\n".join(f"- {str(x).strip()}" for x in req if str(x).strip())
+                        if bullets:
+                            focus_line += ("Required evidence for this step:\n" + bullets + "\n")
+                except Exception:
+                    pass
     except Exception:
         focus_line = ""
 

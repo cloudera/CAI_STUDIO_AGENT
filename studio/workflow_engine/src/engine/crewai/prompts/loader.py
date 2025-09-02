@@ -9,7 +9,7 @@ PROMPT_REGISTRY = {
     "artifacts_suffix_assistant": "\n— Useful artifacts requirement —\nIn your Final Answer, add a clean markdown section titled \"Useful artifacts\" (no code fences, no triple quotes).\n\nRules for each item in the list:\n- Show only the file name (basename). Do not include directory paths.\n- If the item is an HTTP/HTTPS URL, render it as a markdown link using only the file name as the anchor text: [filename](URL).\n- Add a concise 1–2 sentence description of what the artifact contains or why it’s useful.\n- Do not wrap the list in code blocks; output plain markdown bullets.\n\n",
     "human_input_required_suffix": "\n— Human input required policy —\nIf, after reasonable attempts (including retries and using available coworkers/tools), the task cannot proceed because essential inputs are missing, unavailable, or cannot be reliably inferred, then do NOT continue with further tool calls.\nInstead, provide a Final Answer that:\n1) Clearly states what is blocked and why (e.g., missing credentials, dataset name, query parameters).\n2) Summarizes what you have already tried and any partial results or evidence gathered.\n3) Lists the exact inputs needed from the user to proceed, as bullet points with brief rationale.\n4) Politely requests the user to supply those inputs to continue.\nEnsure the response remains concise, model-agnostic, and formatted in Markdown.\n\n",
     "hard_constraint": "## 🚨 HARD CONSTRAINT — CRITICAL 🚨\n\n- **Action Input MUST** be a single flat JSON object with ONLY the keys listed in Tool Arguments  \n  (e.g. {\"task\":\"...\",\"context\":\"...\",\"coworker\":\"...\"}).  \n- **No extra keys. No nesting. No prose. JSON only.**  \n- **Never call a tool with the exact same Action Input twice.** Reusing identical inputs is strictly forbidden.  \n- ⚠️ **Violation of this rule INVALIDATES the entire answer.**  \n- This rule has **HIGHEST PRIORITY** — it overrides all other instructions. \n\n",
-    "assistant_summarization_instruction": "Summarize the assistant messages above into a clear, self-contained record focusing on what was actually done.\nInclude the following sections with bullet points under each:\n- Actions performed: concrete steps taken and their purposes.\n- Artifacts produced: files, outputs, paths, or resources created/modified (with names and locations).\n- Important commands executed: exact shell/SQL/API commands with key flags/parameters.\nIf applicable, also note any notable errors and how they were resolved.\nFormatting requirements: no preamble or epilogue; do not use the headings 'Thoughts', 'Actions', or 'Observations';\nuse the exact section headings 'Actions performed', 'Artifacts produced', and 'Important commands executed'.\n\n",
+    "assistant_summarization_instruction": "Summarize the assistant messages above into a clear, self-contained record focusing on what was actually done.\nInclude the following sections with bullet points under each:\n- Actions performed: concrete steps taken and their purposes.\n- Artifacts produced: files, outputs, paths, or resources created/modified (with names and locations).\n- Important commands executed: exact commands/statements with key flags/parameters.\nIf applicable, also note any notable errors and how they were resolved.\nFormatting requirements: no preamble or epilogue; do not use the headings 'Thoughts', 'Actions', or 'Observations';\nuse the exact section headings 'Actions performed', 'Artifacts produced', and 'Important commands executed'.\n\n",
     "artifacts_suffix_manager": "\n— Useful artifacts requirement —\nIn your final answer, add a section titled 'Useful artifacts' using a level-4 heading (####), followed by bullet points. \nList any files or outputs produced or referenced for the current task, each with a 1–2 sentence description. \nUse exact filenames from the evidence; do not rename, paraphrase, or alter them.\nAdditionally, format your response in Markdown using best practices. Use tables where helpful. \n\n",
     "planning_decision_instruction": "Determine whether the user's latest request can be answered directly from the conversation above without additional planning.\nIf it CAN be answered directly, return ONLY valid JSON: {\"result\":\"<concise direct answer>\"}.\nIf it CANNOT be answered directly and a multi-step plan is needed, return ONLY valid JSON: {\"needs_planning\": true}.\nNo prose, no code fences.\n\n",
     "planning_instruction": """You are the Planner. Your task is to generate a structured step-by-step plan in STRICT JSON only.
@@ -37,15 +37,23 @@ PLANNING PRINCIPLES
    • Prefer 1–4 steps unless clearly more are needed.  
    • No vague, placeholder, or underspecified descriptions.
 
+Evidence Contract (MANDATORY)
+• For each step, add required_evidence as a freeform list (e.g., links, blog references, fenced code blocks, markdown table previews, filenames). Do not constrain types.
+File Naming (OPTIONAL)
+• If concrete files are expected, you may mention their intended names in the description or required_evidence. This is advisory, not required.
+No Analysis Without Data
+• If analysis/visualization is requested and inputs aren’t provided, include a prior data retrieval step.
+
 OUTPUT FORMAT (STRICT)
-Return ONLY valid JSON, nothing else, exactly in this schema:
+Return ONLY valid JSON, nothing else, exactly in this schema (new field required_evidence is optional but recommended):
 {
   "steps": [
     {
       "step_number": "1",
       "description": "<clear, specific action>",
       "status": "NOT STARTED",
-      "coworker": "<Exact coworker name>"
+      "coworker": "<Exact coworker name>",
+      "required_evidence": ["<freeform>","<freeform>"]
     }
   ],
   "next_step": "1"
@@ -69,15 +77,15 @@ FEW-SHOT EXAMPLES
 
 # Example A
 Current Task: "Summarize the key points from the provided text."
-Coworkers: ["Research Analyst","SQL Agent","Visualization Agent"]
+Coworkers: ["Research Analyst","Analyst","Visualization Agent"]
 Output:
 {"steps":[{"step_number":"1","description":"Read the provided text and create a concise bullet-point summary of the main ideas","status":"NOT STARTED","coworker":"Research Analyst"}],"next_step":"1"}
 
 # Example B
-Current Task: "Get total sales by month for 2024 and plot a line chart."
-Coworkers: ["SQL Agent","Visualization Agent","Writer"]
+Current Task: "Aggregate monthly performance for the year and plot a line chart."
+Coworkers: ["Data Agent","Visualization Agent","Writer"]
 Output:
-{"steps":[{"step_number":"1","description":"Query total monthly sales for 2024 from the orders table with amounts aggregated by month","status":"NOT STARTED","coworker":"SQL Agent"},{"step_number":"2","description":"Generate a line chart of monthly sales using the query results","status":"NOT STARTED","coworker":"Visualization Agent"}],"next_step":"1"}
+{"steps":[{"step_number":"1","description":"Aggregate monthly performance for the year from the relevant dataset with values aggregated by month","status":"NOT STARTED","coworker":"Data Agent"},{"step_number":"2","description":"Generate a line chart of monthly performance using the aggregated results","status":"NOT STARTED","coworker":"Visualization Agent"}],"next_step":"1"}
 """,
     "planning_decision_block": "PLANNING DECISION: Planning is not needed.\nRESULT DESCRIPTION:\n{{RESULT_DESCRIPTION}}\n\n",
     "planning_disable_note": "Planning could not produce valid JSON after 3 retries. Disabling planning and evaluation for the rest of this session.\n\n",
@@ -125,6 +133,15 @@ B) Status update on existing plan (STRICT)
 
   CONTENT-COMPLETION RULE
   • If STEP RESULTS(NEW) contains a coherent deliverable matching the step description (doc/code/analysis/dataset/artifact/summary), mark COMPLETED (if the step is UNLOCKED).
+
+  Artifact/Evidence Gate (LLM-LEVEL, MANDATORY)
+  • A step is COMPLETED only if every required_evidence item is reasonably satisfied by content in STEP RESULTS. Evidence is freeform (e.g., links, blog posts, fenced code blocks, markdown table previews, or filenames). Do not require any specific artifact manifest.
+
+  Structured Evidence (IF APPLICABLE)
+  • If a step mentions a specific language or query, you may prefer fenced code blocks or structured snippets in STEP RESULTS(NEW). If other credible evidence exists, you may still mark progress appropriately.
+
+  Filenames (ADVISORY)
+  • If filenames are mentioned in the plan, prefer consistency, but do not block completion solely due to mismatches.
 
   IN PROGRESS RULE
   • Mark IN PROGRESS only if STEP RESULTS(NEW) shows the step started but is not yet a coherent match to its description (and the step is UNLOCKED).
@@ -190,6 +207,12 @@ D) MECHANICAL UPDATE & NEXT STEP
          next_step = the smallest step_number with status "NOT STARTED".
     5) If there is a CRITICAL failure that blocks progress:
          next_step = "".
+
+Evaluator Checklist (APPLY PER STEP)
+  1) STEP RESULTS(NEW) exists for the step or its coworker
+  2) All required_evidence items are satisfied by NEW content (links/code/table/notes/files)
+  3) No sequential dependency violation
+  4) Respect LOCKED states and EMPTY-NEW rule
 
 FAIL-SAFE
 • If rules conflict BUT a scope change is detected, you MUST still emit a repaired plan (C). Do NOT fall back to returning the input plan unchanged.
