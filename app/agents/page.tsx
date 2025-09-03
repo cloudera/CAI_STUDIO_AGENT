@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Button, Typography, Layout, Alert, Image } from 'antd';
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
+import i18n from '../utils/i18n';
 import AgentList from '../components/AgentList';
 import { useListGlobalAgentTemplatesQuery, useRemoveAgentTemplateMutation } from './agentApi';
 import CommonBreadCrumb from '../components/CommonBreadCrumb';
@@ -79,7 +80,7 @@ const AgentsPage: React.FC = () => {
           </div>
           {/* Descriptive Text */}
           <Layout className="bg-white flex-1 ml-3 flex flex-col">
-            <Text className="font-semibold text-lg">Create Agent</Text>
+            <Text className="font-semibold text-lg">{i18n.t('label.createAgent')}</Text>
             <Text className="font-normal">
               The Agent Template Catalog is your centralized hub for managing AI agent templates.
               Register new templates, edit existing ones, and organize them seamlessly. Build and

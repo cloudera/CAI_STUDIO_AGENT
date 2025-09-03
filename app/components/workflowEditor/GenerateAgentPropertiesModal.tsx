@@ -108,7 +108,9 @@ const GenerateAgentPropertiesModal: React.FC<GenerateAgentPropertiesModalProps> 
   };
 
   const handleGenerate = async () => {
-    if (!userDescription.trim()) return;
+    if (!userDescription.trim()) {
+      return;
+    }
 
     setIsGenerating(true);
     setHideInfoBox(true);

@@ -348,7 +348,9 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
   };
 
   const handleSaveTask = async () => {
-    if (!editingTaskId) return;
+    if (!editingTaskId) {
+      return;
+    }
 
     if (!hasManagerAgent && !selectedAgentId) {
       notificationApi.error({

@@ -78,6 +78,15 @@ case "$1" in
             echo "✅ npm eslint check passed"
         fi
         echo ""
+
+        echo "Running Unit tests..."
+        if ! npm run test; then
+            echo "❌ npm test check failed - UT's issues found"
+            EXIT_CODE=1
+        else
+            echo "✅ npm run test check passed"
+        fi
+        echo ""
         
         if [ $EXIT_CODE -eq 0 ]; then
             echo "🎉 All formatting and linting checks passed!"

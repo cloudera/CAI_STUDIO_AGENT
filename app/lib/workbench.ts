@@ -15,12 +15,24 @@ export const compareWorkbenchVersions = (a: string, b: string) => {
   const [aMajor, aMinor, aPatch] = sanitizedA.split('.').map(Number);
   const [bMajor, bMinor, bPatch] = sanitizedB.split('.').map(Number);
 
-  if (aMajor > bMajor) return 1;
-  if (aMajor < bMajor) return -1;
-  if (aMinor > bMinor) return 1;
-  if (aMinor < bMinor) return -1;
-  if (aPatch > bPatch) return 1;
-  if (aPatch < bPatch) return -1;
+  if (aMajor > bMajor) {
+    return 1;
+  }
+  if (aMajor < bMajor) {
+    return -1;
+  }
+  if (aMinor > bMinor) {
+    return 1;
+  }
+  if (aMinor < bMinor) {
+    return -1;
+  }
+  if (aPatch > bPatch) {
+    return 1;
+  }
+  if (aPatch < bPatch) {
+    return -1;
+  }
 
   // Versions are the same
   return 0;

@@ -23,7 +23,9 @@ const WarningMessageBox: React.FC<WarningMessageBoxProps> = ({
 
   const handleClose = () => {
     setVisible(false);
-    if (onClose) onClose();
+    if (onClose) {
+      onClose();
+    }
   };
 
   return (

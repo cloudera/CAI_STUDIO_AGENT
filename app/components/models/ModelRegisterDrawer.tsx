@@ -72,13 +72,10 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
   // If editing an existing model, populate the fields with existing model
   // information whenever the model ID field changes.
   useEffect(() => {
-    console.log('modelRegisterId', modelRegisterId);
     const populateModelDetails = async () => {
       if (modelRegisterId && Boolean(modelRegisterId.trim())) {
         setDrawerMode('edit');
         const model: Model = await getModel({ model_id: modelRegisterId }).unwrap();
-        console.log('model', model);
-        console.log('populateModelRegisterDetails');
         dispatch(populateModelRegisterDetails(model));
       } else {
         setDrawerMode('register');
@@ -92,7 +89,9 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
   const onSubmit = async (_values: any) => {
     try {
       if (drawerMode === 'edit') {
-        if (!modelRegisterId) throw new Error('Model ID not specified for updating model.');
+        if (!modelRegisterId) {
+          throw new Error('Model ID not specified for updating model.');
+        }
 
         await updateModel({
           model_id: modelRegisterId,

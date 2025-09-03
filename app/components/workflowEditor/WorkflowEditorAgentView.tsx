@@ -15,7 +15,7 @@ interface WorkflowEditorAgentViewProps {
   workflowId: string;
 }
 
-const WorkflowEditorAgentView: React.FC<WorkflowEditorAgentViewProps> = ({ workflowId }) => {
+const WorkflowEditorAgentView = ({ workflowId }: WorkflowEditorAgentViewProps) => {
   const dispatch = useAppDispatch();
   const workflowState = useAppSelector(selectEditorWorkflow);
   const [getWorkflow] = useGetWorkflowMutation();
@@ -37,7 +37,9 @@ const WorkflowEditorAgentView: React.FC<WorkflowEditorAgentViewProps> = ({ workf
     }
   }, [workflowId, workflowState.workflowId, dispatch, getWorkflow]);
 
-  if (!workflowState.workflowId) return null;
+  if (!workflowState.workflowId) {
+    return null;
+  }
 
   return (
     <>

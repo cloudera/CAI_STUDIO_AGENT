@@ -43,7 +43,9 @@ const WorkflowTemplateContent: React.FC<WorkflowTemplateContentProps> = ({ templ
   const templateName = template?.name;
 
   const handleDeleteTemplate = async () => {
-    if (!template) return;
+    if (!template) {
+      return;
+    }
 
     try {
       await removeWorkflowTemplate({ id: template.id }).unwrap();
@@ -82,7 +84,9 @@ const WorkflowTemplateContent: React.FC<WorkflowTemplateContentProps> = ({ templ
   };
 
   const handleMenuClick: MenuProps['onClick'] = async ({ key }) => {
-    if (!templateId) return;
+    if (!templateId) {
+      return;
+    }
 
     switch (key) {
       case 'create':

@@ -164,7 +164,9 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
   };
 
   const handleDownloadPDF = async () => {
-    if (!crewOutput) return;
+    if (!crewOutput) {
+      return;
+    }
 
     try {
       // Dynamically import html2pdf
@@ -227,7 +229,9 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
   };
 
   const handleDownloadLogs = () => {
-    if (!lastRun) return;
+    if (!lastRun) {
+      return;
+    }
     const log = [
       {
         User: lastRun.userInput,

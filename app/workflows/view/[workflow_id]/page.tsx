@@ -51,7 +51,9 @@ const WorkflowPage: React.FC = () => {
   const [addWorkflowTemplate] = useAddWorkflowTemplateMutation();
 
   useEffect(() => {
-    if (!workflowId) return;
+    if (!workflowId) {
+      return;
+    }
 
     const fetchWorkflowName = async () => {
       setLoading(true);
@@ -71,7 +73,9 @@ const WorkflowPage: React.FC = () => {
   }, [workflowId, getWorkflow]);
 
   const handleDeleteWorkflow = async () => {
-    if (!workflow) return;
+    if (!workflow) {
+      return;
+    }
 
     try {
       // Delete deployments first if they exist
@@ -135,7 +139,9 @@ const WorkflowPage: React.FC = () => {
   };
 
   const handleMenuClick: MenuProps['onClick'] = async ({ key }) => {
-    if (!workflowId) return;
+    if (!workflowId) {
+      return;
+    }
 
     switch (key) {
       case 'edit':
@@ -172,7 +178,9 @@ const WorkflowPage: React.FC = () => {
   };
 
   const isWorkflowDeployed = () => {
-    if (!workflow || !deployedWorkflows) return false;
+    if (!workflow || !deployedWorkflows) {
+      return false;
+    }
     return deployedWorkflows.some(
       (deployedWorkflow) => deployedWorkflow.workflow_id === workflow.workflow_id,
     );

@@ -55,12 +55,12 @@ interface WorkflowAddMcpModalProps {
   onCancel: () => void;
 }
 
-const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
+const WorkflowAddMcpModal = ({
   workflowId,
   preSelectedMcpInstance,
   open,
   onCancel,
-}) => {
+}: WorkflowAddMcpModalProps) => {
   const [shouldPollForMcpInstances, setShouldPollForMcpInstances] = useState(false);
 
   const { data: mcpTemplates = [] } = useListGlobalMcpTemplatesQuery({});
@@ -456,25 +456,23 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
           // All tools were selected, now deselect this one
           setNoToolsSelected(false);
           return allToolNames.filter((name: string) => name !== toolName);
-        } else {
-          if (prev.includes(toolName)) {
-            // Remove the tool
-            const newSelection = prev.filter((name: string) => name !== toolName);
-            if (newSelection.length === 0) {
-              setNoToolsSelected(true);
-            }
-            return newSelection;
-          } else {
-            // Add the tool
-            const newSelection = [...prev, toolName];
-            if (newSelection.length === allToolNames.length) {
-              // All tools are now selected, set to empty array
-              setNoToolsSelected(false);
-              return [];
-            }
-            setNoToolsSelected(false);
-            return newSelection;
+        } else if (prev.includes(toolName)) {
+          // Remove the tool
+          const newSelection = prev.filter((name: string) => name !== toolName);
+          if (newSelection.length === 0) {
+            setNoToolsSelected(true);
           }
+          return newSelection;
+        } else {
+          // Add the tool
+          const newSelection = [...prev, toolName];
+          if (newSelection.length === allToolNames.length) {
+            // All tools are now selected, set to empty array
+            setNoToolsSelected(false);
+            return [];
+          }
+          setNoToolsSelected(false);
+          return newSelection;
         }
       });
     };
@@ -492,7 +490,9 @@ const WorkflowAddMcpModal: React.FC<WorkflowAddMcpModalProps> = ({
     };
 
     const isToolSelected = (toolName: string) => {
-      if (noToolsSelected) return false;
+      if (noToolsSelected) {
+        return false;
+      }
       return selectedMcpInstanceTools.length === 0 || selectedMcpInstanceTools.includes(toolName);
     };
 

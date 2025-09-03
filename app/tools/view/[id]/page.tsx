@@ -64,7 +64,9 @@ const ToolViewPage: React.FC = () => {
   }, [imageData, toolDetails]);
 
   const fetchToolDetails = async (showFullPageLoading: boolean) => {
-    if (!toolId) return;
+    if (!toolId) {
+      return;
+    }
     setLoading(showFullPageLoading);
     setError(null);
     try {
@@ -207,7 +209,9 @@ const ToolViewPage: React.FC = () => {
   ];
 
   const handleActionMenuClick: MenuProps['onClick'] = ({ key }) => {
-    if (!toolId) return;
+    if (!toolId) {
+      return;
+    }
 
     switch (key) {
       case 'view':

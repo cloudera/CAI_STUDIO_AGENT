@@ -37,7 +37,7 @@ interface WorkflowNavigationProps {
   workflowId: string;
 }
 
-const WorkflowNavigation: React.FC<WorkflowNavigationProps> = ({ workflowId }) => {
+const WorkflowNavigation = ({ workflowId }: WorkflowNavigationProps) => {
   const currentStep = useAppSelector(selectEditorCurrentStep);
   const dispatch = useAppDispatch();
   const router = useRouter();

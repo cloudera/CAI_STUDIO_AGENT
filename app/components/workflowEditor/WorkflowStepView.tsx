@@ -10,7 +10,7 @@ interface StepComponentProps {
   isActive: boolean;
 }
 
-const StepComponent: React.FC<StepComponentProps> = ({ stepNumber, title, isActive }) => {
+const StepComponent = ({ stepNumber, title, isActive }: StepComponentProps) => {
   // Tailwind color classes for dynamic background and text
   const avatarBg = isActive ? 'bg-[#1890ff]' : 'bg-[#d9d9d9]';
   const textColor = isActive ? 'text-[#1890ff]' : 'text-[#434343]';
@@ -27,7 +27,7 @@ const StepComponent: React.FC<StepComponentProps> = ({ stepNumber, title, isActi
   );
 };
 
-const WorkflowStepView: React.FC = () => {
+const WorkflowStepView = () => {
   const currentStep = useAppSelector(selectEditorCurrentStep);
 
   return (

@@ -12,6 +12,7 @@ import {
   LeftOutlined,
 } from '@ant-design/icons';
 import { useGlobalNotification } from '../Notifications';
+import i18n from '@/app/utils/i18n';
 
 const { Text } = Typography;
 
@@ -29,7 +30,7 @@ const ImportWorkflowTemplateModal: React.FC<ImportWorkflowTemplateModalProps> = 
   const [importFilePath, setImportFilePath] = useState(filePrefix);
   const [fileExists, setFileExists] = useState<boolean | null>(null);
   const [isCheckingFile, setIsCheckingFile] = useState(false);
-  const fileCheckTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const fileCheckTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [importWorkflowTemplate, { isLoading: isImporting }] = useImportWorkflowTemplateMutation();
 
   useEffect(() => {
@@ -194,7 +195,9 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
   // TODO: pass deployed workflow IDs in each workflow message as part of listWorkflows/getWorkflow
   const deployedWorkflowMap = filteredDeployedWorkflows.reduce<Record<string, DeployedWorkflow[]>>(
     (acc, dw) => {
-      if (!acc[dw.workflow_id]) acc[dw.workflow_id] = [];
+      if (!acc[dw.workflow_id]) {
+        acc[dw.workflow_id] = [];
+      }
       acc[dw.workflow_id].push(dw);
       return acc;
     },
@@ -288,11 +291,11 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
                   >
                     {showAllDeployed ? (
                       <>
-                        <LeftOutlined /> View Less
+                        <LeftOutlined /> {i18n.t('label.viewLess')}
                       </>
                     ) : (
                       <>
-                        View All <RightOutlined />
+                        {i18n.t('label.viewAll')} <RightOutlined />
                       </>
                     )}
                   </Button>
@@ -348,11 +351,11 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
                 >
                   {showAllDrafts ? (
                     <>
-                      <LeftOutlined /> View Less
+                      <LeftOutlined /> {i18n.t('label.viewLess')}
                     </>
                   ) : (
                     <>
-                      View All <RightOutlined />
+                      {i18n.t('label.viewAll')} <RightOutlined />
                     </>
                   )}
                 </Button>
@@ -395,14 +398,14 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
             <div>
               <div className="flex justify-between items-center mt-px mb-px">
                 <div className="flex items-center">
-                  <Text className="text-lg font-semibold">Workflow Templates</Text>
+                  <Text className="text-lg font-semibold">{i18n.t('label.workflowTemplates')}</Text>
                   <Button
                     type="text"
                     size="small"
                     onClick={() => setImportModalVisible(true)}
                     className="ml-7 bg-white border border-gray-300"
                   >
-                    <PlusCircleOutlined /> Import Template
+                    <PlusCircleOutlined /> {i18n.t('label.importTemplate')}
                   </Button>
                 </div>
                 <div className="flex gap-3 p-0.5 h-8 items-center">
@@ -415,11 +418,11 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
                   >
                     {showAllTemplates ? (
                       <>
-                        <LeftOutlined /> View Less
+                        <LeftOutlined /> {i18n.t('label.viewLess')}
                       </>
                     ) : (
                       <>
-                        View All <RightOutlined />
+                        {i18n.t('label.viewAll')} <RightOutlined />
                       </>
                     )}
                   </Button>

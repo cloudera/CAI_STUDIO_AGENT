@@ -39,8 +39,7 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
   const managerAgentId = workflowData.workflowState.workflowMetadata.managerAgentId;
   const process = workflowData.workflowState.workflowMetadata.process;
   const hasManagerAgent: boolean = process === 'hierarchical';
-  const useDefaultManager: boolean =
-    hasManagerAgent && !Boolean(managerAgentId && managerAgentId.trim());
+  const useDefaultManager: boolean = hasManagerAgent && !(managerAgentId && managerAgentId.trim());
 
   const initialNodes: Node[] = [];
   const initialEdges: Edge[] = [];

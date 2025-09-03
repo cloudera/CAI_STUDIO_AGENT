@@ -46,7 +46,7 @@ const _i18n = {
   },
 };
 
-let i18n = _i18n;
+const i18n = _i18n;
 
 export default i18n;
 export const t = i18n.t;
