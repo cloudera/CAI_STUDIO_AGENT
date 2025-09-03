@@ -17,7 +17,7 @@ from .manager.planning_decision import build_decision_messages, parse_decision_r
 from .manager.planning_generate import build_planning_messages, extract_json_obj as extract_plan_json, valid_plan_schema
 from .manager.planning_evaluation import build_eval_messages, parse_eval_result, valid_eval_schema
 from .manager.plan_injection import build_plan_block
-from .manager.state_context import read_state_entries, build_assistant_messages_from_entries, insert_before_first_user, insert_after_first_user, split_conversation_entries, build_any_entries_up_to_last_conversation, build_all_entries_only_last_conversation
+from .manager.state_context import read_state_entries, build_assistant_messages_from_entries, insert_before_first_user, insert_after_first_user, split_conversation_entries, build_any_entries_up_to_last_conversation
 from .manager.notes import build_status_note
 from .utils.messages import (
     sanitize_messages as _sanitize_messages_util,
@@ -102,13 +102,11 @@ class AgentStudioCrewAILLM(LLM):
     ) -> Any:
         sanitized_messages = self._sanitize_messages(messages)
         try:
-            # Assistant LLM call: include last conversation and EVERYTHING else except Agent Studio (OLD before it, NEW after it)
+            # Mirror manager wrapper: include ONLY past context up to last conversation, inserted before first user
             entries = read_state_entries(self.session_directory) if self.session_directory else []
-            all_msgs = build_all_entries_only_last_conversation(entries)
-            if all_msgs:
-                first_user_index = next((idx for idx, m in enumerate(sanitized_messages) if m.get("role") == "user"), None)
-                insertion_index = first_user_index if first_user_index is not None else 0
-                sanitized_messages = sanitized_messages[:insertion_index] + all_msgs + sanitized_messages[insertion_index:]
+            past_msgs = build_any_entries_up_to_last_conversation(entries)
+            if past_msgs:
+                sanitized_messages = insert_before_first_user(sanitized_messages, past_msgs)
         except Exception:
             pass
 
@@ -457,10 +455,6 @@ class AgentStudioManagerCrewAILLM(LLM):
             try:
                 if plan_path and os.path.exists(plan_path) and os.path.getsize(plan_path) > 0 and not skip_planning_and_injection and not plan_created_this_call:
                     print("[SmartManagerPlanEval] Triggering evaluation call")
-                    try:
-                        logger.info("[manager] Evaluation triggered | plan_path=%s bytes=%d", plan_path, os.path.getsize(plan_path))
-                    except Exception:
-                        pass
                     current_plan_obj: Optional[Dict[str, Any]] = None
                     try:
                         with open(plan_path, "r", encoding="utf-8") as pf_eval:
