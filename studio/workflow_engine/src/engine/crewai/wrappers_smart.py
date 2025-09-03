@@ -17,7 +17,7 @@ from .manager.planning_decision import build_decision_messages, parse_decision_r
 from .manager.planning_generate import build_planning_messages, extract_json_obj as extract_plan_json, valid_plan_schema
 from .manager.planning_evaluation import build_eval_messages, parse_eval_result, valid_eval_schema
 from .manager.plan_injection import build_plan_block
-from .manager.state_context import read_state_entries, build_assistant_messages_from_entries, insert_before_first_user, insert_after_first_user, split_conversation_entries, build_any_entries_up_to_last_conversation
+from .manager.state_context import read_state_entries, build_assistant_messages_from_entries, insert_before_first_user, insert_after_first_user, split_conversation_entries, build_any_entries_up_to_last_conversation, build_all_entries_only_last_conversation, build_any_entries_after_last_conversation
 from .manager.notes import build_status_note
 from .utils.messages import (
     sanitize_messages as _sanitize_messages_util,
@@ -102,11 +102,22 @@ class AgentStudioCrewAILLM(LLM):
     ) -> Any:
         sanitized_messages = self._sanitize_messages(messages)
         try:
-            # Mirror manager wrapper: include ONLY past context up to last conversation, inserted before first user
+            # Assistant LLM call: include the LAST conversation entry and ALL entries after it (agent_role outputs),
+            # inserted below the system message and before the first user message.
             entries = read_state_entries(self.session_directory) if self.session_directory else []
-            past_msgs = build_any_entries_up_to_last_conversation(entries)
-            if past_msgs:
-                sanitized_messages = insert_before_first_user(sanitized_messages, past_msgs)
+            last_conv_msgs: List[Dict[str, Any]] = []
+            try:
+                conv_past_msgs, _ = split_conversation_entries(entries)
+                if isinstance(conv_past_msgs, list) and len(conv_past_msgs) > 0:
+                    last_conv_msgs = [conv_past_msgs[-1]]
+            except Exception:
+                last_conv_msgs = []
+            after_msgs = build_any_entries_after_last_conversation(entries)
+            all_msgs = (last_conv_msgs + after_msgs) if (last_conv_msgs or after_msgs) else []
+            if all_msgs:
+                first_user_index = next((idx for idx, m in enumerate(sanitized_messages) if m.get("role") == "user"), None)
+                insertion_index = first_user_index if first_user_index is not None else 0
+                sanitized_messages = sanitized_messages[:insertion_index] + all_msgs + sanitized_messages[insertion_index:]
         except Exception:
             pass
 
@@ -117,16 +128,7 @@ class AgentStudioCrewAILLM(LLM):
                 if msg.get("role") != "assistant":
                     return False
                 content = msg.get("content")
-                if not isinstance(content, str):
-                    return False
-                stripped = content.lstrip()
-                lowered = stripped.lower()
-                # Preserve injected context: conversation history and step results
-                return (
-                    stripped.startswith("CONTEXT:")
-                    or lowered.startswith("conversation history")
-                    or lowered.startswith("step results(")
-                )
+                return isinstance(content, str) and content.lstrip().startswith("CONTEXT:")
             assistant_indices: List[int] = [
                 idx
                 for idx, m in enumerate(sanitized_messages)
