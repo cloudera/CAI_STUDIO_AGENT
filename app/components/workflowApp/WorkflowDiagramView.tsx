@@ -62,20 +62,34 @@ const WorkflowDiagramView: React.FC<WorkflowDiagramViewProps> = ({
     // Error filter only
     if (eventTypeFilters.includes('error')) {
       const isError = /error|fail/i.test(event.type);
-      if (!isError) return false;
+      if (!isError) {
+        return false;
+      }
     }
     // Category filter
     if (categoryFilters.length > 0) {
       const type = event.type.toLowerCase();
       const matches = categoryFilters.some((cat) => {
-        if (cat === 'workflow') return type.includes('crew');
-        if (cat === 'task') return type.includes('task');
-        if (cat === 'agent') return type.includes('agent');
-        if (cat === 'llm') return type.includes('llm');
-        if (cat === 'tool') return type.includes('tool');
+        if (cat === 'workflow') {
+          return type.includes('crew');
+        }
+        if (cat === 'task') {
+          return type.includes('task');
+        }
+        if (cat === 'agent') {
+          return type.includes('agent');
+        }
+        if (cat === 'llm') {
+          return type.includes('llm');
+        }
+        if (cat === 'tool') {
+          return type.includes('tool');
+        }
         return false;
       });
-      if (!matches) return false;
+      if (!matches) {
+        return false;
+      }
     }
     return true;
   });

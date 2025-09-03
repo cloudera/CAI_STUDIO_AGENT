@@ -61,7 +61,9 @@ const getInvalidTools = (
   toolInstances: ToolInstance[] | undefined,
   workflowId: string | undefined,
 ) => {
-  if (!agents || !toolInstances || !workflowId) return [];
+  if (!agents || !toolInstances || !workflowId) {
+    return [];
+  }
 
   const invalidTools: { name: string; status: string }[] = [];
 
@@ -272,7 +274,7 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
           <span className="font-semibold">{`Task ${index + 1}: `}</span>
           {task.description}
         </Text>
-        {!managerAgentId && !Boolean(process === 'hierarchical') && (
+        {!managerAgentId && !(process === 'hierarchical') && (
           <div className="w-[30%] flex justify-start overflow-hidden">
             <Tooltip title={assignedAgent?.name || 'Unassigned'}>
               <Tag

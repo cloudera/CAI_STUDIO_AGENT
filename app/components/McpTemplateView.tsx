@@ -75,7 +75,9 @@ const McpTemplateView: React.FC<McpTemplateViewProps> = ({
   }, [mcpTemplateDetails?.tools]);
 
   const handleFileUpload = async (file: File) => {
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     // Validate file type
     const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];

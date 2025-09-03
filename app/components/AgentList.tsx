@@ -58,7 +58,9 @@ const AgentList: React.FC<AgentTemplateListProps> = ({
 
   useEffect(() => {
     // Only proceed if toolTemplates has changed and is not empty
-    if (!toolTemplates || toolTemplates.length === 0) return;
+    if (!toolTemplates || toolTemplates.length === 0) {
+      return;
+    }
 
     // Move this outside of useEffect to avoid setting state during render
     const toolTemplateMap = toolTemplates.reduce((acc: Record<string, any>, template: any) => {

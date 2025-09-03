@@ -43,13 +43,13 @@ export interface WorkflowTemplateDiagramProps {
   mcpTemplates?: MCPTemplate[];
 }
 
-const WorkflowTemplateDiagram: React.FC<WorkflowTemplateDiagramProps> = ({
+const WorkflowTemplateDiagram = ({
   template,
   toolTemplates = [],
   agentTemplates = [],
   taskTemplates = [],
   mcpTemplates = [],
-}) => {
+}: WorkflowTemplateDiagramProps) => {
   const { fitView } = useReactFlow();
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);

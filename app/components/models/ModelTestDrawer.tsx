@@ -31,7 +31,9 @@ const ModelTestDrawer: React.FC<ModelTestDrawerProps> = () => {
   const notificationsApi = useGlobalNotification();
 
   const handleTestModel = async (message: string) => {
-    if (!modelId) return;
+    if (!modelId) {
+      return;
+    }
     try {
       setIsTesting(true);
       const response = await testModel({

@@ -141,7 +141,9 @@ const getInvalidTools = (
   toolInstances: ToolInstance[] | undefined,
   workflowId: string | undefined,
 ) => {
-  if (!agents || !toolInstances || !workflowId) return [];
+  if (!agents || !toolInstances || !workflowId) {
+    return [];
+  }
 
   const invalidTools: { name: string; status: string }[] = [];
 
@@ -334,7 +336,9 @@ const WorkflowEditorConfigureInputs: React.FC<WorkflowEditorConfigureInputsProps
 
   // Check if all required parameters are set across all tools
   const hasAllRequiredParams = React.useMemo(() => {
-    if (!agents || !toolInstances) return true;
+    if (!agents || !toolInstances) {
+      return true;
+    }
 
     return agents
       .filter((agent) => agent.workflow_id === workflowId)
@@ -346,7 +350,9 @@ const WorkflowEditorConfigureInputs: React.FC<WorkflowEditorConfigureInputsProps
 
         return workflowTools.every((toolInstance) => {
           const metadata: ToolInstanceMetadataProps = JSON.parse(toolInstance.tool_metadata);
-          if (!metadata.user_params_metadata) return true;
+          if (!metadata.user_params_metadata) {
+            return true;
+          }
 
           const toolConfig = workflowConfiguration.toolConfigurations[toolInstance.id] || {
             parameters: {},
@@ -570,7 +576,9 @@ export const hasValidToolConfiguration = (
     return workflowTools.every((toolInstance) => {
       const metadata: ToolInstanceMetadataProps = JSON.parse(toolInstance.tool_metadata);
 
-      if (!metadata.user_params_metadata) return true;
+      if (!metadata.user_params_metadata) {
+        return true;
+      }
 
       const toolConfig = workflowConfiguration.toolConfigurations[toolInstance.id] || {
         parameters: {},

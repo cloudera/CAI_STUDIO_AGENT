@@ -234,7 +234,9 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
   };
 
   const handleDeleteMcp = async (mcpId: string, mcpName: string) => {
-    if (selectedAgentTemplate) return;
+    if (selectedAgentTemplate) {
+      return;
+    }
 
     try {
       setIsLoading(true);
@@ -308,7 +310,9 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
   };
 
   const handleDeleteTool = async (toolId: string, toolName: string) => {
-    if (selectedAgentTemplate) return;
+    if (selectedAgentTemplate) {
+      return;
+    }
 
     try {
       setIsLoading(true);
@@ -420,7 +424,9 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
   };
 
   const handleFileUpload = async (file: File) => {
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     // Validate file type
     const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
@@ -896,7 +902,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                       <span>
                         Use tools and data sources registered as MCP servers. MCP servers can be
                         registered in Agent Studio from the{' '}
-                        <a
+                        <button
                           onClick={(e) => {
                             e.preventDefault();
                             router.push('/tools?section=mcp');
@@ -904,7 +910,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                           className="text-blue-500 underline cursor-pointer"
                         >
                           Tools Catalog
-                        </a>{' '}
+                        </button>{' '}
                         page. Learn more about Model Context Protocol{' '}
                         <a
                           href="https://modelcontextprotocol.io/introduction"

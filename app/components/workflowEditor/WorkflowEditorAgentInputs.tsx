@@ -61,7 +61,7 @@ import { createUpdateRequestFromEditor, createAddRequestFromEditor } from '../..
 import SelectOrAddManagerAgentModal from './SelectOrAddManagerAgentModal';
 import { useListMcpInstancesQuery } from '@/app/mcp/mcpInstancesApi';
 
-const WorkflowDescriptionComponent: React.FC = () => {
+const WorkflowDescriptionComponent = () => {
   const workflowDescription = useAppSelector(selectEditorWorkflowDescription);
   const dispatch = useAppDispatch();
 
@@ -94,7 +94,7 @@ interface WorkflowAgentsComponentProps {
   workflowId: string;
 }
 
-const WorkflowAgentsComponent: React.FC<WorkflowAgentsComponentProps> = ({ workflowId }) => {
+const WorkflowAgentsComponent = ({ workflowId }: WorkflowAgentsComponentProps) => {
   const { data: agents } = useListAgentsQuery({ workflow_id: workflowId });
   const { data: toolInstances } = useListToolInstancesQuery({ workflow_id: workflowId });
   const { data: mcpInstances } = useListMcpInstancesQuery({ workflow_id: workflowId });
@@ -335,9 +335,7 @@ interface WorkflowManagerAgentsComponentProps {
   workflowId: string;
 }
 
-const WorkflowManagerAgentsComponent: React.FC<WorkflowManagerAgentsComponentProps> = ({
-  workflowId,
-}) => {
+const WorkflowManagerAgentsComponent = ({ workflowId }: WorkflowManagerAgentsComponentProps) => {
   const [isManagerModalOpen, setIsManagerModalOpen] = useState(false);
   // Removed unused tasksTooltip
 
@@ -377,10 +375,7 @@ export interface ManagerAgentComponentProps {
   isDisabled: boolean;
 }
 
-const ManagerAgentCheckComponent: React.FC<ManagerAgentComponentProps> = ({
-  workflowId,
-  isDisabled,
-}) => {
+const ManagerAgentCheckComponent = ({ workflowId, isDisabled }: ManagerAgentComponentProps) => {
   const dispatch = useAppDispatch();
   const managerAgentId = useAppSelector(selectEditorWorkflowManagerAgentId);
   const taskIds = useAppSelector(selectEditorWorkflowTaskIds) ?? [];
@@ -494,7 +489,7 @@ interface SettingsComponentProps {
   workflowId: string;
 }
 
-const SettingsComponent: React.FC<SettingsComponentProps> = ({ workflowId }) => {
+const SettingsComponent = ({ workflowId }: SettingsComponentProps) => {
   const [isManagerModalOpen, setIsManagerModalOpen] = useState(false);
   const isConversational = useAppSelector(selectEditorWorkflowIsConversational);
   const dispatch = useAppDispatch();
@@ -728,7 +723,7 @@ interface WorkflowEditorAgentInputsProps {
   workflowId: string;
 }
 
-const WorkflowEditorAgentInputs: React.FC<WorkflowEditorAgentInputsProps> = ({ workflowId }) => {
+const WorkflowEditorAgentInputs = ({ workflowId }: WorkflowEditorAgentInputsProps) => {
   return (
     <>
       <Layout className="flex flex-col flex-shrink-0 flex-grow-0 px-6 py-4 w-2/5 h-full bg-transparent gap-3 overflow-auto">

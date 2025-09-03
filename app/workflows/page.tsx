@@ -121,7 +121,9 @@ const WorkflowsPageContent: React.FC = () => {
   };
 
   const handleDeleteWorkflowOrWorkflowTemplate = async () => {
-    if (!selectedWorkflow && !selectedWorkflowTemplate) return;
+    if (!selectedWorkflow && !selectedWorkflowTemplate) {
+      return;
+    }
 
     try {
       if (selectedWorkflow) {
@@ -212,7 +214,9 @@ const WorkflowsPageContent: React.FC = () => {
   };
 
   const handleDeleteDeployedWorkflow = async () => {
-    if (!selectedDeployedWorkflow) return;
+    if (!selectedDeployedWorkflow) {
+      return;
+    }
 
     try {
       await undeployWorkflow({

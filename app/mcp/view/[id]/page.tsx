@@ -193,7 +193,9 @@ const McpTemplateViewPage: React.FC = () => {
   ];
 
   const handleActionMenuClick: MenuProps['onClick'] = ({ key }) => {
-    if (!mcpTemplateId) return;
+    if (!mcpTemplateId) {
+      return;
+    }
 
     switch (key) {
       case 'view':

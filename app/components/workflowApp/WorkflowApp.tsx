@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Layout, Spin, Typography, Slider, Button, Tooltip, Input, Collapse } from 'antd';
 import WorkflowAppInputsView from './WorkflowAppInputsView';
 import { useAppDispatch, useAppSelector } from '@/app/lib/hooks/hooks';
@@ -53,7 +53,7 @@ export interface WorkflowAppProps {
   renderMode: 'studio' | 'workflow';
 }
 
-const WorkflowApp: React.FC<WorkflowAppProps> = ({
+const WorkflowApp = ({
   workflow,
   refetchWorkflow,
   agents,
@@ -61,11 +61,11 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
   mcpInstances,
   tasks,
   renderMode,
-}) => {
+}: WorkflowAppProps) => {
   const isRunning = useAppSelector(selectWorkflowIsRunning);
   const currentTraceId = useAppSelector(selectWorkflowCurrentTraceId);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const workflowPollingRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const workflowPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const dispatch = useAppDispatch();
   const currentEvents = useAppSelector(selectCurrentEvents);
   const workflowState = useAppSelector(selectEditorWorkflow);
@@ -156,7 +156,9 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
   };
 
   const handleGenerateDescription = async () => {
-    if (!workflow) return;
+    if (!workflow) {
+      return;
+    }
 
     if (!defaultModel) {
       notificationApi.error({
@@ -278,7 +280,9 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
     };
 
     const startPolling = () => {
-      if (intervalRef.current) return; // Prevent duplicate polling
+      if (intervalRef.current) {
+        return;
+      } // Prevent duplicate polling
       intervalRef.current = setInterval(fetchEvents, 1000);
       setSliderValue(0);
       dispatch(updatedCrewOutput(undefined));
@@ -304,7 +308,9 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
   useEffect(() => {
     if (!workflow?.is_ready && refetchWorkflow) {
       const startWorkflowPolling = () => {
-        if (workflowPollingRef.current) return;
+        if (workflowPollingRef.current) {
+          return;
+        }
         workflowPollingRef.current = setInterval(refetchWorkflow, 2000);
       };
 
@@ -361,12 +367,16 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
   const workflowConfiguration = useAppSelector(selectWorkflowConfiguration);
 
   // Update the hasValidTools check to use workflowConfiguration from redux
-  const hasValidTools = React.useMemo(() => {
+  const hasValidTools = useMemo(() => {
     // Always return true if in workflow mode
-    if (renderMode === 'workflow') return true;
+    if (renderMode === 'workflow') {
+      return true;
+    }
 
     // Otherwise do the normal validation
-    if (!workflow) return true;
+    if (!workflow) {
+      return true;
+    }
     return hasValidToolConfiguration(
       workflow.workflow_id,
       agents,
@@ -381,7 +391,9 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
     toolInstances: ToolInstance[] | undefined,
     workflowId: string | undefined,
   ) => {
-    if (!agents || !toolInstances || !workflowId) return [];
+    if (!agents || !toolInstances || !workflowId) {
+      return [];
+    }
 
     const invalidTools: { name: string; status: string }[] = [];
 

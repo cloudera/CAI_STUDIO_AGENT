@@ -48,7 +48,9 @@ const ToolViewOrEdit: React.FC<ToolViewOrEditProps> = ({
   }, [toolDetails]);
 
   const handleFileUpload = async (file: File) => {
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     // Validate file type
     const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];

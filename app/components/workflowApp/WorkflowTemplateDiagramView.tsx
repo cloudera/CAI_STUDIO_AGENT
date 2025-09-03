@@ -15,7 +15,7 @@ interface WorkflowTemplateDiagramViewProps {
   template: WorkflowTemplateMetadata;
 }
 
-const WorkflowTemplateDiagramView: React.FC<WorkflowTemplateDiagramViewProps> = ({ template }) => {
+const WorkflowTemplateDiagramView = ({ template }: WorkflowTemplateDiagramViewProps) => {
   const { data: agentTemplates, isLoading: agentsLoading } = useListAgentTemplatesQuery({
     workflow_template_id: template.id,
   });

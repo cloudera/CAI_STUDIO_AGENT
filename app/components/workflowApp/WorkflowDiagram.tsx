@@ -142,7 +142,9 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
   // Callback for editing manager agent - only in studio mode
   const handleEditManager = useCallback(
     (_agent: AgentMetadata) => {
-      if (renderMode !== 'studio') return;
+      if (renderMode !== 'studio') {
+        return;
+      }
       // Clear any existing task editing state to prevent conflicts
       dispatch(clearEditorTaskEditingState());
       // Clear any existing agent view state to prevent conflicts
@@ -155,7 +157,9 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
   // Callback for editing task - only in studio mode
   const handleEditTask = useCallback(
     (task: CrewAITaskMetadata) => {
-      if (renderMode !== 'studio') return;
+      if (renderMode !== 'studio') {
+        return;
+      }
       // Clear any existing manager modal state to prevent conflicts
       setIsManagerModalOpen(false);
       // Set the editor step to Tasks
@@ -306,7 +310,9 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
 
   // Update diagram if any relevant agent/task/tool/mcp info changes
   useEffect(() => {
-    if (!workflowState.workflowId) return;
+    if (!workflowState.workflowId) {
+      return;
+    }
     const newSignature = getDiagramDataSignature({
       agents,
       tasks,
@@ -405,7 +411,9 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
 
   // Process events for active/highlight state
   const processedState = useMemo(() => {
-    if (!events || events.length === 0) return { activeNodes: [] };
+    if (!events || events.length === 0) {
+      return { activeNodes: [] };
+    }
     return processEvents(
       events,
       agents || [],

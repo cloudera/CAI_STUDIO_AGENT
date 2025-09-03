@@ -13,6 +13,19 @@ import { useWorkflowDiagramContext } from '../workflowApp/WorkflowDiagram';
 
 const { Paragraph } = Typography;
 
+const infoMessages = {
+  LLMCall: 'Calling LLM...',
+  ToolOutput: 'Tool Use Complete...',
+  ToolInput: 'Using Tool...',
+  TaskStart: 'Starting a Task...',
+  Completion: 'Thinking...',
+  FailedCompletion: 'Failed LLM Call...',
+  Delegate: 'Delegating...',
+  EndDelegate: 'Done Delegating...',
+  AskCoworker: 'Asking a coworker...',
+  EndAskCoworker: 'Done Asking a coworker...',
+};
+
 type AgentNode = Node<
   {
     name: string;
@@ -157,27 +170,8 @@ export default function AgentNode({ data }: NodeProps<AgentNode>) {
             >
               {isHovered
                 ? data.info
-                : data.infoType === 'LLMCall'
-                  ? 'Calling LLM...'
-                  : data.infoType === 'ToolOutput'
-                    ? 'Tool Use Complete...'
-                    : data.infoType === 'ToolInput'
-                      ? 'Using Tool...'
-                      : data.infoType === 'TaskStart'
-                        ? 'Starting a Task...'
-                        : data.infoType === 'Completion'
-                          ? 'Thinking...'
-                          : data.infoType === 'FailedCompletion'
-                            ? 'Failed LLM Call...'
-                            : data.infoType === 'Delegate'
-                              ? 'Delegating...'
-                              : data.infoType === 'EndDelegate'
-                                ? 'Done Delegating...'
-                                : data.infoType === 'AskCoworker'
-                                  ? 'Asking a coworker...'
-                                  : data.infoType === 'EndAskCoworker'
-                                    ? 'Done Asking a coworker...'
-                                    : 'Unknown...'}
+                : (data?.infoType && infoMessages[data.infoType as keyof typeof infoMessages]) ||
+                  'Unknown...'}
             </Paragraph>
           </NodeToolbar>
         </>

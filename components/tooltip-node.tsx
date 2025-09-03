@@ -5,7 +5,7 @@ import {
   NodeToolbar,
   NodeToolbarProps,
   Handle,
-  Position,
+  Position
 } from "@xyflow/react";
 import { BaseNode } from "@/components/base-node";
 

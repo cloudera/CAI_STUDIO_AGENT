@@ -107,7 +107,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId 
   const [toolParams, setToolParams] = useState<{ [key: string]: string }>({});
   const [logs, setLogs] = useState<any[]>([]);
   const [isTesting, setIsTesting] = useState(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [testToolInstance] = useTestToolInstanceMutation();
   const [getEvents] = useGetEventsMutation();
   const [deleteToolInstance] = useRemoveToolInstanceMutation();
@@ -249,7 +249,9 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId 
   const selectedTool = toolTemplates.find((tool) => tool.id === selectedToolTemplate);
 
   const handleFileUpload = async (file: File) => {
-    if (!file) return;
+    if (!file) {
+      return;
+    }
     const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
     if (!validTypes.includes(file.type)) {
       notificationApi.error({
@@ -302,7 +304,9 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId 
   };
 
   const handleRefresh = async () => {
-    if (!selectedToolInstance) return;
+    if (!selectedToolInstance) {
+      return;
+    }
 
     setIsRefreshing(true);
     try {
@@ -324,10 +328,14 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId 
   };
 
   const handleUpdateToolInstance = async () => {
-    if (!selectedToolInstance) return;
+    if (!selectedToolInstance) {
+      return;
+    }
 
     const toolInstance = toolInstancesMap[selectedToolInstance];
-    if (!toolInstance) return;
+    if (!toolInstance) {
+      return;
+    }
 
     try {
       await updateToolInstance({
@@ -455,7 +463,9 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId 
 
   const renderToolInstance = (toolInstanceId: string) => {
     const toolInstance = toolInstancesMap[toolInstanceId];
-    if (!toolInstance) return null;
+    if (!toolInstance) {
+      return null;
+    }
 
     // Find the corresponding tool template to get the image URI if needed
     const toolTemplate = toolTemplates.find((t) => t.id === toolInstance.tool_template_id);
@@ -551,7 +561,9 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId 
 
   const renderToolInstanceDetails = () => {
     const toolInstance = toolInstancesMap[selectedToolInstance || ''];
-    if (!toolInstance) return null;
+    if (!toolInstance) {
+      return null;
+    }
 
     const toolMetadata: {
       user_params_metadata?: Record<string, { required: boolean }>;
