@@ -17,7 +17,7 @@ from .manager.planning_decision import build_decision_messages, parse_decision_r
 from .manager.planning_generate import build_planning_messages, extract_json_obj as extract_plan_json, valid_plan_schema
 from .manager.planning_evaluation import build_eval_messages, parse_eval_result, valid_eval_schema
 from .manager.plan_injection import build_plan_block
-from .manager.state_context import read_state_entries, build_assistant_messages_from_entries, insert_before_first_user, insert_after_first_user, split_conversation_entries, build_any_entries_up_to_last_conversation
+from .manager.state_context import read_state_entries, build_assistant_messages_from_entries, insert_before_first_user, insert_after_first_user, split_conversation_entries, build_any_entries_up_to_last_conversation, build_all_entries_only_last_conversation
 from .manager.notes import build_status_note
 from .utils.messages import (
     sanitize_messages as _sanitize_messages_util,
@@ -102,11 +102,11 @@ class AgentStudioCrewAILLM(LLM):
     ) -> Any:
         sanitized_messages = self._sanitize_messages(messages)
         try:
-            # Mirror manager wrapper: include ONLY past context up to last conversation, inserted before first user
+            # Assistant LLM call: include last conversation and EVERYTHING else except Agent Studio (OLD before it, NEW after it)
             entries = read_state_entries(self.session_directory) if self.session_directory else []
-            past_msgs = build_any_entries_up_to_last_conversation(entries)
-            if past_msgs:
-                sanitized_messages = insert_before_first_user(sanitized_messages, past_msgs)
+            all_msgs = build_all_entries_only_last_conversation(entries)
+            if all_msgs:
+                sanitized_messages = insert_before_first_user(sanitized_messages, all_msgs)
         except Exception:
             pass
 
