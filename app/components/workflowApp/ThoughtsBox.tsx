@@ -12,6 +12,8 @@ import {
   VideoCameraOutlined,
   AudioOutlined,
   DatabaseOutlined,
+  ToolOutlined,
+  UserOutlined,
   RightOutlined,
   DownOutlined,
   LoadingOutlined,
@@ -289,7 +291,15 @@ const ThoughtsBox: React.FC<ThoughtsBoxProps> = ({
               <div style={{ fontSize: 10, opacity: 0.8, color: '#000' }}>No thoughts yet…</div>
             )}
             {entries.map((entry) => {
-              const paddingLeft = Math.max(0, (entry.indentationLevel ?? 0) * 16);
+              let paddingLeft = 0;
+              if (entry.type === 'coworker') {
+                // 1x indentation for coworker tab
+                paddingLeft = 16;
+              } else if (entry.type === 'tool' || entry.type === 'thought') {
+                // 2x indentation for coworker thoughts and tools when nested
+                const isNested = (entry.indentationLevel ?? 0) > 0;
+                paddingLeft = isNested ? 32 : 0;
+              }
               return (
                 <div key={entry.id} style={{ marginBottom: 6, paddingLeft, width: '100%', minWidth: 0 }}>
                   {entry.type === 'thought' && entry.thought && (
@@ -309,9 +319,15 @@ const ThoughtsBox: React.FC<ThoughtsBoxProps> = ({
                           height: 18,
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: 6,
+                          gap: 4,
                         }}
                       >
+                        {entry.type === 'coworker' && (
+                          <UserOutlined style={{ fontSize: 12, color: '#722ed1' }} />
+                        )}
+                        {entry.type === 'tool' && (
+                          <ToolOutlined style={{ fontSize: 12, color: '#d4b106' }} />
+                        )}
                         <span>{entry.name}</span>
                         {entry.status === 'in_progress' && (
                           <LoadingOutlined style={{ fontSize: 12 }} spin />

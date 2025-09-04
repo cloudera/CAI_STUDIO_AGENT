@@ -57,7 +57,7 @@ const HomePage: React.FC = () => {
   // Render workflow app.
   if (wflowData.renderMode === 'workflow') {
     return (
-      <Layout className="p-[36px] flex flex-col">
+      <Layout className="p-[36px] pt-[11px] flex flex-col">
         <WorkflowAppDeployed workflowData={wflowData} />
       </Layout>
     );

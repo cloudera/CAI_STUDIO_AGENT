@@ -852,7 +852,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
       <Layout ref={containerRef} className="flex-1 flex flex-row bg-white rounded relative" style={{ overflowX: 'hidden' }}>
         {/* Left side - Workflow Inputs */}
         <Layout
-          className={`bg-transparent flex-col flex-shrink-0 h-full transition-all duration-300 ease-in-out p-4`}
+          className={`bg-transparent flex-col flex-shrink-0 h-full transition-all duration-300 ease-in-out ${renderMode === 'workflow' ? 'pt-0 pr-4 pb-4 pl-4' : 'p-4'}`}
           style={{ width: showMonitoring ? `${leftWidthPct}%` : '100%', overflowX: 'hidden' }}
         >
           <Collapse

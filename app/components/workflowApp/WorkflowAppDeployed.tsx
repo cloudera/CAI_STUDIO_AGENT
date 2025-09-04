@@ -24,12 +24,20 @@ interface WorkflowAppDeployedHeaderProps {
 const WorkflowAppDeployedHeader: React.FC<WorkflowAppDeployedHeaderProps> = ({ workflowData }) => {
   return (
     <Layout className="bg-transparent p-0 mb-[12px] flex flex-row items-center justify-between flex-none">
-      <Title level={1} ellipsis className="flex-grow">
+      <Title
+        level={1}
+        ellipsis
+        className="flex-grow"
+        style={{ margin: 0, fontSize: 19 }}
+      >
         {workflowData.workflow.name}
       </Title>
-      <Layout className="bg-[#132329] opacity-70 rounded flex flex-col justify-center items-center flex-none p-[12px]">
-        <Text className="font-sans text-white text-[12px] font-extralight">built with</Text>
-        <Text className="font-sans text-white text-[16px] font-extralight">
+      <Layout
+        className="bg-[#132329] opacity-70 rounded flex flex-col justify-center items-center flex-none"
+        style={{ padding: 7 }}
+      >
+        <Text className="font-sans text-white text-[7px] font-extralight">built with</Text>
+        <Text className="font-sans text-white text-[10px] font-extralight">
           Cloudera <b>Agent Studio</b>
         </Text>
       </Layout>

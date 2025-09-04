@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
-import { Input, Button, Avatar, Layout, Spin, Menu, Dropdown, Tag } from 'antd';
+import { Input, Button, Avatar, Layout, Spin, Menu, Dropdown, Tag, Modal, Slider, InputNumber } from 'antd';
 import {
   UserOutlined,
   SendOutlined,
   DownloadOutlined,
   ClearOutlined,
   MoreOutlined,
+  SettingOutlined,
   FileOutlined,
   FilePdfOutlined,
   FileImageOutlined,
@@ -90,6 +91,27 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   const dispatch = useAppDispatch();
   const [previewVisible, setPreviewVisible] = useState<boolean>(false);
   const [selectedFile, setSelectedFile] = useState<ArtifactFileInfo | null>(null);
+  const [settingsVisible, setSettingsVisible] = useState<boolean>(false);
+  const [fontScalePercent, setFontScalePercent] = useState<number>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const stored = window.localStorage.getItem('chatFontScalePercent');
+        const parsed = stored ? parseInt(stored, 10) : 100;
+        if (!Number.isNaN(parsed) && parsed >= 50 && parsed <= 200) return parsed;
+      }
+    } catch {}
+    return 100;
+  });
+
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('chatFontScalePercent', String(fontScalePercent));
+      }
+    } catch {}
+  }, [fontScalePercent]);
+
+  const fontScale = Math.max(50, Math.min(200, fontScalePercent)) / 100;
 
   // Combine artifacts available via Redux session files with server directory listing for robust lookup
   const [availableArtifacts, setAvailableArtifacts] = useState<Record<string, ArtifactFileInfo>>(
@@ -444,6 +466,10 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
         <DownloadOutlined className="mr-2" />
         Log Bundle
       </Menu.Item>
+      <Menu.Item key="settings" onClick={() => setSettingsVisible(true)}>
+        <SettingOutlined className="mr-2" />
+        Chat setting
+      </Menu.Item>
     </Menu>
   );
 
@@ -486,6 +512,31 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
         file={selectedFile}
         onClose={() => setPreviewVisible(false)}
       />
+      <Modal
+        open={settingsVisible}
+        title="Chat Settings"
+        onCancel={() => setSettingsVisible(false)}
+        onOk={() => setSettingsVisible(false)}
+        okText="Close"
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 140 }}>Font Size (%)</div>
+          <Slider
+            min={50}
+            max={200}
+            step={5}
+            value={fontScalePercent}
+            onChange={(v) => setFontScalePercent(Array.isArray(v) ? v[0] : (v as number))}
+            style={{ flex: 1 }}
+          />
+          <InputNumber
+            min={50}
+            max={200}
+            value={fontScalePercent}
+            onChange={(v) => setFontScalePercent(typeof v === 'number' ? v : 100)}
+          />
+        </div>
+      </Modal>
       <div
         style={{
           flex: 1,
@@ -493,6 +544,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
           overflowX: 'hidden',
           marginBottom: '16px',
           position: 'relative',
+          zoom: fontScale,
         }}
       >
         {messages.length === 0 && (
@@ -524,7 +576,18 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                 <Spin size="small" />
               </div>
             ) : message.role === 'assistant' ? (
-              <Layout className="bg-white rounded-lg max-w-[95%] relative shadow" style={{ overflowX: 'hidden' }}>
+              <Layout
+                className="bg-white relative"
+                style={{
+                  overflowX: 'hidden',
+                  border: '1px solid #e8e8e8',
+                  boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
+                  borderRadius: 6,
+                  width: '100%',
+                  minWidth: 0,
+                  flex: 1,
+                }}
+              >
                 <Button
                   type="text"
                   icon={<DownloadOutlined />}
