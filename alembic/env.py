@@ -59,10 +59,14 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
+    from studio.db.dao import get_sqlite_db_location
+    db_location = get_sqlite_db_location()
+    url = f"sqlite:///{db_location}"
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        url=url,
     )
 
     with connectable.connect() as connection:
