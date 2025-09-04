@@ -149,13 +149,13 @@ export default function AgentNode({ data }: NodeProps<AgentNode>) {
         <>
           <NodeToolbar
             isVisible={true}
-            className="rounded-sm bg-primary p-2 text-primary-foreground"
+            className="rounded-sm p-2 text-primary-foreground"
             position={Position.Top}
             tabIndex={1}
             style={{
               maxWidth: 500,
               opacity: 0.8,
-              backgroundColor: '#1890ff',
+              backgroundColor: '#78b2ff',
             }}
           >
             <Paragraph

@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { Button, Typography, Layout, Alert, Dropdown, Space, MenuProps, Modal, Spin } from 'antd';
+import { Button, Typography, Layout, Alert, Dropdown, Space, MenuProps, Modal } from 'antd';
 import { useParams, useSearchParams } from 'next/navigation';
 import CommonBreadCrumb from '@/app/components/CommonBreadCrumb';
 import { useRouter } from 'next/navigation';
@@ -14,6 +14,7 @@ import {
 } from '../../mcpTemplatesApi';
 import McpTemplateView from '@/app/components/McpTemplateView';
 import { useImageAssetsData } from '@/app/lib/hooks/useAssetData';
+import LargeCenterSpin from '@/app/components/common/LargeCenterSpin';
 const { Title } = Typography;
 
 const DeleteMcpTemplateModal: React.FC<{
@@ -75,11 +76,7 @@ const McpTemplateViewPage: React.FC = () => {
   }
 
   if (isMcpTemplateLoading) {
-    return (
-      <Layout className="flex justify-center items-center h-screen">
-        <Spin size="large" />
-      </Layout>
-    );
+    return <LargeCenterSpin message="Loading MCP template..." />;
   }
 
   if (!mcpTemplate) {

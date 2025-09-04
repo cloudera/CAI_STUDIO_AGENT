@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Layout } from 'antd';
 import WorkflowEditorAgentView from '@/app/components/workflowEditor/WorkflowEditorAgentView';
 import { useAppSelector, useAppDispatch } from '@/app/lib/hooks/hooks';
@@ -37,6 +37,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({ workflowId }) => {
   const dispatch = useAppDispatch();
   const [getWorkflow] = useGetWorkflowMutation();
   const [updateWorkflow] = useUpdateWorkflowMutation();
+  const [isInitializing, setIsInitializing] = useState(true);
 
   // Clear the existing workflow app upon component mount. Note: the "Workflow App"
   // in the context of the workflow editor is just the Test page.
@@ -49,25 +50,30 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({ workflowId }) => {
     // Initially populate the redux editor state with this workflow. Also
     // preset all workflow configurations, which are stored in local storage.
     const populateWorkflowEditor = async (workflowId: string) => {
+      setIsInitializing(true);
       // Update aspects about our workflow to redux.
-      const workflow: Workflow = await getWorkflow({ workflow_id: workflowId }).unwrap();
-      dispatch(updatedEditorWorkflowFromExisting(workflow));
+      try {
+        const workflow: Workflow = await getWorkflow({ workflow_id: workflowId }).unwrap();
+        dispatch(updatedEditorWorkflowFromExisting(workflow));
 
-      // Load workflow configuration from local storage.
-      const workflowConfiguration = readWorkflowConfigurationFromLocalStorage(workflowId);
+        // Load workflow configuration from local storage.
+        const workflowConfiguration = readWorkflowConfigurationFromLocalStorage(workflowId);
 
-      // Initialize redux state with this configuration.
-      dispatch(updatedWorkflowConfiguration(workflowConfiguration));
+        // Initialize redux state with this configuration.
+        dispatch(updatedWorkflowConfiguration(workflowConfiguration));
 
-      // Send one update workflow request to ensure that the workflow is in a
-      // valid state and trigger tool venv updates.
-      await updateWorkflow({
-        workflow_id: workflowId,
-        name: workflow.name,
-        description: workflow.description,
-        is_conversational: workflow.is_conversational,
-        crew_ai_workflow_metadata: workflow.crew_ai_workflow_metadata,
-      }).unwrap();
+        // Send one update workflow request to ensure that the workflow is in a
+        // valid state and trigger tool venv updates.
+        await updateWorkflow({
+          workflow_id: workflowId,
+          name: workflow.name,
+          description: workflow.description,
+          is_conversational: workflow.is_conversational,
+          crew_ai_workflow_metadata: workflow.crew_ai_workflow_metadata,
+        }).unwrap();
+      } finally {
+        setIsInitializing(false);
+      }
     };
 
     // Only configure if we have a valid workflow ID.
@@ -78,7 +84,11 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({ workflowId }) => {
 
   // If we don't have a workflow ID, we can't render the workflow editor.
   if (!workflowId) {
-    return <LargeCenterSpin />;
+    return <LargeCenterSpin message="Loading editor..." />;
+  }
+
+  if (isInitializing) {
+    return <LargeCenterSpin message="Loading editor..." />;
   }
 
   /**

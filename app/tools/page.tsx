@@ -21,22 +21,32 @@ import {
   useListGlobalMcpTemplatesQuery,
 } from '../mcp/mcpTemplatesApi';
 import MCPTemplateList from '../components/MCPTemplateList';
+import LargeCenterSpin from '../components/common/LargeCenterSpin';
 const { Text } = Typography;
 const { TabPane } = Tabs;
 
 const ToolsTabContent = () => {
-  const { data: tools } = useListGlobalToolTemplatesQuery({});
+  const {
+    data: tools,
+    isLoading: isToolsLoading,
+    isFetching: _isToolsFetching,
+  } = useListGlobalToolTemplatesQuery({});
   const [removeToolTemplate] = useRemoveToolTemplateMutation();
   const [addToolTemplate] = useAddToolTemplateMutation();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, _setSearchQuery] = useState('');
+  const [creatingTool, setCreatingTool] = useState(false);
 
   const notificationApi = useGlobalNotification();
   const router = useRouter();
 
   const handleGenerateToolTemplate = async (toolName: string) => {
+    if (creatingTool) {
+      return;
+    }
     try {
+      setCreatingTool(true);
       notificationApi.info({
         message: 'Adding Tool Template',
         description: 'Creating tool template...',
@@ -74,6 +84,8 @@ const ToolsTabContent = () => {
         description: errorMessage,
         placement: 'topRight',
       });
+    } finally {
+      setCreatingTool(false);
     }
   };
 
@@ -110,6 +122,10 @@ const ToolsTabContent = () => {
     tool.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
+  if (isToolsLoading) {
+    return <LargeCenterSpin message="Loading tools..." />;
+  }
+
   return (
     <>
       <Layout className="bg-white flex flex-row items-center justify-between flex-grow-0 p-4">
@@ -128,6 +144,8 @@ const ToolsTabContent = () => {
           className="ml-5 mr-4 mt-5 mb-5 flex items-center justify-center gap-2 flex-row-reverse"
           icon={<ArrowRightOutlined />}
           onClick={() => setIsModalOpen(true)}
+          loading={creatingTool}
+          disabled={creatingTool}
         >
           Create
         </Button>
@@ -142,6 +160,7 @@ const ToolsTabContent = () => {
         isOpen={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
         onGenerate={handleGenerateToolTemplate}
+        loading={creatingTool}
       />
     </>
   );
@@ -151,8 +170,13 @@ const MCPTabContent = () => {
   const [addMcpTemplate] = useAddMcpTemplateMutation();
   const [removeMcpTemplate] = useRemoveMcpTemplateMutation();
   const [shouldPoll, setShouldPoll] = useState(false);
+  const [creatingMcp, setCreatingMcp] = useState(false);
 
-  const { data: mcps } = useListGlobalMcpTemplatesQuery(
+  const {
+    data: mcps,
+    isLoading: isMcpsLoading,
+    isFetching: _isMcpsFetching,
+  } = useListGlobalMcpTemplatesQuery(
     {},
     {
       pollingInterval: shouldPoll ? 3000 : 0,
@@ -175,7 +199,11 @@ const MCPTabContent = () => {
     envNames: string[],
     iconPath: string,
   ) => {
+    if (creatingMcp) {
+      return;
+    }
     try {
+      setCreatingMcp(true);
       notificationApi.info({
         message: 'Adding MCP Template',
         description: 'Registering MCP template...',
@@ -212,6 +240,8 @@ const MCPTabContent = () => {
         description: errorMessage,
         placement: 'topRight',
       });
+    } finally {
+      setCreatingMcp(false);
     }
   };
 
@@ -236,6 +266,10 @@ const MCPTabContent = () => {
       });
     }
   };
+
+  if (isMcpsLoading) {
+    return <LargeCenterSpin message="Loading MCP servers..." />;
+  }
 
   return (
     <>
@@ -262,6 +296,8 @@ const MCPTabContent = () => {
           className="ml-5 mr-4 mt-5 mb-5 flex items-center justify-center gap-2 flex-row-reverse"
           icon={<ArrowRightOutlined />}
           onClick={() => setIsModalOpen(true)}
+          loading={creatingMcp}
+          disabled={creatingMcp}
         >
           Register
         </Button>
@@ -275,6 +311,7 @@ const MCPTabContent = () => {
         isOpen={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
         onRegister={handleRegisterMCP}
+        loading={creatingMcp}
       />
     </>
   );

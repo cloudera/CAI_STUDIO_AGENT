@@ -24,6 +24,7 @@ interface ToolViewOrEditProps {
   onSave: (updatedFields: Partial<any>) => void;
   onRefresh?: () => void;
   setParentPageToolName?: (name: string) => void;
+  saving?: boolean;
 }
 
 const ToolViewOrEdit: React.FC<ToolViewOrEditProps> = ({
@@ -32,6 +33,7 @@ const ToolViewOrEdit: React.FC<ToolViewOrEditProps> = ({
   onSave,
   onRefresh,
   setParentPageToolName,
+  saving = false,
 }) => {
   const [toolName, setToolName] = useState<string>(toolDetails?.name || '');
   const [uploadedFilePath, setUploadedFilePath] = useState<string>('');
@@ -212,7 +214,14 @@ const ToolViewOrEdit: React.FC<ToolViewOrEditProps> = ({
 
         {/* Save Button */}
         {mode === 'edit' && (
-          <Button type="primary" block onClick={handleSave} className="mt-auto">
+          <Button
+            type="primary"
+            block
+            onClick={handleSave}
+            className="mt-auto"
+            loading={saving}
+            disabled={saving}
+          >
             Save
           </Button>
         )}

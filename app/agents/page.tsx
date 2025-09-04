@@ -9,11 +9,12 @@ import AgentList from '../components/AgentList';
 import { useListGlobalAgentTemplatesQuery, useRemoveAgentTemplateMutation } from './agentApi';
 import CommonBreadCrumb from '../components/CommonBreadCrumb';
 import { useGlobalNotification } from '../components/Notifications';
+import LargeCenterSpin from '../components/common/LargeCenterSpin';
 
 const { Text } = Typography;
 
 const AgentsPage: React.FC = () => {
-  const { data: agentTemplates, refetch } = useListGlobalAgentTemplatesQuery();
+  const { data: agentTemplates, refetch, isLoading } = useListGlobalAgentTemplatesQuery();
   const [removeAgentTemplate] = useRemoveAgentTemplateMutation();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const notificationApi = useGlobalNotification();
@@ -57,6 +58,10 @@ const AgentsPage: React.FC = () => {
   const testAgentTemplate = (templateId: string) => {
     router.push(`/agents/test/${templateId}`);
   };
+
+  if (isLoading) {
+    return <LargeCenterSpin message="Loading agents..." />;
+  }
 
   return (
     <Layout className="flex flex-1 flex-col pt-4 px-6 pb-[22px]">
