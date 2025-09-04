@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Button, Typography, Layout, Alert, Spin, Dropdown, Space, MenuProps } from 'antd';
+import { Button, Typography, Layout, Alert, Dropdown, Space, MenuProps } from 'antd';
 import {
   DownOutlined,
   EditOutlined,
@@ -27,6 +27,7 @@ import {
   useListDeployedWorkflowsQuery,
   useUndeployWorkflowMutation,
 } from '@/app/workflows/deployedWorkflowsApi';
+import LargeCenterSpin from '@/app/components/common/LargeCenterSpin';
 
 const { Title } = Typography;
 
@@ -267,11 +268,7 @@ const WorkflowPage: React.FC = () => {
   }
 
   if (loading) {
-    return (
-      <Layout className="flex justify-center items-center h-screen">
-        <Spin size="large" />
-      </Layout>
-    );
+    return <LargeCenterSpin message="Loading workflow..." />;
   }
 
   if (error) {

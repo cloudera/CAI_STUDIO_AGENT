@@ -28,6 +28,7 @@ interface RegisterMCPTemplateModalProps {
     envNames: string[],
     iconPath: string,
   ) => void;
+  loading?: boolean;
 }
 
 interface MCPConfig {
@@ -46,6 +47,7 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
   isOpen,
   onCancel,
   onRegister,
+  loading = false,
 }) => {
   const [jsonInput, setJsonInput] = useState('');
   const [validationError, setValidationError] = useState<React.ReactNode>('');
@@ -323,6 +325,7 @@ const RegisterMCPTemplateModal: React.FC<RegisterMCPTemplateModalProps> = ({
       onOk={handleRegister}
       okText="Register"
       cancelText="Cancel"
+      confirmLoading={loading}
       okButtonProps={{ disabled: !isValid }}
     >
       <div className="flex flex-col gap-4">

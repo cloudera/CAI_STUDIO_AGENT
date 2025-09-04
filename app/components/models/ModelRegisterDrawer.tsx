@@ -68,6 +68,7 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
   const [drawerMode, setDrawerMode] = useState<'register' | 'edit'>('register');
   // Add notification API
   const notificationsApi = useGlobalNotification();
+  const [submitting, setSubmitting] = useState(false);
 
   // If editing an existing model, populate the fields with existing model
   // information whenever the model ID field changes.
@@ -87,7 +88,11 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
   }, [modelRegisterId]);
 
   const onSubmit = async (_values: any) => {
+    if (submitting) {
+      return;
+    }
     try {
+      setSubmitting(true);
       if (drawerMode === 'edit') {
         if (!modelRegisterId) {
           throw new Error('Model ID not specified for updating model.');
@@ -173,6 +178,8 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
         description: errorMessage,
         placement: 'topRight',
       });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -270,7 +277,13 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
         <div className="flex justify-between items-center">
           <span>{drawerMode === 'edit' ? 'Edit Model' : 'Register Model'}</span>
           {(drawerMode === 'register' || drawerMode === 'edit') && (
-            <Button type="primary" htmlType="submit" onClick={onSubmit}>
+            <Button
+              type="primary"
+              htmlType="submit"
+              onClick={onSubmit}
+              loading={submitting}
+              disabled={submitting}
+            >
               {drawerMode === 'edit' ? 'Save Changes' : 'Register'}
             </Button>
           )}

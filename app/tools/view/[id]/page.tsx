@@ -23,15 +23,17 @@ const DeleteToolModal: React.FC<{
   onClose: () => void;
   toolDetails: ToolTemplate | null;
   onDelete: () => Promise<void>;
-}> = ({ isOpen, onClose, toolDetails, onDelete }) => {
+  deleting?: boolean;
+}> = ({ isOpen, onClose, toolDetails, onDelete, deleting = false }) => {
   return (
     <Modal
       title={`Are you sure you'd like to delete ${toolDetails?.name}?`}
       open={isOpen}
       onCancel={onClose}
       okText="Delete"
-      okButtonProps={{ danger: true }}
+      okButtonProps={{ danger: true, loading: deleting }}
       cancelText="Cancel"
+      confirmLoading={deleting}
       onOk={onDelete}
     />
   );
@@ -54,6 +56,8 @@ const ToolViewPage: React.FC = () => {
   const notificationApi = useGlobalNotification(); // Using global notification
   const [toolImageData, setToolImageData] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const { imageData } = useImageAssetsData(toolDetails ? [toolDetails.tool_image_uri] : []);
 
@@ -92,16 +96,12 @@ const ToolViewPage: React.FC = () => {
   }, [isEditMode, toolId, getTool, notificationApi]);
 
   const handleSave = async (updatedFields: Partial<any>) => {
-    if (!toolId) {
-      notificationApi.error({
-        message: 'Error',
-        description: 'Tool ID is not available.',
-        placement: 'topRight',
-      });
+    if (!toolId || saving) {
       return;
     }
 
     try {
+      setSaving(true);
       notificationApi.info({
         message: 'Updating Tool',
         description: 'Updating tool details...',
@@ -121,6 +121,7 @@ const ToolViewPage: React.FC = () => {
       });
 
       router.push('/tools?section=tools'); // Redirect to /tools page
+      return;
     } catch (err: any) {
       const errorMessage = err.data?.error || err.message || 'Failed to update the tool.';
       notificationApi.error({
@@ -128,13 +129,18 @@ const ToolViewPage: React.FC = () => {
         description: errorMessage,
         placement: 'topRight',
       });
+      setSaving(false);
     }
   };
 
   const handleRefresh = () => fetchToolDetails(false);
 
   const handleDelete = async () => {
+    if (deleting) {
+      return;
+    }
     try {
+      setDeleting(true);
       await removeToolTemplate({ tool_template_id: toolId || '' }).unwrap();
       notificationApi.success({
         message: 'Success',
@@ -149,6 +155,8 @@ const ToolViewPage: React.FC = () => {
         description: err.message || 'Failed to delete tool',
         placement: 'topRight',
       });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -265,6 +273,7 @@ const ToolViewPage: React.FC = () => {
           onSave={handleSave}
           onRefresh={handleRefresh}
           setParentPageToolName={setToolName}
+          saving={saving}
         />
       </Layout>
       <DeleteToolModal
@@ -272,6 +281,7 @@ const ToolViewPage: React.FC = () => {
         onClose={() => setIsDeleteModalOpen(false)}
         toolDetails={toolDetails}
         onDelete={handleDelete}
+        deleting={deleting}
       />
     </Layout>
   );

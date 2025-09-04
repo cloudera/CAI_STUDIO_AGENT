@@ -2,9 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import Content from 'antd/lib/layout';
-import { Spin } from 'antd';
-import { LoadingOutlined } from '@ant-design/icons';
 import { useGetOpsDataQuery } from '../ops/opsApi';
+import LargeCenterSpin from './common/LargeCenterSpin';
 
 const OpsIFrame: React.FC = () => {
   const { data: opsData, isLoading } = useGetOpsDataQuery();
@@ -16,7 +15,6 @@ const OpsIFrame: React.FC = () => {
     }
   }, [opsData]);
 
-  const loadingIndicator = <LoadingOutlined className="text-[48px]" spin />;
   return (
     <Content className="flex flex-col justify-center items-center overflow-hidden flex-1 w-full">
       {!isLoading ? (
@@ -28,7 +26,7 @@ const OpsIFrame: React.FC = () => {
           />
         </div>
       ) : (
-        <Spin indicator={loadingIndicator} />
+        <LargeCenterSpin message="Loading ops..." />
       )}
     </Content>
   );

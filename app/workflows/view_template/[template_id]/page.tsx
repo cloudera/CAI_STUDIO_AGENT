@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Button, Typography, Layout, Alert, Spin, Dropdown, Space, MenuProps } from 'antd';
+import { Button, Typography, Layout, Alert, Dropdown, Space, MenuProps } from 'antd';
 import {
   DownOutlined,
   DeleteOutlined,
@@ -22,6 +22,7 @@ import DeleteWorkflowModal from '@/app/components/workflows/DeleteWorkflowModal'
 import { useGlobalNotification } from '@/app/components/Notifications';
 import { useRemoveWorkflowTemplateMutation } from '@/app/workflows/workflowsApi';
 import { downloadAndSaveFile } from '@/app/lib/fileDownload';
+import LargeCenterSpin from '@/app/components/common/LargeCenterSpin';
 
 const { Title } = Typography;
 
@@ -154,11 +155,7 @@ const WorkflowTemplateContent: React.FC<WorkflowTemplateContentProps> = ({ templ
   ];
 
   if (loading) {
-    return (
-      <Layout className="flex justify-center items-center h-screen">
-        <Spin size="large" />
-      </Layout>
-    );
+    return <LargeCenterSpin message="Loading template..." />;
   }
 
   if (error) {

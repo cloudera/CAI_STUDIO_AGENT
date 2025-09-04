@@ -17,6 +17,7 @@ import {
   useTestModelMutation,
   useSetDefaultModelMutation,
 } from '@/app/models/modelsApi';
+import LargeCenterSpin from '../common/LargeCenterSpin';
 import { useGlobalNotification } from '../Notifications';
 import {
   setIsRegisterDrawerOpen,
@@ -32,7 +33,7 @@ import { asyncTestModelWithRetry } from '@/app/models/utils';
 interface ModelListProps {}
 
 const ModelList: React.FC<ModelListProps> = ({}) => {
-  const { data: models } = useListModelsQuery({});
+  const { data: models, isLoading } = useListModelsQuery({});
   const [removeModel] = useRemoveModelMutation();
   const [setDefaultModel] = useSetDefaultModelMutation();
   const [testModel] = useTestModelMutation();
@@ -213,6 +214,10 @@ const ModelList: React.FC<ModelListProps> = ({}) => {
       ),
     },
   ];
+
+  if (isLoading) {
+    return <LargeCenterSpin message="Loading models..." />;
+  }
 
   return (
     <Table columns={columns} dataSource={models} rowKey="model_id" pagination={{ pageSize: 5 }} />

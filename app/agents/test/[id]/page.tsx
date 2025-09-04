@@ -11,6 +11,7 @@ import { useParams } from 'next/navigation';
 import { useTestAgentMutation, useGetAgentQuery } from '@/app/agents/agentApi';
 import OpsIFrame from '@/app/components/OpsIFrame';
 import CommonBreadCrumb from '@/app/components/CommonBreadCrumb';
+import LargeCenterSpin from '@/app/components/common/LargeCenterSpin';
 const { Content } = Layout;
 
 // Removed unused MarkdownContent component
@@ -86,6 +87,10 @@ const TestAgentPage: React.FC = () => {
       setError(e.message || 'Failed to test the agent.');
     }
   };
+
+  if (fetchingAgent && !agentData) {
+    return <LargeCenterSpin message="Loading agent..." />;
+  }
 
   return (
     <Layout className="px-6 py-4 flex flex-col">

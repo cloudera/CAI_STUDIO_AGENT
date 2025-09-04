@@ -24,16 +24,18 @@ import WorkflowGetStartModal from '../components/workflows/WorkflowGetStartModal
 import { clearedWorkflowApp } from './workflowAppSlice';
 
 import ContentWithHealthCheck from '../components/ContentWithHealthCheck';
+import LargeCenterSpin from '../components/common/LargeCenterSpin';
 
 const { Text } = Typography;
 
 const WorkflowsPageContent: React.FC = () => {
-  const { data: workflows } = useListWorkflowsQuery({}, { refetchOnMountOrArgChange: true });
-  const { data: deployedWorkflowInstances } = useListDeployedWorkflowsQuery(
+  const { data: workflows, isLoading: isWorkflowsLoading } = useListWorkflowsQuery(
     {},
-    { pollingInterval: 10000 },
+    { refetchOnMountOrArgChange: true },
   );
-  const { data: workflowTemplates } = useListWorkflowTemplatesQuery(
+  const { data: deployedWorkflowInstances, isLoading: isDeployedLoading } =
+    useListDeployedWorkflowsQuery({}, { pollingInterval: 10000 });
+  const { data: workflowTemplates, isLoading: isTemplatesLoading } = useListWorkflowTemplatesQuery(
     {},
     { refetchOnMountOrArgChange: true },
   );
@@ -53,15 +55,24 @@ const WorkflowsPageContent: React.FC = () => {
   const [addWorkflow] = useAddWorkflowMutation();
   const notificationApi = useGlobalNotification();
   const [isGetStartModalVisible, setGetStartModalVisible] = useState(false);
+  const [creatingWorkflow, setCreatingWorkflow] = useState(false);
+
+  if (isWorkflowsLoading || isDeployedLoading || isTemplatesLoading) {
+    return <LargeCenterSpin message="Loading workflows..." />;
+  }
 
   const handleGetStarted = () => {
     setGetStartModalVisible(true);
   };
 
   const handleCreateWorkflow = async (name: string, templateId?: string) => {
+    if (creatingWorkflow) {
+      return;
+    }
     dispatch(resetEditor());
     dispatch(clearedWorkflowApp());
     try {
+      setCreatingWorkflow(true);
       const workflowId = await addWorkflow({
         name,
         workflow_template_id: templateId || undefined,
@@ -81,6 +92,8 @@ const WorkflowsPageContent: React.FC = () => {
         description: 'Failed to create workflow.',
         placement: 'topRight',
       });
+    } finally {
+      setCreatingWorkflow(false);
     }
   };
 
@@ -255,6 +268,8 @@ const WorkflowsPageContent: React.FC = () => {
             className="ml-5 mr-4 my-5 flex items-center justify-center gap-2 flex-row-reverse"
             icon={<ArrowRightOutlined />}
             onClick={handleGetStarted}
+            loading={creatingWorkflow}
+            disabled={creatingWorkflow}
           >
             Create
           </Button>
@@ -292,6 +307,7 @@ const WorkflowsPageContent: React.FC = () => {
         onCancel={() => setGetStartModalVisible(false)}
         onCreateWorkflow={handleCreateWorkflow}
         workflowTemplates={workflowTemplates || []}
+        loading={creatingWorkflow}
       />
     </Layout>
   );

@@ -327,6 +327,7 @@ interface WorkflowGetStartModalProps {
   onCancel: () => void;
   onCreateWorkflow: (name: string, templateId?: string) => void;
   workflowTemplates: WorkflowTemplateMetadata[];
+  loading?: boolean;
 }
 
 const WorkflowGetStartModal: React.FC<WorkflowGetStartModalProps> = ({
@@ -334,6 +335,7 @@ const WorkflowGetStartModal: React.FC<WorkflowGetStartModalProps> = ({
   onCancel,
   onCreateWorkflow,
   workflowTemplates,
+  loading = false,
 }) => {
   const [form] = Form.useForm();
   const [selectedTemplate, setSelectedTemplate] = useState<WorkflowTemplateMetadata | null>(null);
@@ -353,10 +355,16 @@ const WorkflowGetStartModal: React.FC<WorkflowGetStartModalProps> = ({
       width="98%"
       className="!h-[95vh] !p-0"
       footer={[
-        <Button key="cancel" onClick={onCancel}>
+        <Button key="cancel" onClick={onCancel} disabled={loading}>
           Cancel
         </Button>,
-        <Button key="create" type="primary" onClick={handleCreateWorkflow}>
+        <Button
+          key="create"
+          type="primary"
+          onClick={handleCreateWorkflow}
+          loading={loading}
+          disabled={loading}
+        >
           Create Workflow
         </Button>,
       ]}

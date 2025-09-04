@@ -115,6 +115,19 @@ const WorkflowDisplayCard: React.FC<WorkflowDisplayCardProps> = ({
           {(() => {
             const visibleAgents = agents?.slice(0, MAX_VISIBLE_AGENTS) || [];
             const hiddenCount = (agents?.length || 0) - visibleAgents.length;
+
+            // Show default state when no agents
+            if (!agents || agents.length === 0) {
+              return (
+                <div className="flex items-center gap-2 opacity-50">
+                  <div className="w-6 h-6 rounded bg-gray-200 flex items-center justify-center">
+                    <UserOutlined style={{ fontSize: '12px', color: '#999' }} />
+                  </div>
+                  <Text style={{ fontSize: '11px', color: '#999' }}>No agents added</Text>
+                </div>
+              );
+            }
+
             return (
               <>
                 {visibleAgents.map((agent, index) => (
@@ -291,6 +304,22 @@ const WorkflowTemplateDisplayCard: React.FC<WorkflowTemplateDisplayCardProps> = 
               workflowTemplate?.agent_template_ids?.slice(0, MAX_VISIBLE_AGENTS) || [];
             const hiddenCount =
               (workflowTemplate?.agent_template_ids?.length || 0) - visibleAgentIds.length;
+
+            // Show default state when no agents
+            if (
+              !workflowTemplate?.agent_template_ids ||
+              workflowTemplate.agent_template_ids.length === 0
+            ) {
+              return (
+                <div className="flex items-center gap-2 opacity-50">
+                  <div className="w-6 h-6 rounded bg-gray-200 flex items-center justify-center">
+                    <UserOutlined style={{ fontSize: '12px', color: '#999' }} />
+                  </div>
+                  <Text style={{ fontSize: '11px', color: '#999' }}>No agents added</Text>
+                </div>
+              );
+            }
+
             return (
               <>
                 {visibleAgentIds.map((agentId, index) => {

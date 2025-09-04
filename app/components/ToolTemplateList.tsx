@@ -34,7 +34,7 @@ const ToolTemplateList: React.FC<ToolsListProps> = ({
   );
 
   return (
-    <Layout className="flex flex-col h-full overflow-auto w-full bg-transparent">
+    <Layout className="flex flex-col h-full overflow-auto w-full bg-[#f5f5f5]">
       {/* Search Bar */}
       <Space direction="vertical" className="w-full mb-4">
         <Search
