@@ -11,6 +11,8 @@ import {
   AddWorkflowRequest,
   DeployWorkflowRequest,
   AddWorkflowResponse,
+  CloneWorkflowRequest,
+  CloneWorkflowResponse,
   WorkflowTemplateMetadata,
   ListWorkflowTemplatesRequest,
   ListWorkflowTemplatesResponse,
@@ -104,6 +106,17 @@ export const workflowsApi = apiSlice.injectEndpoints({
       transformResponse: (response: TestWorkflowResponse) => {
         return response;
       },
+    }),
+    cloneWorkflow: builder.mutation<string, CloneWorkflowRequest>({
+      query: (request) => ({
+        url: '/grpc/cloneWorkflow',
+        method: 'POST',
+        body: request,
+      }),
+      transformResponse: (response: CloneWorkflowResponse) => {
+        return response.workflow_id;
+      },
+      invalidatesTags: [{ type: 'Workflow', id: 'LIST' }],
     }),
     deployWorkflow: builder.mutation<void, DeployWorkflowRequest>({
       query: (request) => ({
@@ -202,6 +215,7 @@ export const {
   useRemoveWorkflowMutation,
   useTestWorkflowMutation,
   useUpdateWorkflowMutation,
+  useCloneWorkflowMutation,
   useDeployWorkflowMutation,
   useAddWorkflowMutation,
   useListWorkflowTemplatesQuery,

@@ -257,6 +257,7 @@ export async function GET(_request: NextRequest) {
       application_deep_link: '',
       model_deep_link: '',
       created_at: configuration.workflow.created_at || '',
+      updated_at: configuration.workflow.updated_at || '',
     };
 
     return NextResponse.json({

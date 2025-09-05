@@ -1227,8 +1227,10 @@ class CloneWorkflowRequest(_message.Message):
     def __init__(self, workflow_id: _Optional[str] = ..., name: _Optional[str] = ...) -> None: ...
 
 class CloneWorkflowResponse(_message.Message):
-    __slots__ = ()
-    def __init__(self) -> None: ...
+    __slots__ = ("workflow_id",)
+    WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
+    workflow_id: str
+    def __init__(self, workflow_id: _Optional[str] = ...) -> None: ...
 
 class DeployedWorkflow(_message.Message):
     __slots__ = (
@@ -1243,6 +1245,7 @@ class DeployedWorkflow(_message.Message):
         "model_deep_link",
         "deployment_metadata",
         "created_at",
+        "updated_at",
     )
     DEPLOYED_WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
     WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
@@ -1255,6 +1258,7 @@ class DeployedWorkflow(_message.Message):
     MODEL_DEEP_LINK_FIELD_NUMBER: _ClassVar[int]
     DEPLOYMENT_METADATA_FIELD_NUMBER: _ClassVar[int]
     CREATED_AT_FIELD_NUMBER: _ClassVar[int]
+    UPDATED_AT_FIELD_NUMBER: _ClassVar[int]
     deployed_workflow_id: str
     workflow_id: str
     workflow_name: str
@@ -1266,6 +1270,7 @@ class DeployedWorkflow(_message.Message):
     model_deep_link: str
     deployment_metadata: str
     created_at: str
+    updated_at: str
     def __init__(
         self,
         deployed_workflow_id: _Optional[str] = ...,
@@ -1279,6 +1284,7 @@ class DeployedWorkflow(_message.Message):
         model_deep_link: _Optional[str] = ...,
         deployment_metadata: _Optional[str] = ...,
         created_at: _Optional[str] = ...,
+        updated_at: _Optional[str] = ...,
     ) -> None: ...
 
 class Workflow(_message.Message):

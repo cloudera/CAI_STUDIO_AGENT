@@ -251,6 +251,8 @@ class DeployedWorkflowInstance(Base, MappedProtobuf, MappedDict):
         String, nullable=True)  # CML Deployed Model ID. TODO: deprecate in favor of metadata
     # Timestamp when the deployment was created
     created_at = Column(DateTime, nullable=True)
+    # Timestamp when the deployment was last updated
+    updated_at = Column(DateTime, nullable=True)
 
     # Relationships
     workflow = relationship(

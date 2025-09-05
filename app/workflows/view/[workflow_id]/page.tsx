@@ -9,6 +9,7 @@ import {
   ExperimentOutlined,
   PlayCircleOutlined,
   CopyOutlined,
+  DiffOutlined,
 } from '@ant-design/icons';
 import { useParams, useRouter } from 'next/navigation';
 import WorkflowOverview from '@/app/components/workflows/WorkflowOverview';
@@ -16,11 +17,13 @@ import {
   useGetWorkflowMutation,
   useRemoveWorkflowMutation,
   useAddWorkflowTemplateMutation,
+  useCloneWorkflowMutation,
 } from '@/app/workflows/workflowsApi';
 import CommonBreadCrumb from '@/app/components/CommonBreadCrumb';
 import { updatedEditorStep } from '@/app/workflows/editorSlice';
 import { useAppDispatch } from '@/app/lib/hooks/hooks';
 import DeleteWorkflowModal from '@/app/components/workflows/DeleteWorkflowModal';
+import DuplicateWorkflowModal from '@/app/components/workflows/DuplicateWorkflowModal';
 import { useGlobalNotification } from '@/app/components/Notifications';
 import { Workflow } from '@/studio/proto/agent_studio';
 import {
@@ -41,11 +44,14 @@ const WorkflowPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const [getWorkflow] = useGetWorkflowMutation();
   const [removeWorkflow] = useRemoveWorkflowMutation();
+  const [cloneWorkflow] = useCloneWorkflowMutation();
   const notificationApi = useGlobalNotification();
   const [workflowName, setWorkflowName] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isDeleteWorkflowModalVisible, setDeleteWorkflowModalVisible] = useState(false);
+  const [isDuplicateWorkflowModalVisible, setDuplicateWorkflowModalVisible] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState(false);
   const [workflow, setWorkflow] = useState<Workflow | null>(null);
   const { data: deployedWorkflows } = useListDeployedWorkflowsQuery({});
   const [undeployWorkflow] = useUndeployWorkflowMutation();
@@ -139,6 +145,38 @@ const WorkflowPage: React.FC = () => {
     }
   };
 
+  const handleDuplicateWorkflow = async (newWorkflowName: string) => {
+    if (!workflowId) {
+      return;
+    }
+
+    try {
+      setIsDuplicating(true);
+      const newWorkflowId = await cloneWorkflow({
+        workflow_id: workflowId,
+        name: newWorkflowName,
+      }).unwrap();
+
+      notificationApi.success({
+        message: 'Success',
+        description: `Workflow duplicated successfully as "${newWorkflowName}".`,
+        placement: 'topRight',
+      });
+
+      // Redirect to the new workflow
+      router.push(`/workflows/view/${newWorkflowId}`);
+      setDuplicateWorkflowModalVisible(false);
+    } catch (error: any) {
+      notificationApi.error({
+        message: 'Error',
+        description: error.data?.error || 'Failed to duplicate workflow.',
+        placement: 'topRight',
+      });
+    } finally {
+      setIsDuplicating(false);
+    }
+  };
+
   const handleMenuClick: MenuProps['onClick'] = async ({ key }) => {
     if (!workflowId) {
       return;
@@ -151,6 +189,9 @@ const WorkflowPage: React.FC = () => {
         break;
       case 'delete':
         setDeleteWorkflowModalVisible(true);
+        break;
+      case 'duplicate':
+        setDuplicateWorkflowModalVisible(true);
         break;
       case 'test':
         dispatch(updatedEditorStep('Test'));
@@ -189,6 +230,15 @@ const WorkflowPage: React.FC = () => {
 
   const menuItems: MenuProps['items'] = isWorkflowDeployed()
     ? [
+        {
+          key: 'duplicate',
+          label: (
+            <Space>
+              <DiffOutlined />
+              Duplicate Workflow
+            </Space>
+          ),
+        },
         {
           key: 'clone',
           label: (
@@ -237,11 +287,11 @@ const WorkflowPage: React.FC = () => {
           ),
         },
         {
-          key: 'delete',
+          key: 'duplicate',
           label: (
             <Space>
-              <DeleteOutlined />
-              Delete Workflow
+              <DiffOutlined />
+              Duplicate Workflow
             </Space>
           ),
         },
@@ -251,6 +301,15 @@ const WorkflowPage: React.FC = () => {
             <Space>
               <CopyOutlined />
               Clone to Template
+            </Space>
+          ),
+        },
+        {
+          key: 'delete',
+          label: (
+            <Space>
+              <DeleteOutlined />
+              Delete Workflow
             </Space>
           ),
         },
@@ -306,6 +365,13 @@ const WorkflowPage: React.FC = () => {
         onDelete={handleDeleteWorkflow}
         workflowId={workflowId as string}
         workflowTemplateId={undefined}
+      />
+      <DuplicateWorkflowModal
+        visible={isDuplicateWorkflowModalVisible}
+        onCancel={() => setDuplicateWorkflowModalVisible(false)}
+        onDuplicate={handleDuplicateWorkflow}
+        originalWorkflowName={workflowName || 'Unknown Workflow'}
+        loading={isDuplicating}
       />
     </Layout>
   );
