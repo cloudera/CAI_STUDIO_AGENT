@@ -777,7 +777,10 @@ message CloneWorkflowRequest {
   optional string name = 2;
 }
 
-message CloneWorkflowResponse {}
+message CloneWorkflowResponse {
+  // ID of the newly created workflow
+  string workflow_id = 1;
+}
 
 message DeployedWorkflow {
   // ID of the deployed workflow
@@ -802,6 +805,8 @@ message DeployedWorkflow {
   optional string deployment_metadata = 10;
   // Timestamp when the deployment was created
   string created_at = 11;
+  // Timestamp when the deployment was last updated
+  string updated_at = 12;
 }
 
 // Workflow metadata

@@ -221,6 +221,7 @@ def list_deployed_workflows(
                             model_deep_link=model_deep_link,
                             deployment_metadata=deployed_workflow.deployment_metadata or "{}",
                             created_at=deployed_workflow.created_at.isoformat() if deployed_workflow.created_at else "",
+                            updated_at=deployed_workflow.updated_at.isoformat() if deployed_workflow.updated_at else "",
                         )
                     )
                 except Exception as e:

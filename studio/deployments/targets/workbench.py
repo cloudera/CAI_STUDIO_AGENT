@@ -17,7 +17,7 @@ from studio.workflow.utils import is_custom_model_root_dir_feature_enabled
 from studio.cross_cutting.utils import deploy_cml_model, get_cml_project_number_and_id
 import studio.cross_cutting.utils as cc_utils
 from studio.deployments.applications import create_application_for_deployed_workflow, get_application_deep_link
-from studio.deployments.utils import update_deployment_metadata
+from studio.deployments.utils import update_deployment_metadata, delete_key_from_deployment_metadata
 
 # Import engine code manually. Eventually when this code becomes
 # a separate git repo, or a custom runtime image, this path call
@@ -255,6 +255,7 @@ def deploy_artifact_to_workbench(
     Deploys an artifact to a workbench.
     """
 
+    project_id = os.environ.get("CDSW_PROJECT_ID")
     cml_model_id, model_build_id = None, None
     workflow_frontend_application: Optional[cmlapi.Application] = None
 
@@ -271,6 +272,28 @@ def deploy_artifact_to_workbench(
         if payload.deployment_target.auto_redeploy_to_type and deployment_metadata.get("cml_model_id"):
             print(f"Auto-redeploying to CML model with ID {deployment_metadata.get('cml_model_id')}")
             cml_model_id = deployment_metadata.get("cml_model_id")
+
+            # We will delete any previous model builds and applications for this deployment
+            model_build_id_to_delete = delete_key_from_deployment_metadata(deployment, "cml_model_build_id")
+            application_id_to_delete = delete_key_from_deployment_metadata(deployment, "application_id")
+            delete_key_from_deployment_metadata(deployment, "application_deep_link")
+            delete_key_from_deployment_metadata(deployment, "application_subdomain")
+            session.commit()
+
+            if model_build_id_to_delete:
+                try:
+                    cml.delete_model_build(
+                        project_id=project_id, model_id=cml_model_id, build_id=model_build_id_to_delete
+                    )
+                except Exception as e:
+                    # Assume deleted
+                    print(f"Failed to delete model build {model_build_id_to_delete} for model {cml_model_id}: {str(e)}")
+            if application_id_to_delete:
+                try:
+                    cml.delete_application(project_id=project_id, application_id=application_id_to_delete)
+                except Exception as e:
+                    # Assume deleted
+                    print(f"Failed to delete application {application_id_to_delete} for model {cml_model_id}: {str(e)}")
         else:
             cml_model_id = create_new_cml_model(deployment, cml)
 
@@ -283,25 +306,24 @@ def deploy_artifact_to_workbench(
         application_ops_url = None
         if payload.deployment_target.deploy_application:
             deployment_metadata = json.loads(deployment.deployment_metadata)
-            if not deployment_metadata.get("application_id"):
-                application: cmlapi.Application = create_application_for_deployed_workflow(
-                    deployment_target_project_dir, deployment, False, cml
-                )
-                deep_link = get_application_deep_link(application.name)
-                update_deployment_metadata(
-                    deployment,
-                    {
-                        "application_id": application.id,
-                        "application_deep_link": deep_link,
-                        "application_subdomain": application.subdomain,
-                    },
-                )
-                session.commit()
+            application: cmlapi.Application = create_application_for_deployed_workflow(
+                deployment_target_project_dir, deployment, False, cml
+            )
+            deep_link = get_application_deep_link(application.name)
+            update_deployment_metadata(
+                deployment,
+                {
+                    "application_id": application.id,
+                    "application_deep_link": deep_link,
+                    "application_subdomain": application.subdomain,
+                },
+            )
+            session.commit()
 
-                # Construct the ops URL for this application
-                application_subdomain = application.subdomain
-                application_ops_url = get_application_ops_url(application_subdomain)
-                print("APPLICATION OPS URL", application_ops_url)
+            # Construct the ops URL for this application
+            application_subdomain = application.subdomain
+            application_ops_url = get_application_ops_url(application_subdomain)
+            print("APPLICATION OPS URL", application_ops_url)
 
         # STEP 3: Deploy the CML model with application URL as ops endpoint
         # Create env vars with the application ops URL

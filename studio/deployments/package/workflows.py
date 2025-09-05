@@ -73,7 +73,7 @@ def package_workflow_for_deployment(
     ignore_fn = studio_data_workflow_ignore_factory(os.path.basename(workflow.directory))
     shutil.copytree(consts.ALL_STUDIO_DATA_LOCATION, os.path.join(packaging_directory, "studio-data"), ignore=ignore_fn)
     # Create the collated input.
-    collated_input: input_types.CollatedInput = create_collated_input(workflow, session, deployment.created_at or None)
+    collated_input: input_types.CollatedInput = create_collated_input(workflow, session, deployment.updated_at or None)
 
     # Force override generational config. These generational configs
     # are set to default values and can optionally be overriden (currently

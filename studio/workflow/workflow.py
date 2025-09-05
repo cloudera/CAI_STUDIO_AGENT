@@ -592,7 +592,7 @@ def clone_workflow(
             cloned_workflow.crew_ai_llm_provider_model_id = original_workflow.crew_ai_llm_provider_model_id
 
             session.commit()
-            return CloneWorkflowResponse()
+            return CloneWorkflowResponse(workflow_id=new_workflow_id)
 
     except SQLAlchemyError as e:
         raise RuntimeError(f"Failed to clone workflow: {str(e)}")

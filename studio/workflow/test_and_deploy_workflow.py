@@ -124,7 +124,11 @@ def test_workflow(
 
 
 def deploy_workflow(request: DeployWorkflowRequest, cml: CMLServiceApi, dao: AgentStudioDao) -> DeployWorkflowResponse:
-    """Deploy a workflow."""
+    """
+    Deploy a workflow.
+    Creates a deployment of a existing workflow.
+    If a deployment already exists, it will be redeployed with fresh changes in the workflow, maintaining the same endpoints & application URL.
+    """
 
     # Deploy via a direct deployment payload if set.
     if is_field_set(request, "deployment_payload"):

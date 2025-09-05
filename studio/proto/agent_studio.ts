@@ -784,6 +784,22 @@ export interface ListDeployedWorkflowsResponse {
   deployed_workflows: DeployedWorkflow[];
 }
 
+export interface SuspendDeployedWorkflowRequest {
+  /** ID of the deployed workflow to suspend */
+  deployed_workflow_id: string;
+}
+
+export interface SuspendDeployedWorkflowResponse {
+}
+
+export interface ResumeDeployedWorkflowRequest {
+  /** ID of the deployed workflow to resume */
+  deployed_workflow_id: string;
+}
+
+export interface ResumeDeployedWorkflowResponse {
+}
+
 /** Messages for removing workflows */
 export interface RemoveWorkflowRequest {
   /** ID of the workflow to remove */
@@ -791,6 +807,18 @@ export interface RemoveWorkflowRequest {
 }
 
 export interface RemoveWorkflowResponse {
+}
+
+export interface CloneWorkflowRequest {
+  /** ID of the workflow to clone */
+  workflow_id: string;
+  /** Name of the new workflow */
+  name?: string | undefined;
+}
+
+export interface CloneWorkflowResponse {
+  /** ID of the newly created workflow */
+  workflow_id: string;
 }
 
 export interface DeployedWorkflow {
@@ -818,6 +846,8 @@ export interface DeployedWorkflow {
     | undefined;
   /** Timestamp when the deployment was created */
   created_at: string;
+  /** Timestamp when the deployment was last updated */
+  updated_at: string;
 }
 
 /** Workflow metadata */
@@ -9878,6 +9908,212 @@ export const ListDeployedWorkflowsResponse: MessageFns<ListDeployedWorkflowsResp
   },
 };
 
+function createBaseSuspendDeployedWorkflowRequest(): SuspendDeployedWorkflowRequest {
+  return { deployed_workflow_id: "" };
+}
+
+export const SuspendDeployedWorkflowRequest: MessageFns<SuspendDeployedWorkflowRequest> = {
+  encode(message: SuspendDeployedWorkflowRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.deployed_workflow_id !== "") {
+      writer.uint32(10).string(message.deployed_workflow_id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SuspendDeployedWorkflowRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSuspendDeployedWorkflowRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.deployed_workflow_id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SuspendDeployedWorkflowRequest {
+    return {
+      deployed_workflow_id: isSet(object.deployed_workflow_id) ? globalThis.String(object.deployed_workflow_id) : "",
+    };
+  },
+
+  toJSON(message: SuspendDeployedWorkflowRequest): unknown {
+    const obj: any = {};
+    if (message.deployed_workflow_id !== "") {
+      obj.deployed_workflow_id = message.deployed_workflow_id;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<SuspendDeployedWorkflowRequest>): SuspendDeployedWorkflowRequest {
+    return SuspendDeployedWorkflowRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<SuspendDeployedWorkflowRequest>): SuspendDeployedWorkflowRequest {
+    const message = createBaseSuspendDeployedWorkflowRequest();
+    message.deployed_workflow_id = object.deployed_workflow_id ?? "";
+    return message;
+  },
+};
+
+function createBaseSuspendDeployedWorkflowResponse(): SuspendDeployedWorkflowResponse {
+  return {};
+}
+
+export const SuspendDeployedWorkflowResponse: MessageFns<SuspendDeployedWorkflowResponse> = {
+  encode(_: SuspendDeployedWorkflowResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SuspendDeployedWorkflowResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSuspendDeployedWorkflowResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(_: any): SuspendDeployedWorkflowResponse {
+    return {};
+  },
+
+  toJSON(_: SuspendDeployedWorkflowResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  create(base?: DeepPartial<SuspendDeployedWorkflowResponse>): SuspendDeployedWorkflowResponse {
+    return SuspendDeployedWorkflowResponse.fromPartial(base ?? {});
+  },
+  fromPartial(_: DeepPartial<SuspendDeployedWorkflowResponse>): SuspendDeployedWorkflowResponse {
+    const message = createBaseSuspendDeployedWorkflowResponse();
+    return message;
+  },
+};
+
+function createBaseResumeDeployedWorkflowRequest(): ResumeDeployedWorkflowRequest {
+  return { deployed_workflow_id: "" };
+}
+
+export const ResumeDeployedWorkflowRequest: MessageFns<ResumeDeployedWorkflowRequest> = {
+  encode(message: ResumeDeployedWorkflowRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.deployed_workflow_id !== "") {
+      writer.uint32(10).string(message.deployed_workflow_id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ResumeDeployedWorkflowRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseResumeDeployedWorkflowRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.deployed_workflow_id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ResumeDeployedWorkflowRequest {
+    return {
+      deployed_workflow_id: isSet(object.deployed_workflow_id) ? globalThis.String(object.deployed_workflow_id) : "",
+    };
+  },
+
+  toJSON(message: ResumeDeployedWorkflowRequest): unknown {
+    const obj: any = {};
+    if (message.deployed_workflow_id !== "") {
+      obj.deployed_workflow_id = message.deployed_workflow_id;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<ResumeDeployedWorkflowRequest>): ResumeDeployedWorkflowRequest {
+    return ResumeDeployedWorkflowRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<ResumeDeployedWorkflowRequest>): ResumeDeployedWorkflowRequest {
+    const message = createBaseResumeDeployedWorkflowRequest();
+    message.deployed_workflow_id = object.deployed_workflow_id ?? "";
+    return message;
+  },
+};
+
+function createBaseResumeDeployedWorkflowResponse(): ResumeDeployedWorkflowResponse {
+  return {};
+}
+
+export const ResumeDeployedWorkflowResponse: MessageFns<ResumeDeployedWorkflowResponse> = {
+  encode(_: ResumeDeployedWorkflowResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ResumeDeployedWorkflowResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseResumeDeployedWorkflowResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(_: any): ResumeDeployedWorkflowResponse {
+    return {};
+  },
+
+  toJSON(_: ResumeDeployedWorkflowResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  create(base?: DeepPartial<ResumeDeployedWorkflowResponse>): ResumeDeployedWorkflowResponse {
+    return ResumeDeployedWorkflowResponse.fromPartial(base ?? {});
+  },
+  fromPartial(_: DeepPartial<ResumeDeployedWorkflowResponse>): ResumeDeployedWorkflowResponse {
+    const message = createBaseResumeDeployedWorkflowResponse();
+    return message;
+  },
+};
+
 function createBaseRemoveWorkflowRequest(): RemoveWorkflowRequest {
   return { workflow_id: "" };
 }
@@ -9979,6 +10215,140 @@ export const RemoveWorkflowResponse: MessageFns<RemoveWorkflowResponse> = {
   },
 };
 
+function createBaseCloneWorkflowRequest(): CloneWorkflowRequest {
+  return { workflow_id: "", name: undefined };
+}
+
+export const CloneWorkflowRequest: MessageFns<CloneWorkflowRequest> = {
+  encode(message: CloneWorkflowRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.workflow_id !== "") {
+      writer.uint32(10).string(message.workflow_id);
+    }
+    if (message.name !== undefined) {
+      writer.uint32(18).string(message.name);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CloneWorkflowRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCloneWorkflowRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.workflow_id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CloneWorkflowRequest {
+    return {
+      workflow_id: isSet(object.workflow_id) ? globalThis.String(object.workflow_id) : "",
+      name: isSet(object.name) ? globalThis.String(object.name) : undefined,
+    };
+  },
+
+  toJSON(message: CloneWorkflowRequest): unknown {
+    const obj: any = {};
+    if (message.workflow_id !== "") {
+      obj.workflow_id = message.workflow_id;
+    }
+    if (message.name !== undefined) {
+      obj.name = message.name;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<CloneWorkflowRequest>): CloneWorkflowRequest {
+    return CloneWorkflowRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<CloneWorkflowRequest>): CloneWorkflowRequest {
+    const message = createBaseCloneWorkflowRequest();
+    message.workflow_id = object.workflow_id ?? "";
+    message.name = object.name ?? undefined;
+    return message;
+  },
+};
+
+function createBaseCloneWorkflowResponse(): CloneWorkflowResponse {
+  return { workflow_id: "" };
+}
+
+export const CloneWorkflowResponse: MessageFns<CloneWorkflowResponse> = {
+  encode(message: CloneWorkflowResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.workflow_id !== "") {
+      writer.uint32(10).string(message.workflow_id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CloneWorkflowResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCloneWorkflowResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.workflow_id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CloneWorkflowResponse {
+    return { workflow_id: isSet(object.workflow_id) ? globalThis.String(object.workflow_id) : "" };
+  },
+
+  toJSON(message: CloneWorkflowResponse): unknown {
+    const obj: any = {};
+    if (message.workflow_id !== "") {
+      obj.workflow_id = message.workflow_id;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<CloneWorkflowResponse>): CloneWorkflowResponse {
+    return CloneWorkflowResponse.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<CloneWorkflowResponse>): CloneWorkflowResponse {
+    const message = createBaseCloneWorkflowResponse();
+    message.workflow_id = object.workflow_id ?? "";
+    return message;
+  },
+};
+
 function createBaseDeployedWorkflow(): DeployedWorkflow {
   return {
     deployed_workflow_id: "",
@@ -9992,6 +10362,7 @@ function createBaseDeployedWorkflow(): DeployedWorkflow {
     model_deep_link: "",
     deployment_metadata: undefined,
     created_at: "",
+    updated_at: "",
   };
 }
 
@@ -10029,6 +10400,9 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
     }
     if (message.created_at !== "") {
       writer.uint32(90).string(message.created_at);
+    }
+    if (message.updated_at !== "") {
+      writer.uint32(98).string(message.updated_at);
     }
     return writer;
   },
@@ -10128,6 +10502,14 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
           message.created_at = reader.string();
           continue;
         }
+        case 12: {
+          if (tag !== 98) {
+            break;
+          }
+
+          message.updated_at = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -10154,6 +10536,7 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
         ? globalThis.String(object.deployment_metadata)
         : undefined,
       created_at: isSet(object.created_at) ? globalThis.String(object.created_at) : "",
+      updated_at: isSet(object.updated_at) ? globalThis.String(object.updated_at) : "",
     };
   },
 
@@ -10192,6 +10575,9 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
     if (message.created_at !== "") {
       obj.created_at = message.created_at;
     }
+    if (message.updated_at !== "") {
+      obj.updated_at = message.updated_at;
+    }
     return obj;
   },
 
@@ -10211,6 +10597,7 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
     message.model_deep_link = object.model_deep_link ?? "";
     message.deployment_metadata = object.deployment_metadata ?? undefined;
     message.created_at = object.created_at ?? "";
+    message.updated_at = object.updated_at ?? "";
     return message;
   },
 };
@@ -16529,6 +16916,15 @@ export const AgentStudioService = {
     responseSerialize: (value: RemoveWorkflowResponse) => Buffer.from(RemoveWorkflowResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer) => RemoveWorkflowResponse.decode(value),
   },
+  cloneWorkflow: {
+    path: "/agent_studio.AgentStudio/CloneWorkflow",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CloneWorkflowRequest) => Buffer.from(CloneWorkflowRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => CloneWorkflowRequest.decode(value),
+    responseSerialize: (value: CloneWorkflowResponse) => Buffer.from(CloneWorkflowResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => CloneWorkflowResponse.decode(value),
+  },
   /** Deployed Workflow Operations */
   deployWorkflow: {
     path: "/agent_studio.AgentStudio/DeployWorkflow",
@@ -16559,6 +16955,28 @@ export const AgentStudioService = {
     responseSerialize: (value: ListDeployedWorkflowsResponse) =>
       Buffer.from(ListDeployedWorkflowsResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer) => ListDeployedWorkflowsResponse.decode(value),
+  },
+  suspendDeployedWorkflow: {
+    path: "/agent_studio.AgentStudio/SuspendDeployedWorkflow",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: SuspendDeployedWorkflowRequest) =>
+      Buffer.from(SuspendDeployedWorkflowRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => SuspendDeployedWorkflowRequest.decode(value),
+    responseSerialize: (value: SuspendDeployedWorkflowResponse) =>
+      Buffer.from(SuspendDeployedWorkflowResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => SuspendDeployedWorkflowResponse.decode(value),
+  },
+  resumeDeployedWorkflow: {
+    path: "/agent_studio.AgentStudio/ResumeDeployedWorkflow",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ResumeDeployedWorkflowRequest) =>
+      Buffer.from(ResumeDeployedWorkflowRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => ResumeDeployedWorkflowRequest.decode(value),
+    responseSerialize: (value: ResumeDeployedWorkflowResponse) =>
+      Buffer.from(ResumeDeployedWorkflowResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => ResumeDeployedWorkflowResponse.decode(value),
   },
   /** Utility functions */
   temporaryFileUpload: {
@@ -16876,10 +17294,13 @@ export interface AgentStudioServer extends UntypedServiceImplementation {
   updateWorkflow: handleUnaryCall<UpdateWorkflowRequest, UpdateWorkflowResponse>;
   testWorkflow: handleUnaryCall<TestWorkflowRequest, TestWorkflowResponse>;
   removeWorkflow: handleUnaryCall<RemoveWorkflowRequest, RemoveWorkflowResponse>;
+  cloneWorkflow: handleUnaryCall<CloneWorkflowRequest, CloneWorkflowResponse>;
   /** Deployed Workflow Operations */
   deployWorkflow: handleUnaryCall<DeployWorkflowRequest, DeployWorkflowResponse>;
   undeployWorkflow: handleUnaryCall<UndeployWorkflowRequest, UndeployWorkflowResponse>;
   listDeployedWorkflows: handleUnaryCall<ListDeployedWorkflowsRequest, ListDeployedWorkflowsResponse>;
+  suspendDeployedWorkflow: handleUnaryCall<SuspendDeployedWorkflowRequest, SuspendDeployedWorkflowResponse>;
+  resumeDeployedWorkflow: handleUnaryCall<ResumeDeployedWorkflowRequest, ResumeDeployedWorkflowResponse>;
   /** Utility functions */
   temporaryFileUpload: handleClientStreamingCall<FileChunk, FileUploadResponse>;
   nonStreamingTemporaryFileUpload: handleUnaryCall<NonStreamingTemporaryFileUploadRequest, FileUploadResponse>;
@@ -17611,6 +18032,21 @@ export interface AgentStudioClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: RemoveWorkflowResponse) => void,
   ): ClientUnaryCall;
+  cloneWorkflow(
+    request: CloneWorkflowRequest,
+    callback: (error: ServiceError | null, response: CloneWorkflowResponse) => void,
+  ): ClientUnaryCall;
+  cloneWorkflow(
+    request: CloneWorkflowRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CloneWorkflowResponse) => void,
+  ): ClientUnaryCall;
+  cloneWorkflow(
+    request: CloneWorkflowRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CloneWorkflowResponse) => void,
+  ): ClientUnaryCall;
   /** Deployed Workflow Operations */
   deployWorkflow(
     request: DeployWorkflowRequest,
@@ -17656,6 +18092,36 @@ export interface AgentStudioClient extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: ListDeployedWorkflowsResponse) => void,
+  ): ClientUnaryCall;
+  suspendDeployedWorkflow(
+    request: SuspendDeployedWorkflowRequest,
+    callback: (error: ServiceError | null, response: SuspendDeployedWorkflowResponse) => void,
+  ): ClientUnaryCall;
+  suspendDeployedWorkflow(
+    request: SuspendDeployedWorkflowRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: SuspendDeployedWorkflowResponse) => void,
+  ): ClientUnaryCall;
+  suspendDeployedWorkflow(
+    request: SuspendDeployedWorkflowRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: SuspendDeployedWorkflowResponse) => void,
+  ): ClientUnaryCall;
+  resumeDeployedWorkflow(
+    request: ResumeDeployedWorkflowRequest,
+    callback: (error: ServiceError | null, response: ResumeDeployedWorkflowResponse) => void,
+  ): ClientUnaryCall;
+  resumeDeployedWorkflow(
+    request: ResumeDeployedWorkflowRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: ResumeDeployedWorkflowResponse) => void,
+  ): ClientUnaryCall;
+  resumeDeployedWorkflow(
+    request: ResumeDeployedWorkflowRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: ResumeDeployedWorkflowResponse) => void,
   ): ClientUnaryCall;
   /** Utility functions */
   temporaryFileUpload(
