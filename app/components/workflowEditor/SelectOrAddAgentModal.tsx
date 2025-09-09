@@ -80,6 +80,7 @@ import { CrewAIAgentMetadata } from '@/studio/proto/agent_studio';
 import { useGetDefaultModelQuery, useListModelsQuery } from '../../models/modelsApi';
 import { useListMcpInstancesQuery, useRemoveMcpInstanceMutation } from '@/app/mcp/mcpInstancesApi';
 import { useRouter } from 'next/navigation';
+import i18n from '../../utils/i18n';
 import GenerateAgentPropertiesModal from './GenerateAgentPropertiesModal';
 import { uploadFile } from '@/app/lib/fileUpload';
 
@@ -242,16 +243,16 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
       setIsLoading(true);
 
       notificationApi.info({
-        message: 'Initiating MCP Removal',
-        description: `Starting to dissociate ${mcpName} from the agent...`,
+        message: i18n.t('agent.mcp.remove.startTitle'),
+        description: i18n.t('agent.mcp.remove.startDesc', mcpName),
         placement: 'topRight',
       });
 
       await deleteMcpInstance({ mcp_instance_id: mcpId }).unwrap();
 
       notificationApi.success({
-        message: 'MCP Deletion In Progress',
-        description: `${mcpName} will be removed in a few seconds after cleanup of remaining artifacts.`,
+        message: i18n.t('agent.mcp.remove.inProgressTitle'),
+        description: i18n.t('agent.mcp.remove.inProgressDesc', mcpName),
         placement: 'topRight',
         duration: 5,
       });
@@ -298,9 +299,9 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
       }
     } catch (error: any) {
       console.error('Error deleting MCP:', error);
-      const errorMessage = error.data?.error || 'Failed to delete MCP. Please try again.';
+      const errorMessage = error.data?.error || i18n.t('agent.mcp.remove.errorFallback');
       notificationApi.error({
-        message: 'MCP Deletion Failed',
+        message: i18n.t('agent.mcp.remove.errorTitle'),
         description: errorMessage,
         placement: 'topRight',
       });
@@ -318,16 +319,16 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
       setIsLoading(true);
 
       notificationApi.info({
-        message: 'Initiating Tool Removal',
-        description: `Starting to remove ${toolName} from the agent...`,
+        message: i18n.t('agent.tool.remove.startTitle'),
+        description: i18n.t('agent.tool.remove.startDesc', toolName),
         placement: 'topRight',
       });
 
       await deleteToolInstance({ tool_instance_id: toolId }).unwrap();
 
       notificationApi.success({
-        message: 'Tool Deletion In Progress',
-        description: `${toolName} will be removed in a few seconds after cleanup of remaining artifacts.`,
+        message: i18n.t('agent.tool.remove.inProgressTitle'),
+        description: i18n.t('agent.tool.remove.inProgressDesc', toolName),
         placement: 'topRight',
         duration: 5,
       });
@@ -363,8 +364,8 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
         );
 
         notificationApi.success({
-          message: 'Agent Updated',
-          description: `Agent configuration has been updated successfully.`,
+          message: i18n.t('agent.update.successTitle'),
+          description: i18n.t('agent.update.successDesc'),
           placement: 'topRight',
         });
       } else {
@@ -379,9 +380,9 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
     } catch (error: unknown) {
       const errorMessage =
         (error as { data?: { error?: string } })?.data?.error ||
-        'Failed to remove tool. Please try again.';
+        i18n.t('agent.tool.remove.errorFallback');
       notificationApi.error({
-        message: 'Error Removing Tool',
+        message: i18n.t('agent.tool.remove.errorTitle'),
         description: errorMessage,
         placement: 'topRight',
       });
@@ -526,8 +527,8 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
               <Divider className="flex-grow-0 m-0" type="horizontal" />
               <div className="flex flex-row flex-grow-0 bg-transparent justify-center items-center p-0">
                 <Popconfirm
-                  title="Dissociate MCP"
-                  description="Are you sure you want to dissociate this MCP from the agent?"
+                  title={i18n.t('agent.mcp.remove.confirmTitle')}
+                  description={i18n.t('agent.mcp.remove.confirmDesc')}
                   onConfirm={(e) => {
                     e?.stopPropagation();
                     handleDeleteMcp(mcp.id, mcp.name);
@@ -699,8 +700,8 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                 <Divider className="flex-grow-0 m-0" type="horizontal" />
                 <div className="flex flex-row flex-grow-0 bg-transparent justify-center items-center p-0">
                   <Popconfirm
-                    title="Delete Tool"
-                    description="Are you sure you want to delete this tool?"
+                    title={i18n.t('agent.tool.remove.confirmTitle')}
+                    description={i18n.t('agent.tool.remove.confirmDesc')}
                     onConfirm={(e) => {
                       e?.stopPropagation();
                       handleDeleteTool(tool.id, tool.name);
@@ -765,8 +766,8 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                 </div>
                 {/* Delete Button - on the right side, same line as agent name */}
                 <Popconfirm
-                  title="Delete Agent"
-                  description="Are you sure you want to delete this agent?"
+                  title={i18n.t('agent.remove.confirmTitle')}
+                  description={i18n.t('agent.remove.confirmDesc')}
                   onConfirm={(e) => {
                     e?.stopPropagation();
                     onDeleteAgent(agent.id, agent.name);
@@ -849,11 +850,12 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
               <Layout className="flex flex-col gap-1 p-0 bg-transparent">
                 <Layout className="flex flex-row items-center gap-2 bg-transparent">
                   <QuestionCircleOutlined />
-                  <Text className="text-sm font-semibold bg-transparent">Template Mode</Text>
+                  <Text className="text-sm font-semibold bg-transparent">
+                    {i18n.t('agent.template.modeTitle')}
+                  </Text>
                 </Layout>
                 <Text className="text-sm font-normal bg-transparent">
-                  This is an Agent Template. To customize agent & tools and settings, first create
-                  an agent from this template using the button below, then you can modify it.
+                  {i18n.t('agent.template.modeDesc')}
                 </Text>
               </Layout>
             }
@@ -872,7 +874,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
             {/* Tools Section */}
             <div className="flex-1 flex flex-col">
               <Typography.Title level={5} className="mb-3.5">
-                Add Optional Tools
+                {i18n.t('agent.tools.sectionTitle')}
               </Typography.Title>
               <Button
                 type="dashed"
@@ -884,7 +886,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                 className="w-full mb-4"
                 disabled={isFormDisabled}
               >
-                Create or Edit Tools
+                {i18n.t('agent.tools.createOrEdit')}
               </Button>
               <div className="flex-1 overflow-y-auto max-h-[300px]">{renderToolList()}</div>
             </div>
@@ -896,12 +898,11 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
             <div className="flex-1 flex flex-col">
               <Typography.Title level={5} className="mb-3.5">
                 <Space>
-                  Add Optional MCP Servers
+                  {i18n.t('agent.mcp.sectionTitle')}
                   <Tooltip
                     title={
                       <span>
-                        Use tools and data sources registered as MCP servers. MCP servers can be
-                        registered in Agent Studio from the{' '}
+                        {i18n.t('agent.mcp.tooltip.intro')}{' '}
                         <button
                           onClick={(e) => {
                             e.preventDefault();
@@ -909,16 +910,16 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                           }}
                           className="text-blue-500 underline cursor-pointer"
                         >
-                          Tools Catalog
+                          {i18n.t('agent.mcp.tooltip.toolsCatalog')}
                         </button>{' '}
-                        page. Learn more about Model Context Protocol{' '}
+                        {i18n.t('agent.mcp.tooltip.pageSuffix')}{' '}
                         <a
                           href="https://modelcontextprotocol.io/introduction"
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-500 underline"
                         >
-                          here
+                          {i18n.t('agent.mcp.tooltip.linkText')}
                         </a>
                         .
                       </span>
@@ -937,7 +938,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                 }}
                 className="w-full mb-4"
               >
-                Add MCP Server to Agent
+                {i18n.t('agent.mcp.addButton')}
               </Button>
               <div className="flex-1 overflow-y-auto max-h-[300px]">{renderMcpList()}</div>
             </div>
@@ -963,10 +964,10 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                 </div>
                 <div>
                   <div className="whitespace-nowrap overflow-hidden text-ellipsis">
-                    Create New Agent
+                    {i18n.t('agent.createNew')}
                   </div>
                   <Text className="text-[11px] opacity-45 whitespace-nowrap overflow-hidden text-ellipsis">
-                    Create a new custom agent from scratch
+                    {i18n.t('agent.createNew.subtitle')}
                   </Text>
                 </div>
               </Space>
@@ -975,7 +976,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
           <Layout className="flex flex-row bg-white">
             <Layout className="flex-1 bg-white pr-4">
               <Typography.Title level={5} className="mb-4">
-                Edit Agents in Workflow
+                {i18n.t('agent.edit.sectionTitle')}
               </Typography.Title>
             </Layout>
           </Layout>
@@ -989,7 +990,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
         <Layout className="flex-1 bg-white p-4 overflow-y-auto">
           <Typography.Title level={5} className="mb-4">
             <div className="flex items-center align-middle justify-between">
-              <span className="flex items-center gap-2">Agent Details</span>
+              <span className="flex items-center gap-2">{i18n.t('agent.details.title')}</span>
               <span className="flex items-center gap-2">
                 <Button
                   type="default"
@@ -1003,7 +1004,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                   className="text-blue-700 border-blue-700"
                   onClick={() => setIsGenerateAgentPropertiesModalVisible(true)}
                 >
-                  <span className="text-blue-700">Generate with AI</span>
+                  <span className="text-blue-700">{i18n.t('agent.details.generateWithAI')}</span>
                 </Button>
                 <Button
                   type="default"
@@ -1018,7 +1019,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                     });
                   }}
                 >
-                  Reset Fields
+                  {i18n.t('common.resetFields')}
                 </Button>
               </span>
             </div>
@@ -1027,70 +1028,70 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
             <Form.Item
               label={
                 <Space>
-                  Name
-                  <Tooltip title="The name of the agent">
+                  {i18n.t('agent.form.name')}
+                  <Tooltip title={i18n.t('agent.form.name.help')}>
                     <QuestionCircleOutlined className="text-gray-600" />
                   </Tooltip>
                 </Space>
               }
               name="name"
-              rules={[{ required: true, message: 'Name is required' }]}
+              rules={[{ required: true, message: i18n.t('agent.form.name.required') }]}
             >
               <Input disabled={isFormDisabled} />
             </Form.Item>
             <Form.Item
               label={
                 <Space>
-                  Role
-                  <Tooltip title="The role this agent plays in the workflow">
+                  {i18n.t('agent.form.role')}
+                  <Tooltip title={i18n.t('agent.form.role.help')}>
                     <QuestionCircleOutlined className="text-gray-600" />
                   </Tooltip>
                 </Space>
               }
               name="role"
-              rules={[{ required: true, message: 'Role is required' }]}
+              rules={[{ required: true, message: i18n.t('agent.form.role.required') }]}
             >
               <Input disabled={isFormDisabled} />
             </Form.Item>
             <Form.Item
               label={
                 <Space>
-                  Backstory
-                  <Tooltip title="Background information about this agent">
+                  {i18n.t('agent.form.backstory')}
+                  <Tooltip title={i18n.t('agent.form.backstory.help')}>
                     <QuestionCircleOutlined className="text-gray-600" />
                   </Tooltip>
                 </Space>
               }
               name="backstory"
-              rules={[{ required: true, message: 'Backstory is required' }]}
+              rules={[{ required: true, message: i18n.t('agent.form.backstory.required') }]}
             >
               <TextArea disabled={isFormDisabled} autoSize={{ minRows: 3, maxRows: 4 }} />
             </Form.Item>
             <Form.Item
               label={
                 <Space>
-                  Goal
-                  <Tooltip title="The primary objective of this agent">
+                  {i18n.t('agent.form.goal')}
+                  <Tooltip title={i18n.t('agent.form.goal.help')}>
                     <QuestionCircleOutlined className="text-gray-600" />
                   </Tooltip>
                 </Space>
               }
               name="goal"
-              rules={[{ required: true, message: 'Goal is required' }]}
+              rules={[{ required: true, message: i18n.t('agent.form.goal.required') }]}
             >
               <TextArea disabled={isFormDisabled} autoSize={{ minRows: 3, maxRows: 4 }} />
             </Form.Item>
             <Form.Item
               label={
                 <Space>
-                  LLM Model
-                  <Tooltip title="The language model this agent will use">
+                  {i18n.t('agent.form.model')}
+                  <Tooltip title={i18n.t('agent.form.model.help')}>
                     <QuestionCircleOutlined className="text-gray-600" />
                   </Tooltip>
                 </Space>
               }
               name="llm_provider_model_id"
-              rules={[{ required: true, message: 'Language model is required' }]}
+              rules={[{ required: true, message: i18n.t('agent.form.model.required') }]}
             >
               <Select>
                 {models.map((model) => (
@@ -1101,7 +1102,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
               </Select>
             </Form.Item>
             <Form.Item>
-              <Text strong>Agent Icon</Text>
+              <Text strong>{i18n.t('agent.form.icon')}</Text>
               <div className="flex flex-row items-center">
                 <Upload
                   accept=".png,.jpg,.jpeg"
@@ -1119,7 +1120,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                     className="mt-2"
                     disabled={selectedFile !== null}
                   >
-                    {selectedFile ? selectedFile.name : 'Upload File'}
+                    {selectedFile ? selectedFile.name : i18n.t('common.uploadFile')}
                   </Button>
                 </Upload>
                 {selectedFile && (
@@ -1435,20 +1436,20 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
 
   const title: any =
     modalLayout === 'Select'
-      ? 'Create or Edit Agent'
+      ? i18n.t('agent.modal.title.select')
       : modalLayout === 'Details'
-        ? 'Agent Details'
+        ? i18n.t('agent.modal.title.details')
         : modalLayout === 'Create'
-          ? 'Create Agent'
+          ? i18n.t('agent.modal.title.create')
           : '';
 
   const getButtonText = () => {
     if (selectedAgentTemplate) {
-      return 'Create Agent from Template';
+      return i18n.t('agent.modal.cta.createFromTemplate');
     } else if (selectedAssignedAgent) {
-      return 'Save Agent';
+      return i18n.t('agent.modal.cta.save');
     } else {
-      return 'Create Agent';
+      return i18n.t('label.createAgent');
     }
   };
 
@@ -1471,7 +1472,7 @@ const SelectOrAddAgentModal: React.FC<SelectOrAddAgentModalProps> = ({ workflowI
             onClose?.(); // Call onClose callback if provided
           }}
         >
-          Close
+          {i18n.t('common.close')}
         </Button>,
         <Button
           key="add"

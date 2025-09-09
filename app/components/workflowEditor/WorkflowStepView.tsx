@@ -2,6 +2,7 @@ import { useAppSelector } from '../../lib/hooks/hooks';
 import { selectEditorCurrentStep } from '../../workflows/editorSlice';
 import { Avatar, Divider, Layout } from 'antd';
 import { Typography } from 'antd/lib';
+import i18n from '../../utils/i18n';
 const { Text } = Typography;
 
 interface StepComponentProps {
@@ -33,23 +34,43 @@ const WorkflowStepView = () => {
   return (
     <>
       <Layout className="flex flex-row items-center justify-between bg-transparent flex-grow-0 h-8 gap-3">
-        <StepComponent stepNumber={1} title="Add Agents" isActive={currentStep === 'Agents'} />
+        <StepComponent
+          stepNumber={1}
+          title={i18n.t('workflow.steps.addAgents')}
+          isActive={currentStep === 'Agents'}
+        />
         <Layout className="flex-grow items-center flex-col">
           <Divider type="horizontal" />
         </Layout>
-        <StepComponent stepNumber={2} title="Add Tasks" isActive={currentStep === 'Tasks'} />
+        <StepComponent
+          stepNumber={2}
+          title={i18n.t('workflow.steps.addTasks')}
+          isActive={currentStep === 'Tasks'}
+        />
         <Layout className="flex-grow items-center flex-col">
           <Divider type="horizontal" />
         </Layout>
-        <StepComponent stepNumber={3} title="Configure" isActive={currentStep === 'Configure'} />
+        <StepComponent
+          stepNumber={3}
+          title={i18n.t('workflow.steps.configure')}
+          isActive={currentStep === 'Configure'}
+        />
         <Layout className="flex-grow items-center flex-col">
           <Divider type="horizontal" />
         </Layout>
-        <StepComponent stepNumber={4} title="Test" isActive={currentStep === 'Test'} />
+        <StepComponent
+          stepNumber={4}
+          title={i18n.t('workflow.steps.test')}
+          isActive={currentStep === 'Test'}
+        />
         <Layout className="flex-grow items-center flex-col">
           <Divider type="horizontal" />
         </Layout>
-        <StepComponent stepNumber={5} title="Deploy" isActive={currentStep === 'Deploy'} />
+        <StepComponent
+          stepNumber={5}
+          title={i18n.t('workflow.steps.deploy')}
+          isActive={currentStep === 'Deploy'}
+        />
       </Layout>
     </>
   );

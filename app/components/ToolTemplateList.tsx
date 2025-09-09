@@ -4,6 +4,7 @@ import { EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons'
 import { useRouter } from 'next/navigation'; // Use Next.js router
 import { ToolTemplate } from '@/studio/proto/agent_studio';
 import { useImageAssetsData } from '@/app/lib/hooks/useAssetData';
+import i18n from '../utils/i18n';
 
 const { Text } = Typography;
 const { Search } = Input;
@@ -118,8 +119,8 @@ const ToolTemplateList: React.FC<ToolsListProps> = ({
                       title={`Delete ${item.name}?`}
                       description={`Are you sure you'd like to delete ${item.name}?`}
                       placement="topRight"
-                      okText="Confirm"
-                      cancelText="Cancel"
+                      okText={i18n.t('common.confirm')}
+                      cancelText={i18n.t('common.cancel')}
                       onConfirm={(e) => {
                         e?.stopPropagation(); // Prevent card click event
                         deleteExistingTemplate(item.id);

@@ -25,6 +25,7 @@ import { clearedWorkflowApp } from '../../workflows/workflowAppSlice';
 import { downloadAndSaveFile } from '../../lib/fileDownload';
 import { useListAgentsQuery, useListAgentTemplatesQuery } from '@/app/agents/agentApi';
 import { useImageAssetsData } from '@/app/lib/hooks/useAssetData';
+import i18n from '@/app/utils/i18n';
 
 const { Text } = Typography;
 
@@ -103,7 +104,13 @@ const WorkflowDisplayCard: React.FC<WorkflowDisplayCardProps> = ({
             display: 'flex',
             flexDirection: 'column',
           }}
-        ></div>
+        >
+          {agents?.length === 0 && (
+            <Text style={{ fontSize: '11px', color: '#999' }}>
+              {i18n.t('workflow.card.noAgents')}
+            </Text>
+          )}
+        </div>
         <Space
           style={{
             marginTop: 'auto',
@@ -131,7 +138,10 @@ const WorkflowDisplayCard: React.FC<WorkflowDisplayCardProps> = ({
             return (
               <>
                 {visibleAgents.map((agent, index) => (
-                  <Tooltip key={agent?.id || `agent-${index}`} title={agent?.name || 'Unknown'}>
+                  <Tooltip
+                    key={agent?.id || `agent-${index}`}
+                    title={agent?.name || i18n.t('common.unknown')}
+                  >
                     <Button
                       style={{
                         backgroundColor: agentIconsData[agent.agent_image_uri || '']
@@ -152,7 +162,7 @@ const WorkflowDisplayCard: React.FC<WorkflowDisplayCardProps> = ({
                       ) : (
                         <img
                           src={agentIconsData[agent?.agent_image_uri || '']}
-                          alt={agent?.name || 'Unknown'}
+                          alt={agent?.name || i18n.t('common.unknown')}
                           style={{
                             width: '18px',
                             height: '18px',
@@ -172,7 +182,7 @@ const WorkflowDisplayCard: React.FC<WorkflowDisplayCardProps> = ({
                           ?.slice(MAX_VISIBLE_AGENTS)
                           .map((agent, idx) => (
                             <div key={agent?.id || `hidden-agent-${idx}`}>
-                              {agent?.name || 'Unknown'}
+                              {agent?.name || i18n.t('common.unknown')}
                             </div>
                           ))}
                       </div>
@@ -325,7 +335,10 @@ const WorkflowTemplateDisplayCard: React.FC<WorkflowTemplateDisplayCardProps> = 
                 {visibleAgentIds.map((agentId, index) => {
                   const agent = agentTemplates?.find((a) => a.id === agentId);
                   return (
-                    <Tooltip key={agent?.id || `agent-${index}`} title={agent?.name || 'Unknown'}>
+                    <Tooltip
+                      key={agent?.id || `agent-${index}`}
+                      title={agent?.name || i18n.t('common.unknown')}
+                    >
                       <Button
                         style={{
                           backgroundColor: agentIconsData[agent?.agent_image_uri || '']
@@ -346,7 +359,7 @@ const WorkflowTemplateDisplayCard: React.FC<WorkflowTemplateDisplayCardProps> = 
                         ) : (
                           <img
                             src={agentIconsData[agent?.agent_image_uri || '']}
-                            alt={agent?.name || 'Unknown'}
+                            alt={agent?.name || i18n.t('common.unknown')}
                             style={{
                               width: '18px',
                               height: '18px',
@@ -369,7 +382,7 @@ const WorkflowTemplateDisplayCard: React.FC<WorkflowTemplateDisplayCardProps> = 
                             const agent = agentTemplates?.find((a) => a.id === agentId);
                             return (
                               <div key={agent?.id || `hidden-agent-template-${idx}`}>
-                                {agent?.name || 'Unknown'}
+                                {agent?.name || i18n.t('common.unknown')}
                               </div>
                             );
                           })}
@@ -645,7 +658,7 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
           >
             {sectionType === 'Deployed' ? (
               <>
-                <Tooltip title="Save as New Template">
+                <Tooltip title={i18n.t('workflow.card.saveAsTemplate')}>
                   <Button
                     style={{ border: 'none' }}
                     icon={<CopyOutlined style={{ opacity: 0.45 }} />}
@@ -657,15 +670,15 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
                         task_template_ids: [],
                       });
                       notificationsApi.success({
-                        message: 'Workflow Template Created',
-                        description: `Success! Workflow "${workflow?.name}" copied to a workflow template.`,
+                        message: i18n.t('workflow.card.templateCreatedTitle'),
+                        description: i18n.t('workflow.card.templateCreatedDesc', workflow?.name),
                         placement: 'topRight',
                       });
                     }}
                   />
                 </Tooltip>
                 <Divider style={{ flexGrow: 0, margin: '12px 0px' }} type="vertical" />
-                <Tooltip title="Delete Workflow">
+                <Tooltip title={i18n.t('workflow.card.deleteWorkflow')}>
                   <Button
                     style={{ border: 'none' }}
                     icon={<DeleteOutlined style={{ opacity: 0.45 }} />}
@@ -676,7 +689,7 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
                   />
                 </Tooltip>
                 <Divider style={{ flexGrow: 0, margin: '12px 0px' }} type="vertical" />
-                <Tooltip title="Open Application UI">
+                <Tooltip title={i18n.t('workflow.card.openApp')}>
                   <Button
                     style={{ border: 'none' }}
                     icon={<ExportOutlined style={{ opacity: 0.45 }} />}
@@ -688,7 +701,7 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
                   />
                 </Tooltip>
                 <Divider style={{ flexGrow: 0, margin: '12px 0px' }} type="vertical" />
-                <Tooltip title="Open Cloudera AI Workbench Application">
+                <Tooltip title={i18n.t('workflow.card.openCaiApp')}>
                   <Button
                     style={{ border: 'none' }}
                     icon={ClouderaAIWorkbenchAppIcon}
@@ -700,7 +713,7 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
                   />
                 </Tooltip>
                 <Divider style={{ flexGrow: 0, margin: '12px 0px' }} type="vertical" />
-                <Tooltip title="Open Cloudera AI Workbench Model">
+                <Tooltip title={i18n.t('workflow.card.openCaiModel')}>
                   <Button
                     style={{ border: 'none' }}
                     icon={ClouderaAIWorkbenchModelIcon}
@@ -714,7 +727,7 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
               </>
             ) : sectionType === 'Template' ? (
               <>
-                <Tooltip title="Create Workflow from Template">
+                <Tooltip title={i18n.t('workflow.card.createFromTemplate')}>
                   <Button
                     style={{ border: 'none' }}
                     icon={<CopyOutlined style={{ opacity: 0.45 }} />}
@@ -725,7 +738,7 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
                   />
                 </Tooltip>
                 <Divider style={{ flexGrow: 0, margin: '12px 0px' }} type="vertical" />
-                <Tooltip title="Download Workflow Template">
+                <Tooltip title={i18n.t('workflow.card.downloadTemplate')}>
                   <Button
                     style={{ border: 'none' }}
                     icon={
@@ -745,7 +758,7 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
                 {!workflowTemplate?.pre_packaged && (
                   <>
                     <Divider style={{ flexGrow: 0, margin: '12px 0px' }} type="vertical" />
-                    <Tooltip title="Delete Workflow Template">
+                    <Tooltip title={i18n.t('workflow.card.deleteTemplate')}>
                       <Button
                         style={{ border: 'none' }}
                         icon={<DeleteOutlined style={{ opacity: 0.45 }} />}
@@ -760,7 +773,7 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
               </>
             ) : (
               <>
-                <Tooltip title="Edit Workflow">
+                <Tooltip title={i18n.t('workflow.card.editWorkflow')}>
                   <Button
                     style={{ border: 'none' }}
                     icon={<EditOutlined style={{ opacity: 0.45 }} />}
@@ -771,7 +784,7 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
                   />
                 </Tooltip>
                 <Divider style={{ flexGrow: 0, margin: '12px 0px' }} type="vertical" />
-                <Tooltip title="Delete Workflow">
+                <Tooltip title={i18n.t('workflow.card.deleteWorkflow')}>
                   <Button
                     style={{ border: 'none' }}
                     icon={<DeleteOutlined style={{ opacity: 0.45 }} />}
@@ -782,7 +795,7 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
                   />
                 </Tooltip>
                 <Divider style={{ flexGrow: 0, margin: '12px 0px' }} type="vertical" />
-                <Tooltip title="Test Workflow">
+                <Tooltip title={i18n.t('workflow.card.testWorkflow')}>
                   <Button
                     style={{ border: 'none' }}
                     icon={<ExperimentOutlined style={{ opacity: 0.45 }} />}
@@ -793,7 +806,7 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
                   />
                 </Tooltip>
                 <Divider style={{ flexGrow: 0, margin: '12px 0px' }} type="vertical" />
-                <Tooltip title="Deploy Workflow">
+                <Tooltip title={i18n.t('workflow.card.deployWorkflow')}>
                   <Button
                     style={{ border: 'none' }}
                     icon={<PlayCircleOutlined style={{ opacity: 0.45 }} />}
@@ -804,7 +817,7 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
                   />
                 </Tooltip>
                 <Divider style={{ flexGrow: 0, margin: '12px 0px' }} type="vertical" />
-                <Tooltip title="Save as New Template">
+                <Tooltip title={i18n.t('workflow.card.saveAsTemplate')}>
                   <Button
                     style={{ border: 'none' }}
                     icon={<CopyOutlined style={{ opacity: 0.45 }} />}
@@ -816,8 +829,8 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
                         task_template_ids: [],
                       });
                       notificationsApi.success({
-                        message: 'Workflow Template Created',
-                        description: `Success! Workflow "${workflow?.name}" copied to a workflow template.`,
+                        message: i18n.t('workflow.card.templateCreatedTitle'),
+                        description: i18n.t('workflow.card.templateCreatedDesc', workflow?.name),
                         placement: 'topRight',
                       });
                     }}

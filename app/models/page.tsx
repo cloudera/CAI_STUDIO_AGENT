@@ -4,6 +4,7 @@ import React, { useEffect, Suspense } from 'react';
 import { Layout, Typography, Button } from 'antd';
 import { PlusCircleOutlined } from '@ant-design/icons';
 import ModelList from '../components/models/ModelList';
+import i18n from '../utils/i18n';
 import { useSearchParams } from 'next/navigation';
 import CommonBreadCrumb from '../components/CommonBreadCrumb';
 import ModelTestDrawer from '@/app/components/models/ModelTestDrawer';
@@ -19,9 +20,7 @@ const ModelsRegisterHeader: React.FC = () => {
   return (
     <Layout className="bg-transparent flex flex-row items-center justify-between flex-grow-0 p-3">
       {/* Descriptive Text */}
-      <Typography.Text className="font-normal m-0">
-        Register language models which will be used to build agents and workflows.
-      </Typography.Text>
+      <Typography.Text className="font-normal m-0">{i18n.t('models.registerDesc')}</Typography.Text>
 
       {/* Register New Model Button */}
       <Button
@@ -33,7 +32,7 @@ const ModelsRegisterHeader: React.FC = () => {
         }}
         className="ml-4"
       >
-        Register New Model
+        {i18n.t('models.registerNew')}
       </Button>
     </Layout>
   );
@@ -59,9 +58,9 @@ const ModelsPageContent: React.FC = () => {
       <ModelTestDrawer />
       <ModelRegisterDrawer />
       <Layout className="flex-1 p-4 md:p-6 lg:p-6 flex flex-col">
-        <CommonBreadCrumb items={[{ title: 'Language Models' }]} />
+        <CommonBreadCrumb items={[{ title: i18n.t('models.languageModels') }]} />
         <Title level={2} className="mt-4">
-          Models
+          {i18n.t('models.title')}
         </Title>
         <ModelsRegisterHeader />
         <ModelList />

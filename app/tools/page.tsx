@@ -21,7 +21,9 @@ import {
   useListGlobalMcpTemplatesQuery,
 } from '../mcp/mcpTemplatesApi';
 import MCPTemplateList from '../components/MCPTemplateList';
+import i18n from '../utils/i18n';
 import LargeCenterSpin from '../components/common/LargeCenterSpin';
+
 const { Text } = Typography;
 const { TabPane } = Tabs;
 
@@ -133,11 +135,8 @@ const ToolsTabContent = () => {
           <Image src="/ic-brand-tools.svg" alt="Tool Template Icon" />
         </div>
         <Layout className="bg-transparent flex-1 ml-3 flex-col flex">
-          <Text className="font-semibold text-lg">Create Tool Template</Text>
-          <Text className="font-light">
-            Build custom Python tools to enhance your AI agents capabilities and supercharge your
-            workflows.
-          </Text>
+          <Text className="font-semibold text-lg">{i18n.t('tools.createTemplate')}</Text>
+          <Text className="font-light">{i18n.t('tools.createTemplateDesc')}</Text>
         </Layout>
         <Button
           type="primary"
@@ -147,7 +146,7 @@ const ToolsTabContent = () => {
           loading={creatingTool}
           disabled={creatingTool}
         >
-          Create
+          {i18n.t('tools.create')}
         </Button>
       </Layout>
       &nbsp;
@@ -278,9 +277,9 @@ const MCPTabContent = () => {
           <Image src="/mcp-icon.svg" alt="MCP Icon" className="p-3" />
         </div>
         <Layout className="bg-transparent flex-1 ml-3 flex-col flex">
-          <Text className="font-semibold text-lg">Register a MCP Server</Text>
+          <Text className="font-semibold text-lg">{i18n.t('tools.registerMCP')}</Text>
           <Text className="font-light">
-            Register a MCP Server to use in your AI agents. Learn more about Model Context Protocol{' '}
+            {i18n.t('tools.registerMCPDesc')}{' '}
             <a
               href="https://modelcontextprotocol.io/introduction"
               target="_blank"
@@ -299,7 +298,7 @@ const MCPTabContent = () => {
           loading={creatingMcp}
           disabled={creatingMcp}
         >
-          Register
+          {i18n.t('tools.register')}
         </Button>
       </Layout>
       &nbsp;
@@ -340,12 +339,12 @@ const ToolsPageContent = () => {
 
   return (
     <Layout className="flex-1 p-4 pt-4 pb-[22px] flex flex-col">
-      <CommonBreadCrumb items={[{ title: 'Tools Catalog' }]} />
+      <CommonBreadCrumb items={[{ title: i18n.t('tools.title') }]} />
       <Tabs activeKey={section} className="mt-0" onChange={handleTabChange}>
-        <TabPane tab="Agent Studio Tools" key="tools">
+        <TabPane tab={i18n.t('tools.tabTools')} key="tools">
           <ToolsTabContent />
         </TabPane>
-        <TabPane tab="MCP Servers" key="mcp">
+        <TabPane tab={i18n.t('tools.tabMCP')} key="mcp">
           <MCPTabContent />
         </TabPane>
       </Tabs>

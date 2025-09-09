@@ -20,6 +20,7 @@ import {
 import { compareWorkbenchVersions } from '../lib/workbench';
 import WarningMessageBox from './WarningMessageBox';
 import { Button, Layout, Modal, Typography, Alert } from 'antd';
+import i18n from '@/app/utils/i18n';
 import { CheckStudioUpgradeStatusResponse } from '@/studio/proto/agent_studio';
 import { SyncOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { useGlobalNotification } from './Notifications';
@@ -211,8 +212,8 @@ const MessageBoxes: React.FC = () => {
 
       // Show acknowledgment notification
       notificationsApi.info({
-        message: 'Rotating API Keys',
-        description: 'Your request to rotate API keys is being processed...',
+        message: i18n.t('keys.rotate.infoTitle'),
+        description: i18n.t('keys.rotate.infoDesc'),
         placement: 'topRight',
       });
 
@@ -221,11 +222,11 @@ const MessageBoxes: React.FC = () => {
       setIsRotating(false);
 
       notificationsApi.success({
-        message: 'API Keys Rotated Successfully',
+        message: i18n.t('keys.rotate.successTitle'),
         description: (
           <Layout className="flex flex-col gap-1 bg-transparent">
-            <Text>New API keys have been generated.</Text>
-            <Text>All deployed workflows will be redeployed automatically.</Text>
+            <Text>{i18n.t('keys.rotate.successLine1')}</Text>
+            <Text>{i18n.t('keys.rotate.successLine2')}</Text>
           </Layout>
         ),
         placement: 'topRight',
@@ -236,8 +237,8 @@ const MessageBoxes: React.FC = () => {
     } catch (err: any) {
       setIsRotating(false);
       notificationsApi.error({
-        message: 'Failed to Rotate Keys',
-        description: err.message || 'An error occurred while rotating API keys.',
+        message: i18n.t('keys.rotate.errorTitle'),
+        description: err.message || i18n.t('keys.rotate.errorDesc'),
         placement: 'topRight',
       });
       setIsRotateModalOpen(false);
@@ -256,15 +257,15 @@ const MessageBoxes: React.FC = () => {
     <>
       <Modal
         open={isRotateModalOpen}
-        title="Rotate API Keys"
+        title={i18n.t('keys.rotate.modalTitle')}
         onCancel={() => setIsRotateModalOpen(false)}
         centered
         footer={[
           <Button key="cancel" onClick={() => setIsRotateModalOpen(false)} disabled={isRotating}>
-            Cancel
+            {i18n.t('common.cancel')}
           </Button>,
           <Button key="rotate" type="primary" onClick={handleRotateKeys} loading={isRotating}>
-            {isRotating ? 'Rotating Keys' : 'Rotate Keys'}
+            {isRotating ? i18n.t('keys.rotate.ctaWorking') : i18n.t('keys.rotate.cta')}
           </Button>,
         ]}
       >
@@ -274,19 +275,16 @@ const MessageBoxes: React.FC = () => {
             <Layout className="flex-col gap-1 p-0 bg-transparent">
               <Layout className="flex-row items-center gap-2 bg-transparent">
                 <InfoCircleOutlined className="text-yellow-500 text-lg" />
-                <Text className="text-sm font-semibold">Warning: Workflow Redeployment</Text>
+                <Text className="text-sm font-semibold">{i18n.t('keys.rotate.warnTitle')}</Text>
               </Layout>
-              <Text className="text-sm font-normal">
-                Rotating API keys will create new user API keys and trigger redeployment of all
-                deployed workflows.
-              </Text>
+              <Text className="text-sm font-normal">{i18n.t('keys.rotate.warnDesc')}</Text>
             </Layout>
           }
           type="warning"
           showIcon={false}
           closable={false}
         />
-        <Typography.Paragraph>Are you sure you want to rotate the API keys?</Typography.Paragraph>
+        <Typography.Paragraph>{i18n.t('keys.rotate.confirm')}</Typography.Paragraph>
       </Modal>
 
       <UpgradeModal upgradeStatus={upgradeStatus} isOpen={isOpen} setIsOpen={setIsOpen} />
