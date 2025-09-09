@@ -81,12 +81,12 @@ const ImportWorkflowTemplateModal: React.FC<ImportWorkflowTemplateModalProps> = 
   const handleImportWorkflowTemplate = async () => {
     try {
       await importWorkflowTemplate({ file_path: importFilePath }).unwrap();
-      message.success('Workflow template imported successfully');
+      message.success(i18n.t('workflow.import.success'));
       onClose();
     } catch (error) {
-      message.error('Failed to import workflow template: ' + (error as Error).message);
+      message.error(i18n.t('workflow.import.errorMsg', (error as Error).message));
       notificationsApi.error({
-        message: 'Error in importing workflow template',
+        message: i18n.t('workflow.import.errorTitle'),
         description: (error as Error).message,
         placement: 'topRight',
       });
@@ -95,18 +95,16 @@ const ImportWorkflowTemplateModal: React.FC<ImportWorkflowTemplateModalProps> = 
 
   return (
     <Modal
-      title={<div className="text-center">Import Workflow Template</div>}
+      title={<div className="text-center">{i18n.t('workflow.import.title')}</div>}
       open={visible}
       onOk={handleImportWorkflowTemplate}
-      okText="Import"
-      cancelText="Cancel"
+      okText={i18n.t('workflow.import.ok')}
+      cancelText={i18n.t('common.cancel')}
       onCancel={onClose}
       confirmLoading={isImporting}
       width="40%"
     >
-      <p className="mb-2">
-        Please enter the absolute path of the workflow template zip file to import:
-      </p>
+      <p className="mb-2">{i18n.t('workflow.import.prompt')}</p>
       {importFilePath.length > filePrefix.length && (
         <div className="h-[30px] mb-2 flex items-center">
           {(fileExists === null || isCheckingFile) && <Spin indicator={<LoadingOutlined spin />} />}
@@ -117,8 +115,8 @@ const ImportWorkflowTemplateModal: React.FC<ImportWorkflowTemplateModalProps> = 
                 <Layout className="flex flex-col gap-1 p-0 bg-transparent">
                   <Text className="text-[10px] font-light bg-transparent">
                     {fileExists
-                      ? `Found: ${path.basename(importFilePath)}`
-                      : 'The specified file could not be found. Please ensure that the path is correct.'}
+                      ? i18n.t('workflow.import.found', path.basename(importFilePath))
+                      : i18n.t('workflow.import.notFound')}
                   </Text>
                 </Layout>
               }
@@ -133,7 +131,7 @@ const ImportWorkflowTemplateModal: React.FC<ImportWorkflowTemplateModalProps> = 
         <Input
           value={importFilePath.replace(filePrefix, '')}
           onChange={(e) => setImportFilePath(`${filePrefix}${e.target.value}`)}
-          placeholder="workflow_template.zip"
+          placeholder={i18n.t('workflow.import.placeholder')}
           status={fileExists === false && !isCheckingFile ? 'warning' : undefined}
         />
       </div>
@@ -251,18 +249,18 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
             setShowAllDeployed(false);
           }}
           options={[
-            { value: 'all', label: 'All Workflows' },
+            { value: 'all', label: i18n.t('label.allWorkflows') },
             {
               value: 'draft',
-              label: 'Draft Workflows',
+              label: i18n.t('label.draftWorkflows'),
               disabled: draftWorkflows.length === 0,
             },
             {
               value: 'deployed',
-              label: 'Deployed Workflows',
+              label: i18n.t('label.deployedWorkflows'),
               disabled: Object.keys(deployedWorkflowMap).length === 0,
             },
-            { value: 'templates', label: 'Workflow Templates' },
+            { value: 'templates', label: i18n.t('label.workflowTemplates') },
           ]}
         />
       </div>
@@ -281,7 +279,7 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
           Object.keys(deployedWorkflowMap).length > 0 && (
             <div>
               <div className="flex justify-between items-center mb-2.5">
-                <Text className="text-lg font-semibold">Deployed Workflows</Text>
+                <Text className="text-lg font-semibold">{i18n.t('label.deployedWorkflows')}</Text>
                 <div className="flex gap-2 p-0.5 h-8 items-center">
                   <Button
                     type="link"
@@ -341,7 +339,7 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
         {(workflowFilter === 'all' || workflowFilter === 'draft') && draftWorkflows.length > 0 && (
           <div>
             <div className="flex justify-between items-center mt-px mb-px">
-              <Text className="text-lg font-semibold">Draft Workflows</Text>
+              <Text className="text-lg font-semibold">{i18n.t('label.draftWorkflows')}</Text>
               <div className="flex gap-2 p-0.5 h-8 items-center">
                 <Button
                   type="link"

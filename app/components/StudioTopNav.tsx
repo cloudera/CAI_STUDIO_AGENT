@@ -7,6 +7,7 @@ import '../globals.css';
 import FeedbackContent from './FeedbackContent';
 import * as semver from 'semver';
 import { useCheckStudioUpgradeStatusQuery } from '../lib/crossCuttingApi';
+import i18n from '../utils/i18n';
 
 const { Text, Title } = Typography;
 const { Header } = Layout;
@@ -21,10 +22,10 @@ const StudioTopNav: React.FC = () => {
   };
 
   const menuItems = [
-    { key: '/workflows', label: 'Agentic Workflows' },
-    { key: '/tools', label: 'Tools Catalog' },
-    { key: '/models', label: 'LLMs' },
-    { key: '/ops', label: 'Ops' },
+    { key: '/workflows', label: i18n.t('nav.agenticWorkflows') },
+    { key: '/tools', label: i18n.t('nav.toolsCatalog') },
+    { key: '/models', label: i18n.t('nav.llms') },
+    { key: '/ops', label: i18n.t('nav.ops') },
     {
       key: '/feedback',
       label: (
@@ -33,11 +34,13 @@ const StudioTopNav: React.FC = () => {
           trigger="click"
           title={
             <div className="text-center">
-              <Text className="text-base font-medium bg-transparent">Please Provide Feedback</Text>
+              <Text className="text-base font-medium bg-transparent">
+                {i18n.t('feedback.title')}
+              </Text>
             </div>
           }
         >
-          Feedback
+          {i18n.t('nav.feedback')}
         </Popover>
       ),
     },

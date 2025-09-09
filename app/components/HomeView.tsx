@@ -17,6 +17,7 @@ import {
 } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { ViewSettings } from '../lib/types';
+import i18n from '../utils/i18n';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -55,31 +56,28 @@ const HomeViewBannerContent: React.FC = () => {
   return (
     <Layout className="bg-transparent flex flex-col justify-center pl-16 pr-16 gap-6 max-w-[800px] flex-grow-0">
       <Title level={2} className="text-[#120046] text-6xl font-semibold pb-2 m-0 font-sans">
-        Agent Studio
+        {i18n.t('home.title')}
       </Title>
-      <Paragraph className="text-[14px] font-[400] p-0 m-0">
-        A dedicated platform within the Cloudera AI ecosystem that empowers users to design, test,
-        and deploy multi-agent workflows.
-      </Paragraph>
+      <Paragraph className="text-[14px] font-[400] p-0 m-0">{i18n.t('home.subtitle')}</Paragraph>
       <HomeViewBannerCard
-        title="Create Agent Workflows"
+        title={i18n.t('home.banner.createWorkflows')}
         icon={<Avatar icon={<DeploymentUnitOutlined />} className="bg-[#fff4cd] text-black" />}
-        content="Start by creating a workflow assigning multiple agents, with configurations tailored to specific tasks and tools."
+        content={i18n.t('home.banner.createWorkflows.content')}
       />
       <HomeViewBannerCard
-        title="Create Agents & Tools"
+        title={i18n.t('home.banner.createAgentsTools')}
         icon={<Avatar icon={<UsergroupAddOutlined />} className="bg-[#edf7ff] text-black" />}
-        content="Agents can be created as standalone entities, configured to work with tools, and reused across workflows."
+        content={i18n.t('home.banner.createAgentsTools.content')}
       />
       <HomeViewBannerCard
-        title="Assign Tasks"
+        title={i18n.t('home.banner.assignTasks')}
         icon={<Avatar icon={<FileDoneOutlined />} className="bg-[#e5ffe5] text-black" />}
-        content="Assign tasks to tell your agents what to do."
+        content={i18n.t('home.banner.assignTasks.content')}
       />
       <HomeViewBannerCard
-        title="Deploy Workflow"
+        title={i18n.t('home.banner.deployWorkflow')}
         icon={<Avatar icon={<CloudUploadOutlined />} className="bg-[#f9eeff] text-black" />}
-        content="Workflows can be deployed as standalone applications in Cloudera's AI Workbench, enabling other users to interact with and benefit from them for specific tasks."
+        content={i18n.t('home.banner.deployWorkflow.content')}
       />
       <Layout className="flex-grow-0 flex flex-row items-center justify-start pt-8 gap-6">
         <Button
@@ -89,10 +87,10 @@ const HomeViewBannerContent: React.FC = () => {
             router.push('/workflows');
           }}
         >
-          Get Started
+          {i18n.t('home.getStarted')}
         </Button>
         <Checkbox onChange={(e) => handleDontShowAgain(e.target.checked)}>
-          Don't show me this again
+          {i18n.t('home.dontShowAgain')}
         </Checkbox>
       </Layout>
     </Layout>

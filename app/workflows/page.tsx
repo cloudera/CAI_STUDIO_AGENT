@@ -22,7 +22,7 @@ import CommonBreadCrumb from '../components/CommonBreadCrumb';
 import { useGlobalNotification } from '../components/Notifications';
 import WorkflowGetStartModal from '../components/workflows/WorkflowGetStartModal';
 import { clearedWorkflowApp } from './workflowAppSlice';
-
+import i18n from '../utils/i18n';
 import ContentWithHealthCheck from '../components/ContentWithHealthCheck';
 import LargeCenterSpin from '../components/common/LargeCenterSpin';
 
@@ -247,7 +247,7 @@ const WorkflowsPageContent: React.FC = () => {
 
   return (
     <Layout className="flex-1 pt-4 px-6 pb-0 flex flex-col bg-transparent">
-      <CommonBreadCrumb items={[{ title: 'Agentic Workflows' }]} />
+      <CommonBreadCrumb items={[{ title: i18n.t('workflows.title') }]} />
       <Layout>
         <Layout className="bg-white flex flex-row items-center justify-between p-4">
           {/* Icon */}
@@ -256,11 +256,8 @@ const WorkflowsPageContent: React.FC = () => {
           </div>
           {/* Descriptive Text */}
           <Layout className="bg-transparent flex-1 ml-3 flex flex-col">
-            <Text className="font-semibold text-lg">Create Agentic Workflow</Text>
-            <Text className="font-normal">
-              Orchestrate AI agents to collaborate on complex tasks, powered by custom tools and
-              seamless workflow automation.
-            </Text>
+            <Text className="font-semibold text-lg">{i18n.t('workflows.createTitle')}</Text>
+            <Text className="font-normal">{i18n.t('workflows.createDesc')}</Text>
           </Layout>
           {/* Register New Workflow Button */}
           <Button
@@ -271,7 +268,7 @@ const WorkflowsPageContent: React.FC = () => {
             loading={creatingWorkflow}
             disabled={creatingWorkflow}
           >
-            Create
+            {i18n.t('workflows.create')}
           </Button>
         </Layout>
         &nbsp;
