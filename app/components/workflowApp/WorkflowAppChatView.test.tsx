@@ -53,8 +53,18 @@ jest.mock('@/app/workflows/workflowsApi', () => ({
 
 // Mock workflowAppApi
 jest.mock('@/app/workflows/workflowAppApi', () => ({
+  useGetEventsMutation: () => [
+    jest.fn().mockReturnValue({
+      unwrap: jest.fn().mockResolvedValue({ events: [] }),
+    }),
+  ],
+  useKickoffMutation: () => [
+    jest.fn().mockReturnValue({
+      unwrap: jest.fn().mockResolvedValue({ trace_id: 'test-trace-123' }),
+    }),
+  ],
   useGetWorkflowDataQuery: () => ({
-    data: { renderMode: 'studio', workflowModelUrl: 'http://test-url.com' },
+    data: { renderMode: 'studio', workflowModelUrl: 'http://test-url' },
     isLoading: false,
     isError: false,
   }),
@@ -245,7 +255,12 @@ describe('WorkflowAppChatView', () => {
   });
 
   it('handles sending a message in workflow mode', async () => {
-    // Mock the workflowAppApi to return workflow mode
+    // Create a mock kickoff function for this specific test
+    const mockKickoffForWorkflowMode = jest.fn().mockReturnValue({
+      unwrap: jest.fn().mockResolvedValue({ trace_id: 'workflow-trace-123' }),
+    });
+
+    // Mock the workflowAppApi to return workflow mode and the specific kickoff mock
     jest
       .spyOn(require('@/app/workflows/workflowAppApi'), 'useGetWorkflowDataQuery')
       .mockReturnValue({
@@ -253,6 +268,10 @@ describe('WorkflowAppChatView', () => {
         isLoading: false,
         isError: false,
       });
+
+    jest
+      .spyOn(require('@/app/workflows/workflowAppApi'), 'useKickoffMutation')
+      .mockReturnValue([mockKickoffForWorkflowMode]);
 
     render(
       <WorkflowAppChatView
@@ -265,23 +284,21 @@ describe('WorkflowAppChatView', () => {
     const sendButton = screen.getByTestId('send-button');
     fireEvent.click(sendButton);
 
-    // Check that fetch was called with the correct parameters
+    // Check that kickoff mutation was called with the correct parameters
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith(
-        'http://test-url.com',
-        expect.objectContaining({
-          method: 'POST',
-          headers: expect.any(Object),
-          body: expect.any(String),
-        }),
-      );
+      expect(mockKickoffForWorkflowMode).toHaveBeenCalledWith({
+        inputs: {
+          user_input: 'Test user input',
+          context: expect.any(String),
+        },
+      });
     });
 
     // Dispatch should be called to update trace ID, running state, and add message
     expect(mockDispatch).toHaveBeenCalledWith(
       expect.objectContaining({
         type: expect.any(String),
-        payload: expect.any(String),
+        payload: 'workflow-trace-123',
       }),
     );
   });

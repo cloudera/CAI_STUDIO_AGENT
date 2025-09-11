@@ -23,7 +23,7 @@ import {
   selectWorkflowConfiguration,
   selectWorkflowGenerationConfig,
 } from '@/app/workflows/editorSlice';
-import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
+import { useGetWorkflowDataQuery, useKickoffMutation } from '@/app/workflows/workflowAppApi';
 import { useGlobalNotification } from '../Notifications';
 
 const { Title, Text } = Typography;
@@ -47,6 +47,7 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
   const isRunning = useAppSelector(selectWorkflowIsRunning);
   const currentEvents = useAppSelector(selectCurrentEvents);
   const [testWorkflow] = useTestWorkflowMutation();
+  const [kickoff] = useKickoffMutation();
   const workflowGenerationConfig = useAppSelector(selectWorkflowGenerationConfig);
   const workflowConfiguration = useAppSelector(selectWorkflowConfiguration);
   const notificationApi = useGlobalNotification();
@@ -54,7 +55,6 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
   // If we haven't determined our application render type, then we don't render yet!
   const { data: workflowData, isLoading } = useGetWorkflowDataQuery();
   const renderMode = workflowData?.renderMode;
-  const workflowModelUrl = workflowData?.workflowModelUrl;
 
   const allEventsRef = React.useRef<any[]>([]);
   const [lastRun, setLastRun] = useState<{
@@ -98,10 +98,6 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
     );
   };
 
-  const base64Encode = (obj: any): string => {
-    return Buffer.from(JSON.stringify(obj)).toString('base64');
-  };
-
   const handleCrewKickoff = async () => {
     // Get all possible inputs and create a dictionary with empty strings as defaults
     const allInputs = getWorkflowInputs(workflow?.crew_ai_workflow_metadata, tasks);
@@ -134,20 +130,19 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
         return;
       }
     } else {
-      const kickoffResponse = await fetch(`${workflowModelUrl}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          request: {
-            action_type: 'kickoff',
-            kickoff_inputs: base64Encode(finalInputs), // Use finalInputs instead of inputs
-          },
-        }),
-      });
-      const kickoffResponseData = (await kickoffResponse.json()) as any;
-      traceId = kickoffResponseData.response.trace_id;
+      try {
+        const response = await kickoff({
+          inputs: finalInputs,
+        }).unwrap();
+        traceId = response.trace_id;
+      } catch (error) {
+        notificationApi.error({
+          message: 'Kickoff failed',
+          description: JSON.stringify(error),
+          placement: 'topRight',
+        });
+        return;
+      }
     }
 
     if (traceId) {

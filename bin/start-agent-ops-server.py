@@ -158,7 +158,7 @@ class ProxyHandler(http.server.BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self.end_headers()
-        self.wfile.write(json.dumps(messages).encode("utf-8"))
+        self.wfile.write(json.dumps({"events": messages}).encode("utf-8"))
 
 
 

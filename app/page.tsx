@@ -21,10 +21,10 @@ import LargeCenterSpin from './components/common/LargeCenterSpin';
  * to the /workflows page.
  */
 const HomePage: React.FC = () => {
-  // Make a call to /api/wflow in the node server to get rendering information.
+  // Make a call to /api/workflow in the node server to get rendering information.
   // note that RTK will cache this and there is nothing invalidating this, so
   // it will only be called once.
-  const { data: wflowData, isLoading } = useGetWorkflowDataQuery();
+  const { data: workflowData, isLoading } = useGetWorkflowDataQuery();
   const [viewSettings, setViewSettings] = useState<ViewSettings>();
   const router = useRouter();
 
@@ -48,17 +48,17 @@ const HomePage: React.FC = () => {
   }
 
   // Show loading if the render mode is not returning proper information.
-  if (!wflowData || !wflowData?.renderMode) {
+  if (!workflowData || !workflowData?.renderMode) {
     return (
       <LargeCenterSpin message="Issue retrieving workflow and render mode (is the deployed model running?)" />
     );
   }
 
   // Render workflow app.
-  if (wflowData.renderMode === 'workflow') {
+  if (workflowData.renderMode === 'workflow') {
     return (
       <Layout className="p-[36px] flex flex-col">
-        <WorkflowAppDeployed workflowData={wflowData} />
+        <WorkflowAppDeployed workflowData={workflowData} />
       </Layout>
     );
   }

@@ -135,7 +135,10 @@ echo "UV_LINK_MODE set to: $UV_LINK_MODE"
 # We dont want to sync uv dependencies in air gapped environment as we already have .venv directory.
 if [ -z "$UV_DEFAULT_INDEX" ]; then
   cd $APP_DIR
-  uv sync
+  VIRTUAL_ENV=.venv uv sync
+  cd $APP_DIR/studio/workflow_engine
+  VIRTUAL_ENV=.venv uv sync
+  cd $APP_DIR
 fi
 # Initialization logic for studio mode.
 if [ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]; then
@@ -182,11 +185,6 @@ declare -a RUNNER_PIDS=()
 
 # Spin up workflow runners.
 cd $APP_DIR/studio/workflow_engine
-# If UV_DEFAULT_INDEX is not set, that means we are running in non air gapped environment and we can sync uv dependencies.
-# We dont want to sync uv dependencies in air gapped environment as we already have .venv directory.
-if [ -z "$UV_DEFAULT_INDEX" ]; then
-  uv sync
-fi
 if [ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]; then
   for (( i=0; i<AGENT_STUDIO_NUM_WORKFLOW_RUNNERS; i++ )); do
     PORT_NUM=$((DEFAULT_WORKFLOW_RUNNER_STARTING_PORT + i))

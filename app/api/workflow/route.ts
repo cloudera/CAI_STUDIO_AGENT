@@ -7,73 +7,8 @@ import {
   AgentMetadata,
   McpInstance,
 } from '@/studio/proto/agent_studio';
-import fs from 'fs';
-import https from 'https';
-import http from 'http';
 import fetch from 'node-fetch';
-
-const createAgent = () => {
-  const isTlsEnabled = process.env.AGENT_STUDIO_WORKBENCH_TLS_ENABLED === 'true';
-
-  if (isTlsEnabled) {
-    return new https.Agent({
-      ca: fs.readFileSync(process.env.REQUESTS_CA_BUNDLE || ''),
-    });
-  } else {
-    return new http.Agent();
-  }
-};
-
-const getUrlScheme = () => {
-  return process.env.AGENT_STUDIO_WORKBENCH_TLS_ENABLED === 'true' ? 'https' : 'http';
-};
-
-interface CMLModel {
-  id: string;
-  name: string;
-  access_key: string;
-}
-
-interface ListModelsResponse {
-  models: CMLModel[];
-}
-
-const fetchModelUrl = async (cml_model_id: string): Promise<string | null> => {
-  const CDSW_APIV2_KEY = process.env.CDSW_APIV2_KEY;
-  const CDSW_DOMAIN = process.env.CDSW_DOMAIN;
-  const CDSW_PROJECT_ID = process.env.CDSW_PROJECT_ID;
-
-  if (!CDSW_APIV2_KEY || !CDSW_DOMAIN || !CDSW_PROJECT_ID) {
-    console.error('Environment variables are not set properly.');
-    return null;
-  }
-
-  const agent = createAgent();
-  const scheme = getUrlScheme();
-
-  try {
-    const response = await fetch(`${scheme}://${CDSW_DOMAIN}/api/v2/models?page_size=1000`, {
-      headers: {
-        authorization: `Bearer ${CDSW_APIV2_KEY}`,
-      },
-      agent,
-    });
-    const responseData = (await response.json()) as ListModelsResponse;
-
-    const model = responseData.models.find((model: CMLModel) => model.id === cml_model_id);
-
-    if (!model) {
-      console.error('Model is not found.');
-      return null;
-    }
-
-    const outputURL = `${scheme}://modelservice.${CDSW_DOMAIN}/model?accessKey=${model.access_key}`;
-    return outputURL;
-  } catch (error) {
-    console.error('Error fetching model URL:', error);
-    return null;
-  }
-};
+import { fetchModelUrl, createAgent } from '@/app/lib/ops';
 
 // Extract information about the rendermode and the
 // workflow if a workflow app is initialized. This
