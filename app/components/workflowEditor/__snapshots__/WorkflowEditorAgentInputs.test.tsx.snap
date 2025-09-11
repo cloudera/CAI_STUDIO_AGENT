@@ -1,0 +1,93 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`WorkflowEditorAgentInputs matches snapshot with default props 1`] = `
+<div
+  data-testid="workflow-editor-agent-inputs"
+>
+  <div>
+    Agents
+  </div>
+  <div>
+    Create or Edit Agents
+  </div>
+  <div>
+    Is Conversational
+  </div>
+  <div>
+    Manager Agent
+  </div>
+  <div>
+    Capability Guide
+  </div>
+  <div
+    data-testid="select-or-add-agent-modal"
+  >
+    SelectOrAddAgentModal
+  </div>
+  <div>
+    Workflow ID: 
+    test-workflow-id
+  </div>
+</div>
+`;
+
+exports[`WorkflowEditorAgentInputs matches snapshot with different workflow ID 1`] = `
+<div
+  data-testid="workflow-editor-agent-inputs"
+>
+  <div>
+    Agents
+  </div>
+  <div>
+    Create or Edit Agents
+  </div>
+  <div>
+    Is Conversational
+  </div>
+  <div>
+    Manager Agent
+  </div>
+  <div>
+    Capability Guide
+  </div>
+  <div
+    data-testid="select-or-add-agent-modal"
+  >
+    SelectOrAddAgentModal
+  </div>
+  <div>
+    Workflow ID: 
+    snapshot-test-workflow
+  </div>
+</div>
+`;
+
+exports[`WorkflowEditorAgentInputs matches snapshot with empty workflow ID 1`] = `
+<div
+  data-testid="workflow-editor-agent-inputs"
+>
+  <div>
+    Agents
+  </div>
+  <div>
+    Create or Edit Agents
+  </div>
+  <div>
+    Is Conversational
+  </div>
+  <div>
+    Manager Agent
+  </div>
+  <div>
+    Capability Guide
+  </div>
+  <div
+    data-testid="select-or-add-agent-modal"
+  >
+    SelectOrAddAgentModal
+  </div>
+  <div>
+    Workflow ID: 
+  </div>
+</div>
+`;

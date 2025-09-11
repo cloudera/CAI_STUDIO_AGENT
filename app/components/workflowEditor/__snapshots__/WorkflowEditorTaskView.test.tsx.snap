@@ -1,0 +1,212 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`WorkflowEditorTaskView matches snapshot showing layout structure 1`] = `
+<div
+  data-testid="workflow-editor-task-view"
+>
+  <div
+    class="flex-1 flex-row bg-white rounded-md"
+  >
+    <div
+      data-testid="workflow-editor-task-inputs"
+    >
+      <div>
+        Tasks
+      </div>
+      <div>
+        Task Description
+      </div>
+      <div>
+        Expected Output
+      </div>
+      <div>
+        Add Task
+      </div>
+      <div>
+        Select Agent
+      </div>
+    </div>
+    <hr
+      role="separator"
+    />
+    <div
+      data-testid="workflow-diagram-view"
+    >
+      <div>
+        Workflow Diagram
+      </div>
+      <div>
+        Agents: 0
+      </div>
+      <div>
+        Tasks: 0
+      </div>
+      <div>
+        Tools: 0
+      </div>
+    </div>
+  </div>
+  <div>
+    Workflow ID: 
+    test-workflow-id
+  </div>
+</div>
+`;
+
+exports[`WorkflowEditorTaskView matches snapshot with default state 1`] = `
+<div
+  data-testid="workflow-editor-task-view"
+>
+  <div
+    class="flex-1 flex-row bg-white rounded-md"
+  >
+    <div
+      data-testid="workflow-editor-task-inputs"
+    >
+      <div>
+        Tasks
+      </div>
+      <div>
+        Task Description
+      </div>
+      <div>
+        Expected Output
+      </div>
+      <div>
+        Add Task
+      </div>
+      <div>
+        Select Agent
+      </div>
+    </div>
+    <hr
+      role="separator"
+    />
+    <div
+      data-testid="workflow-diagram-view"
+    >
+      <div>
+        Workflow Diagram
+      </div>
+      <div>
+        Agents: 0
+      </div>
+      <div>
+        Tasks: 0
+      </div>
+      <div>
+        Tools: 0
+      </div>
+    </div>
+  </div>
+  <div>
+    Workflow ID: 
+    test-workflow-id
+  </div>
+</div>
+`;
+
+exports[`WorkflowEditorTaskView matches snapshot with different workflow ID 1`] = `
+<div
+  data-testid="workflow-editor-task-view"
+>
+  <div
+    class="flex-1 flex-row bg-white rounded-md"
+  >
+    <div
+      data-testid="workflow-editor-task-inputs"
+    >
+      <div>
+        Tasks
+      </div>
+      <div>
+        Task Description
+      </div>
+      <div>
+        Expected Output
+      </div>
+      <div>
+        Add Task
+      </div>
+      <div>
+        Select Agent
+      </div>
+    </div>
+    <hr
+      role="separator"
+    />
+    <div
+      data-testid="workflow-diagram-view"
+    >
+      <div>
+        Workflow Diagram
+      </div>
+      <div>
+        Agents: 0
+      </div>
+      <div>
+        Tasks: 0
+      </div>
+      <div>
+        Tools: 0
+      </div>
+    </div>
+  </div>
+  <div>
+    Workflow ID: 
+    snapshot-test-workflow
+  </div>
+</div>
+`;
+
+exports[`WorkflowEditorTaskView matches snapshot with empty workflow ID 1`] = `
+<div
+  data-testid="workflow-editor-task-view"
+>
+  <div
+    class="flex-1 flex-row bg-white rounded-md"
+  >
+    <div
+      data-testid="workflow-editor-task-inputs"
+    >
+      <div>
+        Tasks
+      </div>
+      <div>
+        Task Description
+      </div>
+      <div>
+        Expected Output
+      </div>
+      <div>
+        Add Task
+      </div>
+      <div>
+        Select Agent
+      </div>
+    </div>
+    <hr
+      role="separator"
+    />
+    <div
+      data-testid="workflow-diagram-view"
+    >
+      <div>
+        Workflow Diagram
+      </div>
+      <div>
+        Agents: 0
+      </div>
+      <div>
+        Tasks: 0
+      </div>
+      <div>
+        Tools: 0
+      </div>
+    </div>
+  </div>
+  <div>
+    Workflow ID: 
+  </div>
+</div>
+`;

@@ -29,7 +29,13 @@ export default [
         },
 
         languageOptions: {
-            parser: tsParser
+            parser: tsParser,
+            globals: {
+                // Node.js globals
+                process: 'readonly',
+                global: 'readonly',
+                Buffer: 'readonly',
+            }
         },
 
         rules: {
@@ -74,6 +80,48 @@ export default [
             "curly": ["error", "all"],
             "jsx-a11y/anchor-is-valid": "error",
             "jsx-a11y/anchor-has-content": "error",
+        },
+    },
+    // Specific configuration for test files
+    {
+        files: ["**/*.test.{ts,tsx,js,jsx}", "**/__tests__/**/*.{ts,tsx,js,jsx}"],
+        
+        languageOptions: {
+            parser: tsParser,
+            globals: {
+                // Jest globals
+                describe: 'readonly',
+                it: 'readonly',
+                test: 'readonly',
+                expect: 'readonly',
+                beforeAll: 'readonly',
+                beforeEach: 'readonly',
+                afterAll: 'readonly',
+                afterEach: 'readonly',
+                jest: 'readonly',
+                // Node.js globals
+                process: 'readonly',
+                global: 'readonly',
+                Buffer: 'readonly',
+            }
+        },
+
+        rules: {
+            // Relax some rules for test files
+            "@typescript-eslint/no-explicit-any": "off",
+            "no-undef": "off", // Turn off since we're defining Jest globals above
+            "@typescript-eslint/no-unused-vars": [
+                "error",
+                {
+                    vars: "all",
+                    varsIgnorePattern: "^_",
+                    args: "after-used",
+                    argsIgnorePattern: "^_",
+                    caughtErrors: "all",
+                    caughtErrorsIgnorePattern: "^_",
+                    ignoreRestSiblings: true,
+                },
+            ],
         },
     },
 ];

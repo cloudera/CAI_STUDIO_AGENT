@@ -1,0 +1,151 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`WorkflowNavigation matches snapshot for Agents step 1`] = `
+<div
+  data-testid="workflow-navigation"
+>
+  <div
+    class="flex flex-row justify-around items-center"
+  >
+    <button>
+      Cancel
+    </button>
+    <button>
+      Save & Next
+    </button>
+  </div>
+  <div>
+    Current Step: 
+    Agents
+  </div>
+  <div>
+    Workflow ID: 
+    test-workflow-id
+  </div>
+</div>
+`;
+
+exports[`WorkflowNavigation matches snapshot for Configure step 1`] = `
+<div
+  data-testid="workflow-navigation"
+>
+  <div
+    class="flex flex-row justify-around items-center"
+  >
+    <button>
+      Add Tasks
+    </button>
+    <button>
+      Save & Next
+    </button>
+  </div>
+  <div>
+    Current Step: 
+    Configure
+  </div>
+  <div>
+    Workflow ID: 
+    test-workflow-id
+  </div>
+</div>
+`;
+
+exports[`WorkflowNavigation matches snapshot for Deploy step 1`] = `
+<div
+  data-testid="workflow-navigation"
+>
+  <div
+    class="flex flex-row justify-around items-center"
+  >
+    <button>
+      Test
+    </button>
+    <button>
+      Save as Template
+    </button>
+    <button>
+      Deploy
+    </button>
+  </div>
+  <div>
+    Current Step: 
+    Deploy
+  </div>
+  <div>
+    Workflow ID: 
+    test-workflow-id
+  </div>
+</div>
+`;
+
+exports[`WorkflowNavigation matches snapshot for Tasks step 1`] = `
+<div
+  data-testid="workflow-navigation"
+>
+  <div
+    class="flex flex-row justify-around items-center"
+  >
+    <button>
+      Add Agents
+    </button>
+    <button>
+      Save & Next
+    </button>
+  </div>
+  <div>
+    Current Step: 
+    Tasks
+  </div>
+  <div>
+    Workflow ID: 
+    test-workflow-id
+  </div>
+</div>
+`;
+
+exports[`WorkflowNavigation matches snapshot with deploy modal open 1`] = `
+<div
+  data-testid="workflow-navigation"
+>
+  <div
+    class="flex flex-row justify-around items-center"
+  >
+    <button>
+      Test
+    </button>
+    <button>
+      Save as Template
+    </button>
+    <button>
+      Deploy
+    </button>
+  </div>
+  <div
+    data-testid="deploy-modal"
+  >
+    <div>
+      Deploy Workflow
+    </div>
+    <label>
+      <input
+        type="checkbox"
+      />
+      Save as template
+    </label>
+    <button>
+      Cancel
+    </button>
+    <button>
+      Deploy Workflow
+    </button>
+  </div>
+  <div>
+    Current Step: 
+    Deploy
+  </div>
+  <div>
+    Workflow ID: 
+    test-workflow-id
+  </div>
+</div>
+`;

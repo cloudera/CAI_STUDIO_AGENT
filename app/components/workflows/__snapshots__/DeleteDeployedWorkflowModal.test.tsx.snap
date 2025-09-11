@@ -1,0 +1,76 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`DeleteDeployedWorkflowModal matches snapshot in loading state 1`] = `
+<div
+  data-testid="delete-deployed-workflow-modal"
+  role="dialog"
+>
+  <div>
+    Delete Deployed Workflow
+  </div>
+  <p>
+    Are you sure you want to delete this deployed workflow?
+  </p>
+  <div>
+    <button>
+      Cancel
+    </button>
+    <button
+      data-testid="delete-button"
+      disabled=""
+    >
+      Deleting...
+    </button>
+  </div>
+</div>
+`;
+
+exports[`DeleteDeployedWorkflowModal matches snapshot when not visible 1`] = `null`;
+
+exports[`DeleteDeployedWorkflowModal matches snapshot when visible 1`] = `
+<div
+  data-testid="delete-deployed-workflow-modal"
+  role="dialog"
+>
+  <div>
+    Delete Deployed Workflow
+  </div>
+  <p>
+    Are you sure you want to delete this deployed workflow?
+  </p>
+  <div>
+    <button>
+      Cancel
+    </button>
+    <button
+      data-testid="delete-button"
+    >
+      Delete
+    </button>
+  </div>
+</div>
+`;
+
+exports[`DeleteDeployedWorkflowModal matches snapshot with different props 1`] = `
+<div
+  data-testid="delete-deployed-workflow-modal"
+  role="dialog"
+>
+  <div>
+    Delete Deployed Workflow
+  </div>
+  <p>
+    Are you sure you want to delete this deployed workflow?
+  </p>
+  <div>
+    <button>
+      Cancel
+    </button>
+    <button
+      data-testid="delete-button"
+    >
+      Delete
+    </button>
+  </div>
+</div>
+`;
