@@ -443,9 +443,11 @@ export const getStatusColor = (status: string): string => {
   } else if (statusLower.includes('fail')) {
     return 'error';
   } else if (statusLower.includes('stop')) {
-    return 'warning'; // Changed from 'error' to 'warning' for stopped state
+    return 'warning';
+  } else if (statusLower.includes('suspended')) {
+    return 'warning';
   } else {
-    return 'error'; // For unknown or other statuses
+    return 'error';
   }
 };
 
@@ -464,6 +466,8 @@ export const getStatusDisplay = (status: string): string => {
     return 'Failed';
   } else if (statusLower.includes('stop')) {
     return 'Stopped';
+  } else if (statusLower.includes('suspended')) {
+    return 'Suspended';
   } else {
     return 'Unknown';
   }

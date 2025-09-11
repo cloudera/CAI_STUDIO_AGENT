@@ -3,18 +3,18 @@
 import React from 'react';
 import { Modal, Form, Input, Button } from 'antd';
 
-interface DuplicateWorkflowModalProps {
+interface CloneWorkflowModalProps {
   visible: boolean;
   onCancel: () => void;
-  onDuplicate: (newWorkflowName: string) => Promise<void>;
+  onClone: (newWorkflowName: string) => Promise<void>;
   originalWorkflowName: string;
   loading?: boolean;
 }
 
-const DuplicateWorkflowModal: React.FC<DuplicateWorkflowModalProps> = ({
+const CloneWorkflowModal: React.FC<CloneWorkflowModalProps> = ({
   visible,
   onCancel,
-  onDuplicate,
+  onClone,
   originalWorkflowName,
   loading = false,
 }) => {
@@ -23,7 +23,7 @@ const DuplicateWorkflowModal: React.FC<DuplicateWorkflowModalProps> = ({
   const handleDuplicate = async () => {
     try {
       const values = await form.validateFields();
-      await onDuplicate(values.workflowName);
+      await onClone(values.workflowName);
       form.resetFields();
     } catch (error) {
       console.error('Form validation failed:', error);
@@ -46,7 +46,7 @@ const DuplicateWorkflowModal: React.FC<DuplicateWorkflowModalProps> = ({
 
   return (
     <Modal
-      title="Duplicate Workflow"
+      title="Clone Workflow"
       open={visible}
       onCancel={handleCancel}
       centered
@@ -56,7 +56,7 @@ const DuplicateWorkflowModal: React.FC<DuplicateWorkflowModalProps> = ({
           Cancel
         </Button>,
         <Button
-          key="duplicate"
+          key="clone"
           type="primary"
           onClick={handleDuplicate}
           loading={loading}
@@ -90,4 +90,4 @@ const DuplicateWorkflowModal: React.FC<DuplicateWorkflowModalProps> = ({
   );
 };
 
-export default DuplicateWorkflowModal;
+export default CloneWorkflowModal;

@@ -6,6 +6,8 @@ import { useGetWorkflowMutation } from '@/app/workflows/workflowsApi';
 import {
   useListDeployedWorkflowsQuery,
   useUndeployWorkflowMutation,
+  useSuspendDeployedWorkflowMutation,
+  useResumeDeployedWorkflowMutation,
 } from '@/app/workflows/deployedWorkflowsApi';
 import WorkflowDetails from './WorkflowDetails';
 import { useAppDispatch, useAppSelector } from '../../lib/hooks/hooks';
@@ -34,6 +36,8 @@ const WorkflowOverview: React.FC<WorkflowOverviewProps> = ({ workflowId }) => {
   const dispatch = useAppDispatch();
   const { data: deployedWorkflows = [] } = useListDeployedWorkflowsQuery({});
   const [undeployWorkflow] = useUndeployWorkflowMutation();
+  const [suspendDeployedWorkflow] = useSuspendDeployedWorkflowMutation();
+  const [resumeDeployedWorkflow] = useResumeDeployedWorkflowMutation();
   const notificationsApi = useGlobalNotification();
   const { data: toolInstances } = useListToolInstancesQuery({ workflow_id: workflowId });
   const { data: mcpInstances } = useListMcpInstancesQuery({ workflow_id: workflowId });
@@ -75,6 +79,46 @@ const WorkflowOverview: React.FC<WorkflowOverviewProps> = ({ workflowId }) => {
       notificationsApi.error({
         message: 'Error',
         description: 'Failed to delete deployment',
+        placement: 'topRight',
+      });
+    }
+  };
+
+  const handleSuspendDeployedWorkflow = async (deployedWorkflow: DeployedWorkflow) => {
+    try {
+      await suspendDeployedWorkflow({
+        deployed_workflow_id: deployedWorkflow.deployed_workflow_id,
+      }).unwrap();
+
+      notificationsApi.success({
+        message: 'Deployment Suspended',
+        description: `Successfully suspended deployment "${deployedWorkflow.deployed_workflow_name}"`,
+        placement: 'topRight',
+      });
+    } catch (_error) {
+      notificationsApi.error({
+        message: 'Error',
+        description: 'Failed to suspend deployment',
+        placement: 'topRight',
+      });
+    }
+  };
+
+  const handleResumeDeployedWorkflow = async (deployedWorkflow: DeployedWorkflow) => {
+    try {
+      await resumeDeployedWorkflow({
+        deployed_workflow_id: deployedWorkflow.deployed_workflow_id,
+      }).unwrap();
+
+      notificationsApi.success({
+        message: 'Resuming Deployment',
+        description: `Successfully started resuming workflow deployment "${deployedWorkflow.deployed_workflow_name}"`,
+        placement: 'topRight',
+      });
+    } catch (_error) {
+      notificationsApi.error({
+        message: 'Error',
+        description: 'Failed to resume deployment',
         placement: 'topRight',
       });
     }
@@ -128,6 +172,8 @@ const WorkflowOverview: React.FC<WorkflowOverviewProps> = ({ workflowId }) => {
               workflow={workflowDetails}
               deployedWorkflows={deployedWorkflows}
               onDeleteDeployedWorkflow={handleDeleteDeployedWorkflow}
+              onSuspendDeployedWorkflow={handleSuspendDeployedWorkflow}
+              onResumeDeployedWorkflow={handleResumeDeployedWorkflow}
             />
           </Layout.Content>
 

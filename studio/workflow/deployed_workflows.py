@@ -207,6 +207,9 @@ def list_deployed_workflows(
                 ]:
                     application_status = "start"
 
+                if deployed_workflow.status in [DeploymentStatus.SUSPENDED]:
+                    application_status = "suspended"
+
                 try:
                     deployed_workflow_instances.append(
                         DeployedWorkflow(

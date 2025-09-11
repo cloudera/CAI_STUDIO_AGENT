@@ -326,16 +326,11 @@ const WorkflowNavigation = ({ workflowId }: WorkflowNavigationProps) => {
                 type="primary"
                 className="flex-grow-0 h-10"
                 disabled={
-                  !isValid ||
-                  !defaultModel ||
-                  hasExistingDeployment ||
-                  !hasAgents ||
-                  !hasTasks ||
-                  hasUnassignedTasks
+                  !isValid || !defaultModel || !hasAgents || !hasTasks || hasUnassignedTasks
                 }
                 onClick={() => setIsDeployModalVisible(true)}
               >
-                Deploy
+                {hasExistingDeployment ? 'Redeploy' : 'Deploy'}
               </Button>
             </Tooltip>
           </Layout>
@@ -344,7 +339,7 @@ const WorkflowNavigation = ({ workflowId }: WorkflowNavigationProps) => {
         )}
       </Layout>
       <Modal
-        title="Deploy Workflow"
+        title={hasExistingDeployment ? 'Redeploy Workflow' : 'Deploy Workflow'}
         open={isDeployModalVisible}
         onCancel={() => {
           setIsDeployModalVisible(false);
@@ -362,10 +357,7 @@ const WorkflowNavigation = ({ workflowId }: WorkflowNavigationProps) => {
           </Button>,
         ]}
       >
-        <p>
-          A workflow once deployed is not editable. You may optionally save this workflow as a
-          reusable template for future use
-        </p>
+        <p>You may optionally save this workflow as a reusable template for future use</p>
         <div className="flex flex-col gap-4 mt-2.5">
           <Checkbox
             checked={saveWorkflowAsTemplate}
