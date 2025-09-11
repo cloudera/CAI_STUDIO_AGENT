@@ -3,6 +3,8 @@ import {
   ListDeployedWorkflowsResponse,
   DeployedWorkflow,
   UndeployWorkflowRequest,
+  SuspendDeployedWorkflowRequest,
+  ResumeDeployedWorkflowRequest,
 } from '@/studio/proto/agent_studio';
 
 import { apiSlice } from '../api/apiSlice';
@@ -28,7 +30,28 @@ export const deployedWorkflowsApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: [{ type: 'DeployedWorkflow', id: 'LIST' }],
     }),
+    suspendDeployedWorkflow: builder.mutation<void, SuspendDeployedWorkflowRequest>({
+      query: (request) => ({
+        url: '/grpc/suspendDeployedWorkflow',
+        method: 'POST',
+        body: request,
+      }),
+      invalidatesTags: [{ type: 'DeployedWorkflow', id: 'LIST' }],
+    }),
+    resumeDeployedWorkflow: builder.mutation<void, ResumeDeployedWorkflowRequest>({
+      query: (request) => ({
+        url: '/grpc/resumeDeployedWorkflow',
+        method: 'POST',
+        body: request,
+      }),
+      invalidatesTags: [{ type: 'DeployedWorkflow', id: 'LIST' }],
+    }),
   }),
 });
 
-export const { useListDeployedWorkflowsQuery, useUndeployWorkflowMutation } = deployedWorkflowsApi;
+export const {
+  useListDeployedWorkflowsQuery,
+  useUndeployWorkflowMutation,
+  useSuspendDeployedWorkflowMutation,
+  useResumeDeployedWorkflowMutation,
+} = deployedWorkflowsApi;

@@ -10,10 +10,10 @@ import {
   Tooltip,
   Button,
   Tag,
-  Popconfirm,
   Avatar,
-  Divider,
   Collapse,
+  Dropdown,
+  MenuProps,
 } from 'antd';
 import {
   UserOutlined,
@@ -24,6 +24,9 @@ import {
   DeploymentUnitOutlined,
   AppstoreOutlined,
   ApiOutlined,
+  MoreOutlined,
+  PoweroffOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons';
 import { useListAgentsQuery } from '../../agents/agentApi';
 import { useListTasksQuery } from '../../tasks/tasksApi';
@@ -54,6 +57,8 @@ interface WorkflowDetailsProps {
   workflow: any; // Update this type based on your workflow type
   deployedWorkflows: DeployedWorkflow[];
   onDeleteDeployedWorkflow: (deployedWorkflow: DeployedWorkflow) => void;
+  onSuspendDeployedWorkflow: (deployedWorkflow: DeployedWorkflow) => void;
+  onResumeDeployedWorkflow: (deployedWorkflow: DeployedWorkflow) => void;
 }
 
 const getInvalidTools = (
@@ -93,6 +98,8 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
   workflow,
   deployedWorkflows,
   onDeleteDeployedWorkflow,
+  onSuspendDeployedWorkflow,
+  onResumeDeployedWorkflow,
 }) => {
   const pathname = usePathname();
   const isViewRoute = pathname?.startsWith('/workflows/view/');
@@ -292,92 +299,142 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
     );
   };
 
-  const renderDeploymentCard = (deployment: DeployedWorkflow) => (
-    <Layout
-      key={deployment.deployed_workflow_id}
-      className="rounded border border-[#f0f0f0] bg-white w-full h-[150px] p-0 flex flex-col shadow-[0_2px_4px_rgba(0,0,0,0.1)]"
-    >
-      <Layout className="flex-1 bg-transparent flex flex-col overflow-auto">
-        <div className="px-6 py-4 flex flex-row items-center gap-3">
+  const renderDeploymentCard = (deployment: DeployedWorkflow) => {
+    const formatTimestamp = (timestamp: string) => {
+      const timestampWithZ = timestamp.endsWith('Z') ? timestamp : timestamp + 'Z';
+      const date = new Date(timestampWithZ);
+      return date.toLocaleDateString('en-US', {
+        month: 'numeric',
+        day: 'numeric',
+        year: '2-digit',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      });
+    };
+
+    const status = deployment.application_status || '';
+    const statusLower = status.toLowerCase();
+    const isSuspendedOrFailed = statusLower.includes('fail') || statusLower.includes('suspended');
+    const isDeployedOrRunning = statusLower.includes('deployed') || statusLower.includes('run');
+
+    const menuItems: MenuProps['items'] = [
+      {
+        key: 'open-app',
+        label: 'Open Application UI',
+        icon: <ExportOutlined />,
+        disabled: !statusLower.includes('run'),
+        onClick: () => {
+          if (deployment.application_url && deployment.application_url.length > 0) {
+            window.open(deployment.application_url, '_blank');
+          } else {
+            notificationsApi.error({
+              message: `Can't open application while it is ${getStatusDisplay(status)}`,
+              placement: 'topRight',
+            });
+          }
+        },
+      },
+      {
+        key: 'open-workbench-app',
+        label: 'Open Cloudera AI Workbench Application',
+        icon: <AppstoreOutlined />,
+        disabled: !deployment.application_deep_link,
+        onClick: () => {
+          if (deployment.application_deep_link) {
+            window.open(deployment.application_deep_link, '_blank');
+          }
+        },
+      },
+      {
+        key: 'open-workbench-model',
+        label: 'Open Cloudera AI Workbench Model',
+        icon: <ApiOutlined />,
+        disabled: !deployment.model_deep_link,
+        onClick: () => {
+          if (deployment.model_deep_link) {
+            window.open(deployment.model_deep_link, '_blank');
+          }
+        },
+      },
+      { type: 'divider' },
+    ];
+
+    // Add suspend/resume option based on status
+    if (isSuspendedOrFailed) {
+      menuItems.push({
+        key: 'resume',
+        label: 'Resume Deployment',
+        icon: <ReloadOutlined />,
+        onClick: () => onResumeDeployedWorkflow(deployment),
+      });
+    } else {
+      menuItems.push({
+        key: 'suspend',
+        label: 'Suspend Deployment',
+        icon: <PoweroffOutlined />,
+        disabled: !isDeployedOrRunning,
+        onClick: () => {
+          const modal = window.confirm('Are you sure you want to suspend this deployment?');
+          if (modal) {
+            onSuspendDeployedWorkflow(deployment);
+          }
+        },
+      });
+    }
+
+    menuItems.push({
+      key: 'delete',
+      label: 'Delete Deployment',
+      icon: <DeleteOutlined />,
+      danger: true,
+      onClick: () => {
+        // Handle delete with confirmation
+        const handleDelete = () => onDeleteDeployedWorkflow(deployment);
+
+        // Create a confirmation dialog
+        const modal = window.confirm('Are you sure you want to delete this deployment?');
+        if (modal) {
+          handleDelete();
+        }
+      },
+    });
+
+    return (
+      <div
+        key={deployment.deployed_workflow_id}
+        className="flex items-center justify-between p-4 border border-[#f0f0f0] rounded bg-white shadow-[0_2px_4px_rgba(0,0,0,0.1)] mb-3"
+      >
+        <div className="flex items-center gap-3 flex-1 min-w-0">
           <Avatar
             className="shadow-[0_2px_4px_rgba(0,0,0,0.2)] bg-[#1890ff] min-w-[24px] min-h-[24px] w-6 h-6 flex-none"
             size={24}
             icon={<DeploymentUnitOutlined />}
           />
-          <Text
-            className="text-[14px] font-normal whitespace-nowrap overflow-hidden text-ellipsis"
-            title={deployment.deployed_workflow_name}
+          <div className="flex-1 min-w-0">
+            <Text
+              className="text-[14px] font-normal whitespace-nowrap overflow-hidden text-ellipsis block"
+              title={deployment.deployed_workflow_name}
+            >
+              {deployment.deployed_workflow_name}
+            </Text>
+          </div>
+          <Tag
+            color={getStatusColor(status)}
+            className={`rounded-[12px] flex-none ${statusLower === 'unknown' ? 'text-white' : ''}`}
           >
-            {deployment.deployed_workflow_name}
+            {getStatusDisplay(status)}
+          </Tag>
+          <Text className="text-[12px] text-gray-500 flex-none">
+            {deployment.updated_at ? formatTimestamp(deployment.updated_at) : ''}
           </Text>
         </div>
-        <div className="px-6">
-          <Tag
-            color={getStatusColor(deployment.application_status || '')}
-            className={`rounded-[12px] ${deployment.application_status?.toLowerCase() === 'unknown' ? 'text-white' : ''}`}
-          >
-            {getStatusDisplay(deployment.application_status || '')}
-          </Tag>
-        </div>
-      </Layout>
-      <Divider className="flex-grow-0 m-0" type="horizontal" />
-      <Layout className="flex flex-row flex-grow-0 bg-transparent justify-around items-center p-2">
-        <Tooltip title="Open Application UI">
-          <Button
-            type="link"
-            icon={<ExportOutlined />}
-            disabled={!deployment.application_status?.toLowerCase().includes('run')}
-            onClick={() => {
-              if (deployment.application_url && deployment.application_url.length > 0) {
-                window.open(deployment.application_url, '_blank');
-              } else {
-                notificationsApi.error({
-                  message: `Can't open application while it is ${getStatusDisplay(deployment.application_status || '')}`,
-                  placement: 'topRight',
-                });
-              }
-            }}
-          />
-        </Tooltip>
-        <Divider type="vertical" className="h-5 m-0" />
-        <Tooltip title="Open Cloudera AI Workbench Application">
-          <Button
-            type="link"
-            icon={<AppstoreOutlined />}
-            onClick={() => {
-              if (deployment.application_deep_link) {
-                window.open(deployment.application_deep_link, '_blank');
-              }
-            }}
-            disabled={!deployment.application_deep_link}
-          />
-        </Tooltip>
-        <Divider type="vertical" className="h-5 m-0" />
-        <Tooltip title="Open Cloudera AI Workbench Model">
-          <Button
-            type="link"
-            icon={<ApiOutlined />}
-            onClick={() => {
-              if (deployment.model_deep_link) {
-                window.open(deployment.model_deep_link, '_blank');
-              }
-            }}
-            disabled={!deployment.model_deep_link}
-          />
-        </Tooltip>
-        <Divider type="vertical" className="h-5 m-0" />
-        <Popconfirm
-          title="Delete Deployment"
-          description="Are you sure you want to delete this deployment?"
-          onConfirm={() => onDeleteDeployedWorkflow(deployment)}
-          okText="Yes"
-          cancelText="No"
-        >
-          <Button type="link" icon={<DeleteOutlined />} danger />
-        </Popconfirm>
-      </Layout>
-    </Layout>
-  );
+        <Dropdown menu={{ items: menuItems }} placement="bottomRight" trigger={['click']}>
+          <Button type="text" icon={<MoreOutlined />} className="flex-none" />
+        </Dropdown>
+      </div>
+    );
+  };
 
   const workflowDeployments = deployedWorkflows.filter(
     (dw) => dw.workflow_id === workflow.workflow_id,
@@ -441,8 +498,9 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
                       : workflowDeployments.length > 0
                         ? renderAlert(
                             'Existing Deployment',
-                            'There is an existing deployment for this workflow. Please delete it first to redeploy the workflow.',
-                            'warning',
+                            'There is an existing deployment for this workflow. ' +
+                              'Re-deploying will refresh the deployment with fresh changes while maintaining the same model endpoints & application URL.',
+                            'info',
                           )
                         : null)}
       <Collapse
@@ -466,7 +524,7 @@ const WorkflowDetails: React.FC<WorkflowDetailsProps> = ({
         <>
           <Title level={5}>Deployments</Title>
           <List
-            grid={{ gutter: 16, column: 2 }}
+            grid={{ gutter: 16, column: 1 }}
             dataSource={workflowDeployments}
             renderItem={(deployment) => <List.Item>{renderDeploymentCard(deployment)}</List.Item>}
             className="mb-5"

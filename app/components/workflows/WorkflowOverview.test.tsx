@@ -13,9 +13,13 @@ jest.mock('@/app/workflows/workflowsApi', () => ({
 }));
 
 const mockUndeploy = jest.fn(() => ({ unwrap: () => Promise.resolve(true) }));
+const mockSuspend = jest.fn(() => ({ unwrap: () => Promise.resolve(true) }));
+const mockResume = jest.fn(() => ({ unwrap: () => Promise.resolve(true) }));
 jest.mock('@/app/workflows/deployedWorkflowsApi', () => ({
   useListDeployedWorkflowsQuery: () => ({ data: [] }),
   useUndeployWorkflowMutation: () => [mockUndeploy],
+  useSuspendDeployedWorkflowMutation: () => [mockSuspend],
+  useResumeDeployedWorkflowMutation: () => [mockResume],
 }));
 
 jest.mock('../../tools/toolInstancesApi', () => ({
