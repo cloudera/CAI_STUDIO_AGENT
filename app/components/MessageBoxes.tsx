@@ -139,7 +139,10 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ upgradeStatus, isOpen, setI
 
 const MessageBoxes: React.FC = () => {
   const { data: workflowData } = useGetWorkflowDataQuery();
-  const isWorkflowMode = workflowData?.renderMode === 'workflow';
+
+  // Default workflowMode to true while workflowData is loading
+  // to avoid making grpc calls during workflow app mode.
+  const isWorkflowMode = workflowData ? workflowData.renderMode === 'workflow' : true;
 
   // Skip all other API calls if in workflow mode
   const { data: isHealthy } = useHealthCheckQuery(undefined, {

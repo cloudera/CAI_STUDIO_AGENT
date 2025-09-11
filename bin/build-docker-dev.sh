@@ -16,6 +16,7 @@ ML_RUNTIME_EDITION="sandbox:$1"
 docker build \
   --build-arg RT_SHORT_VERSION="$RT_SHORT_VERSION" \
   --build-arg ML_RUNTIME_EDITION="$ML_RUNTIME_EDITION" \
+  --build-arg RT_BUILD_NUMBER="1" \
   --platform=linux/amd64 \
   --provenance=false \
   -t agent-studio:$2 \

@@ -213,6 +213,16 @@ export const getWorkflowInputs = (
   return Array.from(inputSet);
 };
 
+export const getTaskInputs = (tasks?: CrewAITaskMetadata[]) => {
+  const inputSet = new Set<string>();
+
+  tasks?.forEach((task) => {
+    task.inputs.forEach((input) => inputSet.add(input));
+  });
+
+  return Array.from(inputSet);
+};
+
 export const createUpdateRequestFromEditor = (workflowState: WorkflowState) => {
   // There is a chance that the process is not yet defined. Let's fix that here.
   // In reality there should be validations further upstream.

@@ -1,24 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fetch from 'node-fetch';
-import https from 'https';
-import http from 'http';
-import fs from 'fs';
-
-const createAgent = () => {
-  const isTlsEnabled = process.env.AGENT_STUDIO_WORKBENCH_TLS_ENABLED === 'true';
-
-  if (isTlsEnabled) {
-    return new https.Agent({
-      ca: fs.readFileSync(process.env.REQUESTS_CA_BUNDLE || ''),
-    });
-  } else {
-    return new http.Agent();
-  }
-};
-
-const getUrlScheme = () => {
-  return process.env.AGENT_STUDIO_WORKBENCH_TLS_ENABLED === 'true' ? 'https' : 'http';
-};
+import { createAgent, getUrlScheme } from '@/app/lib/ops';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const CDSW_APIV2_KEY = process.env.CDSW_APIV2_KEY;

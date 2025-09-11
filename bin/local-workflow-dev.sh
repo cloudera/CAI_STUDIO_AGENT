@@ -18,9 +18,15 @@
 
 
 #!/bin/bash
-export AGENT_STUDIO_DEPLOYED_MODEL_ID="" # populate this
+
+# APP_DATA_DIR is necessary for our deployed workflow apps to specify where our phoenix ops server data will run.
+export APP_DATA_DIR=/home/cdsw/agent-studio/studio-data/deployable_workflows/737e0e8e-1435-43b4-8de2-a888db50c4e2
+
+# This is the ID of the deployed model. This can be extracted from the actual application.
+export AGENT_STUDIO_DEPLOYED_MODEL_ID="28a079f6-dc17-42be-906f-39e9c023fc35" # populate this
+
+
 export AGENT_STUDIO_RENDER_MODE=workflow
 export AGENT_STUDIO_GRPC_MODE=disabled
 export AGENT_STUDIO_DEPLOYMENT_CONFIG=dev
-export MODEL_API_KEY_ZmUyMWEzN2QtZDljNi00YzViLTg0MTctZmEyMDM5MDQ4NWZi="" # Populate your correact model API keys
 python startup_scripts/run-app.py

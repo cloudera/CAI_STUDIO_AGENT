@@ -75,13 +75,26 @@ jest.mock('@/app/models/modelsApi', () => ({
 }));
 
 jest.mock('@/app/ops/opsApi', () => ({
+  useGetOpsDataQuery: () => ({
+    data: null,
+    isLoading: false,
+    isError: false,
+  }),
+}));
+
+jest.mock('@/app/workflows/workflowAppApi', () => ({
   useGetEventsMutation: () => [
     jest.fn().mockReturnValue({
       unwrap: jest.fn().mockResolvedValue({ events: [] }),
     }),
   ],
-  useGetOpsDataQuery: () => ({
-    data: null,
+  useKickoffMutation: () => [
+    jest.fn().mockReturnValue({
+      unwrap: jest.fn().mockResolvedValue({ trace_id: 'test-trace-123' }),
+    }),
+  ],
+  useGetWorkflowDataQuery: () => ({
+    data: { renderMode: 'studio', workflowModelUrl: 'http://test-url' },
     isLoading: false,
     isError: false,
   }),

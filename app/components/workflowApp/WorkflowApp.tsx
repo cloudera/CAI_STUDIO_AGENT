@@ -33,7 +33,7 @@ import {
 import WorkflowAppChatView from './WorkflowAppChatView';
 import { CloseOutlined, DashboardOutlined } from '@ant-design/icons';
 import { useGetDefaultModelQuery } from '@/app/models/modelsApi';
-import { useGetEventsMutation } from '@/app/ops/opsApi';
+import { useGetEventsMutation } from '@/app/workflows/workflowAppApi';
 import { useUpdateWorkflowMutation } from '@/app/workflows/workflowsApi';
 import { useTestModelMutation } from '@/app/models/modelsApi';
 import { useGlobalNotification } from '../Notifications';
@@ -69,6 +69,7 @@ const WorkflowApp = ({
   const dispatch = useAppDispatch();
   const currentEvents = useAppSelector(selectCurrentEvents);
   const workflowState = useAppSelector(selectEditorWorkflow);
+  const isWorkflowMode = renderMode === 'workflow';
 
   const [getEvents] = useGetEventsMutation();
 
@@ -80,7 +81,7 @@ const WorkflowApp = ({
   // the results of this api call if we are rendering in workflow app mode.
   // TODO: pull this out to either a prop to the component or maybe even
   // set somewhere in redux state.
-  const { data: defaultModel } = useGetDefaultModelQuery();
+  const { data: defaultModel } = useGetDefaultModelQuery(undefined, { skip: isWorkflowMode });
 
   const notificationApi = useGlobalNotification();
   const [sliderValue, setSliderValue] = useState<number>(0);

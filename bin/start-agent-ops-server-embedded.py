@@ -1,12 +1,7 @@
 import subprocess
-import cmlapi
 import os
 import threading
-import socket
-from typing import Dict 
-import json
-from kombu import Connection, Exchange
-from kombu.simple import SimpleQueue
+from kombu import Connection
 import sys
 
 # ---------------------------
@@ -53,38 +48,52 @@ def start_ops_proxy_server(local_port, target_address, target_port):
             import urllib.parse
             
             try:
-                if self.command == 'POST':
-                    # Handle POST /events
-                    content_length = int(self.headers.get('Content-Length', 0))
-                    if content_length > 0:
-                        post_data = self.rfile.read(content_length)
-                        data = json.loads(post_data.decode('utf-8'))
-                        
-                        result, status_code = handle_events_post_data(data)
-                        
-                        self.send_response(status_code)
-                        self.send_header('Content-Type', 'application/json')
-                        self.end_headers()
-                        self.wfile.write(json.dumps(result).encode('utf-8'))
-                    else:
-                        self.send_response(400)
-                        self.end_headers()
-                        self.wfile.write(b'{"error": "No data provided"}')
-                        
-                elif self.command == 'GET':
+                if self.command == 'GET':
                     # Handle GET /events?trace_id=...
                     parsed_url = urllib.parse.urlparse(self.path)
                     query_params = urllib.parse.parse_qs(parsed_url.query)
                     trace_id = query_params.get('trace_id', [None])[0]
                     
-                    result, status_code = handle_events_get_data(trace_id)
+                    messages, status_code = handle_events_get_data(trace_id)
                     
                     self.send_response(status_code)
                     self.send_header('Content-Type', 'application/json')
                     self.end_headers()
-                    self.wfile.write(json.dumps(result).encode('utf-8'))
+                    self.wfile.write(json.dumps({"events": messages}).encode('utf-8'))
+                elif self.command == 'POST':
+                    # Handle POST /events with JSON body
+                    content_length = int(self.headers.get("Content-Length", 0))
+                    body = self.rfile.read(content_length)
+                    try:
+                        data = json.loads(body)
+                    except json.JSONDecodeError:
+                        self.send_response(400)
+                        self.send_header('Content-Type', 'application/json')
+                        self.end_headers()
+                        self.wfile.write(b'{"error": "Invalid JSON"}')
+                        return
+
+                    trace_id = data.get("trace_id")
+                    event_content = data.get("event")
+                    if not trace_id or not event_content:
+                        self.send_response(400)
+                        self.send_header('Content-Type', 'application/json')
+                        self.end_headers()
+                        self.wfile.write(b'{"error": "Missing trace_id or event"}')
+                        return
+
+                    # Get (or create) the queue associated with this trace_id
+                    queue = get_or_create_queue(trace_id)
+                    # Publish the message to the Kombu queue
+                    queue.put(event_content)
+
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(b'{"status": "200"}')
                 else:
                     self.send_response(405)  # Method not allowed
+                    self.send_header('Content-Type', 'application/json')
                     self.end_headers()
                     self.wfile.write(b'{"error": "Method not allowed"}')
                     
@@ -250,23 +259,6 @@ def start_ops_proxy(serving_port):
 # ---------------------------
 # Event Handling Functions
 # ---------------------------
-
-def handle_events_post_data(data):
-    """
-    Handle POST data for crew events.
-    """
-    trace_id = data.get("trace_id")
-    event_content = data.get("event")
-    if not trace_id or not event_content:
-        return {"error": "Missing trace_id or event"}, 400
-
-    # Get (or create) the queue associated with this trace_id
-    queue = get_or_create_queue(trace_id)
-    # Publish the message to the Kombu queue
-    queue.put(event_content)
-
-    return {"status": "200"}, 200
-
 
 def handle_events_get_data(trace_id):
     """

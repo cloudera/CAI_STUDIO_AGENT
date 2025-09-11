@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { WorkflowData } from '../../lib/types';
-import { Layout, Typography } from 'antd/lib';
+import { Layout, Typography, Button } from 'antd/lib';
 const { Text, Title } = Typography;
+import { ApiOutlined } from '@ant-design/icons';
 import WorkflowApp from './WorkflowApp';
+import WorkflowAppApiDrawer from './WorkflowAppApiDrawer';
 import { useAppDispatch } from '../../lib/hooks/hooks';
 import { updatedEditorWorkflowFromExisting } from '../../workflows/editorSlice';
 
@@ -14,6 +16,7 @@ interface WorkflowAppDeployedProps {
 
 interface WorkflowAppDeployedHeaderProps {
   workflowData: WorkflowData;
+  onOpenApiDrawer: () => void;
 }
 
 /**
@@ -21,18 +24,31 @@ interface WorkflowAppDeployedHeaderProps {
  * of the workflow app and contains the workflow name and a "built with"
  * message. This is only displayed in deployed mode.
  */
-const WorkflowAppDeployedHeader: React.FC<WorkflowAppDeployedHeaderProps> = ({ workflowData }) => {
+const WorkflowAppDeployedHeader: React.FC<WorkflowAppDeployedHeaderProps> = ({
+  workflowData,
+  onOpenApiDrawer,
+}) => {
   return (
     <Layout className="bg-transparent p-0 mb-[12px] flex flex-row items-center justify-between flex-none">
       <Title level={1} ellipsis className="flex-grow">
         {workflowData.workflow.name}
       </Title>
-      <Layout className="bg-[#132329] opacity-70 rounded flex flex-col justify-center items-center flex-none p-[12px]">
-        <Text className="font-sans text-white text-[12px] font-extralight">built with</Text>
-        <Text className="font-sans text-white text-[16px] font-extralight">
-          Cloudera <b>Agent Studio</b>
-        </Text>
-      </Layout>
+      <div className="flex items-center gap-3">
+        <Button
+          type="primary"
+          icon={<ApiOutlined />}
+          onClick={onOpenApiDrawer}
+          className="bg-blue-600 hover:bg-blue-700 border-blue-600 hover:border-blue-700"
+        >
+          API
+        </Button>
+        <Layout className="bg-[#132329] opacity-70 rounded flex flex-col justify-center items-center flex-none p-[12px]">
+          <Text className="font-sans text-white text-[12px] font-extralight">built with</Text>
+          <Text className="font-sans text-white text-[16px] font-extralight">
+            Cloudera <b>Agent Studio</b>
+          </Text>
+        </Layout>
+      </div>
     </Layout>
   );
 };
@@ -45,6 +61,7 @@ const WorkflowAppDeployedHeader: React.FC<WorkflowAppDeployedHeaderProps> = ({ w
  */
 const WorkflowAppDeployed: React.FC<WorkflowAppDeployedProps> = ({ workflowData }) => {
   const dispatch = useAppDispatch();
+  const [isApiDrawerOpen, setIsApiDrawerOpen] = useState(false);
 
   // Initialize Redux workflow state for deployed workflows
   useEffect(() => {
@@ -53,9 +70,20 @@ const WorkflowAppDeployed: React.FC<WorkflowAppDeployedProps> = ({ workflowData 
     }
   }, [workflowData.workflow, dispatch]);
 
+  const handleOpenApiDrawer = () => {
+    setIsApiDrawerOpen(true);
+  };
+
+  const handleCloseApiDrawer = () => {
+    setIsApiDrawerOpen(false);
+  };
+
   return (
     <>
-      <WorkflowAppDeployedHeader workflowData={workflowData} />
+      <WorkflowAppDeployedHeader
+        workflowData={workflowData}
+        onOpenApiDrawer={handleOpenApiDrawer}
+      />
       <WorkflowApp
         workflow={workflowData.workflow}
         refetchWorkflow={() => {}}
@@ -64,6 +92,12 @@ const WorkflowAppDeployed: React.FC<WorkflowAppDeployedProps> = ({ workflowData 
         mcpInstances={workflowData.mcpInstances}
         agents={workflowData.agents}
         renderMode="workflow"
+      />
+      <WorkflowAppApiDrawer
+        open={isApiDrawerOpen}
+        onClose={handleCloseApiDrawer}
+        workflowName={workflowData.workflow.name}
+        workflowTasks={workflowData.tasks}
       />
     </>
   );

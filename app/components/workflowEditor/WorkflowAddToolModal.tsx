@@ -64,7 +64,7 @@ import { uploadFile } from '../../lib/fileUpload';
 import { useGetParentProjectDetailsQuery } from '../../lib/crossCuttingApi';
 import { defaultToolPyCode, defaultRequirementsTxt } from '@/app/utils/defaultToolCode'; // Import default code
 import { renderAlert } from '@/app/lib/alertUtils';
-import { useGetEventsMutation } from '@/app/ops/opsApi'; // This is the same as WorkflowApp.tsx
+import { useGetEventsMutation } from '@/app/workflows/workflowAppApi'; // This is the same as WorkflowApp.tsx
 
 const { Text } = Typography;
 
