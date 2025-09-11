@@ -1,0 +1,132 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`WorkflowEditor matches snapshot loading state 1`] = `
+<div
+  data-testid="large-center-spin"
+>
+  Loading editor...
+</div>
+`;
+
+exports[`WorkflowEditor matches snapshot with Agents step 1`] = `
+<div
+  class="ant-layout flex-1 p-4 md:p-6 lg:p-6 flex flex-col css-dev-only-do-not-override-l9pxc0"
+>
+  <div
+    data-testid="workflow-add-tool-modal"
+  >
+    WorkflowAddToolModal
+  </div>
+  <div
+    data-testid="common-bread-crumb"
+  >
+    CommonBreadCrumb
+  </div>
+  <div
+    class="ant-layout flex-1 flex flex-col gap-6 css-dev-only-do-not-override-l9pxc0"
+  >
+    <div
+      data-testid="workflow-editor-name"
+    >
+      WorkflowEditorName
+    </div>
+    <div
+      data-testid="workflow-step-view"
+    >
+      WorkflowStepView
+    </div>
+    <div
+      data-testid="workflow-overview"
+    >
+      WorkflowOverview
+    </div>
+    <div
+      data-testid="workflow-navigation"
+    >
+      WorkflowNavigation
+    </div>
+  </div>
+</div>
+`;
+
+exports[`WorkflowEditor matches snapshot with Configure step 1`] = `
+<div
+  class="ant-layout flex-1 p-4 md:p-6 lg:p-6 flex flex-col css-dev-only-do-not-override-l9pxc0"
+>
+  <div
+    data-testid="workflow-add-tool-modal"
+  >
+    WorkflowAddToolModal
+  </div>
+  <div
+    data-testid="common-bread-crumb"
+  >
+    CommonBreadCrumb
+  </div>
+  <div
+    class="ant-layout flex-1 flex flex-col gap-6 css-dev-only-do-not-override-l9pxc0"
+  >
+    <div
+      data-testid="workflow-editor-name"
+    >
+      WorkflowEditorName
+    </div>
+    <div
+      data-testid="workflow-step-view"
+    >
+      WorkflowStepView
+    </div>
+    <div
+      data-testid="workflow-overview"
+    >
+      WorkflowOverview
+    </div>
+    <div
+      data-testid="workflow-navigation"
+    >
+      WorkflowNavigation
+    </div>
+  </div>
+</div>
+`;
+
+exports[`WorkflowEditor matches snapshot with Tasks step 1`] = `
+<div
+  class="ant-layout flex-1 p-4 md:p-6 lg:p-6 flex flex-col css-dev-only-do-not-override-l9pxc0"
+>
+  <div
+    data-testid="workflow-add-tool-modal"
+  >
+    WorkflowAddToolModal
+  </div>
+  <div
+    data-testid="common-bread-crumb"
+  >
+    CommonBreadCrumb
+  </div>
+  <div
+    class="ant-layout flex-1 flex flex-col gap-6 css-dev-only-do-not-override-l9pxc0"
+  >
+    <div
+      data-testid="workflow-editor-name"
+    >
+      WorkflowEditorName
+    </div>
+    <div
+      data-testid="workflow-step-view"
+    >
+      WorkflowStepView
+    </div>
+    <div
+      data-testid="workflow-overview"
+    >
+      WorkflowOverview
+    </div>
+    <div
+      data-testid="workflow-navigation"
+    >
+      WorkflowNavigation
+    </div>
+  </div>
+</div>
+`;

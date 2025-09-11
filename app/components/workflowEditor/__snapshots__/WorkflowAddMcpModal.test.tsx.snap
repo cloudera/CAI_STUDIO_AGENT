@@ -1,0 +1,71 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`WorkflowAddMcpModal full modal snapshot when open 1`] = `
+<div
+  open=""
+  rootclassname="!top-0"
+  width="98%"
+>
+  <div>
+    Add or Edit MCPs
+  </div>
+  <div
+    class="relative"
+  />
+  <div
+    class="overflow-y-auto h-[calc(95vh-108px)]"
+  >
+    <hr />
+    <div>
+      <div>
+        <div>
+          <div>
+            Edit MCP Server
+          </div>
+          <div
+            class="flex-1 overflow-y-auto"
+          >
+            <div />
+          </div>
+        </div>
+        <hr />
+        <div>
+          <div>
+            Add MCP Server to Agent
+          </div>
+          <div
+            class="flex-1 overflow-y-auto"
+          >
+            <div />
+          </div>
+        </div>
+      </div>
+      <hr />
+      <div>
+        <div
+          class="flex flex-col items-center justify-center h-full text-[#8c8c8c]"
+        >
+          <span>
+            Select an MCP server to view details
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div>
+    <span>
+      <button>
+        Close
+      </button>
+    </span>
+    <span>
+      <button
+        disabled=""
+        type="primary"
+      >
+        Select MCP Server definition
+      </button>
+    </span>
+  </div>
+</div>
+`;

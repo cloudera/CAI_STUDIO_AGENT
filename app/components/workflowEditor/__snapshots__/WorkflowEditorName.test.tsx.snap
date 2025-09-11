@@ -1,0 +1,75 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`WorkflowEditorName matches snapshot in display mode 1`] = `
+<div
+  class="flex items-center w-full"
+>
+  <h5
+    class="pt-1 text-[18px] font-semibold"
+  >
+    Test Workflow
+  </h5>
+  <button
+    aria-label="edit"
+  >
+    Edit
+  </button>
+  <button
+    aria-label="folder-open"
+  >
+    Folder
+  </button>
+</div>
+`;
+
+exports[`WorkflowEditorName matches snapshot in edit mode 1`] = `
+<div
+  class="flex items-center w-full"
+>
+  <div
+    class="flex items-center gap-2 w-full"
+  >
+    <input
+      class="w-1/2"
+      value="Test Workflow"
+    />
+    <button
+      aria-label="save"
+    >
+      Save
+    </button>
+  </div>
+</div>
+`;
+
+exports[`WorkflowEditorName matches snapshot with different workflow name 1`] = `
+<div
+  class="flex items-center w-full"
+>
+  <div
+    class="flex items-center gap-2 w-full"
+  >
+    <input
+      class="w-1/2"
+      value="Custom Workflow Name"
+    />
+    <button
+      aria-label="save"
+    >
+      Save
+    </button>
+  </div>
+</div>
+`;
+
+exports[`WorkflowEditorName matches snapshot with no workflowId 1`] = `
+<div
+  class="flex items-center w-full"
+>
+  <h5
+    class="pt-1 text-[18px] font-semibold"
+  >
+    Create Workflow
+  </h5>
+</div>
+`;

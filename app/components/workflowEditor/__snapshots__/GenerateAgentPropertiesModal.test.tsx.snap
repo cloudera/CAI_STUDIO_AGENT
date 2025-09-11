@@ -1,0 +1,7 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`GenerateAgentPropertiesModal matches snapshot when closed 1`] = `null`;
+
+exports[`GenerateAgentPropertiesModal matches snapshot when open 1`] = `null`;
+
+exports[`GenerateAgentPropertiesModal matches snapshot with user input 1`] = `null`;

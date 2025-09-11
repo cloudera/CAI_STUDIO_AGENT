@@ -1,0 +1,691 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`WorkflowEditorTaskInputs matches snapshot in reorder mode 1`] = `
+<div
+  data-testid="workflow-editor-task-inputs"
+>
+  <div
+    class="flex flex-col flex-shrink-0 flex-grow-0 p-4 md:px-6 w-2/5 h-full bg-transparent gap-6 overflow-auto"
+  >
+    <div
+      data-testid="unassigned-alert"
+    >
+      <div>
+        Unassigned Tasks
+      </div>
+      <div>
+        You need to assign tasks to an agent because there is no manager agent.
+      </div>
+    </div>
+    <div
+      class="gap-2.5 flex-grow-0 flex-shrink-0 flex-col bg-white"
+    >
+      <div
+        data-testid="execution-order-alert"
+      >
+        <div>
+          Task Execution Order
+        </div>
+        <div>
+          The following 
+          2
+           tasks will be executed in the order specified below.
+        </div>
+      </div>
+      <div
+        class="bg-white flex flex-row gap-1 justify-between items-center"
+      >
+        <div
+          class="flex items-center gap-1"
+        >
+          <span
+            class="text-sm font-semibold"
+          >
+            Tasks
+          </span>
+        </div>
+        <div
+          class="flex gap-2"
+        >
+          <button>
+            Save
+          </button>
+          <button>
+            Cancel
+          </button>
+        </div>
+      </div>
+      <div
+        class="relative flex flex-row items-center justify-between h-11 shadow-md border-0 gap-1.5 pl-10 pr-3 bg-white"
+      >
+        <span
+          class="flex-basis-[60%] text-sm font-normal ml-1"
+        >
+          Task 1: Task 1
+        </span>
+        <div
+          class="w-[30%] flex justify-start overflow-hidden"
+        >
+          <span
+            class="max-w-full text-[11px] font-normal bg-blue-200 border-none text-ellipsis overflow-hidden whitespace-nowrap flex items-center px-2 gap-1"
+          >
+            Agent: Unassigned
+          </span>
+        </div>
+        <div
+          class="flex gap-2"
+        >
+          <button
+            disabled=""
+          >
+            ↑
+          </button>
+          <button>
+            ↓
+          </button>
+        </div>
+      </div>
+      <div
+        class="relative flex flex-row items-center justify-between h-11 shadow-md border-0 gap-1.5 pl-10 pr-3 bg-white"
+      >
+        <span
+          class="flex-basis-[60%] text-sm font-normal ml-1"
+        >
+          Task 2: Task 2
+        </span>
+        <div
+          class="w-[30%] flex justify-start overflow-hidden"
+        >
+          <span
+            class="max-w-full text-[11px] font-normal bg-blue-200 border-none text-ellipsis overflow-hidden whitespace-nowrap flex items-center px-2 gap-1"
+          >
+            Agent: Unassigned
+          </span>
+        </div>
+        <div
+          class="flex gap-2"
+        >
+          <button>
+            ↑
+          </button>
+          <button
+            disabled=""
+          >
+            ↓
+          </button>
+        </div>
+      </div>
+      <div
+        class="flex flex-row gap-2.5 mb-2.5 bg-white mt-2.5"
+      >
+        <div
+          class="flex-1 bg-white pb-2"
+        >
+          <div
+            class="text-sm font-semibold mb-2"
+          >
+            Task Description
+          </div>
+          <textarea
+            placeholder="Task Description"
+            rows="5"
+          />
+        </div>
+        <div
+          class="flex-1 bg-white pb-2"
+        >
+          <div
+            class="text-sm font-semibold mb-2"
+          >
+            Expected Output
+          </div>
+          <textarea
+            placeholder="Expected Output"
+            rows="5"
+          />
+        </div>
+      </div>
+      <div
+        class="bg-white pb-2"
+      >
+        <div
+          class="text-sm font-semibold mb-2"
+        >
+          Select Agent
+        </div>
+        <select
+          class="w-full mb-2.5"
+        >
+          <option
+            value=""
+          >
+            Select Agent
+          </option>
+          <option
+            value="agent-1"
+          >
+            Test Agent 1
+          </option>
+          <option
+            value="agent-2"
+          >
+            Test Agent 2
+          </option>
+        </select>
+      </div>
+      <button
+        class="mb-2.5 w-auto"
+      >
+        Add Task
+      </button>
+    </div>
+    <div>
+      <label>
+        <input
+          type="checkbox"
+        />
+        Is Conversational
+      </label>
+    </div>
+    <div>
+      <label>
+        <input
+          type="checkbox"
+        />
+        Manager Agent
+      </label>
+    </div>
+  </div>
+  <div>
+    Workflow ID: 
+    test-workflow-id
+  </div>
+</div>
+`;
+
+exports[`WorkflowEditorTaskInputs matches snapshot with conversational workflow 1`] = `
+<div
+  data-testid="workflow-editor-task-inputs"
+>
+  <div
+    class="flex flex-col flex-shrink-0 flex-grow-0 p-4 md:px-6 w-2/5 h-full bg-transparent gap-6 overflow-auto"
+  >
+    <div
+      data-testid="conversational-alert"
+    >
+      <div>
+        This is a conversational workflow.
+      </div>
+      <div>
+        Conversational workflows have one dedicated task that facilitates conversation.
+      </div>
+    </div>
+    <div
+      class="gap-2.5 flex-grow-0 flex-shrink-0 flex-col bg-white"
+    >
+      <div
+        class="bg-white flex flex-row gap-1 justify-between items-center"
+      >
+        <div
+          class="flex items-center gap-1"
+        >
+          <span
+            class="text-sm font-semibold"
+          >
+            Tasks
+          </span>
+        </div>
+        <div
+          class="flex gap-2"
+        />
+      </div>
+    </div>
+    <div>
+      <label>
+        <input
+          type="checkbox"
+        />
+        Is Conversational
+      </label>
+    </div>
+    <div>
+      <label>
+        <input
+          type="checkbox"
+        />
+        Manager Agent
+      </label>
+    </div>
+  </div>
+  <div>
+    Workflow ID: 
+    test-workflow-id
+  </div>
+</div>
+`;
+
+exports[`WorkflowEditorTaskInputs matches snapshot with default state 1`] = `
+<div
+  data-testid="workflow-editor-task-inputs"
+>
+  <div
+    class="flex flex-col flex-shrink-0 flex-grow-0 p-4 md:px-6 w-2/5 h-full bg-transparent gap-6 overflow-auto"
+  >
+    <div
+      data-testid="dynamic-input-alert"
+    >
+      <div>
+        Tasks with Dynamic Input
+      </div>
+      <div>
+        Setting the dynamic input in tasks allows you to run workflow during execution with same input.
+      </div>
+    </div>
+    <div
+      class="gap-2.5 flex-grow-0 flex-shrink-0 flex-col bg-white"
+    >
+      <div
+        class="bg-white flex flex-row gap-1 justify-between items-center"
+      >
+        <div
+          class="flex items-center gap-1"
+        >
+          <span
+            class="text-sm font-semibold"
+          >
+            Tasks
+          </span>
+        </div>
+        <div
+          class="flex gap-2"
+        />
+      </div>
+      <div
+        class="flex flex-row gap-2.5 mb-2.5 bg-white mt-2.5"
+      >
+        <div
+          class="flex-1 bg-white pb-2"
+        >
+          <div
+            class="text-sm font-semibold mb-2"
+          >
+            Task Description
+          </div>
+          <textarea
+            placeholder="Task Description"
+            rows="5"
+          />
+        </div>
+        <div
+          class="flex-1 bg-white pb-2"
+        >
+          <div
+            class="text-sm font-semibold mb-2"
+          >
+            Expected Output
+          </div>
+          <textarea
+            placeholder="Expected Output"
+            rows="5"
+          />
+        </div>
+      </div>
+      <div
+        class="bg-white pb-2"
+      >
+        <div
+          class="text-sm font-semibold mb-2"
+        >
+          Select Agent
+        </div>
+        <select
+          class="w-full mb-2.5"
+        >
+          <option
+            value=""
+          >
+            Select Agent
+          </option>
+          <option
+            value="agent-1"
+          >
+            Test Agent 1
+          </option>
+          <option
+            value="agent-2"
+          >
+            Test Agent 2
+          </option>
+        </select>
+      </div>
+      <button
+        class="mb-2.5 w-auto"
+      >
+        Add Task
+      </button>
+    </div>
+    <div>
+      <label>
+        <input
+          type="checkbox"
+        />
+        Is Conversational
+      </label>
+    </div>
+    <div>
+      <label>
+        <input
+          type="checkbox"
+        />
+        Manager Agent
+      </label>
+    </div>
+  </div>
+  <div>
+    Workflow ID: 
+    test-workflow-id
+  </div>
+</div>
+`;
+
+exports[`WorkflowEditorTaskInputs matches snapshot with manager agent enabled 1`] = `
+<div
+  data-testid="workflow-editor-task-inputs"
+>
+  <div
+    class="flex flex-col flex-shrink-0 flex-grow-0 p-4 md:px-6 w-2/5 h-full bg-transparent gap-6 overflow-auto"
+  >
+    <div
+      data-testid="dynamic-input-alert"
+    >
+      <div>
+        Tasks with Dynamic Input
+      </div>
+      <div>
+        Setting the dynamic input in tasks allows you to run workflow during execution with same input.
+      </div>
+    </div>
+    <div
+      data-testid="manager-alert"
+    >
+      <div>
+        Manager Agent Assigned
+      </div>
+      <div>
+        Tasks will be assigned automatically. If you wish to assign them individually, please go back and remove your manager agent.
+      </div>
+    </div>
+    <div
+      class="gap-2.5 flex-grow-0 flex-shrink-0 flex-col bg-white"
+    >
+      <div
+        class="bg-white flex flex-row gap-1 justify-between items-center"
+      >
+        <div
+          class="flex items-center gap-1"
+        >
+          <span
+            class="text-sm font-semibold"
+          >
+            Tasks
+          </span>
+        </div>
+        <div
+          class="flex gap-2"
+        />
+      </div>
+      <div
+        class="flex flex-row gap-2.5 mb-2.5 bg-white mt-2.5"
+      >
+        <div
+          class="flex-1 bg-white pb-2"
+        >
+          <div
+            class="text-sm font-semibold mb-2"
+          >
+            Task Description
+          </div>
+          <textarea
+            placeholder="Task Description"
+            rows="5"
+          />
+        </div>
+        <div
+          class="flex-1 bg-white pb-2"
+        >
+          <div
+            class="text-sm font-semibold mb-2"
+          >
+            Expected Output
+          </div>
+          <textarea
+            placeholder="Expected Output"
+            rows="5"
+          />
+        </div>
+      </div>
+      <button
+        class="mb-2.5 w-auto"
+      >
+        Add Task
+      </button>
+    </div>
+    <div>
+      <label>
+        <input
+          type="checkbox"
+        />
+        Is Conversational
+      </label>
+    </div>
+    <div>
+      <label>
+        <input
+          type="checkbox"
+        />
+        Manager Agent
+      </label>
+    </div>
+  </div>
+  <div>
+    Workflow ID: 
+    test-workflow-id
+  </div>
+</div>
+`;
+
+exports[`WorkflowEditorTaskInputs matches snapshot with tasks 1`] = `
+<div
+  data-testid="workflow-editor-task-inputs"
+>
+  <div
+    class="flex flex-col flex-shrink-0 flex-grow-0 p-4 md:px-6 w-2/5 h-full bg-transparent gap-6 overflow-auto"
+  >
+    <div
+      data-testid="unassigned-alert"
+    >
+      <div>
+        Unassigned Tasks
+      </div>
+      <div>
+        You need to assign tasks to an agent because there is no manager agent.
+      </div>
+    </div>
+    <div
+      class="gap-2.5 flex-grow-0 flex-shrink-0 flex-col bg-white"
+    >
+      <div
+        data-testid="execution-order-alert"
+      >
+        <div>
+          Task Execution Order
+        </div>
+        <div>
+          The following 
+          2
+           tasks will be executed in the order specified below.
+        </div>
+      </div>
+      <div
+        class="bg-white flex flex-row gap-1 justify-between items-center"
+      >
+        <div
+          class="flex items-center gap-1"
+        >
+          <span
+            class="text-sm font-semibold"
+          >
+            Tasks
+          </span>
+        </div>
+        <div
+          class="flex gap-2"
+        >
+          <button>
+            Reorder
+          </button>
+        </div>
+      </div>
+      <div
+        class="relative flex flex-row items-center justify-between h-11 shadow-md border-0 gap-1.5 pl-10 pr-3 bg-white"
+      >
+        <span
+          class="flex-basis-[60%] text-sm font-normal ml-1"
+        >
+          Task 1: Task 1
+        </span>
+        <div
+          class="w-[30%] flex justify-start overflow-hidden"
+        >
+          <span
+            class="max-w-full text-[11px] font-normal bg-blue-200 border-none text-ellipsis overflow-hidden whitespace-nowrap flex items-center px-2 gap-1"
+          >
+            Agent: Unassigned
+          </span>
+        </div>
+        <div
+          class="flex gap-2"
+        >
+          <button>
+            Edit
+          </button>
+          <button>
+            Delete
+          </button>
+        </div>
+      </div>
+      <div
+        class="relative flex flex-row items-center justify-between h-11 shadow-md border-0 gap-1.5 pl-10 pr-3 bg-white"
+      >
+        <span
+          class="flex-basis-[60%] text-sm font-normal ml-1"
+        >
+          Task 2: Task 2
+        </span>
+        <div
+          class="w-[30%] flex justify-start overflow-hidden"
+        >
+          <span
+            class="max-w-full text-[11px] font-normal bg-blue-200 border-none text-ellipsis overflow-hidden whitespace-nowrap flex items-center px-2 gap-1"
+          >
+            Agent: Unassigned
+          </span>
+        </div>
+        <div
+          class="flex gap-2"
+        >
+          <button>
+            Edit
+          </button>
+          <button>
+            Delete
+          </button>
+        </div>
+      </div>
+      <div
+        class="flex flex-row gap-2.5 mb-2.5 bg-white mt-2.5"
+      >
+        <div
+          class="flex-1 bg-white pb-2"
+        >
+          <div
+            class="text-sm font-semibold mb-2"
+          >
+            Task Description
+          </div>
+          <textarea
+            placeholder="Task Description"
+            rows="5"
+          />
+        </div>
+        <div
+          class="flex-1 bg-white pb-2"
+        >
+          <div
+            class="text-sm font-semibold mb-2"
+          >
+            Expected Output
+          </div>
+          <textarea
+            placeholder="Expected Output"
+            rows="5"
+          />
+        </div>
+      </div>
+      <div
+        class="bg-white pb-2"
+      >
+        <div
+          class="text-sm font-semibold mb-2"
+        >
+          Select Agent
+        </div>
+        <select
+          class="w-full mb-2.5"
+        >
+          <option
+            value=""
+          >
+            Select Agent
+          </option>
+          <option
+            value="agent-1"
+          >
+            Test Agent 1
+          </option>
+          <option
+            value="agent-2"
+          >
+            Test Agent 2
+          </option>
+        </select>
+      </div>
+      <button
+        class="mb-2.5 w-auto"
+      >
+        Add Task
+      </button>
+    </div>
+    <div>
+      <label>
+        <input
+          type="checkbox"
+        />
+        Is Conversational
+      </label>
+    </div>
+    <div>
+      <label>
+        <input
+          type="checkbox"
+        />
+        Manager Agent
+      </label>
+    </div>
+  </div>
+  <div>
+    Workflow ID: 
+    test-workflow-id
+  </div>
+</div>
+`;
