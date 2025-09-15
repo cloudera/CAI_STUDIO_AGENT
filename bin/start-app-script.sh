@@ -91,6 +91,7 @@ export DEFAULT_AS_GRPC_PORT=${DEFAULT_AS_GRPC_PORT:-50051}
 export DEFAULT_AS_PHOENIX_OPS_PLATFORM_PORT=${DEFAULT_AS_PHOENIX_OPS_PLATFORM_PORT:-50052}
 export DEFAULT_WORKFLOW_RUNNER_STARTING_PORT=${DEFAULT_WORKFLOW_RUNNER_STARTING_PORT:-51000}
 export DEFAULT_AS_DEBUG_PORT=${DEFAULT_AS_DEBUG_PORT:-5678}
+export DEFAULT_WORKFLOW_RUNNER_DEBUG_PORT=${DEFAULT_WORKFLOW_RUNNER_DEBUG_PORT:-5679}
 
 # If we are running in studio mode, and if there is an Ops & Metrics application in the project,
 # it's assumed that the main studio application should continue to use the old legacy workflow app.
@@ -188,11 +189,18 @@ cd $APP_DIR/studio/workflow_engine
 if [ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]; then
   for (( i=0; i<AGENT_STUDIO_NUM_WORKFLOW_RUNNERS; i++ )); do
     PORT_NUM=$((DEFAULT_WORKFLOW_RUNNER_STARTING_PORT + i))
+    DEBUG_PORT_NUM=$((DEFAULT_WORKFLOW_RUNNER_DEBUG_PORT + i))
     echo "Starting workflow runner on port $PORT_NUM..."
+    if [ "$AGENT_STUDIO_DEPLOYMENT_CONFIG" = "dev" ]; then
+      echo "Starting workflow runner with a debug port at $DEBUG_PORT_NUM..."
+      VIRTUAL_ENV=.venv uv run --no-sync -m debugpy --listen $DEBUG_PORT_NUM -m uvicorn src.engine.entry.runner:app --port "$PORT_NUM" --host "0.0.0.0" &
+    else
+      # Launch the runner using the virtual environment's python.
+      echo "Starting workflow runner using the virtual environment's python..."
+      VIRTUAL_ENV=.venv uv run --no-sync python -m uvicorn \
+       src.engine.entry.runner:app --port "$PORT_NUM" &
+    fi
     
-    # Launch the runner using the virtual environment's python
-    VIRTUAL_ENV=.venv uv run --no-sync python -m uvicorn \
-     src.engine.entry.runner:app --port "$PORT_NUM" &
     
     # Save the process PID.
     RUNNER_PIDS+=($!)

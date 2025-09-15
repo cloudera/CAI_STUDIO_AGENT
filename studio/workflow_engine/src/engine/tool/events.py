@@ -57,6 +57,16 @@ class ToolVenvCreationFailedEvent(BaseModel):
     pip_error: str = ""
 
 
+# New event for final tool output (success or error)
+class ToolOutputEvent(BaseModel):
+    timestamp: datetime
+    type: str = "ToolOutput"
+    tool_instance_id: str
+    output: Any = None
+    error: str = None
+    success: bool = True
+
+
 # Event processor for tool test events
 TOOL_EVENT_PROCESSORS = {
     ToolTestStartedEvent: lambda x: {
@@ -90,6 +100,12 @@ TOOL_EVENT_PROCESSORS = {
         "error": x.error,
         "pip_output": x.pip_output,
         "pip_error": x.pip_error,
+    },
+    ToolOutputEvent: lambda x: {
+        "tool_instance_id": x.tool_instance_id,
+        "output": x.output,
+        "error": x.error,
+        "success": x.success,
     },
 }
 
