@@ -732,9 +732,16 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId 
                       // Start polling for events
                       intervalRef.current = setInterval(async () => {
                         try {
-                          const { events: newEvents } = await getEvents({
+                          let { events: newEvents } = await getEvents({
                             trace_id: resp.trace_id,
                           }).unwrap();
+
+                          // Filter events to only show ToolOutput events and events with "failed" in type
+                          newEvents = (newEvents || []).filter(
+                            (e: any) =>
+                              e.type === 'ToolOutput' ||
+                              (e.type && e.type.toLowerCase().includes('failed')),
+                          );
 
                           // Always deduplicate by a unique key (timestamp+type+output+error)
                           const makeKey = (e: any) =>
@@ -765,7 +772,9 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId 
 
                           // Check for final event in the accumulated list
                           const hasFinalEvent = allEventsRef.current.some(
-                            (e) => e.type === 'ToolTestCompleted' || e.type === 'ToolTestFailed',
+                            (e) =>
+                              e.type === e.type.toLowerCase().includes('failed') ||
+                              e.type === 'ToolOutput',
                           );
                           if (hasFinalEvent) {
                             if (intervalRef.current) {
@@ -809,7 +818,6 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId 
                   {logs.map((event, idx) => (
                     <Card
                       key={idx}
-                      title={event.type}
                       className={`
                         text-[9px]
                         max-w-full
@@ -829,7 +837,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId 
                       bodyStyle={{ fontSize: '9px', padding: '12px', overflow: 'auto' }}
                     >
                       <pre className="text-[9px] m-0 overflow-auto max-w-full">
-                        {JSON.stringify(event, null, 2)}
+                        {event.error ? event.type + '\n' + event.error : event.output}
                       </pre>
                     </Card>
                   ))}

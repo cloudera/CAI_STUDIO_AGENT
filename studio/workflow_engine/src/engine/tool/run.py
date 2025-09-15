@@ -4,18 +4,18 @@ import json
 from datetime import datetime
 from engine.tool.events import (
     ToolTestStartedEvent,
-    ToolTestCompletedEvent,
     ToolTestFailedEvent,
     ToolVenvCreationStartedEvent,
     ToolVenvCreationFinishedEvent,
     ToolVenvCreationFailedEvent,
+    ToolOutputEvent,
     process_tool_event,
 )
 from engine.ops import get_ops_endpoint
 import requests
 import shutil
 import traceback
-from engine.crewai.tools import create_virtual_env
+from engine.crewai.tools import create_virtual_env, get_venv_tool_output_key
 import ast
 
 # Utility to post tool events
@@ -37,7 +37,7 @@ def post_tool_event(trace_id, event):
 
 
 def ensure_venv_and_requirements(
-    tool_dir: str, requirements_file: str = "requirements.txt", trace_id=None, tool_instance_id=None
+    tool_dir: str, requirements_file: str = "requirements.txt", trace_id=None, tool_instance_id=None, silent=False
 ):
     venv_dir = os.path.join(tool_dir, ".venv")
     uv_bin = shutil.which("uv")
@@ -58,7 +58,7 @@ def ensure_venv_and_requirements(
             )
         raise RuntimeError(error_msg)
     # Post event for venv creation/requirements install
-    if trace_id and tool_instance_id:
+    if trace_id and tool_instance_id and not silent:
         post_tool_event(
             trace_id,
             ToolVenvCreationStartedEvent(
@@ -86,7 +86,7 @@ def ensure_venv_and_requirements(
             pip_output = proc.stdout
             pip_error = proc.stderr
             # Always post finished event
-            if trace_id and tool_instance_id:
+            if trace_id and tool_instance_id and not silent:
                 post_tool_event(
                     trace_id,
                     ToolVenvCreationFinishedEvent(
@@ -115,7 +115,7 @@ def ensure_venv_and_requirements(
                 raise RuntimeError(f"pip install failed: {pip_error}")
         else:
             # No requirements.txt, still post finished event
-            if trace_id and tool_instance_id:
+            if trace_id and tool_instance_id and not silent:
                 post_tool_event(
                     trace_id,
                     ToolVenvCreationFinishedEvent(
@@ -235,15 +235,16 @@ def run_tool_test(tool_instance_id, tool_dir, user_params, tool_params, trace_id
     try:
         # Ensure venv and requirements (now posts ToolVenvCreationStartedEvent and ToolVenvCreationFinishedEvent)
         try:
-            ensure_venv_and_requirements(tool_dir, trace_id=trace_id, tool_instance_id=tool_instance_id)
+            ensure_venv_and_requirements(tool_dir, trace_id=trace_id, tool_instance_id=tool_instance_id, silent=True)
         except Exception as venv_err:
             tb = traceback.format_exc()
             post_tool_event(
                 trace_id,
-                ToolTestFailedEvent(
+                ToolOutputEvent(
                     timestamp=datetime.utcnow(),
                     tool_instance_id=tool_instance_id,
                     error=f"venv/requirements error: {str(venv_err)}\n{tb}",
+                    success=False,
                 ),
             )
             return {
@@ -259,10 +260,11 @@ def run_tool_test(tool_instance_id, tool_dir, user_params, tool_params, trace_id
             error_msg = f"tool.py not found in {tool_dir}"
             post_tool_event(
                 trace_id,
-                ToolTestFailedEvent(
+                ToolOutputEvent(
                     timestamp=datetime.utcnow(),
                     tool_instance_id=tool_instance_id,
                     error=error_msg,
+                    success=False,
                 ),
             )
             return {"status": "Tool test failed", "trace_id": trace_id, "error": error_msg}
@@ -278,10 +280,11 @@ def run_tool_test(tool_instance_id, tool_dir, user_params, tool_params, trace_id
             )
             post_tool_event(
                 trace_id,
-                ToolTestFailedEvent(
+                ToolOutputEvent(
                     timestamp=datetime.utcnow(),
                     tool_instance_id=tool_instance_id,
                     error=error_msg,
+                    success=False,
                 ),
             )
             return {"status": "Tool test failed", "trace_id": trace_id, "error": error_msg}
@@ -296,10 +299,11 @@ def run_tool_test(tool_instance_id, tool_dir, user_params, tool_params, trace_id
             tb = traceback.format_exc()
             post_tool_event(
                 trace_id,
-                ToolTestFailedEvent(
+                ToolOutputEvent(
                     timestamp=datetime.utcnow(),
                     tool_instance_id=tool_instance_id,
                     error=f"subprocess error: {str(sub_err)}\n{tb}\nIf you see ModuleNotFoundError, check if the package is in requirements.txt and that pip install succeeded.",
+                    success=False,
                 ),
             )
             return {
@@ -310,12 +314,24 @@ def run_tool_test(tool_instance_id, tool_dir, user_params, tool_params, trace_id
         output = proc.stdout.strip()
         error = proc.stderr.strip()
         if proc.returncode == 0:
+            try:
+                with open(tool_py, "r") as f:
+                    tool_code = f.read()
+                output_key = get_venv_tool_output_key(tool_code)
+
+                if output_key and output_key in output:
+                    output = output.split(output_key, 1)[-1].strip()
+            except Exception as e:
+                pass
+
             post_tool_event(
                 trace_id,
-                ToolTestCompletedEvent(
+                ToolOutputEvent(
                     timestamp=datetime.utcnow(),
                     tool_instance_id=tool_instance_id,
                     output=output,
+                    error=error,
+                    success=True,
                 ),
             )
             return {"status": "Tool test completed", "trace_id": trace_id, "output": output}
@@ -323,10 +339,11 @@ def run_tool_test(tool_instance_id, tool_dir, user_params, tool_params, trace_id
             error_msg = error or output or f"Tool exited with code {proc.returncode}"
             post_tool_event(
                 trace_id,
-                ToolTestFailedEvent(
+                ToolOutputEvent(
                     timestamp=datetime.utcnow(),
                     tool_instance_id=tool_instance_id,
                     error=error_msg,
+                    success=False,
                 ),
             )
             return {"status": "Tool test failed", "trace_id": trace_id, "error": error_msg}
@@ -334,10 +351,11 @@ def run_tool_test(tool_instance_id, tool_dir, user_params, tool_params, trace_id
         tb = traceback.format_exc()
         post_tool_event(
             trace_id,
-            ToolTestFailedEvent(
+            ToolOutputEvent(
                 timestamp=datetime.utcnow(),
                 tool_instance_id=tool_instance_id,
                 error=f"unexpected error: {str(e)}\n{tb}",
+                success=False,
             ),
         )
         return {"status": "Tool test failed", "trace_id": trace_id, "error": f"unexpected error: {str(e)}\n{tb}"}
