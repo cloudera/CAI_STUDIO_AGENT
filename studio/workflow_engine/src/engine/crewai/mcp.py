@@ -37,7 +37,7 @@ def get_mcp_tools_for_crewai(mcp_instance: Input__MCPInstance, env_vars: Dict[st
 
 
 async def get_mcp_tool_definitions(mcp_instance: Input__MCPInstance, env_vars: Dict[str, str]) -> List[mcp_types.Tool]:
-    timeout = timedelta(seconds=120)  # 2 minutes
+    timeout = timedelta(minutes=5)  # 5 minutes
     env_to_pass = os.environ.copy()
     env_to_pass.update(env_vars)
     server_params = StdioServerParameters(

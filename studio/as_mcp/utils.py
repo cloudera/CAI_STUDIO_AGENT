@@ -18,7 +18,7 @@ def _get_runtime_command(mcp_type: consts.SupportedMCPTypes) -> str:
 
 
 async def _get_mcp_tools(server_params: StdioServerParameters) -> List[mcp_types.Tool]:
-    timeout = timedelta(seconds=120)  # 2 minutes
+    timeout = timedelta(minutes=5)  # 5 minutes
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(
             read_stream=read,
