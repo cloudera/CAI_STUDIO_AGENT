@@ -24,10 +24,10 @@ type ToolNode = Node<
     workflowId: string;
     toolInstanceId: string;
     agentId: string;
-    agentTools: any[]; // Added for passing tools to the modal
+    agentTools: string[]; // Added for passing tools to the modal
     showEditButton?: boolean; // Control whether to show edit button
   },
-  'task'
+  'tool'
 >;
 
 export default function ToolNode({ data }: NodeProps<ToolNode>) {

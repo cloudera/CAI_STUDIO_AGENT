@@ -56,6 +56,9 @@ jest.mock('../../workflows/editorSlice', () => ({
   openedEditorToolView: jest.fn(),
   updatedEditorSelectedToolInstanceId: jest.fn(),
   clearedEditorToolEditingState: jest.fn(),
+  openedEditorMcpView: jest.fn(),
+  updatedEditorSelectedMcpInstanceId: jest.fn(),
+  clearedEditorMcpEditingState: jest.fn(),
 }));
 
 jest.mock('@/app/tools/toolTemplatesApi', () => ({

@@ -62,16 +62,6 @@
       "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/mail.png"
     },
     {
-      "id": "79502d03-05ea-4043-abff-42a00c6945e6",
-      "name": "Email Tool",
-      "python_code_file_name": "tool.py",
-      "python_requirements_file_name": "requirements.txt",
-      "source_folder_path": "studio-data/tool_templates/email_tool",
-      "pre_built": true,
-      "is_venv_tool": true,
-      "tool_image_path": "studio-data/dynamic_assets/tool_template_icons/mail.png"
-    },
-    {
       "id": "5b2d9315-2624-47ec-8a4e-ccae3da3e868",
       "name": "Slack Tool",
       "python_code_file_name": "tool.py",

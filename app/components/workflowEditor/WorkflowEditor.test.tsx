@@ -11,6 +11,12 @@ import { configureStore } from '@reduxjs/toolkit';
 const originalConsoleError = console.error;
 console.error = jest.fn();
 
+// Mock fetch for SSR compatibility
+global.fetch = jest.fn().mockResolvedValue({
+  ok: true,
+  json: jest.fn().mockResolvedValue({}),
+});
+
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
@@ -74,6 +80,13 @@ jest.mock('./WorkflowAddToolModal', () => {
   MockWorkflowAddToolModal.displayName = 'MockWorkflowAddToolModal';
   return MockWorkflowAddToolModal;
 });
+jest.mock('./WorkflowAddMcpModal', () => {
+  const MockWorkflowAddMcpModal = () => (
+    <div data-testid="workflow-add-mcp-modal">WorkflowAddMcpModal</div>
+  );
+  MockWorkflowAddMcpModal.displayName = 'MockWorkflowAddMcpModal';
+  return MockWorkflowAddMcpModal;
+});
 jest.mock('@/app/components/workflows/WorkflowOverview', () => {
   const MockWorkflowOverview = () => <div data-testid="workflow-overview">WorkflowOverview</div>;
   MockWorkflowOverview.displayName = 'MockWorkflowOverview';
@@ -136,6 +149,22 @@ jest.mock('@/app/workflows/workflowsApi', () => ({
       unwrap: jest.fn().mockResolvedValue({}),
     }),
   ],
+}));
+
+// Mock API slice to avoid fetch warnings
+jest.mock('@/app/api/apiSlice', () => ({
+  apiSlice: {
+    reducer: (state = {}) => state,
+    middleware: [],
+    injectEndpoints: jest.fn().mockReturnValue({
+      useListGlobalMcpTemplatesQuery: jest.fn(),
+      useListMcpTemplatesQuery: jest.fn(),
+      useGetMcpTemplateQuery: jest.fn(),
+      useAddMcpTemplateMutation: jest.fn(),
+      useUpdateMcpTemplateMutation: jest.fn(),
+      useRemoveMcpTemplateMutation: jest.fn(),
+    }),
+  },
 }));
 
 // Mock local storage helper used during initialization
@@ -310,6 +339,7 @@ describe('WorkflowEditor', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('workflow-add-tool-modal')).toBeInTheDocument();
+      expect(screen.getByTestId('workflow-add-mcp-modal')).toBeInTheDocument();
     });
   });
 

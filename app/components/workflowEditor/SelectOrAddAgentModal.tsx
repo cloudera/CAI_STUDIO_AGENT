@@ -56,6 +56,9 @@ import {
   openedEditorToolView,
   updatedEditorSelectedToolInstanceId,
   clearedEditorToolEditingState,
+  openedEditorMcpView,
+  updatedEditorSelectedMcpInstanceId,
+  clearedEditorMcpEditingState,
 } from '../../workflows/editorSlice';
 import {
   AgentTemplateMetadata,
@@ -141,10 +144,8 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
     toolTemplates.map((tool) => tool.tool_image_uri),
   );
   const dispatch = useAppDispatch();
-  const [isAddMcpModalVisible, setAddMcpModalVisible] = useState(false);
   const [isUploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [clickedMcpInstance, setClickedMcpInstance] = useState<McpInstance | undefined>(undefined);
   const notificationApi = useGlobalNotification();
   const [isCreateMode, setIsCreateMode] = useState(false);
   const [deleteToolInstance] = useRemoveToolInstanceMutation();
@@ -475,8 +476,8 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
             <div
               className="rounded-md border border-solid border-gray-200 bg-white w-full p-0 flex flex-col cursor-pointer transition-all duration-200 shadow-sm hover:scale-[1.03] hover:shadow-md hover:bg-green-50"
               onClick={() => {
-                setClickedMcpInstance(mcp);
-                setAddMcpModalVisible(true);
+                dispatch(updatedEditorSelectedMcpInstanceId(mcp.id));
+                dispatch(openedEditorMcpView());
               }}
             >
               <div className="flex-1 flex flex-col overflow-auto p-3">
@@ -840,7 +841,7 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
 
   const isFormDisabled = selectedAgentTemplate !== null;
 
-  const renderToolSection = () => {
+  const renderToolAndMcpSection = () => {
     if (selectedAgentTemplate) {
       return (
         <>
@@ -933,8 +934,8 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
                 type="dashed"
                 icon={<PlusOutlined />}
                 onClick={() => {
-                  setClickedMcpInstance(undefined);
-                  setAddMcpModalVisible(true);
+                  dispatch(clearedEditorMcpEditingState());
+                  dispatch(openedEditorMcpView());
                 }}
                 className="w-full mb-4"
               >
@@ -1136,20 +1137,12 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
               </div>
               <div className="my-4" />
             </Form.Item>
-            {renderToolSection()}
+            {renderToolAndMcpSection()}
           </Form>
         </Layout>
       </Layout>
       <Divider className="m-0 bg-gray-200" />
-      <WorkflowAddMcpModal
-        workflowId={workflowId}
-        preSelectedMcpInstance={clickedMcpInstance}
-        open={isAddMcpModalVisible}
-        onCancel={() => {
-          setAddMcpModalVisible(false);
-          setClickedMcpInstance(undefined);
-        }}
-      />
+      <WorkflowAddMcpModal workflowId={workflowId} />
       {defaultModel && (
         <GenerateAgentPropertiesModal
           open={isGenerateAgentPropertiesModalVisible}

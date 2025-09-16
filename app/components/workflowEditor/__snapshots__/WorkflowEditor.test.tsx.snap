@@ -13,6 +13,11 @@ exports[`WorkflowEditor matches snapshot with Agents step 1`] = `
   class="ant-layout flex-1 p-4 md:p-6 lg:p-6 flex flex-col css-dev-only-do-not-override-l9pxc0"
 >
   <div
+    data-testid="workflow-add-mcp-modal"
+  >
+    WorkflowAddMcpModal
+  </div>
+  <div
     data-testid="workflow-add-tool-modal"
   >
     WorkflowAddToolModal
@@ -54,6 +59,11 @@ exports[`WorkflowEditor matches snapshot with Configure step 1`] = `
   class="ant-layout flex-1 p-4 md:p-6 lg:p-6 flex flex-col css-dev-only-do-not-override-l9pxc0"
 >
   <div
+    data-testid="workflow-add-mcp-modal"
+  >
+    WorkflowAddMcpModal
+  </div>
+  <div
     data-testid="workflow-add-tool-modal"
   >
     WorkflowAddToolModal
@@ -94,6 +104,11 @@ exports[`WorkflowEditor matches snapshot with Tasks step 1`] = `
 <div
   class="ant-layout flex-1 p-4 md:p-6 lg:p-6 flex flex-col css-dev-only-do-not-override-l9pxc0"
 >
+  <div
+    data-testid="workflow-add-mcp-modal"
+  >
+    WorkflowAddMcpModal
+  </div>
   <div
     data-testid="workflow-add-tool-modal"
   >

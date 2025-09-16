@@ -92,6 +92,7 @@ function getDiagramDataSignature({
       name: a.name,
       image: a.agent_image_uri,
       tools_id: a.tools_id || [], // Include tools_id to detect when tools are added/removed from agents
+      mcp_instance_ids: a.mcp_instance_ids || [], // Include mcp_instance_ids to detect when MCP instances are added/removed from agents
     })),
     tasks: (tasks || []).map((t: CrewAITaskMetadata) => ({
       id: t.task_id,
@@ -217,7 +218,7 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
           },
         };
       }
-      if (node.type === 'agent' || node.type === 'tool') {
+      if (node.type === 'agent' || node.type === 'tool' || node.type === 'mcp') {
         return {
           ...node,
           data: {

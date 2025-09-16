@@ -60,14 +60,14 @@ describe('ToolNode component', () => {
       workflowId: 'workflow-123',
       toolInstanceId: 'tool-instance-123',
       agentId: 'agent-123',
-      agentTools: [{ id: 'tool-1', name: 'Tool 1' }],
+      agentTools: ['tool-1'],
       showEditButton: true,
     },
     id: 'test-tool-id',
     width: 100,
     height: 120,
     selected: false,
-    type: 'task' as const,
+    type: 'tool' as const,
     positionAbsoluteX: 0,
     positionAbsoluteY: 0,
     dragging: false,
@@ -140,7 +140,7 @@ describe('ToolNode component', () => {
       type: 'updatedEditorAgentViewCreateAgentState',
       payload: {
         agentId: 'agent-123',
-        tools: [{ id: 'tool-1', name: 'Tool 1' }],
+        tools: ['tool-1'],
       },
     });
     expect(mockDispatch).toHaveBeenNthCalledWith(2, {
@@ -202,7 +202,7 @@ describe('ToolNode component', () => {
         width={100}
         height={100}
         selected={false}
-        type="task"
+        type="tool"
         positionAbsoluteX={0}
         positionAbsoluteY={0}
         dragging={false}
