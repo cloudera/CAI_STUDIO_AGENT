@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
 import { Handle, Position, NodeProps, Node, NodeToolbar } from '@xyflow/react';
-import { Avatar, Image, Typography, Tag } from 'antd';
-
+import { Avatar, Image, Typography, Tag, Tooltip } from 'antd';
+import { EditOutlined } from '@ant-design/icons';
+import { useAppDispatch } from '@/app/lib/hooks/hooks';
+import {
+  updatedEditorAgentViewCreateAgentState,
+  updatedEditorSelectedMcpInstanceId,
+  openedEditorMcpView,
+} from '@/app/workflows/editorSlice';
 const { Paragraph } = Typography;
 
 type InfoType = 'Completion' | 'TaskStart' | 'ToolInput' | 'ToolOutput';
@@ -16,12 +22,18 @@ type McpNode = Node<
     info?: string;
     infoType?: InfoType;
     isMostRecent?: boolean;
+    mcpInstances: string[];
+    mcpInstanceId: string;
+    agentId: string;
+    workflowId: string;
+    showEditButton?: boolean;
   },
-  'task'
+  'mcp'
 >;
 
 export default function McpNode({ data }: NodeProps<McpNode>) {
   const [isHovered, setIsHovered] = useState(false);
+  const dispatch = useAppDispatch();
 
   // Process tools list
   const getDisplayTools = () => {
@@ -37,6 +49,20 @@ export default function McpNode({ data }: NodeProps<McpNode>) {
     }
 
     return tools;
+  };
+
+  // Set agent context before opening modal
+  const handleEditMcp = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Set the agent context in Redux so the modal shows the correct tool list
+    dispatch(
+      updatedEditorAgentViewCreateAgentState({
+        agentId: data.agentId,
+        mcpInstances: data.mcpInstances,
+      }),
+    );
+    dispatch(updatedEditorSelectedMcpInstanceId(data.mcpInstanceId));
+    dispatch(openedEditorMcpView());
   };
 
   const tagColor = '#a6a6a6';
@@ -80,6 +106,38 @@ export default function McpNode({ data }: NodeProps<McpNode>) {
         minHeight: 120,
       }}
     >
+      {/* Edit MCP Button */}
+      {data.showEditButton !== false && (
+        <div
+          style={{
+            position: 'absolute',
+            top: -10,
+            right: -10,
+            zIndex: 10,
+          }}
+        >
+          <Tooltip title="Edit MCP configuration">
+            <button
+              onClick={handleEditMcp}
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: '50%',
+                backgroundColor: 'white', // Match Avatar background
+                border: '2px solid #b8d6ff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+                padding: 0,
+                cursor: 'pointer',
+              }}
+            >
+              <EditOutlined style={{ color: '#1890ff', fontSize: 12 }} />
+            </button>
+          </Tooltip>
+        </div>
+      )}
       {data.info && (
         <>
           <NodeToolbar

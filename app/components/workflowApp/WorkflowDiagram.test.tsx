@@ -23,7 +23,11 @@ jest.mock('@xyflow/react', () => {
 // Mock createDiagramStateFromWorkflow to return predictable nodes/edges
 jest.mock('../../workflows/diagrams', () => ({
   createDiagramStateFromWorkflow: jest.fn(() => ({
-    nodes: [{ id: 'node-1', type: 'agent', data: { label: 'A' } }],
+    nodes: [
+      { id: 'node-1', type: 'agent', data: { label: 'A' } },
+      { id: 'node-2', type: 'mcp', data: { label: 'MCP' } },
+      { id: 'node-3', type: 'tool', data: { label: 'Tool' } },
+    ],
     edges: [],
   })),
 }));
@@ -97,5 +101,18 @@ describe('WorkflowDiagram', () => {
     });
 
     expect(calledWithUpdatedDiagramState).toBe(true);
+  });
+
+  it('handles multiple node types including mcp nodes', () => {
+    const workflowState = {
+      workflowId: 'w1',
+      workflowMetadata: { managerAgentId: null, process: 'linear' },
+    } as any;
+
+    render(<WorkflowDiagram workflowState={workflowState} />);
+
+    // Verify that the mocked diagram function was called which contains agent, mcp, and tool nodes
+    const { createDiagramStateFromWorkflow } = require('../../workflows/diagrams');
+    expect(createDiagramStateFromWorkflow).toHaveBeenCalled();
   });
 });

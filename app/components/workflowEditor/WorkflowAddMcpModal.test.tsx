@@ -132,6 +132,36 @@ jest.mock('react-redux', () => ({
     ) {
       return { mcpInstances: [] };
     }
+    if (
+      selector &&
+      selector.toString &&
+      selector.toString().includes('selectEditorMcpViewIsVisible')
+    ) {
+      return false;
+    }
+    if (selector && selector.toString && selector.toString().includes('selectEditorSelectedMcp')) {
+      return undefined;
+    }
+    return undefined;
+  }),
+}));
+
+// Mock the new MCP editor slice selectors with mutable state
+let mockIsVisible = false;
+let mockSelectedMcpInstanceId: string | undefined = undefined;
+let mockSelectedMcpTemplateId: string | undefined = undefined;
+
+jest.mock('@/app/lib/hooks/hooks', () => ({
+  useAppSelector: jest.fn((selector: any) => {
+    if (selector.toString && selector.toString().includes('selectEditorMcpViewIsVisible')) {
+      return mockIsVisible;
+    }
+    if (selector.toString && selector.toString().includes('selectEditorSelectedMcpInstanceId')) {
+      return mockSelectedMcpInstanceId;
+    }
+    if (selector.toString && selector.toString().includes('selectEditorSelectedMcpTemplateId')) {
+      return mockSelectedMcpTemplateId;
+    }
     return undefined;
   }),
 }));
@@ -151,9 +181,6 @@ const WorkflowAddMcpModal = require('./WorkflowAddMcpModal').default;
 describe('WorkflowAddMcpModal', () => {
   const mockProps = {
     workflowId: 'test-workflow-id',
-    preSelectedMcpInstance: undefined,
-    open: false,
-    onCancel: jest.fn(),
   };
 
   afterAll(() => {
@@ -166,6 +193,9 @@ describe('WorkflowAddMcpModal', () => {
     mockMcpTemplates = [];
     mockMcpInstances = [];
     mockAgents = [];
+    mockIsVisible = false;
+    mockSelectedMcpInstanceId = undefined;
+    mockSelectedMcpTemplateId = undefined;
   });
 
   it('renders without crashing when closed', () => {
@@ -178,11 +208,21 @@ describe('WorkflowAddMcpModal', () => {
     expect(container).toBeTruthy();
   });
 
-  it('renders without crashing when open', () => {
-    const store = createMockStore();
+  it('renders without crashing when open via Redux state', () => {
+    mockIsVisible = true;
+    const store = configureStore({
+      reducer: {
+        editor: (
+          state = {
+            agentViewCreateAgent: { mcpInstances: [] },
+            mcpView: { isVisible: true },
+          },
+        ) => state,
+      },
+    });
     const { container } = render(
       <Provider store={store}>
-        <WorkflowAddMcpModal {...mockProps} open={true} />
+        <WorkflowAddMcpModal {...mockProps} />
       </Provider>,
     );
     expect(container).toBeTruthy();
@@ -190,10 +230,20 @@ describe('WorkflowAddMcpModal', () => {
 
   it('renders MCP template view when a template exists', () => {
     mockMcpTemplates = [{ id: 'tpl-1', name: 'Template 1', image_uri: 'img1.png' }];
-    const store = createMockStore();
+    mockIsVisible = true;
+    const store = configureStore({
+      reducer: {
+        editor: (
+          state = {
+            agentViewCreateAgent: { mcpInstances: [] },
+            mcpView: { isVisible: true },
+          },
+        ) => state,
+      },
+    });
     render(
       <Provider store={store}>
-        <WorkflowAddMcpModal {...mockProps} open={true} />
+        <WorkflowAddMcpModal {...mockProps} />
       </Provider>,
     );
     // The template list should render the template name (may be split across nodes)
@@ -213,18 +263,27 @@ describe('WorkflowAddMcpModal', () => {
   });
 
   it('renders modal title when open', () => {
-    const store = createMockStore();
+    mockIsVisible = true;
+    const store = configureStore({
+      reducer: {
+        editor: (
+          state = {
+            agentViewCreateAgent: { mcpInstances: [] },
+            mcpView: { isVisible: true },
+          },
+        ) => state,
+      },
+    });
     render(
       <Provider store={store}>
-        <WorkflowAddMcpModal {...mockProps} open={true} />
+        <WorkflowAddMcpModal {...mockProps} />
       </Provider>,
     );
     expect(screen.getByText((c) => c.includes('Add or Edit MCPs'))).toBeInTheDocument();
   });
 
-  it('renders edit server view for pre-selected instance', () => {
-    const store = createMockStore();
-    const preSelectedInstance = {
+  it('renders edit server view with Redux state for selected instance', () => {
+    const selectedInstance = {
       id: 'instance-1',
       name: 'Test Instance',
       image_uri: 'test-image.png',
@@ -232,30 +291,53 @@ describe('WorkflowAddMcpModal', () => {
       activated_tools: ['tool1'],
       tools: JSON.stringify([{ name: 'tool1', description: 'desc' }]),
       env_names: [],
-      // minimal additional fields to satisfy McpInstance shape in TypeScript
       type: '',
       args: [],
       workflow_id: 'test-workflow-id',
     };
 
+    mockMcpInstances = [selectedInstance];
+    mockIsVisible = true;
+    mockSelectedMcpInstanceId = 'instance-1';
+
+    const store = configureStore({
+      reducer: {
+        editor: (
+          state = {
+            agentViewCreateAgent: { mcpInstances: ['instance-1'] },
+            mcpView: {
+              isVisible: true,
+              selectedMcpInstanceId: 'instance-1',
+            },
+          },
+        ) => state,
+      },
+    });
+
     render(
       <Provider store={store}>
-        <WorkflowAddMcpModal
-          {...mockProps}
-          open={true}
-          preSelectedMcpInstance={preSelectedInstance}
-        />
+        <WorkflowAddMcpModal {...mockProps} />
       </Provider>,
     );
 
-    expect(screen.getByText((c) => c.includes('Edit Server'))).toBeInTheDocument();
+    expect(screen.getByText('Edit MCP Server')).toBeInTheDocument();
   });
 
   it('full modal snapshot when open', () => {
-    const store = createMockStore();
+    mockIsVisible = true;
+    const store = configureStore({
+      reducer: {
+        editor: (
+          state = {
+            agentViewCreateAgent: { mcpInstances: [] },
+            mcpView: { isVisible: true },
+          },
+        ) => state,
+      },
+    });
     const { container } = render(
       <Provider store={store}>
-        <WorkflowAddMcpModal {...mockProps} open={true} />
+        <WorkflowAddMcpModal {...mockProps} />
       </Provider>,
     );
 

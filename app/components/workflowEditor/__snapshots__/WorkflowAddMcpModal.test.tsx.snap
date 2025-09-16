@@ -2,7 +2,6 @@
 
 exports[`WorkflowAddMcpModal full modal snapshot when open 1`] = `
 <div
-  open=""
   rootclassname="!top-0"
   width="98%"
 >

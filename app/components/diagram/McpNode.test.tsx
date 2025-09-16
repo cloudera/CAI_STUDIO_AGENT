@@ -29,6 +29,24 @@ jest.mock('@xyflow/react', () => ({
   ),
 }));
 
+// Mock Redux hooks and actions
+const mockDispatch = jest.fn();
+jest.mock('@/app/lib/hooks/hooks', () => ({
+  useAppDispatch: () => mockDispatch,
+}));
+
+jest.mock('@/app/workflows/editorSlice', () => ({
+  updatedEditorAgentViewCreateAgentState: jest.fn((payload) => ({
+    type: 'updatedEditorAgentViewCreateAgentState',
+    payload,
+  })),
+  updatedEditorSelectedMcpInstanceId: jest.fn((payload) => ({
+    type: 'updatedEditorSelectedMcpInstanceId',
+    payload,
+  })),
+  openedEditorMcpView: jest.fn(() => ({ type: 'openedEditorMcpView' })),
+}));
+
 describe('McpNode component', () => {
   const defaultProps = {
     data: {
@@ -40,12 +58,17 @@ describe('McpNode component', () => {
       infoType: undefined as string | undefined,
       activeTool: undefined as string | undefined,
       isMostRecent: false,
+      mcpInstances: ['mcp-instance-1', 'mcp-instance-2'],
+      mcpInstanceId: 'mcp-instance-1',
+      agentId: 'agent-123',
+      workflowId: 'workflow-123',
+      showEditButton: true,
     },
     id: 'test-id',
     width: 100,
     height: 120,
     selected: false,
-    type: 'task' as const,
+    type: 'mcp' as const,
     positionAbsolute: { x: 0, y: 0 },
     dragging: false,
     zIndex: 0,
@@ -66,6 +89,7 @@ describe('McpNode component', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockDispatch.mockClear();
   });
 
   test('renders the MCP node name correctly', () => {

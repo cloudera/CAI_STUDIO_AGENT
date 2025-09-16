@@ -32,12 +32,20 @@ import {
 import {
   selectEditorAgentViewCreateAgentState,
   updatedEditorAgentViewCreateAgentState,
+  selectEditorSelectedMcpTemplateId,
+  selectEditorSelectedMcpInstanceId,
+  selectEditorMcpViewIsVisible,
+  closedEditorMcpView,
+  updatedEditorSelectedMcpTemplateId,
+  updatedEditorSelectedMcpInstanceId,
+  clearedEditorMcpEditingState,
 } from '@/app/workflows/editorSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { useImageAssetsData } from '@/app/lib/hooks/useAssetData';
 import { useGlobalNotification } from '../Notifications';
 import { useListAgentsQuery, useUpdateAgentMutation } from '@/app/agents/agentApi';
 import McpTemplateView from '../McpTemplateView';
+import { useAppSelector } from '@/app/lib/hooks/hooks';
 
 const { Text } = Typography;
 
@@ -50,17 +58,9 @@ interface Tool {
 
 interface WorkflowAddMcpModalProps {
   workflowId: string;
-  preSelectedMcpInstance?: McpInstance;
-  open: boolean;
-  onCancel: () => void;
 }
 
-const WorkflowAddMcpModal = ({
-  workflowId,
-  preSelectedMcpInstance,
-  open,
-  onCancel,
-}: WorkflowAddMcpModalProps) => {
+const WorkflowAddMcpModal = ({ workflowId }: WorkflowAddMcpModalProps) => {
   const [shouldPollForMcpInstances, setShouldPollForMcpInstances] = useState(false);
 
   const { data: mcpTemplates = [] } = useListGlobalMcpTemplatesQuery({});
@@ -74,8 +74,15 @@ const WorkflowAddMcpModal = ({
   );
   const { data: agents = [] } = useListAgentsQuery({ workflow_id: workflowId });
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedMcpTemplate, setSelectedMcpTemplate] = useState<MCPTemplate | null>(null);
-  const [selectedMcpInstance, setSelectedMcpInstance] = useState<McpInstance | null>(null);
+  const selectedMcpTemplateId = useAppSelector(selectEditorSelectedMcpTemplateId);
+  const selectedMcpInstanceId = useAppSelector(selectEditorSelectedMcpInstanceId);
+  const selectedMcpTemplate = mcpTemplates.find(
+    (template) => template.id === selectedMcpTemplateId,
+  );
+  const selectedMcpInstance = mcpInstanceList.find(
+    (instance) => instance.id === selectedMcpInstanceId,
+  );
+  const open = useAppSelector(selectEditorMcpViewIsVisible);
   const [selectedMcpInstanceTools, setSelectedMcpInstanceTools] = useState<string[]>([]);
   const [noToolsSelected, setNoToolsSelected] = useState<boolean>(false);
   const [editedMcpInstanceName, setEditedMcpInstanceName] = useState<string>('');
@@ -115,6 +122,7 @@ const WorkflowAddMcpModal = ({
       // Refresh MCP Instance selection if list is refreshed.
       const updatedInstance = mcpInstanceList.find((i) => i.id === selectedMcpInstance.id);
       if (updatedInstance) {
+        dispatch(updatedEditorSelectedMcpInstanceId(updatedInstance.id));
         handleSelectMcpInstance(updatedInstance);
       }
     }
@@ -122,14 +130,13 @@ const WorkflowAddMcpModal = ({
   }, [mcpInstanceList]);
 
   useEffect(() => {
-    if (preSelectedMcpInstance && open) {
-      handleSelectMcpInstance(preSelectedMcpInstance);
+    if (selectedMcpInstance && open) {
+      handleSelectMcpInstance(selectedMcpInstance);
     }
     if (!open) {
-      setSelectedMcpInstance(null);
-      setSelectedMcpTemplate(null);
+      dispatch(clearedEditorMcpEditingState());
     }
-  }, [preSelectedMcpInstance, open]); // reset the selected MCP instance and template when the modal is closed
+  }, [selectedMcpInstance, open]); // reset the selected MCP instance and template when the modal is closed
 
   const getButtonText = () => {
     if (selectedMcpTemplate) {
@@ -196,7 +203,7 @@ const WorkflowAddMcpModal = ({
       }
 
       // Clear selection and show success
-      setSelectedMcpTemplate(null);
+      dispatch(clearedEditorMcpEditingState());
       notificationApi.success({
         message: 'MCP Added',
         description: 'MCP has been successfully created.',
@@ -212,6 +219,7 @@ const WorkflowAddMcpModal = ({
         [newMcpInstance.id]: newMcpInstance,
       }));
 
+      dispatch(updatedEditorSelectedMcpInstanceId(newMcpInstance.id));
       handleSelectMcpInstance(newMcpInstance);
     } catch (error: any) {
       const errorMessage = error.data?.error || 'Failed to create MCP. Please try again.';
@@ -288,15 +296,13 @@ const WorkflowAddMcpModal = ({
                 selectedMcpTemplate?.id === item.id ? 'bg-[#edf7ff] shadow-lg' : 'bg-white shadow'
               } w-full p-4 flex items-center cursor-pointer transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg`}
               onClick={() => {
-                setSelectedMcpTemplate(item);
-                setSelectedMcpInstance(null);
+                dispatch(updatedEditorSelectedMcpTemplateId(item.id));
               }}
             >
               <Radio
                 checked={selectedMcpTemplate?.id === item.id}
                 onChange={() => {
-                  setSelectedMcpTemplate(item);
-                  setSelectedMcpInstance(null);
+                  dispatch(updatedEditorSelectedMcpTemplateId(item.id));
                 }}
                 className="mr-3"
               />
@@ -328,8 +334,6 @@ const WorkflowAddMcpModal = ({
   };
 
   const handleSelectMcpInstance = (mcpInstance: McpInstance) => {
-    setSelectedMcpInstance(mcpInstance);
-    setSelectedMcpTemplate(null);
     setSelectedMcpInstanceTools(mcpInstance.activated_tools || []);
     setEditedMcpInstanceName(mcpInstance.name || '');
     setMcpInstanceNameError(''); // Clear any previous validation error
@@ -354,12 +358,14 @@ const WorkflowAddMcpModal = ({
                 selectedMcpInstance?.id === item.id ? 'bg-[#edf7ff] shadow-lg' : 'bg-white shadow'
               } w-full p-4 flex items-center cursor-pointer transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg`}
               onClick={() => {
+                dispatch(updatedEditorSelectedMcpInstanceId(item.id));
                 handleSelectMcpInstance(item);
               }}
             >
               <Radio
                 checked={selectedMcpInstance?.id === item.id}
                 onChange={() => {
+                  dispatch(updatedEditorSelectedMcpInstanceId(item.id));
                   handleSelectMcpInstance(item);
                 }}
                 className="mr-3"
@@ -652,6 +658,12 @@ const WorkflowAddMcpModal = ({
         )}
       </div>
     );
+  };
+
+  const onCancel = () => {
+    if (!isLoading) {
+      dispatch(closedEditorMcpView());
+    }
   };
 
   return (

@@ -263,6 +263,10 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
               active: false,
               toolList: mcpTools,
               activeTool: '',
+              mcpInstances: agent.mcp_instance_ids,
+              mcpInstanceId: mcpInstance?.id,
+              agentId: agent.id,
+              workflowId: workflowData.workflowState.workflowId,
             },
           });
 

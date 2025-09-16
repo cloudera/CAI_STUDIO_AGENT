@@ -21,6 +21,7 @@ import WorkflowAppTest from '@/app/components/workflowApp/WorkflowAppTest';
 import LargeCenterSpin from '@/app/components/common/LargeCenterSpin';
 import WorkflowEditorName from '@/app/components/workflowEditor/WorkflowEditorName';
 import WorkflowAddToolModal from './WorkflowAddToolModal';
+import WorkflowAddMcpModal from './WorkflowAddMcpModal';
 
 export interface WorkflowEditorProps {
   workflowId: string;
@@ -99,6 +100,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({ workflowId }) => {
   const GlobalModals: React.FC = () => {
     return (
       <>
+        <WorkflowAddMcpModal workflowId={workflowId} />
         <WorkflowAddToolModal workflowId={workflowId} />
       </>
     );
