@@ -1,4 +1,4 @@
-git 'use client';
+'use client';
 
 import React, { useEffect, useState } from 'react';
 import { Drawer, Input, Select, Tooltip, Button, Switch, Collapse } from 'antd';
@@ -46,10 +46,21 @@ import {
   setModelRegisterAwsSecretAccessKey,
   setModelRegisterAwsSessionToken,
 } from '@/app/models/modelsSlice';
-import { MODEL_IDENTIFIER_OPTIONS, BEDROCK_REGIONS } from '@/app/lib/constants';
+import { MODEL_IDENTIFIER_OPTIONS } from '@/app/lib/constants';
 import { asyncTestModelWithRetry } from '@/app/models/utils';
 
 const { Option } = Select;
+
+interface BedrockCatalogModel {
+  model_id: string;
+  model_name?: string;
+  regions?: string[];
+}
+
+interface BedrockCatalog {
+  models: BedrockCatalogModel[];
+  regions: string[];
+}
 
 interface ModelRegisterDrawerProps {}
 
@@ -83,6 +94,60 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
   // Add notification API
   const notificationsApi = useGlobalNotification();
   const [submitting, setSubmitting] = useState(false);
+  const [bedrockCatalog, setBedrockCatalog] = useState<BedrockCatalog>({
+    models: [],
+    regions: [],
+  });
+  const [bedrockModelRegions, setBedrockModelRegions] = useState<string[]>([]);
+  const [bedrockUseCustomModelId, setBedrockUseCustomModelId] = useState<boolean>(false);
+
+  // Load Bedrock catalog once
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch('/data/bedrock_models.json', { cache: 'no-store' });
+        if (!res.ok) {
+          throw new Error('Failed loading bedrock_models.json');
+        }
+        const data = await res.json();
+        setBedrockCatalog({ models: data.models || [], regions: data.regions || [] });
+      } catch (_e) {
+        // Show a friendly error; Bedrock UI depends on this file per requirements
+        notificationsApi.error({
+          message: 'Bedrock Catalog Missing',
+          description:
+            'Could not load app/data/bedrock_models.json. Run bin/sync-bedrock-models.py and reload.',
+          placement: 'topRight',
+        });
+      }
+    };
+    load();
+  }, []);
+
+  // When provider model changes, compute its region list
+  useEffect(() => {
+    if (modelRegisterType !== 'BEDROCK') {
+      setBedrockModelRegions([]);
+      return;
+    }
+
+    const found = modelRegisterProviderModel
+      ? bedrockCatalog.models.find((m) => m.model_id === modelRegisterProviderModel)
+      : undefined;
+
+    let regions: string[] = [];
+    if (found && !bedrockUseCustomModelId) {
+      regions = found.regions || [];
+    } else {
+      // Custom identifier or not found -> show all supported regions from catalog
+      regions = bedrockCatalog.regions || [];
+    }
+
+    setBedrockModelRegions(regions);
+    if (regions.length && (!bedrockAwsRegionName || !regions.includes(bedrockAwsRegionName))) {
+      dispatch(setModelRegisterAwsRegionName(regions[0]));
+    }
+  }, [modelRegisterType, modelRegisterProviderModel, bedrockCatalog, bedrockUseCustomModelId]);
 
   // If editing an existing model, populate the fields with existing model
   // information whenever the model ID field changes.
@@ -126,7 +191,9 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
           updatePayload.aws_region_name = bedrockAwsRegionName || '';
           updatePayload.aws_access_key_id = bedrockAwsAccessKeyId || '';
           updatePayload.aws_secret_access_key = bedrockAwsSecretAccessKey || '';
-          if (bedrockAwsSessionToken) {updatePayload.aws_session_token = bedrockAwsSessionToken;}
+          if (bedrockAwsSessionToken) {
+            updatePayload.aws_session_token = bedrockAwsSessionToken;
+          }
         }
         await updateModel(updatePayload);
 
@@ -177,7 +244,9 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
             addPayload.aws_region_name = bedrockAwsRegionName || '';
             addPayload.aws_access_key_id = bedrockAwsAccessKeyId || '';
             addPayload.aws_secret_access_key = bedrockAwsSecretAccessKey || '';
-            if (bedrockAwsSessionToken) {addPayload.aws_session_token = bedrockAwsSessionToken;}
+            if (bedrockAwsSessionToken) {
+              addPayload.aws_session_token = bedrockAwsSessionToken;
+            }
           }
           const modelId = await addModel(addPayload).unwrap();
 
@@ -280,6 +349,50 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
             value={modelRegisterProviderModel}
             onChange={(e) => dispatch(setModelRegisterProviderModel(e.target.value))}
           />
+        </>
+      );
+    }
+
+    if (type === 'BEDROCK') {
+      const bedrockOptions = bedrockCatalog.models.map((m) => ({
+        value: m.model_id,
+        label: `${m.model_name} — ${m.model_id}`,
+      }));
+      return (
+        <>
+          {modelIdentifierHeader}
+          <div className="flex items-center gap-2 pb-2">
+            <Switch
+              checked={bedrockUseCustomModelId}
+              onChange={(v) => setBedrockUseCustomModelId(v)}
+            />
+            <span>Use custom model identifier</span>
+            <Tooltip title="If the model is not on-demand and requires an inference profile, enter the inference profile ID here as the model identifier.">
+              <QuestionCircleOutlined className="ml-1 cursor-pointer" />
+            </Tooltip>
+          </div>
+          {bedrockUseCustomModelId ? (
+            <Input
+              placeholder="Enter provider model identifier (e.g., anthropic.claude-... or meta.llama...)"
+              value={modelRegisterProviderModel}
+              onChange={(e) => dispatch(setModelRegisterProviderModel(e.target.value))}
+            />
+          ) : (
+            <Select
+              className="w-full"
+              placeholder="Select the Bedrock model"
+              value={modelRegisterProviderModel}
+              onChange={(value) => dispatch(setModelRegisterProviderModel(value))}
+              showSearch
+              optionFilterProp="label"
+            >
+              {bedrockOptions.map((opt) => (
+                <Option key={opt.value} value={opt.value} label={opt.label}>
+                  {opt.label}
+                </Option>
+              ))}
+            </Select>
+          )}
         </>
       );
     }
@@ -453,7 +566,7 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
         </>
       )}
 
-      {/* AWS Region for Bedrock */}
+      {/* AWS Region for Bedrock (model-specific) */}
       {modelRegisterType === 'BEDROCK' && (
         <>
           <div
@@ -471,15 +584,15 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
           </div>
           <Select
             style={{ width: '100%' }}
-            placeholder="Select AWS region"
+            placeholder={bedrockModelRegions.length ? 'Select AWS region' : 'Select a model first'}
             value={bedrockAwsRegionName}
             onChange={(value) => dispatch(setModelRegisterAwsRegionName(value))}
             showSearch
             optionFilterProp="label"
           >
-            {BEDROCK_REGIONS.map((r) => (
-              <Option key={r.value} value={r.value} label={r.label}>
-                {r.label}
+            {bedrockModelRegions.map((r) => (
+              <Option key={r} value={r} label={r}>
+                {r}
               </Option>
             ))}
           </Select>
