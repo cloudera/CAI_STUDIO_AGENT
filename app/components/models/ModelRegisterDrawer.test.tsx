@@ -73,32 +73,45 @@ jest.mock('@/app/lib/hooks/hooks', () => ({
   useAppDispatch: () => mockDispatch,
   useAppSelector: (selector: any) => {
     // Return different values based on the selector function
-    if (selector.name === 'selectIsRegisterDrawerOpen') {
+    if (selector && selector.name === 'selectIsRegisterDrawerOpen') {
       return true;
     }
-    if (selector.name === 'selectModelRegisterId') {
+    if (selector && selector.name === 'selectModelRegisterId') {
       return 'model1';
     }
-    if (selector.name === 'selectModelRegisterName') {
+    if (selector && selector.name === 'selectModelRegisterName') {
       return 'Test Model 1';
     }
-    if (selector.name === 'selectModelRegisterType') {
+    if (selector && selector.name === 'selectModelRegisterType') {
       return 'OPENAI';
     }
-    if (selector.name === 'selectModelRegisterProviderModel') {
+    if (selector && selector.name === 'selectModelRegisterProviderModel') {
       return 'gpt-4';
     }
-    if (selector.name === 'selectModelRegisterApiBase') {
+    if (selector && selector.name === 'selectModelRegisterApiBase') {
       return 'https://api.openai.com';
     }
-    if (selector.name === 'selectModelRegisterApiKey') {
+    if (selector && selector.name === 'selectModelRegisterApiKey') {
       return 'api-key-123';
     }
-    if (selector.name === 'selectModelRegisterExtraHeaders') {
+    if (selector && selector.name === 'selectModelRegisterExtraHeaders') {
       return { 'X-API-Key': 'test-api-key' };
     }
-    if (selector.name === 'selectModelRegisterSetAsDefault') {
+    if (selector && selector.name === 'selectModelRegisterSetAsDefault') {
       return false;
+    }
+    // Bedrock-specific selectors used by the component should be safely handled in tests
+    if (selector && selector.name === 'selectModelRegisterAwsRegionName') {
+      return 'us-east-1';
+    }
+    if (selector && selector.name === 'selectModelRegisterAwsAccessKeyId') {
+      return '';
+    }
+    if (selector && selector.name === 'selectModelRegisterAwsSecretAccessKey') {
+      return '';
+    }
+    if (selector && selector.name === 'selectModelRegisterAwsSessionToken') {
+      return '';
     }
     return undefined;
   },
@@ -142,6 +155,15 @@ jest.mock('@/app/models/modelsSlice', () => {
     setModelRegisterApiKey: jest.fn(),
     setModelRegisterSetAsDefault: jest.fn(),
     updateModelStatus: jest.fn(),
+    // Bedrock-specific selectors and actions required by the component
+    selectModelRegisterAwsRegionName: { name: 'selectModelRegisterAwsRegionName' },
+    selectModelRegisterAwsAccessKeyId: { name: 'selectModelRegisterAwsAccessKeyId' },
+    selectModelRegisterAwsSecretAccessKey: { name: 'selectModelRegisterAwsSecretAccessKey' },
+    selectModelRegisterAwsSessionToken: { name: 'selectModelRegisterAwsSessionToken' },
+    setModelRegisterAwsRegionName: jest.fn(),
+    setModelRegisterAwsAccessKeyId: jest.fn(),
+    setModelRegisterAwsSecretAccessKey: jest.fn(),
+    setModelRegisterAwsSessionToken: jest.fn(),
   };
 });
 
