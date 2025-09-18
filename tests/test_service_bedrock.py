@@ -39,8 +39,10 @@ def test_grpc_add_model_bedrock_stores_region_and_filters_headers(mock_cmlapi):
 
         # AWS creds stored once
         assert mock_update_creds.call_count == 1
-        _, kwargs = mock_update_creds.call_args
-        assert kwargs["aws_credentials"]["aws_region_name"] == "us-east-1"
+        args, _kwargs = mock_update_creds.call_args
+        # Signature: update_model_aws_credentials_in_env(model_id, aws_credentials, cml)
+        aws_credentials = args[1]
+        assert aws_credentials["aws_region_name"] == "us-east-1"
 
         # Extra headers filtered before secondary store (no aws_* keys)
         assert mock_update_headers.call_count >= 1
