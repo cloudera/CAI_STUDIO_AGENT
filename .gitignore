@@ -277,6 +277,3 @@ db/
 
 # Node
 .nvm/
-
-# workflow engine
-studio/workflow_engine/uv.lock
