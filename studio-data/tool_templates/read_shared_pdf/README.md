@@ -65,14 +65,14 @@ The tool returns a JSON object with the following structure:
 
 ## Dependencies
 
-- **PyMuPDF (fitz)**: For PDF text extraction and processing
+- **pdfplumber**: For PDF text extraction and processing
 - **pydantic**: For parameter validation
 - **Standard library modules**: json, argparse, os, pathlib
 
 
 ## Implementation Details
 
-- Uses PyMuPDF's `fitz` library for robust PDF text extraction
+- Uses pdfplumber library for robust PDF text extraction
 - Operates within the workflow directory context for security and consistency
 - Processes each page individually and combines results
 - Applies heuristic-based formatting to improve readability
@@ -91,4 +91,4 @@ The tool will raise appropriate errors if:
 - Works best with text-based PDFs (not scanned documents)
 - Formatting detection is heuristic-based and may not be perfect for all document types
 - Complex layouts, tables, and graphics are converted to simple text format
-- Requires PyMuPDF library to be installed
+- Requires pdfplumber library to be installed

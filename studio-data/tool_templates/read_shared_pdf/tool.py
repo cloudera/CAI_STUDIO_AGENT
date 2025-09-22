@@ -9,7 +9,7 @@ import json
 import argparse
 import os
 from pathlib import Path
-import fitz  # PyMuPDF
+import pdfplumber
 import sys
 
 # Our tool is stored in .../<workflow>/tools/<tool_name>/tool.py. So we need to go up 3 levels to get to the root of the workflow.
@@ -33,9 +33,9 @@ def run_tool(config: UserParameters, args: ToolParameters) -> Any:
 
     markdown_lines = []
 
-    with fitz.open(pdf_path) as doc:
-        for i, page in enumerate(doc):
-            text = page.get_text("text")
+    with pdfplumber.open(pdf_path) as doc:
+        for i, page in enumerate(doc.pages):
+            text = page.extract_text() or ""
             lines = text.splitlines()
 
             for line in lines:
