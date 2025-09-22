@@ -11,7 +11,8 @@ from pathlib import Path
 import pandas as pd
 import sys
 import os
-from markdown_pdf import MarkdownPdf, Section
+from markdown_it import MarkdownIt
+from weasyprint import HTML
 
 
 # Our tool is stored in .../<workflow>/tools/<tool_name>/tool.py. So we need to go up 3 levels to get to the root of the workflow.
@@ -38,9 +39,10 @@ def run_tool(config: UserParameters, args: ToolParameters) -> Any:
     Main tool code logic. Anything returned from this method is returned
     from the tool back to the calling agent.
     """
-    pdf = MarkdownPdf(toc_level=2, optimize=True)
-    pdf.add_section(Section(args.markdown_content, toc=False))
-    pdf.save(args.output_file)
+    md = MarkdownIt().enable('table')
+    html = md.render(args.markdown_content)
+    # Use base_url to resolve any relative resources if present
+    HTML(string=html, base_url=str(Path(args.output_file).parent)).write_pdf(args.output_file)
 
     return {
         "path": args.output_file,
