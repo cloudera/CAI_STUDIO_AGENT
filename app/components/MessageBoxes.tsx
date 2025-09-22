@@ -117,9 +117,9 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ upgradeStatus, isOpen, setI
                 </b>
               </Text>
               <Paragraph>
-                Your version of Agent Studio is out of date. Upgrading Agent Studio will make both
-                Agent Studio and the Ops & Metrics applications temporarily unavailable. You will
-                not lose your workflows. Do you want to continue?
+                Your version of Agent Studio is out of date. Upgrading Agent Studio will make Agent
+                Studio application temporarily unavailable. You will not lose your workflows. Do you
+                want to continue?
               </Paragraph>
             </>
           ) : (

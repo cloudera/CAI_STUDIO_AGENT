@@ -1,18 +1,25 @@
 from cmlapi import CMLServiceApi
 import cmlapi
-
-from studio.consts import AGENT_STUDIO_UPGRADE_JOB_NAME
+import json
+import re
+from studio.consts import (
+    AGENT_STUDIO_UPGRADE_JOB_NAME,
+    AGENT_STUDIO_SERVICE_APPLICATION_NAME,
+    AGENT_STUDIO_RUNTIME_KERNEL,
+    AGENT_STUDIO_RUNTIME_EDITION,
+)
 from studio.cross_cutting.utils import (
     get_job_by_name,
     get_deployed_workflow_runtime_identifier,
     get_studio_subdirectory,
+    get_application_by_name,
 )
 from studio.db.dao import AgentStudioDao
 from studio.api import *
 
 import subprocess
-import re
 import os
+from typing import List, Dict
 
 
 SEMVER_REGEX = re.compile(
@@ -175,6 +182,137 @@ def get_remote_head_commit():
     ).stdout.strip()
 
 
+def get_current_runtime_version(cml: CMLServiceApi) -> str:
+    """
+    Get the semantic version of the currently running application's runtime.
+    Returns just the version part: '5.0.6-b4'
+    """
+
+    # Get the current running application
+    application: cmlapi.Application = get_application_by_name(
+        cml, AGENT_STUDIO_SERVICE_APPLICATION_NAME, only_running=True
+    )
+
+    # Extract version from runtime identifier
+    runtime_identifier = application.runtime_identifier
+    if not runtime_identifier:
+        raise RuntimeError("No runtime identifier found for current application")
+
+    # Simple split on : to get the version tag
+    if ":" in runtime_identifier:
+        version_str = runtime_identifier.split(":")[-1]
+        return version_str
+    else:
+        raise RuntimeError(f"No version tag found in runtime identifier: {runtime_identifier}")
+
+
+def get_agent_studio_runtimes(cml: CMLServiceApi) -> List[Dict[str, str]]:
+    """
+    Get all agent-studio runtimes from the catalog with their versions and full identifiers.
+    Uses search filter for efficient filtering and returns sorted list.
+    """
+    runtime_kernel = os.getenv("ML_RUNTIME_KERNEL", AGENT_STUDIO_RUNTIME_KERNEL)
+    runtime_edition = os.getenv("ML_RUNTIME_EDITION", AGENT_STUDIO_RUNTIME_EDITION)
+
+    search_filter = json.dumps({"kernel": runtime_kernel, "edition": runtime_edition})
+
+    try:
+        runtimes_response = cml.list_runtimes(page_size=5000, search_filter=search_filter)
+        runtimes = runtimes_response.runtimes if hasattr(runtimes_response, "runtimes") else []
+        print(f"Found {len(runtimes)} runtimes matching filter: {search_filter}")
+    except Exception as e:
+        # Fallback to old method if search_filter is not supported
+        print(f"Search filter failed ({e}), falling back to client-side filtering")
+        try:
+            runtimes_response = cml.list_runtimes(page_size=5000)
+            runtimes = runtimes_response.runtimes if hasattr(runtimes_response, "runtimes") else []
+        except Exception as fallback_e:
+            raise RuntimeError(f"Failed to list runtimes: {fallback_e}")
+
+    # Extract versions from filtered runtimes
+    agent_studio_versions = []
+    for runtime in runtimes:
+        # Basic validation
+        if not hasattr(runtime, "image_identifier"):
+            continue
+        if hasattr(runtime, "status") and runtime.status != "ENABLED":
+            continue
+
+        if "agent-studio" not in runtime.image_identifier:
+            continue
+
+        # Extract semantic version from the image identifier
+        if ":" in runtime.image_identifier:
+            version_str = runtime.image_identifier.split(":")[-1]
+
+            # Skip invalid version tags that cannot be parsed as semantic versions
+            if version_str in ["latest", "main", "dev", "unspecified"] or "unspecified" in version_str:
+                continue
+
+            agent_studio_versions.append({"version": version_str, "full_identifier": runtime.image_identifier})
+
+    if not agent_studio_versions:
+        raise RuntimeError(
+            f"No agent-studio runtimes found with kernel='{runtime_kernel}' and edition='{runtime_edition}'"
+        )
+
+    # Sort versions using enhanced semantic version logic that handles pre-release versions
+    def parse_semver_str(v):
+        # First try the main SEMVER_REGEX
+        m = SEMVER_REGEX.match(v)
+        if m:
+            major, minor, patch = map(int, m.groups()[:3])
+            if "-" in v:
+                base_part, pre_release = v.split("-", 1)
+                pre_release_num = 0
+                try:
+                    numbers = re.findall(r"\d+", pre_release)
+                    if numbers:
+                        pre_release_num = int(numbers[-1])
+                except:
+                    pre_release_num = 0
+                return (major, minor, patch, 0, pre_release_num)
+            else:
+                return (major, minor, patch, 1, 0)
+        else:
+            # Fallback for non-standard versions
+            try:
+                base_version = v.split("-")[0]
+                parts = base_version.split(".")
+                if len(parts) >= 3:
+                    major, minor, patch = map(int, parts[:3])
+                    if "-" in v:
+                        return (major, minor, patch, 0, 0)
+                    else:
+                        return (major, minor, patch, 1, 0)
+            except ValueError:
+                pass
+            return (0, 0, 0, 0, 0)
+
+    # Sort by semantic version
+    agent_studio_versions.sort(key=lambda ver: parse_semver_str(ver["version"]))
+
+    return agent_studio_versions
+
+
+def get_newest_runtime_version(cml: CMLServiceApi) -> str:
+    """
+    Get the newest semantic version available in the runtime catalog for agent-studio runtimes.
+    Returns the highest semantic version found.
+    """
+    agent_studio_runtimes = get_agent_studio_runtimes(cml)
+    return agent_studio_runtimes[-1]["version"]
+
+
+def get_newest_runtime_full_identifier(cml: CMLServiceApi) -> str:
+    """
+    Get the full runtime identifier (including repository and tag) for the newest agent-studio runtime.
+    Returns something like 'docker-sandbox.infra.cloudera.com/nagrawal/agent-studio:5.0.6-b4'
+    """
+    agent_studio_runtimes = get_agent_studio_runtimes(cml)
+    return agent_studio_runtimes[-1]["full_identifier"]
+
+
 def check_studio_upgrade_status(
     request: CheckStudioUpgradeStatusRequest, cml: CMLServiceApi = None, dao: AgentStudioDao = None
 ) -> CheckStudioUpgradeStatusResponse:
@@ -184,10 +322,21 @@ def check_studio_upgrade_status(
     """
     # If we are running in runtime mode, then this upgrade logic is not needed.
     if os.getenv("AGENT_STUDIO_DEPLOY_MODE") == "runtime":
-        return CheckStudioUpgradeStatusResponse(
-            local_version="",
-            newest_version="",
-        )
+        try:
+            local_version = get_current_runtime_version(cml)
+            newest_version = get_newest_runtime_version(cml)
+
+            return CheckStudioUpgradeStatusResponse(
+                local_version=local_version,
+                newest_version=newest_version,
+            )
+        except Exception as e:
+            # If runtime version detection fails, return empty versions
+            print(f"Error getting runtime versions: {e}")
+            return CheckStudioUpgradeStatusResponse(
+                local_version="",
+                newest_version="",
+            )
 
     # 1) Fetch from remote
     git_fetch()
@@ -212,9 +361,119 @@ def check_studio_upgrade_status(
     )
 
 
+def upgrade_studio_runtime_mode(cml: CMLServiceApi) -> UpgradeStudioResponse:
+    """
+    Upgrade Agent Studio running in runtime mode using a job with script in studio-data/scripts.
+    Creates a job that runs the upgrade script from the project filesystem.
+    """
+
+    try:
+        current_app = get_application_by_name(cml, AGENT_STUDIO_SERVICE_APPLICATION_NAME, only_running=True)
+        print(f"Creating runtime upgrade job for application: {current_app.name}")
+        runtime_upgrade_job_name = f"{AGENT_STUDIO_UPGRADE_JOB_NAME} - Runtime"
+
+        # Always get fresh runtime info for each upgrade
+        newest_runtime_identifier = get_newest_runtime_full_identifier(cml)
+        script_path = os.path.join(get_studio_subdirectory(), "studio-data", "scripts", "upgrade_runtime.py")
+
+        # Use comma-separated arguments for better parsing
+        job_arguments = f"{newest_runtime_identifier},{os.getenv('CDSW_PROJECT_ID')},{current_app.id},{current_app.runtime_identifier}"
+
+        print(f"Job script path: {script_path}")
+        print(f"Job arguments: {job_arguments}")
+
+        # Check if job exists and delete it to ensure fresh arguments
+        try:
+            existing_job = get_job_by_name(cml, runtime_upgrade_job_name)
+            if existing_job:
+                print(f"Deleting existing job {existing_job.id} to ensure fresh arguments")
+                cml.delete_job(project_id=os.getenv("CDSW_PROJECT_ID"), job_id=existing_job.id)
+        except:
+            pass
+
+        # Always create a fresh job with current arguments
+        print(f"Creating runtime upgrade job: {runtime_upgrade_job_name}")
+        job = cml.create_job(
+            {
+                "name": runtime_upgrade_job_name,
+                "project_id": os.getenv("CDSW_PROJECT_ID"),
+                "script": script_path,
+                "cpu": 2,
+                "memory": 8,
+                "nvidia_gpu": 0,
+                "arguments": job_arguments,
+                "runtime_identifier": current_app.runtime_identifier,
+            },
+            project_id=os.getenv("CDSW_PROJECT_ID"),
+        )
+        print(f"Runtime upgrade job created: {job.id}")
+
+        print("Starting runtime upgrade job....")
+        job_run = cml.create_job_run({}, project_id=os.getenv("CDSW_PROJECT_ID"), job_id=job.id)
+        print(f"Runtime upgrade job started. Job run ID: {job_run.id}")
+        print("Check the job logs in CML for upgrade progress.")
+
+        return UpgradeStudioResponse()
+
+    except Exception as e:
+        raise RuntimeError(f"Failed to create runtime upgrade job: {e}")
+
+
+def compare_versions(version_a: str, version_b: str) -> int:
+    """
+    Compare two semantic versions using the same logic as runtime sorting.
+    Returns: 1 if version_a > version_b, -1 if version_a < version_b, 0 if equal
+    """
+
+    def parse_for_comparison(v):
+        m = SEMVER_REGEX.match(v)
+        if m:
+            major, minor, patch = map(int, m.groups()[:3])
+
+            if "-" in v:
+                base_part, pre_release = v.split("-", 1)
+                pre_release_num = 0
+                try:
+                    numbers = re.findall(r"\d+", pre_release)
+                    if numbers:
+                        pre_release_num = int(numbers[-1])
+                except:
+                    pre_release_num = 0
+                return (major, minor, patch, 0, pre_release_num)
+            else:
+                return (major, minor, patch, 1, 0)
+        return (0, 0, 0, 0, 0)
+
+    parsed_a = parse_for_comparison(version_a)
+    parsed_b = parse_for_comparison(version_b)
+
+    if parsed_a > parsed_b:
+        return 1
+    elif parsed_a < parsed_b:
+        return -1
+    else:
+        return 0
+
+
 def upgrade_studio(
     request: UpgradeStudioRequest, cml: CMLServiceApi = None, dao: AgentStudioDao = None
 ) -> UpgradeStudioResponse:
+    # Check if we are running in runtime mode
+    if os.getenv("AGENT_STUDIO_DEPLOY_MODE") == "runtime":
+        try:
+            local_version = get_current_runtime_version(cml)
+            newest_version = get_newest_runtime_version(cml)
+
+            comparison = compare_versions(newest_version, local_version)
+            if comparison <= 0:
+                print(f"No upgrade needed. Current: {local_version}, Available: {newest_version}")
+                return UpgradeStudioResponse()
+
+            print(f"Upgrading from {local_version} to {newest_version}")
+            return upgrade_studio_runtime_mode(cml)
+        except Exception as e:
+            raise RuntimeError(f"Failed to check versions before upgrade: {e}")
+
     # Determine if the job exists
     job: cmlapi.Job = get_job_by_name(cml, AGENT_STUDIO_UPGRADE_JOB_NAME)
 
@@ -235,3 +494,4 @@ def upgrade_studio(
 
     # Now run the job
     cml.create_job_run({}, project_id=os.getenv("CDSW_PROJECT_ID"), job_id=job.id)
+    return UpgradeStudioResponse()
