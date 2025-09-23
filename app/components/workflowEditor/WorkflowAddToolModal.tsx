@@ -141,7 +141,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId 
   };
 
   useEffect(() => {
-    if (selectedToolInstance) {
+    if (selectedToolInstance && toolInstancesMap[selectedToolInstance]) {
       setEditedToolName(toolInstancesMap[selectedToolInstance].name || '');
     } else if (selectedToolTemplate) {
       setEditedToolName(toolTemplates.find((t) => t.id === selectedToolTemplate)?.name || '');
@@ -149,7 +149,7 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId 
       setNewToolName('');
     }
     resetPlaygroundState();
-  }, [selectedToolInstance, selectedToolTemplate]);
+  }, [selectedToolInstance, selectedToolTemplate, toolInstancesMap]);
 
   const handleSelectToolTemplate = (toolTemplateId: string) => {
     setSelectedToolTemplate(toolTemplateId);
@@ -606,11 +606,17 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId 
                 'Tool Validation Error',
                 `This tool instance is in an invalid state: ${
                   toolInstancesMap[selectedToolInstance]?.tool_metadata
-                    ? JSON.parse(
-                        typeof toolInstancesMap[selectedToolInstance]?.tool_metadata === 'string'
-                          ? toolInstancesMap[selectedToolInstance]?.tool_metadata
-                          : JSON.stringify(toolInstancesMap[selectedToolInstance]?.tool_metadata),
-                      ).status
+                    ? (() => {
+                        try {
+                          const metadata = toolInstancesMap[selectedToolInstance]?.tool_metadata;
+                          const parsedMetadata = JSON.parse(
+                            typeof metadata === 'string' ? metadata : JSON.stringify(metadata),
+                          );
+                          return parsedMetadata.status || 'Unknown error';
+                        } catch (_err) {
+                          return 'Error parsing metadata';
+                        }
+                      })()
                     : 'Unknown error'
                 }. Please consider deleting this tool and creating a new one.`,
                 'warning',

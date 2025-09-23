@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button, Layout, List, Typography, Popconfirm, Input, Divider, Space, Tooltip } from 'antd';
-import { EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, SearchOutlined, ToolOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation'; // Use Next.js router
 import { ToolTemplate } from '@/studio/proto/agent_studio';
 import { useImageAssetsData } from '@/app/lib/hooks/useAssetData';
@@ -66,17 +66,18 @@ const ToolTemplateList: React.FC<ToolsListProps> = ({
               }}
             >
               <Layout className="flex-1 bg-transparent flex flex-row items-center px-6">
-                {/* Image */}
-                {item.tool_image_uri && imageData[item.tool_image_uri] && (
-                  <div className="w-6 h-6 rounded-full bg-[#f1f1f1] flex items-center justify-center mr-4">
-                    {/* Icon - Only render if URI exists and image data is available */}
+                {/* Image - Always show either custom icon or fallback */}
+                <div className="w-6 h-6 rounded-full bg-[#f1f1f1] flex items-center justify-center mr-4">
+                  {item.tool_image_uri && imageData[item.tool_image_uri] ? (
                     <img
                       src={imageData[item.tool_image_uri]}
                       alt={item.name}
                       className="w-4 h-4 object-cover rounded-sm"
                     />
-                  </div>
-                )}
+                  ) : (
+                    <ToolOutlined style={{ fontSize: '16px', color: '#9ca3af' }} />
+                  )}
+                </div>
                 {/* Text */}
                 <div className="flex-1 max-w-[220px]">
                   <Tooltip title={item.name}>

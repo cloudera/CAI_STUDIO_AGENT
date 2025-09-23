@@ -78,12 +78,14 @@ function getDiagramDataSignature({
   toolInstances,
   mcpInstances,
   workflowState,
+  iconsData,
 }: {
   agents?: AgentMetadata[];
   tasks?: CrewAITaskMetadata[];
   toolInstances?: ToolInstance[];
   mcpInstances?: McpInstance[];
   workflowState: WorkflowState;
+  iconsData?: { [key: string]: string };
 }) {
   // Only include fields that affect diagram rendering
   return JSON.stringify({
@@ -111,6 +113,7 @@ function getDiagramDataSignature({
     })),
     managerAgentId: workflowState?.workflowMetadata?.managerAgentId,
     process: workflowState?.workflowMetadata?.process,
+    iconsDataKeys: Object.keys(iconsData || {}), // Include icons data in signature
   });
 }
 
@@ -320,6 +323,7 @@ const WorkflowDiagram: React.FC<WorkflowDiagramProps> = ({
       toolInstances,
       mcpInstances,
       workflowState,
+      iconsData,
     });
     if (prevDiagramSignature.current !== newSignature) {
       prevDiagramSignature.current = newSignature;
