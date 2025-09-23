@@ -321,12 +321,15 @@ def _prepare_virtual_env_for_tool_impl(
                 "-r",
                 requirements_file_path,
             ]
+        subprocess_env = os.environ.copy()
+        if with_ == "uv":
+            subprocess_env["VIRTUAL_ENV"] = venv_dir
         result = subprocess.run(
             pip_install_command,
             check=True,
             text=True,
             capture_output=True,  # Capture stdout/stderr
-            env={"VIRTUAL_ENV": venv_dir} if with_ == "uv" else None,
+            env=subprocess_env,
         )
     except subprocess.CalledProcessError as e:
         # We're not raising error as this will bring down the whole studio, as it's running in a thread

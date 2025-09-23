@@ -77,11 +77,13 @@ def ensure_venv_and_requirements(
     pip_install_command = [uv_bin, "pip", "install", "-r", requirements_path]
     try:
         if os.path.exists(requirements_path):
+            subprocess_env = os.environ.copy()
+            subprocess_env["VIRTUAL_ENV"] = venv_dir
             proc = subprocess.run(
                 pip_install_command,
                 capture_output=True,
                 text=True,
-                env={"VIRTUAL_ENV": venv_dir},
+                env=subprocess_env,
             )
             pip_output = proc.stdout
             pip_error = proc.stderr
