@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Handle, Position, NodeProps, Node, NodeToolbar } from '@xyflow/react';
-import { Avatar, Image, Typography, Button, Tooltip } from 'antd';
+import { Avatar, Typography, Button, Tooltip } from 'antd';
 import { UsergroupAddOutlined, UserOutlined, EditOutlined } from '@ant-design/icons';
 import { useAppDispatch } from '@/app/lib/hooks/hooks';
 import {
@@ -45,6 +45,7 @@ type AgentNode = Node<
 
 export default function AgentNode({ data }: NodeProps<AgentNode>) {
   const [isHovered, setIsHovered] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const dispatch = useAppDispatch();
   const { onEditManager } = useWorkflowDiagramContext();
 
@@ -178,23 +179,30 @@ export default function AgentNode({ data }: NodeProps<AgentNode>) {
       )}
 
       <Avatar
+        src={!data.manager && data.iconData && !imageError ? data.iconData : undefined}
+        onError={() => {
+          setImageError(true);
+          return false;
+        }}
         style={{
           position: 'absolute',
           left: -30, // Position avatar overlapping to the left
           top: -30,
           boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)', // Optional shadow for floating look
-          backgroundColor: data.manager ? 'lightgrey' : data.iconData ? '#b8d6ff' : '#78b2ff', // or lightblue
-          padding: data.manager ? 0 : data.iconData ? 8 : 0,
+          backgroundColor: data.manager
+            ? 'lightgrey'
+            : data.iconData && !imageError
+              ? '#b8d6ff'
+              : '#78b2ff', // or lightblue
+          padding: data.manager ? 0 : data.iconData && !imageError ? 8 : 0,
         }}
         size={48}
         icon={
           data.manager ? (
             <UsergroupAddOutlined />
-          ) : data.iconData ? (
-            <Image src={data.iconData} alt={data.name} />
-          ) : (
+          ) : !data.iconData || imageError ? (
             <UserOutlined />
-          )
+          ) : undefined
         }
       />
 

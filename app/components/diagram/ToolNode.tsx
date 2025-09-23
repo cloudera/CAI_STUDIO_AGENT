@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Handle, Position, NodeProps, Node, NodeToolbar } from '@xyflow/react';
-import { Avatar, Image, Typography, Tooltip } from 'antd';
+import { Avatar, Typography, Tooltip } from 'antd';
 import { ToolOutlined, EditOutlined } from '@ant-design/icons';
 import { useAppDispatch } from '@/app/lib/hooks/hooks';
 import {
@@ -32,6 +32,7 @@ type ToolNode = Node<
 
 export default function ToolNode({ data }: NodeProps<ToolNode>) {
   const [isHovered, setIsHovered] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const dispatch = useAppDispatch();
 
   // Set agent context before opening modal
@@ -130,20 +131,23 @@ export default function ToolNode({ data }: NodeProps<ToolNode>) {
 
       {/* Ant Design Avatar */}
       <Avatar
+        src={data.iconData && !imageError ? data.iconData : undefined}
+        onError={() => {
+          setImageError(true);
+          return false;
+        }}
         style={{
           position: 'absolute',
           bottom: -25,
           boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)', // Optional shadow for floating look,
           backgroundColor: 'white',
-          padding: data.iconData ? 5 : 0,
+          padding: data.iconData && !imageError ? 5 : 0,
         }}
         size={36}
         icon={
-          data.iconData ? (
-            <Image src={data.iconData} />
-          ) : (
+          !data.iconData || imageError ? (
             <ToolOutlined style={{ opacity: 0.6, color: 'black' }} />
-          )
+          ) : undefined
         }
       />
 

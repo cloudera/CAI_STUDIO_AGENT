@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Handle, Position, NodeProps, Node, NodeToolbar } from '@xyflow/react';
-import { Avatar, Image, Typography, Tag, Tooltip } from 'antd';
+import { Avatar, Typography, Tag, Tooltip } from 'antd';
 import { EditOutlined } from '@ant-design/icons';
 import { useAppDispatch } from '@/app/lib/hooks/hooks';
 import {
@@ -169,6 +169,7 @@ export default function McpNode({ data }: NodeProps<McpNode>) {
 
       {/* Ant Design Avatar */}
       <Avatar
+        src={data.iconData || '/mcp-icon.svg'}
         style={{
           position: 'absolute',
           bottom: -25,
@@ -177,7 +178,6 @@ export default function McpNode({ data }: NodeProps<McpNode>) {
           padding: 5,
         }}
         size={36}
-        icon={data.iconData ? <Image src={data.iconData} /> : <Image src="/mcp-icon.svg" />}
       />
 
       {/* Node Content */}

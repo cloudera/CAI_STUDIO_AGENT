@@ -133,7 +133,9 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
         label: `${agentName}`,
         name: agentName,
         manager: true,
-        iconData: '',
+        iconData: useDefaultManager
+          ? ''
+          : (workflowData.iconsData?.[agent?.agent_image_uri ?? ''] ?? ''),
         agentId: mId, // Add agent ID for consistency
         agentData: useDefaultManager ? undefined : agent, // Only set agentData for custom managers
         isDefaultManager: useDefaultManager, // Add flag to identify default manager
@@ -165,7 +167,7 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
         data: {
           label: `${agent.name}`,
           name: `${agent.name}`,
-          iconData: workflowData.iconsData[agent.agent_image_uri ?? ''] ?? '',
+          iconData: workflowData.iconsData?.[agent.agent_image_uri ?? ''] ?? '',
           agentId: agent.id, // Add agent ID
           agentData: agent, // Add full agent data for edit functionality
         },
@@ -203,7 +205,7 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
             data: {
               label: `Tool: ${toolInstance?.name}`,
               name: toolInstance?.name,
-              iconData: workflowData.iconsData[toolInstance?.tool_image_uri ?? ''] ?? '',
+              iconData: workflowData.iconsData?.[toolInstance?.tool_image_uri ?? ''] ?? '',
               workflowId: workflowData.workflowState.workflowId,
               toolInstanceId: toolInstance.id,
               agentId: agent.id,
@@ -259,7 +261,7 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
             position: { x: xIndexOffset, y: yIndex + 150 },
             data: {
               name: mcpInstance?.name,
-              iconData: workflowData.iconsData[mcpInstance?.image_uri ?? ''] ?? '',
+              iconData: workflowData.iconsData?.[mcpInstance?.image_uri ?? ''] ?? '',
               active: false,
               toolList: mcpTools,
               activeTool: '',
