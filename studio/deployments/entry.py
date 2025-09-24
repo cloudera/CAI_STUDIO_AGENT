@@ -119,7 +119,12 @@ def deploy(payload: DeploymentPayload, session: Session, cml: CMLServiceApi) -> 
             deploy_artifact(artifact, payload, deployment, session, cml)
             deployment.status = DeploymentStatus.DEPLOYED
             session.commit()
-            cml.delete_job(os.getenv("CDSW_PROJECT_ID"), os.getenv("AGENT_STUDIO_DEPLOYMENT_JOB_ID"))
+
+            # Remove legacy deployment job
+            try:
+                cml.delete_job(os.getenv("CDSW_PROJECT_ID"), os.getenv("AGENT_STUDIO_DEPLOYMENT_JOB_ID"))
+            except Exception as e:
+                print(f"Failed to delete legacy deployment job: {str(e)}")
 
         # If a deployment fails, mark the deployment as failed in the DB
         # and continue to raise a runtime error

@@ -77,11 +77,6 @@ echo "AGENT_STUDIO_NUM_WORKFLOW_RUNNERS: $AGENT_STUDIO_NUM_WORKFLOW_RUNNERS"
 export AGENT_STUDIO_DEPLOY_MODE=${AGENT_STUDIO_DEPLOY_MODE:-amp}
 echo "AGENT_STUDIO_DEPLOY_MODE: $AGENT_STUDIO_DEPLOY_MODE"
 
-# Legacy workflow app flag. This is set to true if the application is a legacy workflow app that
-# still communicates with the legacy Agent Studio - Agent Ops & Metrics application.
-export AGENT_STUDIO_LEGACY_WORKFLOW_APP=${AGENT_STUDIO_LEGACY_WORKFLOW_APP:-false}
-echo "AGENT_STUDIO_LEGACY_WORKFLOW_APP: $AGENT_STUDIO_LEGACY_WORKFLOW_APP"
-
 # Disable CrewAI telemetry.
 export CREWAI_DISABLE_TELEMETRY=${CREWAI_DISABLE_TELEMETRY:-true}
 echo "CREWAI_DISABLE_TELEMETRY: $CREWAI_DISABLE_TELEMETRY"
@@ -92,34 +87,6 @@ export DEFAULT_AS_PHOENIX_OPS_PLATFORM_PORT=${DEFAULT_AS_PHOENIX_OPS_PLATFORM_PO
 export DEFAULT_WORKFLOW_RUNNER_STARTING_PORT=${DEFAULT_WORKFLOW_RUNNER_STARTING_PORT:-51000}
 export DEFAULT_AS_DEBUG_PORT=${DEFAULT_AS_DEBUG_PORT:-5678}
 export DEFAULT_WORKFLOW_RUNNER_DEBUG_PORT=${DEFAULT_WORKFLOW_RUNNER_DEBUG_PORT:-5679}
-
-# If we are running in studio mode, and if there is an Ops & Metrics application in the project,
-# it's assumed that the main studio application should continue to use the old legacy workflow app.
-if [[ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]]; then
-  echo "Checking for legacy ops server..."
-  APP_RESPONSE=$(curl -s -X GET https://$CDSW_DOMAIN/api/v2/projects/$CDSW_PROJECT_ID/applications?page_size=500 -H "Authorization: Bearer $CDSW_APIV2_KEY")
-  if [[ "$APP_RESPONSE" == *"Agent Studio - Agent Ops"* ]]; then
-    echo "Legacy ops server detected. Setting AGENT_STUDIO_LEGACY_WORKFLOW_APP to true."
-    export AGENT_STUDIO_LEGACY_WORKFLOW_APP=true
-  fi
-fi
-
-# Default ops endpoint. This i`s specifically used in studio mode where the workflow engine
-# sidecars can write to the local ops endpoint. For deployed workflows, start-app-script.sh
-# is never ran and the ops endpoint is set purely by the deployed environemnt. Note: we only
-# specify the environment variable for non-legacy apps, because legacy apps will explicitly
-# search for the existing ops & metrics server if the environment variable is not set.
-if [[ "$AGENT_STUDIO_LEGACY_WORKFLOW_APP" = "false" ]]; then
-  export AGENT_STUDIO_OPS_ENDPOINT=http://127.0.0.1:$DEFAULT_AS_PHOENIX_OPS_PLATFORM_PORT
-fi
-
-# Export a variable indicating whether the parent workbench is TLS-enabled or not.
-# Check if CDSW_PROJECT_URL uses HTTPS scheme (same logic as pre_install_check.py)
-if [[ -n "$CDSW_PROJECT_URL" && "$CDSW_PROJECT_URL" == https://* ]]; then
-  export AGENT_STUDIO_WORKBENCH_TLS_ENABLED=true
-else
-  export AGENT_STUDIO_WORKBENCH_TLS_ENABLED=false
-fi
 
 # Checking for uv installation.
 echo "Confirming uv installation..."
@@ -141,6 +108,30 @@ if [ -z "$UV_DEFAULT_INDEX" ]; then
   VIRTUAL_ENV=.venv uv sync
   cd $APP_DIR
 fi
+
+# Export a variable indicating whether the parent workbench is TLS-enabled or not.
+# Check if CDSW_PROJECT_URL uses HTTPS scheme (same logic as pre_install_check.py)
+if [[ -n "$CDSW_PROJECT_URL" && "$CDSW_PROJECT_URL" == https://* ]]; then
+  export AGENT_STUDIO_WORKBENCH_TLS_ENABLED=true
+else
+  export AGENT_STUDIO_WORKBENCH_TLS_ENABLED=false
+fi
+
+# Install the cmlapi package in both environments.
+if [[ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]]; then
+  echo "Installing cmlapi in both the base and workflow engine venvs..."
+  cd $APP_DIR 
+  VIRTUAL_ENV=.venv uv pip install https://${CDSW_DOMAIN}/api/v2/python.tar.gz --trusted-host ${CDSW_DOMAIN}
+  cd $APP_DIR/studio/workflow_engine
+  VIRTUAL_ENV=.venv uv pip install https://${CDSW_DOMAIN}/api/v2/python.tar.gz --trusted-host ${CDSW_DOMAIN}
+  cd $APP_DIR
+fi
+
+# Default ops endpoint. This is specifically used in studio mode where the workflow engine
+# sidecars can write to the local ops endpoint. For deployed workflows, start-app-script.sh
+# is never ran and the ops endpoint is set purely by the deployed environemnt. 
+export AGENT_STUDIO_OPS_ENDPOINT=http://127.0.0.1:$DEFAULT_AS_PHOENIX_OPS_PLATFORM_PORT
+
 # Initialization logic for studio mode.
 if [ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]; then
 
@@ -158,14 +149,6 @@ if [ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]; then
   echo "Initializing project defaults..."
   cd $APP_DIR
   VIRTUAL_ENV=.venv uv run --no-sync startup_scripts/uv_initialize-project-defaults.py
-
-  # Install cmlapi in both the base and workflow engine venvs.
-  echo "Installing cmlapi in both the base and workflow engine venvs..."
-  cd $APP_DIR 
-  VIRTUAL_ENV=.venv uv pip install https://${CDSW_DOMAIN}/api/v2/python.tar.gz --trusted-host ${CDSW_DOMAIN}
-  cd $APP_DIR/studio/workflow_engine
-  VIRTUAL_ENV=.venv uv pip install https://${CDSW_DOMAIN}/api/v2/python.tar.gz --trusted-host ${CDSW_DOMAIN}
-  cd $APP_DIR
 
   # Run alembic upgrades once to ensure we are at head.
   echo "Upgrading DB..."
@@ -250,7 +233,7 @@ else
 fi 
 
 # Start up the ops server. 
-if [[ "$AGENT_STUDIO_OPS_PROVIDER" = "phoenix" && "$AGENT_STUDIO_LEGACY_WORKFLOW_APP" = "false" ]]; then
+if [[ "$AGENT_STUDIO_OPS_PROVIDER" = "phoenix" ]]; then
   echo "Starting up embedded Phoenix ops server..."
   VIRTUAL_ENV=.venv uv run --no-sync python $APP_DIR/bin/start-agent-ops-server-embedded.py $DEFAULT_AS_PHOENIX_OPS_PLATFORM_PORT &
 fi

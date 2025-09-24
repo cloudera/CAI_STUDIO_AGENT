@@ -188,6 +188,9 @@ def get_current_runtime_version(cml: CMLServiceApi) -> str:
     Returns just the version part: '5.0.6-b4'
     """
 
+    if os.getenv("AGENT_STUDIO_RUNTIME_IDENTIFIER"):
+        return os.getenv("AGENT_STUDIO_RUNTIME_IDENTIFIER").split(":")[-1]
+
     # Get the current running application
     application: cmlapi.Application = get_application_by_name(
         cml, AGENT_STUDIO_SERVICE_APPLICATION_NAME, only_running=True

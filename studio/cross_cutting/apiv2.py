@@ -337,7 +337,7 @@ def redeploy_single_workflow(
                 logger.error(f"No builds found for model {deployed_workflow.cml_deployed_model_id}")
                 return
 
-            latest_build = builds[0]
+            latest_build = sorted(builds, key=lambda x: x.created_at, reverse=True)[0]
             deployments = cml.list_model_deployments(
                 project_id=os.getenv("CDSW_PROJECT_ID"),
                 model_id=deployed_workflow.cml_deployed_model_id,
