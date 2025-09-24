@@ -222,6 +222,8 @@ def get_agent_studio_runtimes(cml: CMLServiceApi) -> List[Dict[str, str]]:
     try:
         runtimes_response = cml.list_runtimes(page_size=5000, search_filter=search_filter)
         runtimes = runtimes_response.runtimes if hasattr(runtimes_response, "runtimes") else []
+        # Filter out runtimes that are disabled
+        runtimes = [runtime for runtime in runtimes if runtime.status == "ENABLED"]
         print(f"Found {len(runtimes)} runtimes matching filter: {search_filter}")
     except Exception as e:
         # Fallback to old method if search_filter is not supported

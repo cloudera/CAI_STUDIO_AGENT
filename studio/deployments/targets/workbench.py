@@ -200,6 +200,21 @@ def prepare_deployment_target_dir(
     # Lastly, bundle and add our workflow engine code to the deployment directory.
     prepare_workflow_engine_package(cml, deployment, deployment_target_project_dir)
 
+    # If the model root dir feature is disabled, we need to upload the cdsw build script separately.
+    is_runtime = os.getenv("AGENT_STUDIO_DEPLOY_MODE", "amp").lower() == "runtime"
+    if not is_custom_model_root_dir_feature_enabled() and is_runtime:
+        print("Model root dir feature is disabled in runtime mode. Uploading cdsw-build.sh script separately.")
+        try:
+            upload_file_to_project(
+                cml,
+                os.getenv("CDSW_PROJECT_ID"),
+                os.path.join("cdsw-build.sh"),
+                os.path.join(app_dir, "cdsw-build.sh"),
+            )
+        except Exception as e:
+            print(f"Failed to upload cdsw-build.sh script: {e}")
+
+
     return deployment_target_project_dir
 
 
