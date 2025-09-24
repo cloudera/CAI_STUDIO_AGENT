@@ -279,7 +279,7 @@ exports[`WorkflowEditorConfigureInputs matches snapshot with default configurati
         </div>
       </div>
       <div
-        class="ant-layout gap-4 flex-grow css-dev-only-do-not-override-l9pxc0"
+        class="ant-layout gap-4 flex-grow bg-transparent css-dev-only-do-not-override-l9pxc0"
       />
     </div>
   </div>

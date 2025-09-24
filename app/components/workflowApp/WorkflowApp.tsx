@@ -312,7 +312,28 @@ const WorkflowApp = ({
         if (workflowPollingRef.current) {
           return;
         }
-        workflowPollingRef.current = setInterval(refetchWorkflow, 2000);
+        workflowPollingRef.current = setInterval(() => {
+          // Double-check workflow is still not ready before refetching
+          if (workflow?.is_ready) {
+            if (workflowPollingRef.current) {
+              clearInterval(workflowPollingRef.current);
+              workflowPollingRef.current = null;
+            }
+            return;
+          }
+          refetchWorkflow();
+        }, 2000);
+        workflowPollingRef.current = setInterval(() => {
+          // Double-check workflow is still not ready before refetching
+          if (workflow?.is_ready) {
+            if (workflowPollingRef.current) {
+              clearInterval(workflowPollingRef.current);
+              workflowPollingRef.current = null;
+            }
+            return;
+          }
+          refetchWorkflow();
+        }, 2000);
       };
 
       const stopWorkflowPolling = () => {
@@ -327,6 +348,18 @@ const WorkflowApp = ({
       return () => {
         stopWorkflowPolling();
       };
+    }
+
+    // Clean up polling when workflow becomes ready
+    if (workflow?.is_ready && workflowPollingRef.current) {
+      clearInterval(workflowPollingRef.current);
+      workflowPollingRef.current = null;
+    }
+
+    // Clean up polling when workflow becomes ready
+    if (workflow?.is_ready && workflowPollingRef.current) {
+      clearInterval(workflowPollingRef.current);
+      workflowPollingRef.current = null;
     }
   }, [workflow?.is_ready, refetchWorkflow]);
 
@@ -454,7 +487,7 @@ const WorkflowApp = ({
         >
           <Collapse
             bordered={false}
-            className="mb-6"
+            className="mb-1"
             items={[
               {
                 key: '1',

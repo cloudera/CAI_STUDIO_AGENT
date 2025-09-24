@@ -9,7 +9,7 @@ exports[`WorkflowApp matches snapshot for conversational workflow 1`] = `
       class="ant-layout bg-transparent flex-col flex-shrink-0 h-full transition-all duration-300 ease-in-out p-4 w-full css-dev-only-do-not-override-l9pxc0"
     >
       <div
-        class="ant-collapse ant-collapse-icon-position-start ant-collapse-borderless mb-6 css-dev-only-do-not-override-l9pxc0"
+        class="ant-collapse ant-collapse-icon-position-start ant-collapse-borderless mb-1 css-dev-only-do-not-override-l9pxc0"
       >
         <div
           class="ant-collapse-item"
@@ -100,7 +100,7 @@ exports[`WorkflowApp matches snapshot in studio mode 1`] = `
       class="ant-layout bg-transparent flex-col flex-shrink-0 h-full transition-all duration-300 ease-in-out p-4 w-[40%] css-dev-only-do-not-override-l9pxc0"
     >
       <div
-        class="ant-collapse ant-collapse-icon-position-start ant-collapse-borderless mb-6 css-dev-only-do-not-override-l9pxc0"
+        class="ant-collapse ant-collapse-icon-position-start ant-collapse-borderless mb-1 css-dev-only-do-not-override-l9pxc0"
       >
         <div
           class="ant-collapse-item"
@@ -250,7 +250,7 @@ exports[`WorkflowApp matches snapshot in workflow mode 1`] = `
       class="ant-layout bg-transparent flex-col flex-shrink-0 h-full transition-all duration-300 ease-in-out p-4 w-full css-dev-only-do-not-override-l9pxc0"
     >
       <div
-        class="ant-collapse ant-collapse-icon-position-start ant-collapse-borderless mb-6 css-dev-only-do-not-override-l9pxc0"
+        class="ant-collapse ant-collapse-icon-position-start ant-collapse-borderless mb-1 css-dev-only-do-not-override-l9pxc0"
       >
         <div
           class="ant-collapse-item"
@@ -341,7 +341,7 @@ exports[`WorkflowApp matches snapshot when workflow is not ready 1`] = `
       class="ant-layout bg-transparent flex-col flex-shrink-0 h-full transition-all duration-300 ease-in-out p-4 w-[40%] css-dev-only-do-not-override-l9pxc0"
     >
       <div
-        class="ant-collapse ant-collapse-icon-position-start ant-collapse-borderless mb-6 css-dev-only-do-not-override-l9pxc0"
+        class="ant-collapse ant-collapse-icon-position-start ant-collapse-borderless mb-1 css-dev-only-do-not-override-l9pxc0"
       >
         <div
           class="ant-collapse-item"

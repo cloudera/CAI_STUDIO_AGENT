@@ -104,13 +104,7 @@ const WorkflowDisplayCard: React.FC<WorkflowDisplayCardProps> = ({
             display: 'flex',
             flexDirection: 'column',
           }}
-        >
-          {agents?.length === 0 && (
-            <Text style={{ fontSize: '11px', color: '#999' }}>
-              {i18n.t('workflow.card.noAgents')}
-            </Text>
-          )}
-        </div>
+        ></div>
         <Space
           style={{
             marginTop: 'auto',
@@ -130,7 +124,11 @@ const WorkflowDisplayCard: React.FC<WorkflowDisplayCardProps> = ({
                   <div className="w-6 h-6 rounded bg-gray-200 flex items-center justify-center">
                     <UserOutlined style={{ fontSize: '12px', color: '#999' }} />
                   </div>
-                  <Text style={{ fontSize: '11px', color: '#999' }}>No agents added</Text>
+                  {agents?.length === 0 && (
+                    <Text style={{ fontSize: '11px', color: '#999' }}>
+                      {i18n.t('workflow.card.noAgents')}
+                    </Text>
+                  )}
                 </div>
               );
             }
@@ -325,7 +323,9 @@ const WorkflowTemplateDisplayCard: React.FC<WorkflowTemplateDisplayCardProps> = 
                   <div className="w-6 h-6 rounded bg-gray-200 flex items-center justify-center">
                     <UserOutlined style={{ fontSize: '12px', color: '#999' }} />
                   </div>
-                  <Text style={{ fontSize: '11px', color: '#999' }}>No agents added</Text>
+                  <Text style={{ fontSize: '11px', color: '#999' }}>
+                    {i18n.t('workflow.card.noAgents')}
+                  </Text>
                 </div>
               );
             }
@@ -640,7 +640,7 @@ const WorkflowListItem: React.FC<WorkflowListItemProps> = ({
           ) : sectionType === 'Deployed' && workflow && deployments?.[0] ? (
             <WorkflowDisplayCard
               workflow={workflow}
-              deployment={deployments?.[0]}
+              deployment={matchingDeployedWorkflow || deployments?.[0]}
               sectionType={sectionType}
             />
           ) : sectionType === 'Draft' && workflow ? (

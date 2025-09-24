@@ -23,14 +23,7 @@ exports[`WorkflowListItem matches snapshot for Draft card 1`] = `
         </span>
         <div
           style="margin: 3px 0px 9px 0px; font-size: 13px; color: rgb(136, 136, 136); display: flex; flex-direction: column;"
-        >
-          <span
-            class="ant-typography css-dev-only-do-not-override-l9pxc0"
-            style="font-size: 11px; color: rgb(153, 153, 153);"
-          >
-            No agents added
-          </span>
-        </div>
+        />
         <div
           class="ant-space css-dev-only-do-not-override-l9pxc0 ant-space-horizontal ant-space-align-center ant-space-gap-row-small ant-space-gap-col-small"
           style="margin-top: auto; display: flex; flex-wrap: wrap; gap: 8px;"

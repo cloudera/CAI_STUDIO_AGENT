@@ -734,7 +734,12 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
         return (
           <List.Item>
             <div
-              className={`rounded border border-gray-200 bg-white w-full h-[160px] p-4 flex flex-col cursor-pointer transition-transform duration-200 shadow-sm ${selectedAssignedAgent?.id === agent.id ? 'shadow-lg bg-blue-50' : ''} group`}
+              className={`rounded border w-full h-[160px] p-4 flex flex-col cursor-pointer transition-transform duration-200 shadow-sm group ${
+                selectedAssignedAgent?.id === agent.id
+                  ? 'bg-blue-100 shadow-lg border-gray-200'
+                  : 'bg-white border-gray-200'
+              }`}
+              aria-selected={selectedAssignedAgent?.id === agent.id}
               onClick={() => handleSelectAssignedAgent(agent)}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'scale(1.03)';
@@ -955,7 +960,9 @@ const SelectAgentComponent: React.FC<SelectAgentComponentProps> = ({
       <Layout className="flex flex-row h-full bg-white">
         <Layout className="flex-1 overflow-y-auto p-4 bg-white">
           <div
-            className={`mb-4 cursor-pointer w-full border border-solid border-gray-200 rounded p-4 ${isCreateMode ? 'shadow-lg bg-blue-50' : 'bg-white'}`}
+            className={`mb-4 cursor-pointer w-full border border-solid rounded p-4 ${
+              isCreateMode ? 'bg-blue-100 shadow-lg border-gray-200' : 'bg-white border-gray-200'
+            }`}
             onClick={changeToCreateAgentMode}
           >
             <div className="flex items-center justify-between">

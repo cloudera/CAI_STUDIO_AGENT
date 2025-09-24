@@ -512,7 +512,7 @@ const WorkflowEditorConfigureInputs: React.FC<WorkflowEditorConfigureInputsProps
                   closable={false}
                 />
               )}
-              <Layout className="gap-4 flex-grow">
+              <Layout className="gap-4 flex-grow bg-transparent">
                 {agents
                   ?.filter((agent) => agent.workflow_id === workflowId)
                   .map((agent, _index) => {

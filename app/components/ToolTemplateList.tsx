@@ -49,12 +49,13 @@ const ToolTemplateList: React.FC<ToolsListProps> = ({
 
       {/* Tool List */}
       <List
+        className="ml-[2.5%]"
         grid={{ gutter: 16 }}
         dataSource={filteredTools}
         renderItem={(item) => (
           <List.Item>
             <Layout
-              className="rounded border border-[#f0f0f0] bg-white w-[320px] h-[164px] mr-3 mb-4 p-0 flex flex-col cursor-pointer transition-transform duration-200 ease-in-out shadow-md"
+              className="rounded border border-[#f0f0f0] bg-white w-full h-[164px] p-0 flex flex-col cursor-pointer transition-transform duration-200 ease-in-out shadow-md"
               onClick={() => router.push(`/tools/view/${item.id}`)} // Navigate to tool details page
               onMouseEnter={(e: React.MouseEvent<HTMLElement>) => {
                 e.currentTarget.style.transform = 'scale(1.03)';
@@ -66,6 +67,7 @@ const ToolTemplateList: React.FC<ToolsListProps> = ({
               }}
             >
               <Layout className="flex-1 bg-transparent flex flex-row items-center px-6">
+                {/* Tool Icon */}
                 {/* Image - Always show either custom icon or fallback */}
                 <div className="w-6 h-6 rounded-full bg-[#f1f1f1] flex items-center justify-center mr-4">
                   {item.tool_image_uri && imageData[item.tool_image_uri] ? (

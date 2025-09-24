@@ -217,7 +217,7 @@ const WorkflowList: React.FC<WorkflowListProps> = ({
     : Object.keys(deployedWorkflowMap).slice(0, 5);
 
   const EmptyWorkflowState = () => (
-    <div className="flex flex-col items-center justify-center p-10 bg-white rounded-lg mt-5">
+    <div className="flex flex-col items-center justify-center p-10 bg-white rounded-lg mt-5 mb-10">
       <Text>No workflows here yet</Text>
       <Text className="text-gray-600 mb-5">
         Explore our different workflow templates or create one yourself.
