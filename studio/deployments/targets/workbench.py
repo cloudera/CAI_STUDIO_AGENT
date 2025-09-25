@@ -214,7 +214,6 @@ def prepare_deployment_target_dir(
         except Exception as e:
             print(f"Failed to upload cdsw-build.sh script: {e}")
 
-
     return deployment_target_project_dir
 
 
