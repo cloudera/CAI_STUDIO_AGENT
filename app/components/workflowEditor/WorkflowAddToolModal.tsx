@@ -98,7 +98,6 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [updateToolInstance] = useUpdateToolInstanceMutation();
   const [editedToolName, setEditedToolName] = useState<string>('');
-  const [newToolName, setNewToolName] = useState<string>(''); // State for new tool name
   const [searchTemplates, setSearchTemplates] = useState('');
   const [searchTools, setSearchTools] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -145,8 +144,6 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId 
       setEditedToolName(toolInstancesMap[selectedToolInstance].name || '');
     } else if (selectedToolTemplate) {
       setEditedToolName(toolTemplates.find((t) => t.id === selectedToolTemplate)?.name || '');
-    } else {
-      setNewToolName('');
     }
     resetPlaygroundState();
   }, [selectedToolInstance, selectedToolTemplate, toolInstancesMap]);
@@ -169,9 +166,9 @@ const WorkflowAddToolModal: React.FC<WorkflowAddToolModalProps> = ({ workflowId 
         throw new Error('input validation error');
       }
 
-      let toolName = values.toolname || 'New Tool'; // Default name if not provided
+      let toolName: string;
       if (isCreateSelected) {
-        toolName = newToolName || `${workflowName || 'Workflow'} Tool`;
+        toolName = values.toolname || `${workflowName} New Tool`;
       } else {
         const toolTemplate = toolTemplates.find((t) => t.id === toolTemplateId);
         if (!toolTemplate) {
