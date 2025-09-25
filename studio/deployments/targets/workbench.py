@@ -318,10 +318,12 @@ def deploy_artifact_to_workbench(
 
         # STEP 2: Create application (with model ID available in deployment metadata)
         application_ops_url = None
+        # For workbenches pre-2.0.47, bypass authentication on apps
+        bypass_authentication = not is_custom_model_root_dir_feature_enabled()
         if payload.deployment_target.deploy_application:
             deployment_metadata = json.loads(deployment.deployment_metadata)
             application: cmlapi.Application = create_application_for_deployed_workflow(
-                deployment_target_project_dir, deployment, False, cml
+                deployment_target_project_dir, deployment, bypass_authentication, cml
             )
             deep_link = get_application_deep_link(application.name)
             update_deployment_metadata(
