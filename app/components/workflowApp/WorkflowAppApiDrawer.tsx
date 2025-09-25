@@ -33,15 +33,12 @@ const WorkflowAppApiDrawer: React.FC<WorkflowAppApiDrawerProps> = ({
   });
 
   const inputsObject = Object.fromEntries(taskSet.map((input) => [input, '']));
-  const inputsJson = JSON.stringify(inputsObject, null, 4).replace(/^/gm, '      ');
+  const inputsJson = JSON.stringify(inputsObject);
 
   const kickoffCommand = `curl -X POST "${baseUrl}/api/workflow/kickoff" \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $CDSW_APIV2_KEY" \\
-  -d '{
-    "inputs": {
-${inputsJson}
-  }'`;
+  -d '{"inputs": ${inputsJson} }'`;
 
   const eventsCommand = `curl -X GET "${baseUrl}/api/workflow/events?trace_id=<trace_id>" \\
   -H "Accept: application/json" \\

@@ -13,6 +13,8 @@ Cloudera AI's Agent Studio is a platform for building, testing, and deploying AI
 - Users can create custom agents, tools and workflows. Test the workflows in the Studio. Save them as templates for reuse.
 - Workflows can be deployed as long-running endpoints ready for production use.
 
+### [Release Notes](./docs/release_notes.md)
+
 ## Getting Started
 
 ### User Guides
