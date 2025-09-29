@@ -119,10 +119,10 @@ exports[`WorkflowAppInputsView matches snapshot 1`] = `
       </button>
     </div>
     <div
-      class="flex flex-col bg-white rounded-lg shadow-lg min-h-[200px] relative mb-4 self-stretch flex-1"
+      class="flex flex-col bg-white rounded-lg shadow-lg relative mb-4 self-stretch flex-1 overflow-hidden"
     >
       <div
-        class="prose prose-lg max-w-none text-xs p-4 pb-12 w-full leading-relaxed font-sans"
+        class="prose prose-lg max-w-none text-xs p-4 pb-12 w-full leading-relaxed font-sans overflow-y-auto flex-1"
         id="crew-output-content"
       >
         <div

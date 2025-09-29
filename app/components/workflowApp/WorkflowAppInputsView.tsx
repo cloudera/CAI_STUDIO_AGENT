@@ -314,12 +314,12 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
           </Dropdown>
         </div>
 
-        <div className="flex flex-col bg-white rounded-lg shadow-lg min-h-[200px] relative mb-4 self-stretch flex-1">
+        <div className="flex flex-col bg-white rounded-lg shadow-lg relative mb-4 self-stretch flex-1 overflow-hidden">
           {crewOutput && (
             <>
               <div
                 id="crew-output-content"
-                className="prose prose-lg max-w-none text-xs p-4 pb-12 w-full leading-relaxed font-sans"
+                className="prose prose-lg max-w-none text-xs p-4 pb-12 w-full leading-relaxed font-sans overflow-y-auto flex-1"
               >
                 <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
                   {crewOutput}
