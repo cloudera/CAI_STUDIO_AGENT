@@ -2,6 +2,10 @@
 
 *Runtime Version: 2.0.0*
 
+## Airgapped Environment Support
+
+Installation in airgapped environment has been simplified by publishing the agent studio as a custom runtime image. You can read more about setup in airgapped environment here: [Airgap Setup](../../user_guide/airgap_installation.md)
+
 ## Bedrock Support
 
 Agent Studio now supports Bedrock as an LLM model provider. 
