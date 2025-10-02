@@ -260,6 +260,8 @@ class DeployedWorkflowInstance(Base, MappedProtobuf, MappedDict):
     
     # Metadata about the deployment itself
     deployment_metadata = Column(JSON, nullable=True)
+    # Has the deployment diverged from the parent workflow?
+    stale = Column(Boolean, default=True)
 
 
 class WorkflowTemplate(Base, MappedProtobuf, MappedDict):

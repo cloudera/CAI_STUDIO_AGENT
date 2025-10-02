@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import Component from './WorkflowTemplateOverview';
 
-// Mock the query hook
+// Mock the query hooks
 jest.mock('@/app/workflows/workflowsApi', () => ({
   useGetWorkflowTemplateByIdQuery: (id: string) => ({
     data: id === 'tpl-1' ? { id: 'tpl-1', name: 'Template 1' } : null,
@@ -11,13 +11,28 @@ jest.mock('@/app/workflows/workflowsApi', () => ({
   }),
 }));
 
+jest.mock('../../agents/agentApi', () => ({
+  useListAgentTemplatesQuery: () => ({ data: [] }),
+}));
+jest.mock('../../tasks/tasksApi', () => ({
+  useListTaskTemplatesQuery: () => ({ data: [] }),
+}));
+jest.mock('../../tools/toolTemplatesApi', () => ({
+  useListToolTemplatesQuery: () => ({ data: [] }),
+}));
+jest.mock('../../mcp/mcpTemplatesApi', () => ({
+  useListMcpTemplatesQuery: () => ({ data: [] }),
+}));
+
 // Mock heavy children
-jest.mock('./WorkflowTemplateDetails', () => {
-  const MockWorkflowTemplateDetails = (props: any) => (
-    <div data-testid="template-details">Details for {props.template?.name}</div>
+jest.mock('./WorkflowSubOverview', () => {
+  const MockWorkflowSubOverview = (props: any) => (
+    <div data-testid="template-details">
+      Details for {props.workflowTemplateInfo?.workflowTemplate?.name}
+    </div>
   );
-  MockWorkflowTemplateDetails.displayName = 'MockWorkflowTemplateDetails';
-  return MockWorkflowTemplateDetails;
+  MockWorkflowSubOverview.displayName = 'MockWorkflowSubOverview';
+  return MockWorkflowSubOverview;
 });
 jest.mock('../workflowApp/WorkflowTemplateDiagramView', () => {
   const MockWorkflowTemplateDiagramView = (props: any) => (

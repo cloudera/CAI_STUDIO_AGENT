@@ -2,10 +2,15 @@
 
 import React, { Suspense } from 'react';
 import { Layout, Spin, Alert, Divider } from 'antd';
+import { useListAgentTemplatesQuery } from '../../agents/agentApi';
+import { useListTaskTemplatesQuery } from '../../tasks/tasksApi';
+import { useListToolTemplatesQuery } from '../../tools/toolTemplatesApi';
+import { useListMcpTemplatesQuery } from '../../mcp/mcpTemplatesApi';
 import { useGetWorkflowTemplateByIdQuery } from '@/app/workflows/workflowsApi';
-import WorkflowTemplateDetails from './WorkflowTemplateDetails';
+import WorkflowSubOverview from './WorkflowSubOverview';
 import ErrorBoundary from '../ErrorBoundary';
 import WorkflowTemplateDiagramView from '../workflowApp/WorkflowTemplateDiagramView';
+import { WorkflowTemplateInfo } from '@/app/utils/conversions';
 
 interface WorkflowTemplateOverviewProps {
   workflowTemplateId: string;
@@ -19,6 +24,18 @@ const WorkflowTemplateOverview: React.FC<WorkflowTemplateOverviewProps> = ({
     isLoading: loading,
     error,
   } = useGetWorkflowTemplateByIdQuery(workflowTemplateId);
+  const { data: agentTemplates } = useListAgentTemplatesQuery({
+    workflow_template_id: workflowTemplateId,
+  });
+  const { data: taskTemplates } = useListTaskTemplatesQuery({
+    workflow_template_id: workflowTemplateId,
+  });
+  const { data: toolTemplates = [] } = useListToolTemplatesQuery({
+    workflow_template_id: workflowTemplateId,
+  });
+  const { data: mcpTemplates = [] } = useListMcpTemplatesQuery({
+    workflow_template_id: workflowTemplateId,
+  });
 
   if (loading) {
     return (
@@ -63,7 +80,18 @@ const WorkflowTemplateOverview: React.FC<WorkflowTemplateOverviewProps> = ({
         <Layout className="flex-1 flex flex-row bg-white rounded h-screen overflow-hidden">
           {/* Left Side: Template Details */}
           <Layout.Content className="bg-white overflow-y-auto overflow-x-hidden flex-auto w-2/5">
-            <WorkflowTemplateDetails template={templateDetails} />
+            <WorkflowSubOverview
+              workflowTemplateInfo={
+                {
+                  workflowTemplate: templateDetails,
+                  agentTemplates: agentTemplates,
+                  taskTemplates: taskTemplates,
+                  toolTemplates: toolTemplates,
+                  mcpTemplates: mcpTemplates,
+                } as WorkflowTemplateInfo
+              }
+              type="workflowTemplate"
+            />
           </Layout.Content>
 
           <Divider type="vertical" className="h-full flex-grow-0 flex-shrink-0" />

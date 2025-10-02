@@ -147,6 +147,7 @@ def initialize_deployment(payload: DeploymentPayload, session: Session, cml: CML
     deployment: DeployedWorkflowInstance = get_or_create_deployment(workflow, payload, session, cml)
     deployment.status = DeploymentStatus.INITIALIZED
     deployment.updated_at = datetime.now(timezone.utc)
+    deployment.stale = False
     session.commit()
 
     # Initialize deployment metadata if it does not exist yet

@@ -7,7 +7,6 @@ import {
   EditOutlined,
   DeleteOutlined,
   ExperimentOutlined,
-  PlayCircleOutlined,
   CopyOutlined,
   DiffOutlined,
 } from '@ant-design/icons';
@@ -183,25 +182,21 @@ const WorkflowPage: React.FC = () => {
     }
 
     switch (key) {
-      case 'edit':
+      case 'edit-and-deploy':
         dispatch(updatedEditorStep('Agents'));
         router.push(`/workflows/create?workflowId=${workflowId}`);
         break;
       case 'delete':
         setDeleteWorkflowModalVisible(true);
         break;
-      case 'duplicate':
+      case 'clone-workflow':
         setCloneWorkflowModalVisible(true);
         break;
       case 'test':
         dispatch(updatedEditorStep('Test'));
         router.push(`/workflows/create?workflowId=${workflowId}`);
         break;
-      case 'deploy':
-        dispatch(updatedEditorStep('Configure'));
-        router.push(`/workflows/create?workflowId=${workflowId}`);
-        break;
-      case 'clone':
+      case 'create-template':
         await addWorkflowTemplate({
           workflow_id: workflowId,
           agent_template_ids: [], // TODO: make optional
@@ -230,11 +225,11 @@ const WorkflowPage: React.FC = () => {
 
   const menuItems: MenuProps['items'] = [
     {
-      key: 'edit',
+      key: 'edit-and-deploy',
       label: (
         <Space>
           <EditOutlined />
-          Edit Workflow
+          {isWorkflowDeployed() ? 'Edit & Redeploy' : 'Edit & Deploy'}
         </Space>
       ),
     },
@@ -248,16 +243,7 @@ const WorkflowPage: React.FC = () => {
       ),
     },
     {
-      key: 'deploy',
-      label: (
-        <Space>
-          <PlayCircleOutlined />
-          {isWorkflowDeployed() ? 'Redeploy Workflow' : 'Deploy Workflow'}
-        </Space>
-      ),
-    },
-    {
-      key: 'clone',
+      key: 'clone-workflow',
       label: (
         <Space>
           <DiffOutlined />

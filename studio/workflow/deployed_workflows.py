@@ -225,6 +225,7 @@ def list_deployed_workflows(
                             deployment_metadata=deployed_workflow.deployment_metadata or "{}",
                             created_at=deployed_workflow.created_at.isoformat() if deployed_workflow.created_at else "",
                             updated_at=deployed_workflow.updated_at.isoformat() if deployed_workflow.updated_at else "",
+                            stale=deployed_workflow.stale,
                         )
                     )
                 except Exception as e:

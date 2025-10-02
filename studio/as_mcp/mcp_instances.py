@@ -9,6 +9,7 @@ from studio.api import *
 from studio.cross_cutting.global_thread_pool import get_thread_pool
 import studio.consts as consts
 import studio.as_mcp.utils as mcp_utils
+from studio.workflow.utils import set_workflow_deployment_stale_status
 from cmlapi import CMLServiceApi
 import json
 
@@ -91,6 +92,8 @@ def _create_mcp_instance_impl(request: CreateMcpInstanceRequest, session: DbSess
     )
     session.add(mcp_instance)
 
+    get_thread_pool().submit(set_workflow_deployment_stale_status, request.workflow_id, True)
+
     return CreateMcpInstanceResponse(
         mcp_instance_name=mcp_instance_name,
         mcp_instance_id=instance_uuid,
@@ -145,6 +148,8 @@ def _update_mcp_instance_impl(request: UpdateMcpInstanceRequest, session: DbSess
         mcp_instance.mcp_image_path = mcp_image_path
     new_activated_tools = list(request.activated_tools) or []
     mcp_instance.activated_tools = new_activated_tools
+
+    get_thread_pool().submit(set_workflow_deployment_stale_status, mcp_instance.workflow_id, True)
 
     return UpdateMcpInstanceResponse(
         mcp_instance_id=mcp_instance.id,
@@ -264,5 +269,9 @@ def _remove_mcp_instance_impl(request: RemoveMcpInstanceRequest, session: DbSess
     if not mcp_instance:
         raise ValueError(f"MCP Instance with id {request.mcp_instance_id} not found")
     _delete_icon_file(mcp_instance.mcp_image_path)
+
+    workflow_id = mcp_instance.workflow_id
     session.delete(mcp_instance)
+    get_thread_pool().submit(set_workflow_deployment_stale_status, workflow_id, True)
+
     return RemoveMcpInstanceResponse()

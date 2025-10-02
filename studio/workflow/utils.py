@@ -1,6 +1,6 @@
 # No top level studio.db imports allowed to support wokrflow model deployment
 
-from typing import List
+from typing import List, Optional
 import os
 import requests
 
@@ -8,8 +8,9 @@ from cmlapi import CMLServiceApi
 
 from studio.cross_cutting import utils as cc_utils
 from studio import consts
+from studio.db.dao import AgentStudioDao
 from studio.cross_cutting.global_thread_pool import get_thread_pool
-from studio.db.model import Workflow, Model, Agent, ToolInstance
+from studio.db.model import Workflow, Model, Agent, ToolInstance, DeployedWorkflowInstance
 from studio.api.types import ToolInstanceStatus
 from sqlalchemy.orm.session import Session
 
@@ -216,3 +217,21 @@ def prepare_tools_for_workflow(workflow_id: str, session: Session) -> None:
             prepare_tool_instance,
             tool_instance.id,
         )
+
+
+def set_workflow_deployment_stale_status(parent_workflow_id: Optional[str], is_stale: bool) -> None:
+    if not parent_workflow_id:
+        return
+
+    dao: AgentStudioDao = AgentStudioDao()
+    try:
+        with dao.get_session() as session:
+            deployed_workflows = session.query(DeployedWorkflowInstance).filter_by(workflow_id=parent_workflow_id).all()
+            if not deployed_workflows:
+                print(f"Workflow deployment with parent workflow ID '{parent_workflow_id}' not found.")
+                return
+            for deployed_workflow in deployed_workflows:
+                deployed_workflow.stale = is_stale
+            session.commit()
+    except Exception as e:
+        print(f"Error marking workflow deployment as stale: {str(e)}")

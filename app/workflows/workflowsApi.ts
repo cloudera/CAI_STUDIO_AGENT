@@ -25,6 +25,7 @@ import {
   ExportWorkflowTemplateResponse,
   ImportWorkflowTemplateRequest,
   ImportWorkflowTemplateResponse,
+  DeployWorkflowResponse,
 } from '@/studio/proto/agent_studio';
 
 import { apiSlice } from '../api/apiSlice';
@@ -82,7 +83,7 @@ export const workflowsApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: (result, error, request) => [
         { type: 'Workflow', id: request.workflow_id },
-        // { type: 'Workflow', id: 'LIST' }
+        { type: 'DeployedWorkflow', id: 'LIST' },
       ],
     }),
     removeWorkflow: builder.mutation<void, RemoveWorkflowRequest>({
@@ -118,7 +119,7 @@ export const workflowsApi = apiSlice.injectEndpoints({
       },
       invalidatesTags: [{ type: 'Workflow', id: 'LIST' }],
     }),
-    deployWorkflow: builder.mutation<void, DeployWorkflowRequest>({
+    deployWorkflow: builder.mutation<DeployWorkflowResponse, DeployWorkflowRequest>({
       query: (request) => ({
         url: '/grpc/deployWorkflow',
         method: 'POST',
@@ -128,6 +129,7 @@ export const workflowsApi = apiSlice.injectEndpoints({
         { type: 'Workflow', id: request.workflow_id },
         { type: 'Workflow', id: 'LIST' },
         { type: 'DeployedWorkflow', id: 'LIST' },
+        { type: 'DeployedWorkflow', id: result?.deployed_workflow_id },
       ],
     }),
     listWorkflowTemplates: builder.query<WorkflowTemplateMetadata[], ListWorkflowTemplatesRequest>({

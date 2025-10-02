@@ -1296,6 +1296,7 @@ class DeployedWorkflow(_message.Message):
         "deployment_metadata",
         "created_at",
         "updated_at",
+        "stale",
     )
     DEPLOYED_WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
     WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
@@ -1309,6 +1310,7 @@ class DeployedWorkflow(_message.Message):
     DEPLOYMENT_METADATA_FIELD_NUMBER: _ClassVar[int]
     CREATED_AT_FIELD_NUMBER: _ClassVar[int]
     UPDATED_AT_FIELD_NUMBER: _ClassVar[int]
+    STALE_FIELD_NUMBER: _ClassVar[int]
     deployed_workflow_id: str
     workflow_id: str
     workflow_name: str
@@ -1321,6 +1323,7 @@ class DeployedWorkflow(_message.Message):
     deployment_metadata: str
     created_at: str
     updated_at: str
+    stale: bool
     def __init__(
         self,
         deployed_workflow_id: _Optional[str] = ...,
@@ -1335,6 +1338,7 @@ class DeployedWorkflow(_message.Message):
         deployment_metadata: _Optional[str] = ...,
         created_at: _Optional[str] = ...,
         updated_at: _Optional[str] = ...,
+        stale: bool = ...,
     ) -> None: ...
 
 class Workflow(_message.Message):

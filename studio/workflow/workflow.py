@@ -13,6 +13,7 @@ from studio.agents.agent import remove_agent, add_agent
 from studio.tools.tool_instance import remove_tool_instance
 from studio.cross_cutting.global_thread_pool import get_thread_pool
 import studio.workflow.utils as workflow_utils
+from studio.workflow.utils import set_workflow_deployment_stale_status
 import studio.as_mcp.utils as mcp_utils
 import studio.agents.utils as agent_utils
 
@@ -415,12 +416,10 @@ def update_workflow(
                     _validate_process(metadata, cml, dao)
                     workflow.crew_ai_process = metadata.process
 
-            # Any deployed workflow instances have now entered a stale state.
-            deployed_workflow_instances = (
-                session.query(db_model.DeployedWorkflowInstance).filter_by(workflow_id=workflow.id).all()
-            )
-
             session.commit()
+
+            # Mark workflow deployments as stale since the workflow has been updated
+            get_thread_pool().submit(set_workflow_deployment_stale_status, workflow.id, True)
 
             # Update all tools for the workflow
             workflow_utils.prepare_tools_for_workflow(workflow.id, session)

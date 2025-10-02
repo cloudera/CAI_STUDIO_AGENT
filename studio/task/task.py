@@ -7,6 +7,8 @@ from studio.api import *
 from cmlapi import CMLServiceApi
 import re
 from studio.proto.utils import is_field_set
+from studio.workflow.utils import set_workflow_deployment_stale_status
+from studio.cross_cutting.global_thread_pool import get_thread_pool
 
 
 def add_task(request: AddTaskRequest, cml: CMLServiceApi, dao: AgentStudioDao = None) -> AddTaskResponse:
@@ -37,6 +39,9 @@ def add_task(request: AddTaskRequest, cml: CMLServiceApi, dao: AgentStudioDao = 
             )
             session.add(new_task)
             session.commit()
+
+            get_thread_pool().submit(set_workflow_deployment_stale_status, request.workflow_id, True)
+
             return AddTaskResponse(task_id=new_task.id)
     except ValueError as e:
         raise RuntimeError(f"Validation error: {str(e)}")
@@ -76,6 +81,9 @@ def update_task(request: UpdateTaskRequest, cml: CMLServiceApi, dao: AgentStudio
                 task.assigned_agent_id = request.UpdateCrewAITaskRequest.assigned_agent_id or None
 
             session.commit()
+
+            get_thread_pool().submit(set_workflow_deployment_stale_status, task.workflow_id, True)
+
             return UpdateTaskResponse()
     except ValueError as e:
         raise RuntimeError(f"Validation error: {str(e)}")
@@ -170,8 +178,11 @@ def remove_task(request: RemoveTaskRequest, cml: CMLServiceApi, dao: AgentStudio
             if not task:
                 raise ValueError(f"Task with ID '{request.task_id}' not found.")
 
+            workflow_id = task.workflow_id
             session.delete(task)
             session.commit()
+            get_thread_pool().submit(set_workflow_deployment_stale_status, workflow_id, True)
+
             return RemoveTaskResponse()
     except ValueError as e:
         raise RuntimeError(f"Validation error: {str(e)}")

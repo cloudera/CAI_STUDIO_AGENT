@@ -888,6 +888,8 @@ export interface DeployedWorkflow {
   created_at: string;
   /** Timestamp when the deployment was last updated */
   updated_at: string;
+  /** Has the deployment diverged from the parent workflow */
+  stale: boolean;
 }
 
 /** Workflow metadata */
@@ -10574,6 +10576,7 @@ function createBaseDeployedWorkflow(): DeployedWorkflow {
     deployment_metadata: undefined,
     created_at: "",
     updated_at: "",
+    stale: false,
   };
 }
 
@@ -10614,6 +10617,9 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
     }
     if (message.updated_at !== "") {
       writer.uint32(98).string(message.updated_at);
+    }
+    if (message.stale !== false) {
+      writer.uint32(104).bool(message.stale);
     }
     return writer;
   },
@@ -10721,6 +10727,14 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
           message.updated_at = reader.string();
           continue;
         }
+        case 13: {
+          if (tag !== 104) {
+            break;
+          }
+
+          message.stale = reader.bool();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -10748,6 +10762,7 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
         : undefined,
       created_at: isSet(object.created_at) ? globalThis.String(object.created_at) : "",
       updated_at: isSet(object.updated_at) ? globalThis.String(object.updated_at) : "",
+      stale: isSet(object.stale) ? globalThis.Boolean(object.stale) : false,
     };
   },
 
@@ -10789,6 +10804,9 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
     if (message.updated_at !== "") {
       obj.updated_at = message.updated_at;
     }
+    if (message.stale !== false) {
+      obj.stale = message.stale;
+    }
     return obj;
   },
 
@@ -10809,6 +10827,7 @@ export const DeployedWorkflow: MessageFns<DeployedWorkflow> = {
     message.deployment_metadata = object.deployment_metadata ?? undefined;
     message.created_at = object.created_at ?? "";
     message.updated_at = object.updated_at ?? "";
+    message.stale = object.stale ?? false;
     return message;
   },
 };

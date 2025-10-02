@@ -32,7 +32,23 @@ Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
   value: jest.fn()
 });
 
+// Add matchMedia mock for Ant Design components
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: jest.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  })),
+});
+
 // Suppress console error for testing environment
+const originalConsoleError = console.error;
 console.error = (...args) => {
   if (
     typeof args[0] === 'string' &&
@@ -40,5 +56,5 @@ console.error = (...args) => {
   ) {
     return;
   }
-  console.error(...args);
+  originalConsoleError(...args);
 };

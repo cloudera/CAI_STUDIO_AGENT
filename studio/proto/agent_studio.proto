@@ -830,6 +830,8 @@ message DeployedWorkflow {
   string created_at = 11;
   // Timestamp when the deployment was last updated
   string updated_at = 12;
+  // Has the deployment diverged from the parent workflow
+  bool stale = 13;
 }
 
 // Workflow metadata

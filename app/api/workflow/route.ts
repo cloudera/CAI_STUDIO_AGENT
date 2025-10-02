@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  ToolInstance,
-  DeployedWorkflow,
-  Workflow,
-  CrewAITaskMetadata,
-  AgentMetadata,
-  McpInstance,
-} from '@/studio/proto/agent_studio';
+import { DeployedWorkflow } from '@/studio/proto/agent_studio';
 import fetch from 'node-fetch';
 import { fetchModelUrl, createAgent } from '@/app/lib/ops';
+import { deployedWorkflowResponseConversion } from '@/app/utils/conversions';
 
 // Extract information about the rendermode and the
 // workflow if a workflow app is initialized. This
@@ -80,106 +74,17 @@ export async function GET(_request: NextRequest) {
       await new Promise((resolve) => setTimeout(resolve, pollInterval));
     }
 
-    const toolInstances: ToolInstance[] = configuration.tool_instances
-      ? configuration.tool_instances.map((tool: any) => {
-          const t: ToolInstance = {
-            id: tool.id,
-            name: tool.name,
-            workflow_id: configuration.workflow.id,
-            python_code: '', // These fields aren't in the config response
-            python_requirements: '',
-            source_folder_path: '',
-            tool_metadata: tool.tool_metadata,
-            is_valid: true,
-            tool_image_uri: tool.tool_image_uri,
-            tool_description: '',
-            is_venv_tool: tool.is_venv_tool || false,
-            status: '',
-          };
-          return t;
-        })
-      : [];
+    // Convert configuration to WorkflowInfo using the utility function
+    const workflowInfo = deployedWorkflowResponseConversion(configuration);
 
-    const mcpInstances: McpInstance[] = configuration.mcp_instances
-      ? configuration.mcp_instances.map((mcp: any) => {
-          let toolsString = '[]';
-          if (mcpToolDefinitions && mcpToolDefinitions[mcp.id]) {
-            toolsString = JSON.stringify(mcpToolDefinitions[mcp.id]);
-          }
-
-          const m: McpInstance = {
-            id: mcp.id,
-            name: mcp.name,
-            type: '',
-            args: [],
-            env_names: [],
-            tools: toolsString,
-            image_uri: mcp.image_uri,
-            status: '',
-            activated_tools: mcp.tools,
-            workflow_id: configuration.workflow.id,
-          };
-          return m;
-        })
-      : [];
-
-    const agents: AgentMetadata[] = configuration.agents
-      ? configuration.agents.map((agent: any) => {
-          const a: AgentMetadata = {
-            id: agent.id,
-            name: agent.name,
-            llm_provider_model_id: agent.llm_provider_model_id || '',
-            tools_id: agent.tool_instance_ids,
-            mcp_instance_ids: agent.mcp_instance_ids,
-            crew_ai_agent_metadata: {
-              role: agent.crew_ai_role,
-              backstory: agent.crew_ai_backstory,
-              goal: agent.crew_ai_goal,
-              allow_delegation: agent.crew_ai_allow_delegation,
-              verbose: agent.crew_ai_verbose,
-              cache: agent.crew_ai_cache,
-              temperature: agent.crew_ai_temperature,
-              max_iter: agent.crew_ai_max_iter,
-            },
-            is_valid: true,
-            workflow_id: configuration.workflow.id,
-            agent_image_uri: agent.agent_image_uri || '',
-          };
-          return a;
-        })
-      : [];
-
-    const extractPlaceholders = (description: string): string[] => {
-      const matches = description.match(/{(.*?)}/g) || [];
-      return [...new Set(matches.map((match) => match.slice(1, -1)))];
-    };
-
-    const tasks: CrewAITaskMetadata[] = configuration.tasks
-      ? configuration.tasks.map((task: any) => ({
-          task_id: task.id,
-          description: task.description,
-          expected_output: task.expected_output,
-          assigned_agent_id: task.assigned_agent_id,
-          is_valid: true,
-          inputs: extractPlaceholders(task.description),
-          workflow_id: configuration.workflow.id,
-        }))
-      : [];
-
-    const workflow: Workflow = {
-      workflow_id: configuration.workflow.id,
-      name: configuration.workflow.name,
-      description: configuration.workflow.description,
-      crew_ai_workflow_metadata: {
-        agent_id: configuration.workflow.agent_ids,
-        task_id: configuration.workflow.task_ids,
-        manager_agent_id: configuration.workflow.manager_agent_id || '',
-        process: configuration.workflow.crew_ai_process,
-      },
-      is_valid: true,
-      is_ready: true,
-      is_conversational: configuration.workflow.is_conversational,
-    };
+    // Apply MCP tool definitions to the converted MCP instances
+    if (workflowInfo.mcpInstances && mcpToolDefinitions) {
+      workflowInfo.mcpInstances.forEach((mcpInstance) => {
+        if (mcpToolDefinitions[mcpInstance.id]) {
+          mcpInstance.tools = JSON.stringify(mcpToolDefinitions[mcpInstance.id]);
+        }
+      });
+    }
 
     const deployedWorkflow: DeployedWorkflow = {
       deployed_workflow_id: configuration.workflow.deployment_id,
@@ -193,6 +98,7 @@ export async function GET(_request: NextRequest) {
       model_deep_link: '',
       created_at: configuration.workflow.created_at || '',
       updated_at: configuration.workflow.updated_at || '',
+      stale: false,
     };
 
     return NextResponse.json({
@@ -200,11 +106,11 @@ export async function GET(_request: NextRequest) {
       deployedWorkflowId: process.env.AGENT_STUDIO_DEPLOYED_WORKFLOW_ID,
       deployedWorkflow: deployedWorkflow,
       workflowModelUrl: await fetchModelUrl(deployedWorkflow.cml_deployed_model_id),
-      workflow: workflow,
-      agents: agents,
-      tasks: tasks,
-      toolInstances: toolInstances,
-      mcpInstances: mcpInstances,
+      workflow: workflowInfo.workflow,
+      agents: workflowInfo.agents,
+      tasks: workflowInfo.tasks,
+      toolInstances: workflowInfo.toolInstances,
+      mcpInstances: workflowInfo.mcpInstances,
     });
   } else {
     return NextResponse.json({

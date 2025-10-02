@@ -11,6 +11,7 @@ import os
 import ast
 import studio.tools.utils as tool_utils
 from studio.cross_cutting.global_thread_pool import get_thread_pool
+from studio.workflow.utils import set_workflow_deployment_stale_status
 import studio.consts as consts
 import studio.cross_cutting.utils as cc_utils
 from studio.tools.utils import read_tool_instance_code, extract_tool_params_from_code
@@ -110,6 +111,9 @@ def _create_tool_instance_impl(request: CreateToolInstanceRequest, session: DbSe
         tool_utils.prepare_tool_instance,
         instance_uuid,
     )
+
+    get_thread_pool().submit(set_workflow_deployment_stale_status, request.workflow_id, True)
+
     return CreateToolInstanceResponse(
         tool_instance_id=instance_uuid,
         tool_instance_name=tool_instance_name,
@@ -178,6 +182,8 @@ def _update_tool_instance_impl(request: UpdateToolInstanceRequest, session: DbSe
         )
     else:
         print(f"Skipping venv preparation for tool instance {request.tool_instance_id} - status is {current_status}")
+
+    get_thread_pool().submit(set_workflow_deployment_stale_status, tool_instance.workflow_id, True)
 
     return UpdateToolInstanceResponse(tool_instance_id=tool_instance.id)
 
@@ -422,7 +428,10 @@ def _remove_tool_instance_impl(
         except Exception as e:
             print(f"Failed to delete tool instance image: {e}")
 
+    workflow_id = tool_instance.workflow_id
     session.delete(tool_instance)
+    get_thread_pool().submit(set_workflow_deployment_stale_status, workflow_id, True)
+
     return RemoveToolInstanceResponse()
 
 
