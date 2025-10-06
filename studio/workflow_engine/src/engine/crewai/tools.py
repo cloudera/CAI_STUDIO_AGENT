@@ -319,6 +319,10 @@ def _prepare_virtual_env_for_tool_impl(
                 pip_install_command.extend(["--index-url", default_index])
             if insecure_host:
                 pip_install_command.extend(["--trusted-host", insecure_host])
+            https_proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy")
+            print(f"https_proxy: {https_proxy}")
+            http_proxy = os.environ.get("HTTP_PROXY") or os.environ.get("http_proxy")
+            print(f"http_proxy: {http_proxy}")
         else:
             python_exe = os.path.join(venv_dir, "bin", "python")
             pip_install_command = [
@@ -333,6 +337,12 @@ def _prepare_virtual_env_for_tool_impl(
         subprocess_env = os.environ.copy()
         if with_ == "uv":
             subprocess_env["VIRTUAL_ENV"] = venv_dir
+            if https_proxy:
+                subprocess_env["HTTPS_PROXY"] = https_proxy
+                subprocess_env["https_proxy"] = https_proxy
+            if http_proxy:
+                subprocess_env["HTTP_PROXY"] = http_proxy
+                subprocess_env["http_proxy"] = http_proxy
         result = subprocess.run(
             pip_install_command,
             check=True,
