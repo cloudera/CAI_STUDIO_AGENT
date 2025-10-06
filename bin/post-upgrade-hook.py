@@ -46,6 +46,7 @@ from studio.cross_cutting.utils import (
     restart_workflow_application, 
     get_application_by_name
 )
+from studio.cross_cutting.global_thread_pool import initialize_thread_pool, cleanup_thread_pool
 from studio.deployments.entry import deploy_from_payload
 from studio.deployments.types import *
 from studio.consts import AGENT_STUDIO_OPS_APPLICATION_NAME, AGENT_STUDIO_SERVICE_APPLICATION_NAME
@@ -266,6 +267,10 @@ def perform_legacy_ops_metrics_application_migration():
 
 def run_post_upgrade_tasks():
     """Run all pre-upgrade tasks"""
+
+    print("Initializing thread pool...")
+    initialize_thread_pool()
+
     print("Starting post-upgrade tasks...")
      # Task 1: Check API key migration
     check_api_key_migration()
@@ -277,6 +282,9 @@ def run_post_upgrade_tasks():
     restart_deployed_workflow_applications()
 
     print("Post-upgrade tasks completed")
+
+    print("Cleaning up thread pool...")
+    cleanup_thread_pool()
 
 if __name__ == "__main__":
     run_post_upgrade_tasks()
