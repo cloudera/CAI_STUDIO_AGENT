@@ -149,6 +149,19 @@ def compare_workbench_versions(a: str, b: str) -> int:
     return 0
 
 
+def is_workbench_gteq_2_0_47() -> bool:
+    """
+    Check if the workbench version is greater than or equal to 2.0.47. There were two features
+    released in 2.0.47 that Agent Studio have specific features depending on:
+    - Call applications authenticated with APIv2 keys
+    - AI Studios feature
+    - Custom model root dir feature for model deployments in a workbench
+    """
+    scheme = cc_utils.get_url_scheme()
+    bootstrap_data: dict = requests.get(f"{scheme}://{os.getenv('CDSW_DOMAIN')}/sense-bootstrap.json").json()
+    return compare_workbench_versions(bootstrap_data.get("gitSha", "0.0.0"), "2.0.47") >= 0
+
+
 def is_custom_model_root_dir_feature_enabled() -> bool:
     """
     Currently custom model root dirs for Workbench models are hidden behind
@@ -165,7 +178,7 @@ def is_custom_model_root_dir_feature_enabled() -> bool:
     # is translated upstream from ML_ENABLE_COMPOSABLE_AMPS, which is the
     # entitlement that blocks the model root dir feature.
     composable_amp_entitlement_enabled = bootstrap_data.get("enable_ai_studios", False)
-    workbench_gteq_2_0_47 = compare_workbench_versions(bootstrap_data.get("gitSha", "0.0.0"), "2.0.47") >= 0
+    workbench_gteq_2_0_47 = is_workbench_gteq_2_0_47()
 
     return composable_amp_entitlement_enabled and workbench_gteq_2_0_47
 

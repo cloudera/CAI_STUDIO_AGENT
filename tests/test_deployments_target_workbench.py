@@ -252,9 +252,9 @@ def test_get_workbench_model_deep_link_not_found(mock_post, mock_get_ids):
 @patch("studio.deployments.targets.workbench.cmlapi.default_client")
 @patch("studio.deployments.targets.workbench.cc_utils.get_deployed_workflow_runtime_identifier", return_value="runtime123")
 @patch("studio.deployments.targets.workbench.prepare_deployment_target_dir", return_value="workflow_dir")
-@patch("studio.deployments.targets.workbench.is_custom_model_root_dir_feature_enabled", return_value=False)
+@patch("studio.deployments.targets.workbench.is_workbench_gteq_2_0_47", return_value=True)
 def test_deploy_artifact_to_workbench_success(
-    mock_is_custom_model_root_dir_feature_enabled,
+    mock_is_workbench_gteq_2_0_47,
     mock_prepare_deployment_target_dir,
     mock_runtime_id,
     mock_default_client,
@@ -295,8 +295,7 @@ def test_deploy_artifact_to_workbench_success(
     mock_deploy_model.assert_called_once()
     mock_monitor.assert_called_once()
     mock_create_app.assert_called_once()
-    mock_is_custom_model_root_dir_feature_enabled.assert_called_once()
-    mock_create_app.assert_called_with(ANY, ANY, True, ANY)
+    mock_create_app.assert_called_with(ANY, ANY, False, ANY)
     mock_update_meta.assert_called()
 
 
@@ -323,9 +322,9 @@ def test_deploy_artifact_to_workbench_success(
 @patch("studio.deployments.targets.workbench.cmlapi.default_client")
 @patch("studio.deployments.targets.workbench.cc_utils.get_deployed_workflow_runtime_identifier", return_value="runtime123")
 @patch("studio.deployments.targets.workbench.prepare_deployment_target_dir", return_value="workflow_dir")
-@patch("studio.deployments.targets.workbench.is_custom_model_root_dir_feature_enabled", return_value=True)
+@patch("studio.deployments.targets.workbench.is_workbench_gteq_2_0_47", return_value=True)
 def test_deploy_artifact_to_workbench_success_auto_redeploy(
-    mock_is_custom_model_root_dir_feature_enabled,
+    mock_is_workbench_gteq_2_0_47,
     mock_prepare_deployment_target_dir,
     mock_runtime_id,
     mock_default_client,
@@ -371,6 +370,5 @@ def test_deploy_artifact_to_workbench_success_auto_redeploy(
     mock_deploy_model.assert_called_once()
     mock_update_metadata.assert_called()
     mock_monitor.assert_called_once()
-    mock_is_custom_model_root_dir_feature_enabled.assert_called_once()
     mock_create_app.assert_not_called()
     

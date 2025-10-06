@@ -13,7 +13,7 @@ import studio.consts as consts
 from studio.cross_cutting.apiv2 import get_api_key_from_env, validate_api_key, upload_file_to_project
 from studio.deployments.types import DeploymentArtifact, DeploymentPayload
 from studio.db.model import DeployedWorkflowInstance
-from studio.workflow.utils import is_custom_model_root_dir_feature_enabled
+from studio.workflow.utils import is_custom_model_root_dir_feature_enabled, is_workbench_gteq_2_0_47
 from studio.cross_cutting.utils import deploy_cml_model, get_cml_project_number_and_id
 import studio.cross_cutting.utils as cc_utils
 from studio.deployments.applications import create_application_for_deployed_workflow, get_application_deep_link
@@ -318,8 +318,12 @@ def deploy_artifact_to_workbench(
 
         # STEP 2: Create application (with model ID available in deployment metadata)
         application_ops_url = None
-        # For workbenches pre-2.0.47, bypass authentication on apps
-        bypass_authentication = not is_custom_model_root_dir_feature_enabled()
+        # For workbenches pre-2.0.47, the APIv2-authed applications calls were not available.
+        # To compensate for this, we bypass authentication on older workbenches where this
+        # feature is not enabled.
+        bypass_authentication = False
+        if not is_workbench_gteq_2_0_47():
+            bypass_authentication = True
         if payload.deployment_target.deploy_application:
             deployment_metadata = json.loads(deployment.deployment_metadata)
             application: cmlapi.Application = create_application_for_deployed_workflow(
