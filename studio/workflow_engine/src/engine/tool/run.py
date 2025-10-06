@@ -75,6 +75,16 @@ def ensure_venv_and_requirements(
     pip_output = ""
     pip_error = ""
     pip_install_command = [uv_bin, "pip", "install", "-r", requirements_path]
+
+    # Honor PyPI mirror if provided
+    default_index = os.environ.get("UV_DEFAULT_INDEX")
+    insecure_host = os.environ.get("UV_INSECURE_HOST")
+    print(f"default_index: {default_index}")
+    print(f"insecure_host: {insecure_host}")
+    if default_index:
+        pip_install_command.extend(["--index-url", default_index])
+    if insecure_host:
+        pip_install_command.extend(["--trusted-host", insecure_host])
     try:
         if os.path.exists(requirements_path):
             subprocess_env = os.environ.copy()

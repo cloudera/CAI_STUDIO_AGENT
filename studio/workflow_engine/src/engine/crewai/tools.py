@@ -310,6 +310,15 @@ def _prepare_virtual_env_for_tool_impl(
     try:
         if with_ == "uv":
             pip_install_command = [uv_bin, "pip", "install", "-r", requirements_file_path]
+            # Honor PyPI mirror if provided
+            default_index = os.environ.get("UV_DEFAULT_INDEX")
+            insecure_host = os.environ.get("UV_INSECURE_HOST")
+            print(f"default_index: {default_index}")
+            print(f"insecure_host: {insecure_host}")
+            if default_index:
+                pip_install_command.extend(["--index-url", default_index])
+            if insecure_host:
+                pip_install_command.extend(["--trusted-host", insecure_host])
         else:
             python_exe = os.path.join(venv_dir, "bin", "python")
             pip_install_command = [
