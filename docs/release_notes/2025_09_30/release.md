@@ -47,16 +47,6 @@ You can read more about custom applications and the deployed workflow API here: 
 
 ![API docs](./003_api_docs.png)
 
-## Agent Studio Runtimes
-
-Starting this release, Agent Studio now ships as a fully supported Cloudera AI [Runtime](https://docs.cloudera.com/machine-learning/cloud/architecture-overview/topics/ml-architecture-overview-runtimes.html). Installing Agent Studio as a runtime comes with the following benefits:
-* Significantly improved installation times, upgrade times and workflow deployment times
-* Ease of installation in airgapped environments
-
-You can read more about Agent Studio Runtimes here: [Runtimes](../../user_guide/runtimes.md)
-
-![Runtimes](./004_runtimes.png)
-
 ## UI Bugfixes and Enhancements
 
 Several bugfixes and enhancements have been made to the Agent Studio UI, including:
