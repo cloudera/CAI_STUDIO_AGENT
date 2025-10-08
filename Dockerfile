@@ -1,5 +1,5 @@
 # Stage 1: Build stage
-FROM docker-private.infra.cloudera.com/cloudera/cdsw/ml-runtime-pbj-workbench-python3.10-standard:2025.09.1-b5 AS builder
+FROM docker.repository.cloudera.com/cloudera/cdsw/ml-runtime-pbj-workbench-python3.10-standard:2025.09.1-b5 AS builder
 
 USER root
 WORKDIR /studio_app
@@ -50,7 +50,7 @@ RUN cd studio/workflow_engine && \
     VIRTUAL_ENV=.venv uv sync --no-dev
 
 # Stage 2: Runtime stage
-FROM docker-private.infra.cloudera.com/cloudera/cdsw/ml-runtime-pbj-workbench-python3.10-standard:2025.09.1-b5
+FROM docker.repository.cloudera.com/cloudera/cdsw/ml-runtime-pbj-workbench-python3.10-standard:2025.09.1-b5
 
 USER root
 RUN mkdir -p /studio_app && chown cdsw:cdsw /studio_app

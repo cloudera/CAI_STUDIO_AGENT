@@ -20,7 +20,7 @@ def main():
       "runtimes": [
         {
           "image_identifier": f"docker.repository.cloudera.com/cloudera/studio/cloudera-ai-agent-studio:{PKG_VERSION}",
-          "runtime_metadata_version": 1,
+          "runtime_metadata_version": 2,
           "editor": "PBJ Workbench",
           "kernel": "Agent Studio",
           "description": "Agent Studio runtime provided by Cloudera",
