@@ -115,18 +115,18 @@ const deployedWorkflowResponseConversion = (configuration: any): WorkflowInfo =>
 
   // Convert workflow
   const workflow: Workflow = {
-    workflow_id: configuration.workflow.id,
-    name: configuration.workflow.name,
-    description: configuration.workflow.description,
+    workflow_id: configuration?.workflow?.id,
+    name: configuration?.workflow?.name,
+    description: configuration?.workflow?.description,
     crew_ai_workflow_metadata: {
-      agent_id: configuration.workflow.agent_ids,
-      task_id: configuration.workflow.task_ids,
-      manager_agent_id: configuration.workflow.manager_agent_id || '',
-      process: configuration.workflow.crew_ai_process,
+      agent_id: configuration?.workflow?.agent_ids,
+      task_id: configuration?.workflow?.task_ids,
+      manager_agent_id: configuration?.workflow?.manager_agent_id || '',
+      process: configuration?.workflow?.crew_ai_process,
     },
     is_valid: true,
     is_ready: true,
-    is_conversational: configuration.workflow.is_conversational,
+    is_conversational: configuration?.workflow?.is_conversational,
   };
 
   return {

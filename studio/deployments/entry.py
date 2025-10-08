@@ -28,7 +28,6 @@ from studio.cross_cutting.apiv2 import redeploy_single_workflow
 from studio.db import model as db_model
 import studio.cross_cutting.utils as cc_utils
 from studio.workflow.utils import set_workflow_deployment_stale_status
-from studio.cross_cutting.global_thread_pool import get_thread_pool
 
 
 def deploy_artifact(
@@ -115,7 +114,7 @@ def deploy(payload: DeploymentPayload, session: Session, cml: CMLServiceApi) -> 
         deployment: DeployedWorkflowInstance = initialize_deployment(payload, session, cml)
         print(f"Deployment initialized. Deployment ID: {deployment.id}, Deployment Name: {deployment.name}")
 
-        get_thread_pool().submit(set_workflow_deployment_stale_status, deployment.workflow_id, False)
+        set_workflow_deployment_stale_status(deployment.workflow_id, False)
 
         # Attempt a deployment
         try:

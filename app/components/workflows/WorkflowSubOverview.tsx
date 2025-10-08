@@ -279,7 +279,7 @@ const WorkflowSubOverview: React.FC<WorkflowSubOverviewProps> = ({
               'Please configure a default LLM model in the Models section to use workflows.',
               'warning',
             )
-          : invalidTools.length > 0
+          : invalidTools?.length > 0
             ? renderAlertLocal(
                 'Invalid Tools Detected',
                 `The following tools are invalid: ${invalidTools.map((t) => `${t.name} (${t.status})`).join(', ')}. Please go to Create or Edit Agent Modal to fix or delete these tools.`,
@@ -323,7 +323,7 @@ const WorkflowSubOverview: React.FC<WorkflowSubOverviewProps> = ({
                             'info',
                           )
                         : null)}
-      {wf.workflow.description.length > 0 && (
+      {wf.workflow?.description?.length > 0 && (
         <Collapse
           className="mb-3"
           bordered={false}
