@@ -277,4 +277,4 @@ db/
 
 # Node
 .nvm/
-/re_configs
+re_configs/
