@@ -24,6 +24,7 @@ interface ToolViewOrEditProps {
   onSave: (updatedFields: Partial<any>) => void;
   onRefresh?: () => void;
   setParentPageToolName?: (name: string) => void;
+  saving?: boolean;
 }
 
 const ToolViewOrEdit: React.FC<ToolViewOrEditProps> = ({
@@ -32,6 +33,7 @@ const ToolViewOrEdit: React.FC<ToolViewOrEditProps> = ({
   onSave,
   onRefresh,
   setParentPageToolName,
+  saving = false,
 }) => {
   const [toolName, setToolName] = useState<string>(toolDetails?.name || '');
   const [uploadedFilePath, setUploadedFilePath] = useState<string>('');
@@ -48,7 +50,9 @@ const ToolViewOrEdit: React.FC<ToolViewOrEditProps> = ({
   }, [toolDetails]);
 
   const handleFileUpload = async (file: File) => {
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     // Validate file type
     const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
@@ -107,26 +111,9 @@ const ToolViewOrEdit: React.FC<ToolViewOrEditProps> = ({
   };
 
   return (
-    <Layout
-      style={{
-        display: 'flex',
-        flexDirection: 'row',
-        width: '100%',
-        height: '100vh',
-        overflow: 'hidden',
-      }}
-    >
+    <Layout className="flex flex-row w-full h-screen overflow-hidden">
       {/* Left Side: Tool Details */}
-      <Layout
-        style={{
-          flex: 1,
-          borderRight: '1px solid #f0f0f0',
-          background: '#fff',
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          padding: '16px',
-        }}
-      >
+      <Layout className="flex-1 border-r border-solid border-[#f0f0f0] bg-white overflow-y-auto overflow-x-hidden p-4">
         {/* Tool Name */}
         <Text strong>Tool Name</Text>
         <Input
@@ -136,34 +123,24 @@ const ToolViewOrEdit: React.FC<ToolViewOrEditProps> = ({
             setParentPageToolName?.(e.target.value);
           }}
           disabled={mode === 'view'}
-          style={{
-            marginTop: '8px',
-            backgroundColor: mode === 'view' ? '#fff' : undefined,
-            cursor: mode === 'view' ? 'not-allowed' : 'text',
-            color: mode === 'view' ? '#000' : undefined,
-          }}
+          className={mode === 'view' ? 'mt-2 bg-white cursor-not-allowed text-black' : 'mt-2'}
         />
-        <div style={{ margin: '16px 0' }} />
+        <div className="my-4" />
 
         {/* Tool Description */}
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+        <div className="flex items-center">
           <Text strong>Tool Description</Text>
           <Tooltip title="The tool description is fetched from the tool class definition in tool.py file.">
-            <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+            <QuestionCircleOutlined className="ml-2 cursor-pointer" />
           </Tooltip>
         </div>
         <TextArea
           rows={4}
           value={toolDetails?.tool_description}
           disabled
-          style={{
-            marginTop: '8px',
-            backgroundColor: mode === 'view' ? '#fff' : undefined,
-            cursor: mode === 'view' ? 'not-allowed' : 'text',
-            color: mode === 'view' ? '#000' : undefined,
-          }}
+          className={mode === 'view' ? 'mt-2 bg-white cursor-not-allowed text-black' : 'mt-2'}
         />
-        <div style={{ margin: '16px 0' }} />
+        <div className="my-4" />
 
         {/* Validation Errors (if any) */}
         {toolDetails?.tool_metadata &&
@@ -176,22 +153,15 @@ const ToolViewOrEdit: React.FC<ToolViewOrEditProps> = ({
                 return (
                   <>
                     <Text strong>Validation Errors</Text>
-                    <div
-                      style={{
-                        background: '#ffccc7',
-                        padding: '12px',
-                        borderRadius: '4px',
-                        marginTop: '8px',
-                      }}
-                    >
+                    <div className="bg-[#ffccc7] p-3 rounded mt-2">
                       {validation_errors.map((error, index) => (
-                        <div key={index} style={{ display: 'flex', marginBottom: '4px' }}>
-                          <span style={{ marginRight: '8px' }}>•</span>
+                        <div key={index} className="flex mb-1">
+                          <span className="mr-2">•</span>
                           <span>{error}</span>
                         </div>
                       ))}
                     </div>
-                    <div style={{ margin: '16px 0' }} />
+                    <div className="my-4" />
                   </>
                 );
               } else {
@@ -207,7 +177,7 @@ const ToolViewOrEdit: React.FC<ToolViewOrEditProps> = ({
         {mode === 'edit' && (
           <>
             <Text strong>Tool Icon</Text>
-            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+            <div className="flex flex-row items-center">
               <Upload
                 accept=".png,.jpg,.jpeg"
                 customRequest={({ file, onSuccess, onError }) => {
@@ -221,7 +191,7 @@ const ToolViewOrEdit: React.FC<ToolViewOrEditProps> = ({
                 <Button
                   icon={selectedFile ? <FileImageOutlined /> : <UploadOutlined />}
                   loading={isUploading}
-                  style={{ marginTop: '8px' }}
+                  className="mt-2"
                   disabled={selectedFile !== null}
                 >
                   {selectedFile ? selectedFile.name : 'Upload File'}
@@ -230,7 +200,7 @@ const ToolViewOrEdit: React.FC<ToolViewOrEditProps> = ({
               {selectedFile && (
                 <Button
                   icon={<DeleteOutlined />}
-                  style={{ marginLeft: '8px', marginTop: '8px' }}
+                  className="ml-2 mt-2"
                   onClick={() => {
                     setSelectedFile(null);
                     setUploadedFilePath('');
@@ -238,34 +208,34 @@ const ToolViewOrEdit: React.FC<ToolViewOrEditProps> = ({
                 />
               )}
             </div>
-            <div style={{ margin: '16px 0' }} />
+            <div className="my-4" />
           </>
         )}
 
         {/* Save Button */}
         {mode === 'edit' && (
-          <Button type="primary" block onClick={handleSave} style={{ marginTop: 'auto' }}>
+          <Button
+            type="primary"
+            block
+            onClick={handleSave}
+            className="mt-auto"
+            loading={saving}
+            disabled={saving}
+          >
             Save
           </Button>
         )}
       </Layout>
 
       {/* Right Side: Placeholder for Workflow Diagram */}
-      <Layout style={{ flex: 1, overflow: 'hidden', background: '#fafafa' }}>
+      <Layout className="flex-1 overflow-hidden bg-[#fafafa]">
         {/* Tool Template Edit and Refresh Button */}
         {/* Buttons Row */}
         {/* Buttons in a Single Row */}
         {/* Tool Template Details */}
         {toolDetails && (
-          <Layout style={{ flex: 1, background: '#fff', padding: '16px', borderRadius: '8px' }}>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                marginTop: '12px',
-                marginBottom: '12px',
-              }}
-            >
+          <Layout className="flex-1 bg-white p-4 rounded">
+            <div className="flex justify-between mt-3 mb-3">
               {!toolDetails?.pre_built ? (
                 <Button type="text" onClick={handleEditToolFile} size="small">
                   Edit Tool File <ExportOutlined />
@@ -283,9 +253,7 @@ const ToolViewOrEdit: React.FC<ToolViewOrEditProps> = ({
                 Refresh
               </Button>
             </div>
-            <Typography style={{ fontSize: 13, fontWeight: 400, marginBottom: '8px' }}>
-              tool.py
-            </Typography>
+            <Typography className="text-sm font-normal mb-2">tool.py</Typography>
             <Editor
               height="800px"
               defaultLanguage="python"
@@ -297,16 +265,7 @@ const ToolViewOrEdit: React.FC<ToolViewOrEditProps> = ({
               }}
             />
 
-            <Typography
-              style={{
-                fontSize: 13,
-                fontWeight: 400,
-                marginTop: '16px',
-                marginBottom: '8px',
-              }}
-            >
-              requirements.txt
-            </Typography>
+            <Typography className="text-sm font-normal mt-4 mb-2">requirements.txt</Typography>
             <Editor
               height="150px"
               defaultLanguage="plaintext"

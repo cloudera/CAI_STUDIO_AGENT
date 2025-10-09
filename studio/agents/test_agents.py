@@ -1,3 +1,4 @@
+import os
 from sqlalchemy.exc import SQLAlchemyError
 from studio.db.dao import AgentStudioDao
 from studio.api import *
@@ -12,7 +13,10 @@ from studio.agents.agent import get_agent
 # will go away and workflow engine features will be available already.
 import sys
 
-sys.path.append("studio/workflow_engine/src")
+app_dir = os.getenv("APP_DIR")
+if not app_dir:
+    raise EnvironmentError("APP_DIR environment variable is not set.")
+sys.path.append(os.path.join(app_dir, "studio", "workflow_engine", "src"))
 
 from engine.crewai.tracing import instrument_crewai_workflow, reset_crewai_instrumentation
 

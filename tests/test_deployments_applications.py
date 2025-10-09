@@ -125,7 +125,7 @@ def test_create_application_for_deployed_workflow(
     mock_get_runtime.return_value = "runtime-abc"
 
     # Run
-    result = create_application_for_deployed_workflow(deployment, bypass_authentication=True, cml=cml)
+    result = create_application_for_deployed_workflow("test_target_dir", deployment, bypass_authentication=True, cml=cml)
 
     # Validate
     assert result == mock_app
@@ -168,7 +168,7 @@ def test_create_application_prefers_deployed_model_id_over_metadata(
     mock_get_subdir.return_value = "/studio/root"
     mock_get_runtime.return_value = "runtime-xyz"
 
-    result = create_application_for_deployed_workflow(deployment, bypass_authentication=False, cml=cml)
+    result = create_application_for_deployed_workflow("test_target_dir", deployment, bypass_authentication=False, cml=cml)
 
     assert result == mock_app
     req: CreateApplicationRequest = cml.create_application.call_args[0][0]

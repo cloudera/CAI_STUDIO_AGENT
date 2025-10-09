@@ -1,13 +1,9 @@
 import subprocess
+import os
+from startup_scripts.startup_utils import ensure_correct_base_path, load_dotenv_file
 
-def ensure_correct_base_path():
-    import os
-    is_composable: bool = os.getenv("IS_COMPOSABLE", "false").lower() == "true"
-    if is_composable:
-        subdirectory = "agent-studio"
-        working_dir = os.path.join("/home/cdsw", subdirectory)
-        print(f"Changing working directory to '{working_dir}'")
-        os.chdir(working_dir)
+# Load environment and execution directory.
+load_dotenv_file()
 ensure_correct_base_path()
 
 out = subprocess.run([f"bash ./bin/install-dependencies-script.sh"], shell=True, check=True)

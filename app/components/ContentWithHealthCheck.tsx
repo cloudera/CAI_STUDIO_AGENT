@@ -29,19 +29,7 @@ const ContentWithHealthCheck: React.FC<ContentWithHealthCheckProps> = ({ childre
     return <LargeCenterSpin message="Agent Studio is starting. Please wait..." />;
   }
 
-  return (
-    <Content
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        flex: 1,
-        width: '100%',
-      }}
-    >
-      {children}
-    </Content>
-  );
+  return <Content className="flex flex-col overflow-hidden flex-1 w-full">{children}</Content>;
 };
 
 export default ContentWithHealthCheck;

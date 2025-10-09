@@ -46,16 +46,25 @@ def upgrade_studio(cml: CMLServiceApi = None) -> UpgradeStudioResponse:
     studio_application: cmlapi.Application = get_application_by_name(
         cml, AGENT_STUDIO_SERVICE_APPLICATION_NAME, only_running=False
     )
-    ops_application: cmlapi.Application = get_application_by_name(
-        cml, AGENT_STUDIO_OPS_APPLICATION_NAME, only_running=False
-    )
-    for application in [studio_application, ops_application]:
-        print(f"Stopping the '{application.name}' application...")
-        if application.status.lower() == "stopped":
-            print(f"Application '{application.name}' is already stopped!")
+    if studio_application.status.lower() == "stopped":
+        print(f"Application '{studio_application.name}' is already stopped!")
+    else:
+        cml.stop_application(project_id=os.getenv("CDSW_PROJECT_ID"), application_id=studio_application.id)
+        print(f"Application '{studio_application.name}' stopped.")
+
+    # Ops & Metrics application is now optional. If it exists, stop it.
+    try:
+        ops_application: cmlapi.Application = get_application_by_name(
+            cml, AGENT_STUDIO_OPS_APPLICATION_NAME, only_running=False
+        )
+        if ops_application.status.lower() == "stopped":
+            print(f"Application '{ops_application.name}' is already stopped!")
         else:
-            cml.stop_application(project_id=os.getenv("CDSW_PROJECT_ID"), application_id=application.id)
-            print(f"Application '{application.name}' stopped.")
+            cml.stop_application(project_id=os.getenv("CDSW_PROJECT_ID"), application_id=ops_application.id)
+            print(f"Application '{ops_application.name}' stopped.")
+    except Exception as e:
+        ops_application = None
+        print(f"Error stopping Ops & Metrics application: {e}")
 
     # Always stash before doing any git operation, so we can safely switch versions/branches
     print(f"Attempting to pull new Agent Studio version...")
@@ -128,6 +137,8 @@ def upgrade_studio(cml: CMLServiceApi = None) -> UpgradeStudioResponse:
 
     print("Restarting all running applications in the Agent Studio ecosystem...")
     for application in [studio_application, ops_application]:
+        if not application:
+            continue
         print(f"Starting the '{application.name}' application...")
         cml.restart_application(os.getenv("CDSW_PROJECT_ID"), application.id)
         print(f"Application '{application.name}' restart request sent.")
@@ -138,27 +149,33 @@ def upgrade_studio(cml: CMLServiceApi = None) -> UpgradeStudioResponse:
         studio_application: cmlapi.Application = get_application_by_name(
             cml, AGENT_STUDIO_SERVICE_APPLICATION_NAME, only_running=False
         )
-        ops_application: cmlapi.Application = get_application_by_name(
-            cml, AGENT_STUDIO_OPS_APPLICATION_NAME, only_running=False
-        )
+        try:
+            ops_application: cmlapi.Application = get_application_by_name(
+                cml, AGENT_STUDIO_OPS_APPLICATION_NAME, only_running=False
+            )
+        except Exception as e:
+            ops_application = None
+
         print("Application statuses:")
         print(
             json.dumps(
                 {
                     f"{AGENT_STUDIO_SERVICE_APPLICATION_NAME}": studio_application.status,
-                    f"{AGENT_STUDIO_OPS_APPLICATION_NAME}": ops_application.status,
+                    f"{AGENT_STUDIO_OPS_APPLICATION_NAME}": ops_application.status if ops_application else "NOT_FOUND",
                 },
                 indent=2,
             )
         )
-        if studio_application.status == "APPLICATION_RUNNING" and ops_application.status == "APPLICATION_RUNNING":
+        if studio_application.status == "APPLICATION_RUNNING" and (
+            ops_application.status == "APPLICATION_RUNNING" if ops_application else True
+        ):
             print("Agent Studio back up and running!")
             break
 
     # Run post upgrade hook
     print("Running the post-upgrade hoook...")
     try:
-        subprocess.run(["uv", "run", "bin/post-upgrade-hook.py"], check=True)
+        subprocess.run(["uv run bin/post-upgrade-hook.py"], shell=True, check=True)
     except subprocess.CalledProcessError as e:
         print(f"Error running post upgrade: {e}")
 

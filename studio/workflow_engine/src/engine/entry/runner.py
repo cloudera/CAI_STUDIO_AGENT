@@ -1,7 +1,11 @@
+import os
+
+# Move to our app's data dir.
+os.chdir(os.getenv("APP_DATA_DIR"))
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import asyncio
-import os
 import sys
 import traceback
 import requests

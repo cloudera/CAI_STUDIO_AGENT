@@ -67,6 +67,8 @@ def import_defaults():
 
     # Get the project defaults
     defaults_file = get_project_defaults_location()
+    if os.getenv("AGENT_STUDIO_DEPLOY_MODE", "amp") == "runtime":
+        defaults_file = os.path.join(os.getenv("APP_DIR"), defaults_file)
 
     # Create a brand new DAO (and a brand new .app/state.db) and write project defaults.
     dao: AgentStudioDao = AgentStudioDao()

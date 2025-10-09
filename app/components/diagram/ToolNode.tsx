@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { Handle, Position, NodeProps, Node, NodeToolbar } from '@xyflow/react';
-import { Avatar, Image, Typography, Tooltip } from 'antd';
+import { Avatar, Typography, Tooltip } from 'antd';
 import { ToolOutlined, EditOutlined } from '@ant-design/icons';
-import WorkflowAddToolModal from '../workflowEditor/WorkflowAddToolModal';
 import { useAppDispatch } from '@/app/lib/hooks/hooks';
-import { updatedEditorAgentViewCreateAgentState } from '@/app/workflows/editorSlice';
+import {
+  openedEditorToolView,
+  updatedEditorAgentViewCreateAgentState,
+  updatedEditorSelectedToolInstanceId,
+} from '@/app/workflows/editorSlice';
 
 const { Paragraph } = Typography;
 
@@ -21,15 +24,15 @@ type ToolNode = Node<
     workflowId: string;
     toolInstanceId: string;
     agentId: string;
-    agentTools: any[]; // Added for passing tools to the modal
+    agentTools: string[]; // Added for passing tools to the modal
     showEditButton?: boolean; // Control whether to show edit button
   },
-  'task'
+  'tool'
 >;
 
 export default function ToolNode({ data }: NodeProps<ToolNode>) {
   const [isHovered, setIsHovered] = useState(false);
-  const [isToolModalOpen, setIsToolModalOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const dispatch = useAppDispatch();
 
   // Set agent context before opening modal
@@ -42,7 +45,8 @@ export default function ToolNode({ data }: NodeProps<ToolNode>) {
         tools: data.agentTools, // agentTools should be passed in data
       }),
     );
-    setIsToolModalOpen(true);
+    dispatch(updatedEditorSelectedToolInstanceId(data.toolInstanceId));
+    dispatch(openedEditorToolView());
   };
 
   return (
@@ -127,20 +131,23 @@ export default function ToolNode({ data }: NodeProps<ToolNode>) {
 
       {/* Ant Design Avatar */}
       <Avatar
+        src={data.iconData && !imageError ? data.iconData : undefined}
+        onError={() => {
+          setImageError(true);
+          return false;
+        }}
         style={{
           position: 'absolute',
           bottom: -25,
           boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)', // Optional shadow for floating look,
           backgroundColor: 'white',
-          padding: data.iconData ? 5 : 0,
+          padding: data.iconData && !imageError ? 5 : 0,
         }}
         size={36}
         icon={
-          data.iconData ? (
-            <Image src={data.iconData} />
-          ) : (
+          !data.iconData || imageError ? (
             <ToolOutlined style={{ opacity: 0.6, color: 'black' }} />
-          )
+          ) : undefined
         }
       />
 
@@ -162,15 +169,6 @@ export default function ToolNode({ data }: NodeProps<ToolNode>) {
 
       {/* Handles for React Flow */}
       <Handle type="target" position={Position.Top} style={{ background: '#555' }} />
-      {/* Tool Modal */}
-      {isToolModalOpen && (
-        <WorkflowAddToolModal
-          workflowId={data.workflowId}
-          preSelectedToolInstanceId={data.toolInstanceId}
-          open={isToolModalOpen}
-          onCancel={() => setIsToolModalOpen(false)}
-        />
-      )}
     </div>
   );
 }

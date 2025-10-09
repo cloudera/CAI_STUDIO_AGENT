@@ -8,10 +8,11 @@ import {
   TestWorkflowRequest,
   TestWorkflowResponse,
   UpdateWorkflowRequest,
-  UpdateWorkflowResponse,
   AddWorkflowRequest,
   DeployWorkflowRequest,
   AddWorkflowResponse,
+  CloneWorkflowRequest,
+  CloneWorkflowResponse,
   WorkflowTemplateMetadata,
   ListWorkflowTemplatesRequest,
   ListWorkflowTemplatesResponse,
@@ -24,6 +25,7 @@ import {
   ExportWorkflowTemplateResponse,
   ImportWorkflowTemplateRequest,
   ImportWorkflowTemplateResponse,
+  DeployWorkflowResponse,
 } from '@/studio/proto/agent_studio';
 
 import { apiSlice } from '../api/apiSlice';
@@ -81,7 +83,7 @@ export const workflowsApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: (result, error, request) => [
         { type: 'Workflow', id: request.workflow_id },
-        // { type: 'Workflow', id: 'LIST' }
+        { type: 'DeployedWorkflow', id: 'LIST' },
       ],
     }),
     removeWorkflow: builder.mutation<void, RemoveWorkflowRequest>({
@@ -106,7 +108,18 @@ export const workflowsApi = apiSlice.injectEndpoints({
         return response;
       },
     }),
-    deployWorkflow: builder.mutation<void, DeployWorkflowRequest>({
+    cloneWorkflow: builder.mutation<string, CloneWorkflowRequest>({
+      query: (request) => ({
+        url: '/grpc/cloneWorkflow',
+        method: 'POST',
+        body: request,
+      }),
+      transformResponse: (response: CloneWorkflowResponse) => {
+        return response.workflow_id;
+      },
+      invalidatesTags: [{ type: 'Workflow', id: 'LIST' }],
+    }),
+    deployWorkflow: builder.mutation<DeployWorkflowResponse, DeployWorkflowRequest>({
       query: (request) => ({
         url: '/grpc/deployWorkflow',
         method: 'POST',
@@ -116,6 +129,7 @@ export const workflowsApi = apiSlice.injectEndpoints({
         { type: 'Workflow', id: request.workflow_id },
         { type: 'Workflow', id: 'LIST' },
         { type: 'DeployedWorkflow', id: 'LIST' },
+        { type: 'DeployedWorkflow', id: result?.deployed_workflow_id },
       ],
     }),
     listWorkflowTemplates: builder.query<WorkflowTemplateMetadata[], ListWorkflowTemplatesRequest>({
@@ -203,6 +217,7 @@ export const {
   useRemoveWorkflowMutation,
   useTestWorkflowMutation,
   useUpdateWorkflowMutation,
+  useCloneWorkflowMutation,
   useDeployWorkflowMutation,
   useAddWorkflowMutation,
   useListWorkflowTemplatesQuery,

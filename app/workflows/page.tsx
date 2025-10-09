@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Button, Typography, Layout, Image } from 'antd';
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation'; // Use Next.js router
@@ -22,18 +22,20 @@ import CommonBreadCrumb from '../components/CommonBreadCrumb';
 import { useGlobalNotification } from '../components/Notifications';
 import WorkflowGetStartModal from '../components/workflows/WorkflowGetStartModal';
 import { clearedWorkflowApp } from './workflowAppSlice';
-
+import i18n from '../utils/i18n';
 import ContentWithHealthCheck from '../components/ContentWithHealthCheck';
+import LargeCenterSpin from '../components/common/LargeCenterSpin';
 
-const { Text, Title, Paragraph } = Typography;
+const { Text } = Typography;
 
 const WorkflowsPageContent: React.FC = () => {
-  const { data: workflows } = useListWorkflowsQuery({}, { refetchOnMountOrArgChange: true });
-  const { data: deployedWorkflowInstances } = useListDeployedWorkflowsQuery(
+  const { data: workflows, isLoading: isWorkflowsLoading } = useListWorkflowsQuery(
     {},
-    { pollingInterval: 10000 },
+    { refetchOnMountOrArgChange: true },
   );
-  const { data: workflowTemplates } = useListWorkflowTemplatesQuery(
+  const { data: deployedWorkflowInstances, isLoading: isDeployedLoading } =
+    useListDeployedWorkflowsQuery({}, { pollingInterval: 10000 });
+  const { data: workflowTemplates, isLoading: isTemplatesLoading } = useListWorkflowTemplatesQuery(
     {},
     { refetchOnMountOrArgChange: true },
   );
@@ -53,15 +55,24 @@ const WorkflowsPageContent: React.FC = () => {
   const [addWorkflow] = useAddWorkflowMutation();
   const notificationApi = useGlobalNotification();
   const [isGetStartModalVisible, setGetStartModalVisible] = useState(false);
+  const [creatingWorkflow, setCreatingWorkflow] = useState(false);
+
+  if (isWorkflowsLoading || isDeployedLoading || isTemplatesLoading) {
+    return <LargeCenterSpin message="Loading workflows..." />;
+  }
 
   const handleGetStarted = () => {
     setGetStartModalVisible(true);
   };
 
   const handleCreateWorkflow = async (name: string, templateId?: string) => {
+    if (creatingWorkflow) {
+      return;
+    }
     dispatch(resetEditor());
     dispatch(clearedWorkflowApp());
     try {
+      setCreatingWorkflow(true);
       const workflowId = await addWorkflow({
         name,
         workflow_template_id: templateId || undefined,
@@ -75,12 +86,14 @@ const WorkflowsPageContent: React.FC = () => {
 
       setGetStartModalVisible(false);
       router.push(`/workflows/create?workflowId=${workflowId}`);
-    } catch (error) {
+    } catch (_error) {
       notificationApi.error({
         message: 'Error',
         description: 'Failed to create workflow.',
         placement: 'topRight',
       });
+    } finally {
+      setCreatingWorkflow(false);
     }
   };
 
@@ -121,7 +134,9 @@ const WorkflowsPageContent: React.FC = () => {
   };
 
   const handleDeleteWorkflowOrWorkflowTemplate = async () => {
-    if (!selectedWorkflow && !selectedWorkflowTemplate) return;
+    if (!selectedWorkflow && !selectedWorkflowTemplate) {
+      return;
+    }
 
     try {
       if (selectedWorkflow) {
@@ -212,14 +227,16 @@ const WorkflowsPageContent: React.FC = () => {
   };
 
   const handleDeleteDeployedWorkflow = async () => {
-    if (!selectedDeployedWorkflow) return;
+    if (!selectedDeployedWorkflow) {
+      return;
+    }
 
     try {
       await undeployWorkflow({
         deployed_workflow_id: selectedDeployedWorkflow.deployed_workflow_id,
       }).unwrap();
       closeDeleteDeployedWorkflowModal();
-    } catch (error) {
+    } catch (_error) {
       notificationApi.error({
         message: 'Error',
         description: 'Failed to delete deployed workflow.',
@@ -229,77 +246,29 @@ const WorkflowsPageContent: React.FC = () => {
   };
 
   return (
-    <Layout
-      style={{
-        flex: 1,
-        padding: '16px 24px 0px',
-        flexDirection: 'column',
-        background: 'transparent',
-      }}
-    >
-      <CommonBreadCrumb items={[{ title: 'Agentic Workflows' }]} />
+    <Layout className="flex-1 pt-4 px-6 pb-0 flex flex-col bg-transparent">
+      <CommonBreadCrumb items={[{ title: i18n.t('workflows.title') }]} />
       <Layout>
-        <Layout
-          style={{
-            background: '#fff',
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexGrow: 0,
-            padding: '16px',
-          }}
-        >
+        <Layout className="bg-white flex flex-row items-center justify-between p-4">
           {/* Icon */}
-          <div
-            style={{
-              width: '66px',
-              height: '66px',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              overflow: 'hidden',
-              backgroundColor: '#fff4cd',
-              margin: '0px',
-            }}
-          >
+          <div className="w-[66px] h-[66px] rounded-full flex items-center justify-center overflow-hidden bg-[#fff4cd] m-0">
             <Image src="/ic-brand-algorithm.svg" alt="Workflow Catalog Icon" />
           </div>
           {/* Descriptive Text */}
-          <Layout
-            style={{
-              background: 'transparent',
-              flex: 1,
-              marginLeft: '12px',
-              flexDirection: 'column',
-              display: 'flex',
-            }}
-          >
-            <Text style={{ fontWeight: 600, fontSize: '18px' }}>Create Agentic Workflow</Text>
-            <Text style={{ fontWeight: 350 }}>
-              Orchestrate AI agents to collaborate on complex tasks, powered by custom tools and
-              seamless workflow automation.
-            </Text>
+          <Layout className="bg-transparent flex-1 ml-3 flex flex-col">
+            <Text className="font-semibold text-lg">{i18n.t('workflows.createTitle')}</Text>
+            <Text className="font-normal">{i18n.t('workflows.createDesc')}</Text>
           </Layout>
           {/* Register New Workflow Button */}
           <Button
             type="primary"
-            style={{
-              marginLeft: '20px',
-              marginRight: '16px',
-              marginTop: '20px',
-              marginBottom: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              flexDirection: 'row-reverse',
-            }}
+            className="ml-5 mr-4 my-5 flex items-center justify-center gap-2 flex-row-reverse"
             icon={<ArrowRightOutlined />}
             onClick={handleGetStarted}
+            loading={creatingWorkflow}
+            disabled={creatingWorkflow}
           >
-            Create
+            {i18n.t('workflows.create')}
           </Button>
         </Layout>
         &nbsp;
@@ -335,6 +304,7 @@ const WorkflowsPageContent: React.FC = () => {
         onCancel={() => setGetStartModalVisible(false)}
         onCreateWorkflow={handleCreateWorkflow}
         workflowTemplates={workflowTemplates || []}
+        loading={creatingWorkflow}
       />
     </Layout>
   );

@@ -17,7 +17,7 @@ interface WorkflowEditorTaskViewProps {
   workflowId: string;
 }
 
-const WorkflowEditorTaskView: React.FC<WorkflowEditorTaskViewProps> = ({ workflowId }) => {
+const WorkflowEditorTaskView = ({ workflowId }: WorkflowEditorTaskViewProps) => {
   const dispatch = useAppDispatch();
   const workflowState = useAppSelector(selectEditorWorkflow);
   const [getWorkflow] = useGetWorkflowMutation();
@@ -39,20 +39,15 @@ const WorkflowEditorTaskView: React.FC<WorkflowEditorTaskViewProps> = ({ workflo
     }
   }, [workflowId, workflowState.workflowId, dispatch, getWorkflow]);
 
-  if (!workflowState.workflowId) return null;
+  if (!workflowState.workflowId) {
+    return null;
+  }
 
   return (
     <>
-      <Layout
-        style={{
-          flex: 1,
-          flexDirection: 'row',
-          backgroundColor: 'white',
-          borderRadius: 4,
-        }}
-      >
+      <Layout className="flex-1 flex-row bg-white rounded-md">
         <WorkflowEditorTaskInputs workflowId={workflowId}></WorkflowEditorTaskInputs>
-        <Divider type="vertical" style={{ height: '100%', flexGrow: 0, flexShrink: 0 }} />
+        <Divider type="vertical" className="h-full flex-grow-0 flex-shrink-0" />
         <WorkflowDiagramView
           workflowState={workflowState}
           toolInstances={toolInstances}

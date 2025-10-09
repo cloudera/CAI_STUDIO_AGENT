@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, ANY
 import os
 import json
 
@@ -33,29 +33,30 @@ from studio.deployments.targets.workbench import (
 )
 
 
-@patch("studio.deployments.targets.workbench.get_studio_subdirectory", return_value="studio_subdir")
 @patch("studio.deployments.targets.workbench.is_custom_model_root_dir_feature_enabled", return_value=True)
-def test_get_workbench_model_config_custom_enabled(mock_custom_enabled, mock_get_subdir):
-    artifact = DeploymentArtifact(project_location="/tmp/deployment_artifacts/fake-artifact.tar.gz")
+def test_get_workbench_model_config_custom_enabled(mock_custom_enabled):
+    artifact = DeploymentArtifact(artifact_path="/tmp/deployment_artifacts/fake-artifact.tar.gz")
     result = get_workbench_model_config("my_workflow", artifact)
-    assert result == {
-        "model_root_dir": os.path.join("studio_subdir", "my_workflow"),
-        "model_file_path": "src/engine/entry/workbench.py",
+    expected = {
+        "model_root_dir": os.path.join("my_workflow"),
+        "model_file_path": "workbench.py",
         "workflow_artifact_location": "/home/cdsw/fake-artifact.tar.gz",
         "model_execution_dir": "/home/cdsw",
     }
+    assert result == expected
 
-@patch("studio.deployments.targets.workbench.get_studio_subdirectory", return_value="studio_subdir")
+
 @patch("studio.deployments.targets.workbench.is_custom_model_root_dir_feature_enabled", return_value=False)
-def test_get_workbench_model_config_custom_disabled(mock_custom_enabled, mock_get_subdir):
-    artifact = DeploymentArtifact(project_location="/tmp/deployment_artifacts/fake-artifact.tar.gz")
+def test_get_workbench_model_config_custom_disabled(mock_custom_enabled):
+    artifact = DeploymentArtifact(artifact_path="/tmp/deployment_artifacts/fake-artifact.tar.gz")
     result = get_workbench_model_config("my_workflow", artifact)
-    assert result == {
+    expected = {
         "model_root_dir": None,
-        "model_file_path": os.path.join("studio_subdir", "my_workflow", "src/engine/entry/workbench.py"),
-        "workflow_artifact_location": os.path.join("/home/cdsw", "studio_subdir", "my_workflow", "fake-artifact.tar.gz"),
-        "model_execution_dir": os.path.join("/home/cdsw", "studio_subdir", "my_workflow"),
+        "model_file_path": "my_workflow/workbench.py",
+        "workflow_artifact_location": os.path.join("/home/cdsw", "my_workflow", "fake-artifact.tar.gz"),
+        "model_execution_dir": os.path.join("/home/cdsw", "my_workflow"),
     }
+    assert result == expected
     
     
 class DummyDeploymentConfig:
@@ -68,7 +69,7 @@ class DummyPayload:
     def __init__(self):
         self.deployment_config = DummyDeploymentConfig()
 
-artifact = DeploymentArtifact(project_location="/tmp/deployment_artifacts/fake-artifact.tar.gz")
+artifact = DeploymentArtifact(artifact_path="/tmp/deployment_artifacts/fake-artifact.tar.gz")
 payload = DummyPayload()
 deployment = MagicMock(spec=DeployedWorkflowInstance)
 session = MagicMock(spec=Session)
@@ -94,7 +95,7 @@ def test_prepare_env_vars_for_workbench_success(mock_get_api_key, mock_validate,
 
     result = prepare_env_vars_for_workbench(
         cml=MagicMock(),
-        deployable_workflow_dir="workflow_dir",
+        deployment_target_project_dir="workflow_dir",
         artifact=artifact,
         payload=payload,
         deployment=deployment,
@@ -108,6 +109,7 @@ def test_prepare_env_vars_for_workbench_success(mock_get_api_key, mock_validate,
         "AGENT_STUDIO_MODEL_EXECUTION_DIR": "/home/cdsw/exec",
         "CDSW_APIV2_KEY": "key_value",
         "CDSW_PROJECT_ID": "fake-project-id",
+        "AGENT_STUDIO_DEPLOY_MODE": "amp",
         "CUSTOM_ENV_VAR": "value",
         "CREWAI_DISABLE_TELEMETRY": "true",
         "AGENT_STUDIO_WORKBENCH_TLS_ENABLED": "true",
@@ -119,7 +121,7 @@ def test_prepare_env_vars_for_workbench_success(mock_get_api_key, mock_validate,
 @patch("studio.deployments.targets.workbench.get_api_key_from_env", return_value=(None, None))
 def test_prepare_env_vars_missing_api_key(mock_get_api_key):
     cml = MagicMock()
-    artifact = DeploymentArtifact(project_location="/tmp/fake.tar.gz")
+    artifact = DeploymentArtifact(artifact_path="/tmp/fake.tar.gz")
     payload = DummyPayload()
     deployment = MagicMock()
     session = MagicMock()
@@ -132,7 +134,7 @@ def test_prepare_env_vars_missing_api_key(mock_get_api_key):
 @patch("studio.deployments.targets.workbench.validate_api_key", return_value=False)
 def test_prepare_env_vars_invalid_api_key(mock_validate, mock_get_api_key):
     cml = MagicMock()
-    artifact = DeploymentArtifact(project_location="/tmp/fake.tar.gz")
+    artifact = DeploymentArtifact(artifact_path="/tmp/fake.tar.gz")
     payload = DummyPayload()
     deployment = MagicMock()
     session = MagicMock()
@@ -226,6 +228,7 @@ def test_get_workbench_model_deep_link_not_found(mock_post, mock_get_ids):
     assert result == ""
     
 
+@patch.dict(os.environ, {"CDSW_DOMAIN": "test.domain.com", "AGENT_STUDIO_WORKBENCH_TLS_ENABLED": "true"})
 @patch("studio.deployments.targets.workbench.monitor_workbench_deployment_for_completion")
 @patch("studio.deployments.targets.workbench.get_application_deep_link", return_value="http://deep.link")
 @patch("studio.deployments.targets.workbench.create_application_for_deployed_workflow")
@@ -240,21 +243,27 @@ def test_get_workbench_model_deep_link_not_found(mock_post, mock_get_ids):
 })
 @patch("studio.deployments.targets.workbench.prepare_env_vars_for_workbench", return_value={"KEY": "VALUE"})
 @patch("studio.deployments.targets.workbench.create_new_cml_model", return_value="model123")
-@patch("studio.deployments.targets.workbench.copy_workflow_engine")
-@patch("studio.deployments.targets.workbench.shutil.copy")
+@patch("shutil.copy")
+@patch("shutil.copytree")
 @patch("studio.deployments.targets.workbench.os.makedirs")
-@patch("studio.deployments.targets.workbench.shutil.rmtree")
+@patch("shutil.rmtree")
 @patch("studio.deployments.targets.workbench.os.path.isdir", return_value=True)
+@patch("studio.deployments.targets.workbench.os.path.exists", return_value=True)
 @patch("studio.deployments.targets.workbench.cmlapi.default_client")
 @patch("studio.deployments.targets.workbench.cc_utils.get_deployed_workflow_runtime_identifier", return_value="runtime123")
+@patch("studio.deployments.targets.workbench.prepare_deployment_target_dir", return_value="workflow_dir")
+@patch("studio.deployments.targets.workbench.is_workbench_gteq_2_0_47", return_value=True)
 def test_deploy_artifact_to_workbench_success(
+    mock_is_workbench_gteq_2_0_47,
+    mock_prepare_deployment_target_dir,
     mock_runtime_id,
     mock_default_client,
+    mock_exists,
     mock_isdir,
     mock_rmtree,
     mock_makedirs,
+    mock_copytree,
     mock_copy,
-    mock_copy_engine,
     mock_create_model,
     mock_prepare_env,
     mock_get_config,
@@ -265,7 +274,7 @@ def test_deploy_artifact_to_workbench_success(
     mock_get_app_link,
     mock_monitor
 ):
-    artifact = DeploymentArtifact(project_location="artifact.tar.gz")
+    artifact = DeploymentArtifact(artifact_path="artifact.tar.gz")
     deployment_target = DeploymentTargetRequest(
         type="workbench_model",
         workbench_resource_profile=WorkbenchDeploymentResourceProfile(cpu=1, mem=1, num_replicas=1),
@@ -286,16 +295,17 @@ def test_deploy_artifact_to_workbench_success(
     mock_deploy_model.assert_called_once()
     mock_monitor.assert_called_once()
     mock_create_app.assert_called_once()
+    mock_create_app.assert_called_with(ANY, ANY, False, ANY)
     mock_update_meta.assert_called()
 
 
+@patch.dict(os.environ, {"CDSW_DOMAIN": "test.domain.com", "AGENT_STUDIO_WORKBENCH_TLS_ENABLED": "true"})
 @patch("studio.deployments.targets.workbench.monitor_workbench_deployment_for_completion")
 @patch("studio.deployments.targets.workbench.get_application_deep_link", return_value="https://app-link")
 @patch("studio.deployments.targets.workbench.create_application_for_deployed_workflow")
 @patch("studio.deployments.targets.workbench.update_deployment_metadata")
 @patch("studio.deployments.targets.workbench.get_workbench_model_deep_link", return_value="https://some-url/model-id")
 @patch("studio.deployments.targets.workbench.deploy_cml_model", return_value=("model-id-123", "build-id-456"))
-@patch("studio.deployments.targets.workbench.get_studio_subdirectory", return_value="studio-subdir")
 @patch("studio.deployments.targets.workbench.prepare_env_vars_for_workbench", return_value={"key": "value"})
 @patch("studio.deployments.targets.workbench.get_workbench_model_config", return_value={
     "model_root_dir": "/root/dir",
@@ -303,24 +313,29 @@ def test_deploy_artifact_to_workbench_success(
     "workflow_artifact_location": "/location/artifact.tar.gz",
     "model_execution_dir": "/exec"
 })
-@patch("studio.deployments.targets.workbench.shutil.copy", return_value=None)
-@patch("studio.deployments.targets.workbench.copy_workflow_engine", return_value=None)
+@patch("shutil.copy", return_value=None)
+@patch("shutil.copytree", return_value=None)
 @patch("studio.deployments.targets.workbench.os.makedirs", return_value=None)
-@patch("studio.deployments.targets.workbench.shutil.rmtree", return_value=None)
+@patch("shutil.rmtree", return_value=None)
 @patch("studio.deployments.targets.workbench.os.path.isdir", return_value=True)
+@patch("studio.deployments.targets.workbench.os.path.exists", return_value=True)
 @patch("studio.deployments.targets.workbench.cmlapi.default_client")
 @patch("studio.deployments.targets.workbench.cc_utils.get_deployed_workflow_runtime_identifier", return_value="runtime123")
+@patch("studio.deployments.targets.workbench.prepare_deployment_target_dir", return_value="workflow_dir")
+@patch("studio.deployments.targets.workbench.is_workbench_gteq_2_0_47", return_value=True)
 def test_deploy_artifact_to_workbench_success_auto_redeploy(
+    mock_is_workbench_gteq_2_0_47,
+    mock_prepare_deployment_target_dir,
     mock_runtime_id,
     mock_default_client,
+    mock_exists,
     mock_isdir,
     mock_rmtree,
     mock_makedirs,
-    mock_copy_engine,
+    mock_copytree,
     mock_copy_artifact,
     mock_model_config,
     mock_env_vars,
-    mock_subdir,
     mock_deploy_model,
     mock_deep_link,
     mock_update_metadata,
@@ -328,8 +343,8 @@ def test_deploy_artifact_to_workbench_success_auto_redeploy(
     mock_get_app_link,
     mock_monitor,
 ):
-    artifact = DeploymentArtifact(project_location="artifact.tar.gz")
-    
+    artifact = DeploymentArtifact(artifact_path="artifact.tar.gz")
+
     mock_create_app.return_value = MagicMock(id="app-123", name="Agent Studio")
 
     deployment_target = DeploymentTargetRequest(
@@ -354,42 +369,6 @@ def test_deploy_artifact_to_workbench_success_auto_redeploy(
     # Assert that auto-redeploy skipped model creation
     mock_deploy_model.assert_called_once()
     mock_update_metadata.assert_called()
-    mock_copy_engine.assert_called_once()
-    mock_copy_artifact.assert_called_once()
     mock_monitor.assert_called_once()
+    mock_create_app.assert_not_called()
     
-
-@patch("studio.deployments.targets.workbench.shutil.copy", return_value=None)
-@patch("studio.deployments.targets.workbench.os.makedirs")
-@patch("studio.deployments.targets.workbench.shutil.rmtree")
-@patch("studio.deployments.targets.workbench.os.path.isdir", return_value=False)
-@patch("studio.deployments.targets.workbench.cmlapi.default_client")
-def test_deploy_artifact_to_workbench_error_handling(
-    mock_default_client,
-    mock_isdir,
-    mock_rmtree,
-    mock_makedirs,
-    mock_copy
-):
-    artifact = DeploymentArtifact(project_location="artifact.tar.gz")
-    deployment_target = DeploymentTargetRequest(
-        type="workbench_model",
-        workbench_resource_profile=WorkbenchDeploymentResourceProfile(cpu=1, mem=1, num_replicas=1),
-        deploy_application=False
-    )
-    payload = DeploymentPayload(
-        deployment_target=deployment_target,
-        deployment_config=DeploymentConfig()
-    )
-    deployment = DeployedWorkflowInstance(id="123", name="workflow_name", deployment_metadata=json.dumps({}))
-    deployment.workflow = MagicMock(name="workflow")
-    session = MagicMock(spec=Session)
-
-    with patch("studio.deployments.targets.workbench.copy_workflow_engine", side_effect=Exception("BOOM")):
-        with pytest.raises(RuntimeError, match="Unexpected error occurred while deploying workflow: BOOM"):
-            deploy_artifact_to_workbench(artifact, payload, deployment, session, MagicMock())
-
-
-# TODO: fill in when monitoring is done
-def test_monitor_workbench_deployment_for_completion():
-    monitor_workbench_deployment_for_completion(None, None, None, None)

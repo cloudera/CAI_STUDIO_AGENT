@@ -15,7 +15,7 @@ const TestWorkflowPage: React.FC = () => {
   }
 
   return (
-    <Layout style={{ padding: '16px 24px', flexDirection: 'column' }}>
+    <Layout className="p-4 md:px-6 flex flex-col">
       <CommonBreadCrumb
         items={[{ title: 'Agentic Workflows', href: '/workflows' }, { title: 'Test Workflow' }]}
       />

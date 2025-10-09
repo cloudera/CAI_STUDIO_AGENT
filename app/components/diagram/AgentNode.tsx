@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Handle, Position, NodeProps, Node, NodeToolbar } from '@xyflow/react';
-import { Avatar, Image, Typography, Button, Tooltip } from 'antd';
+import { Avatar, Typography, Button, Tooltip } from 'antd';
 import { UsergroupAddOutlined, UserOutlined, EditOutlined } from '@ant-design/icons';
-import { useImageAssetsData } from '@/app/lib/hooks/useAssetData';
 import { useAppDispatch } from '@/app/lib/hooks/hooks';
 import {
   updatedEditorAgentViewOpen,
@@ -10,8 +9,22 @@ import {
   updatedEditorAgentViewAgent,
 } from '@/app/workflows/editorSlice';
 import { AgentMetadata } from '@/studio/proto/agent_studio';
+import { useWorkflowDiagramContext } from '../workflowApp/WorkflowDiagram';
 
 const { Paragraph } = Typography;
+
+const infoMessages = {
+  LLMCall: 'Calling LLM...',
+  ToolOutput: 'Tool Use Complete...',
+  ToolInput: 'Using Tool...',
+  TaskStart: 'Starting a Task...',
+  Completion: 'Thinking...',
+  FailedCompletion: 'Failed LLM Call...',
+  Delegate: 'Delegating...',
+  EndDelegate: 'Done Delegating...',
+  AskCoworker: 'Asking a coworker...',
+  EndAskCoworker: 'Done Asking a coworker...',
+};
 
 type AgentNode = Node<
   {
@@ -25,7 +38,6 @@ type AgentNode = Node<
     agentId?: string; // Add agent ID for edit functionality
     agentData?: AgentMetadata; // Add full agent data
     isDefaultManager?: boolean; // Add flag for default manager
-    onEditManager?: (agent: AgentMetadata) => void; // Add callback for manager edit
     showEditButton?: boolean; // Control whether to show edit button
   },
   'agent'
@@ -33,7 +45,9 @@ type AgentNode = Node<
 
 export default function AgentNode({ data }: NodeProps<AgentNode>) {
   const [isHovered, setIsHovered] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const dispatch = useAppDispatch();
+  const { onEditManager } = useWorkflowDiagramContext();
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -48,8 +62,8 @@ export default function AgentNode({ data }: NodeProps<AgentNode>) {
     e.stopPropagation();
     // For manager agents, we need to open the manager modal
     // This will be handled by the parent component through a callback
-    if (data.onEditManager && data.agentData) {
-      data.onEditManager(data.agentData);
+    if (onEditManager && data.agentData) {
+      onEditManager(data.agentData);
     }
   };
 
@@ -101,45 +115,48 @@ export default function AgentNode({ data }: NodeProps<AgentNode>) {
       )}
 
       {/* Edit Button - Show for custom manager agents (not default) */}
-      {data.manager && data.agentData && !data.isDefaultManager && data.onEditManager && (
-        <Tooltip title="Edit Manager Agent">
-          <Button
-            type="text"
-            icon={<EditOutlined style={{ color: 'white' }} />}
-            size="small"
-            onClick={handleEditManagerClick}
-            style={{
-              position: 'absolute',
-              bottom: -10, // Move to bottom right
-              right: -10,
-              zIndex: 10,
-              width: '24px',
-              height: '24px',
-              borderRadius: '50%',
-              backgroundColor: 'lightgrey',
-              border: '2px solid lightgrey',
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 0,
-              minWidth: 'auto',
-            }}
-          />
-        </Tooltip>
-      )}
+      {data.manager &&
+        data.agentData &&
+        !data.isDefaultManager &&
+        data.showEditButton !== false && (
+          <Tooltip title="Edit Manager Agent">
+            <Button
+              type="text"
+              icon={<EditOutlined style={{ color: 'white' }} />}
+              size="small"
+              onClick={handleEditManagerClick}
+              style={{
+                position: 'absolute',
+                bottom: -10, // Move to bottom right
+                right: -10,
+                zIndex: 10,
+                width: '24px',
+                height: '24px',
+                borderRadius: '50%',
+                backgroundColor: 'lightgrey',
+                border: '2px solid lightgrey',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0,
+                minWidth: 'auto',
+              }}
+            />
+          </Tooltip>
+        )}
 
       {data.info && (
         <>
           <NodeToolbar
             isVisible={true}
-            className="rounded-sm bg-primary p-2 text-primary-foreground"
+            className="rounded-sm p-2 text-primary-foreground"
             position={Position.Top}
             tabIndex={1}
             style={{
               maxWidth: 500,
               opacity: 0.8,
-              backgroundColor: '#1890ff',
+              backgroundColor: '#78b2ff',
             }}
           >
             <Paragraph
@@ -154,50 +171,38 @@ export default function AgentNode({ data }: NodeProps<AgentNode>) {
             >
               {isHovered
                 ? data.info
-                : data.infoType === 'LLMCall'
-                  ? 'Calling LLM...'
-                  : data.infoType === 'ToolOutput'
-                    ? 'Tool Use Complete...'
-                    : data.infoType === 'ToolInput'
-                      ? 'Using Tool...'
-                      : data.infoType === 'TaskStart'
-                        ? 'Starting a Task...'
-                        : data.infoType === 'Completion'
-                          ? 'Thinking...'
-                          : data.infoType === 'FailedCompletion'
-                            ? 'Failed LLM Call...'
-                            : data.infoType === 'Delegate'
-                              ? 'Delegating...'
-                              : data.infoType === 'EndDelegate'
-                                ? 'Done Delegating...'
-                                : data.infoType === 'AskCoworker'
-                                  ? 'Asking a coworker...'
-                                  : data.infoType === 'EndAskCoworker'
-                                    ? 'Done Asking a coworker...'
-                                    : 'Unknown...'}
+                : (data?.infoType && infoMessages[data.infoType as keyof typeof infoMessages]) ||
+                  'Unknown...'}
             </Paragraph>
           </NodeToolbar>
         </>
       )}
 
       <Avatar
+        src={!data.manager && data.iconData && !imageError ? data.iconData : undefined}
+        onError={() => {
+          setImageError(true);
+          return false;
+        }}
         style={{
           position: 'absolute',
           left: -30, // Position avatar overlapping to the left
           top: -30,
           boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)', // Optional shadow for floating look
-          backgroundColor: data.manager ? 'lightgrey' : data.iconData ? '#b8d6ff' : '#78b2ff', // or lightblue
-          padding: data.manager ? 0 : data.iconData ? 8 : 0,
+          backgroundColor: data.manager
+            ? 'lightgrey'
+            : data.iconData && !imageError
+              ? '#b8d6ff'
+              : '#78b2ff', // or lightblue
+          padding: data.manager ? 0 : data.iconData && !imageError ? 8 : 0,
         }}
         size={48}
         icon={
           data.manager ? (
             <UsergroupAddOutlined />
-          ) : data.iconData ? (
-            <Image src={data.iconData} alt={data.name} />
-          ) : (
+          ) : !data.iconData || imageError ? (
             <UserOutlined />
-          )
+          ) : undefined
         }
       />
 

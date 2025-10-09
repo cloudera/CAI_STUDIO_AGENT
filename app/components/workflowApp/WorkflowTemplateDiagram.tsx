@@ -13,7 +13,6 @@ import {
   type NodeTypes,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { createDiagramStateFromWorkflow, DiagramState } from '../../workflows/diagrams';
 import { useCallback, useEffect, useState } from 'react';
 import AgentNode from '../diagram/AgentNode';
 import TaskNode from '../diagram/TaskNode';
@@ -44,13 +43,13 @@ export interface WorkflowTemplateDiagramProps {
   mcpTemplates?: MCPTemplate[];
 }
 
-const WorkflowTemplateDiagram: React.FC<WorkflowTemplateDiagramProps> = ({
+const WorkflowTemplateDiagram = ({
   template,
   toolTemplates = [],
   agentTemplates = [],
   taskTemplates = [],
   mcpTemplates = [],
-}) => {
+}: WorkflowTemplateDiagramProps) => {
   const { fitView } = useReactFlow();
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
@@ -105,16 +104,7 @@ const WorkflowTemplateDiagram: React.FC<WorkflowTemplateDiagramProps> = ({
   }, [nodes, edges]);
 
   return (
-    <Layout
-      style={{
-        flexShrink: 0,
-        flexGrow: 1,
-        height: '100%',
-        flexDirection: 'column',
-        padding: 0,
-        background: 'transparent',
-      }}
-    >
+    <Layout className="flex-shrink-0 flex-grow h-full flex flex-col p-0 bg-transparent">
       <ReactFlow
         nodes={nodes}
         edges={edges}

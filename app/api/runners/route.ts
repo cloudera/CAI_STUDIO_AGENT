@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fetch from 'node-fetch';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   const numRunners = parseInt(process.env.AGENT_STUDIO_NUM_WORKFLOW_RUNNERS as string);
   const firstPort = 51000;
 

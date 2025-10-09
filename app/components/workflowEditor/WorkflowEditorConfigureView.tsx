@@ -12,9 +12,7 @@ interface WorkflowEditorConfigureViewProps {
   workflowId: string;
 }
 
-const WorkflowEditorConfigureView: React.FC<WorkflowEditorConfigureViewProps> = ({
-  workflowId,
-}) => {
+const WorkflowEditorConfigureView = ({ workflowId }: WorkflowEditorConfigureViewProps) => {
   const workflowState = useAppSelector(selectEditorWorkflow);
   const { data: toolInstances } = useListToolInstancesQuery({ workflow_id: workflowId });
   const { data: mcpInstances } = useListMcpInstancesQuery({ workflow_id: workflowId });
@@ -23,16 +21,9 @@ const WorkflowEditorConfigureView: React.FC<WorkflowEditorConfigureViewProps> = 
 
   return (
     <>
-      <Layout
-        style={{
-          flex: 1,
-          flexDirection: 'row',
-          backgroundColor: 'white',
-          borderRadius: 4,
-        }}
-      >
+      <Layout className="flex-1 flex flex-row bg-white rounded">
         <WorkflowEditorConfigureInputs workflowId={workflowId} />
-        <Divider type="vertical" style={{ height: '100%' }} />
+        <Divider type="vertical" className="h-full" />
         <WorkflowDiagramView
           workflowState={workflowState}
           toolInstances={toolInstances}

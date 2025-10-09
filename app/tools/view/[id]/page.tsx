@@ -23,15 +23,17 @@ const DeleteToolModal: React.FC<{
   onClose: () => void;
   toolDetails: ToolTemplate | null;
   onDelete: () => Promise<void>;
-}> = ({ isOpen, onClose, toolDetails, onDelete }) => {
+  deleting?: boolean;
+}> = ({ isOpen, onClose, toolDetails, onDelete, deleting = false }) => {
   return (
     <Modal
       title={`Are you sure you'd like to delete ${toolDetails?.name}?`}
       open={isOpen}
       onCancel={onClose}
       okText="Delete"
-      okButtonProps={{ danger: true }}
+      okButtonProps={{ danger: true, loading: deleting }}
       cancelText="Cancel"
+      confirmLoading={deleting}
       onOk={onDelete}
     />
   );
@@ -54,6 +56,8 @@ const ToolViewPage: React.FC = () => {
   const notificationApi = useGlobalNotification(); // Using global notification
   const [toolImageData, setToolImageData] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const { imageData } = useImageAssetsData(toolDetails ? [toolDetails.tool_image_uri] : []);
 
@@ -64,7 +68,9 @@ const ToolViewPage: React.FC = () => {
   }, [imageData, toolDetails]);
 
   const fetchToolDetails = async (showFullPageLoading: boolean) => {
-    if (!toolId) return;
+    if (!toolId) {
+      return;
+    }
     setLoading(showFullPageLoading);
     setError(null);
     try {
@@ -90,16 +96,12 @@ const ToolViewPage: React.FC = () => {
   }, [isEditMode, toolId, getTool, notificationApi]);
 
   const handleSave = async (updatedFields: Partial<any>) => {
-    if (!toolId) {
-      notificationApi.error({
-        message: 'Error',
-        description: 'Tool ID is not available.',
-        placement: 'topRight',
-      });
+    if (!toolId || saving) {
       return;
     }
 
     try {
+      setSaving(true);
       notificationApi.info({
         message: 'Updating Tool',
         description: 'Updating tool details...',
@@ -119,6 +121,7 @@ const ToolViewPage: React.FC = () => {
       });
 
       router.push('/tools?section=tools'); // Redirect to /tools page
+      return;
     } catch (err: any) {
       const errorMessage = err.data?.error || err.message || 'Failed to update the tool.';
       notificationApi.error({
@@ -126,13 +129,18 @@ const ToolViewPage: React.FC = () => {
         description: errorMessage,
         placement: 'topRight',
       });
+      setSaving(false);
     }
   };
 
   const handleRefresh = () => fetchToolDetails(false);
 
   const handleDelete = async () => {
+    if (deleting) {
+      return;
+    }
     try {
+      setDeleting(true);
       await removeToolTemplate({ tool_template_id: toolId || '' }).unwrap();
       notificationApi.success({
         message: 'Success',
@@ -147,6 +155,8 @@ const ToolViewPage: React.FC = () => {
         description: err.message || 'Failed to delete tool',
         placement: 'topRight',
       });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -163,31 +173,14 @@ const ToolViewPage: React.FC = () => {
 
   if (loading) {
     return (
-      <Layout
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-        }}
-      >
+      <Layout className="flex justify-center items-center h-screen">
         <Spin size="large" />
       </Layout>
     );
   }
 
   if (error) {
-    return (
-      <Alert
-        message="Error"
-        description={error}
-        type="error"
-        showIcon
-        style={{
-          margin: '16px',
-        }}
-      />
-    );
+    return <Alert message="Error" description={error} type="error" showIcon className="m-4" />;
   }
 
   const actionMenuItems: MenuProps['items'] = [
@@ -224,7 +217,9 @@ const ToolViewPage: React.FC = () => {
   ];
 
   const handleActionMenuClick: MenuProps['onClick'] = ({ key }) => {
-    if (!toolId) return;
+    if (!toolId) {
+      return;
+    }
 
     switch (key) {
       case 'view':
@@ -242,48 +237,21 @@ const ToolViewPage: React.FC = () => {
   };
 
   return (
-    <Layout style={{ flex: 1, padding: '16px 24px 22px', flexDirection: 'column' }}>
+    <Layout className="flex-1 p-4 pt-4 pb-[22px] flex flex-col">
       <CommonBreadCrumb
         items={[
           { title: 'Tool Catalog', href: '/tools?section=tools' },
           { title: isEditMode ? 'Edit Tool' : 'View Tool' },
         ]}
       />
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          borderBottom: '1px solid #f0f0f0',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div className="flex flex-row items-center justify-between border-b border-[#f0f0f0]">
+        <div className="flex items-center gap-2">
           {toolImageData && (
-            <div
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '50%',
-                background: '#f1f1f1',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <img
-                src={toolImageData}
-                alt={toolName}
-                style={{
-                  width: '24px',
-                  height: '24px',
-                  objectFit: 'cover',
-                  borderRadius: '2px',
-                }}
-              />
+            <div className="w-8 h-8 rounded-full bg-[#f1f1f1] flex items-center justify-center">
+              <img src={toolImageData} alt={toolName} className="w-6 h-6 object-cover rounded" />
             </div>
           )}
-          <Title level={4} style={{ margin: 0 }}>
+          <Title level={4} className="m-0">
             {toolName || 'Unknown Tool'}
           </Title>
         </div>
@@ -293,25 +261,19 @@ const ToolViewPage: React.FC = () => {
           trigger={['click']}
           placement="bottomRight"
         >
-          <Button
-            style={{
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-            }}
-          >
+          <Button className="text-[14px] flex items-center gap-1">
             Actions <DownOutlined />
           </Button>
         </Dropdown>
       </div>
-      <Layout style={{ marginTop: '20px' }}>
+      <Layout className="mt-5">
         <ToolViewOrEdit
           mode={isEditMode ? 'edit' : 'view'}
           toolDetails={toolDetails}
           onSave={handleSave}
           onRefresh={handleRefresh}
           setParentPageToolName={setToolName}
+          saving={saving}
         />
       </Layout>
       <DeleteToolModal
@@ -319,6 +281,7 @@ const ToolViewPage: React.FC = () => {
         onClose={() => setIsDeleteModalOpen(false)}
         toolDetails={toolDetails}
         onDelete={handleDelete}
+        deleting={deleting}
       />
     </Layout>
   );

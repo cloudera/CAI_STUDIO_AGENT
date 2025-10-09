@@ -1,3 +1,4 @@
+import os
 from pydantic import BaseModel
 from enum import Enum
 from typing import Optional
@@ -7,7 +8,10 @@ from typing import Optional
 # will go away and workflow engine features will be available already.
 import sys
 
-sys.path.append("studio/workflow_engine/src")
+app_dir = os.getenv("APP_DIR")
+if not app_dir:
+    raise EnvironmentError("APP_DIR environment variable is not set.")
+sys.path.append(os.path.join(app_dir, "studio", "workflow_engine", "src"))
 from engine.types import DeploymentConfig
 
 
@@ -23,6 +27,7 @@ class DeploymentStatus(str, Enum):
     DEPLOYING = "deploying"
     DEPLOYED = "deployed"
     FAILED = "failed"
+    SUSPENDED = "suspended"
 
 
 class DeploymentTargetType(str, Enum):
@@ -82,9 +87,9 @@ class DeploymentArtifact(BaseModel):
     that don't need a project relative location (like a packaged model registry model).
     """
 
-    project_location: Optional[str] = None
+    artifact_path: Optional[str] = None
     """
-    Project-relative location of the deployment target. This is the artifact
+    Path of the deployment workflow artifact. This is the artifact
     that is packaged and ready to be deployed to any one of our deployment targets.
     """
 

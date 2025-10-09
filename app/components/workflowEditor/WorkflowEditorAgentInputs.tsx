@@ -33,7 +33,6 @@ import {
   Switch,
 } from 'antd';
 import { Typography } from 'antd/lib';
-const { Header, Content } = Layout;
 const { Text } = Typography;
 import {
   PlusCircleOutlined,
@@ -62,21 +61,13 @@ import { createUpdateRequestFromEditor, createAddRequestFromEditor } from '../..
 import SelectOrAddManagerAgentModal from './SelectOrAddManagerAgentModal';
 import { useListMcpInstancesQuery } from '@/app/mcp/mcpInstancesApi';
 
-const WorkflowDescriptionComponent: React.FC = () => {
+const WorkflowDescriptionComponent = () => {
   const workflowDescription = useAppSelector(selectEditorWorkflowDescription);
   const dispatch = useAppDispatch();
 
   return (
     <>
-      <Layout
-        style={{
-          flexGrow: 0,
-          flexShrink: 0,
-          flexDirection: 'column',
-          gap: '8px',
-          background: 'transparent',
-        }}
-      >
+      <Layout className="flex-grow-0 flex-shrink-0 flex-col gap-2 bg-transparent">
         <Collapse
           bordered={false}
           items={[
@@ -103,7 +94,7 @@ interface WorkflowAgentsComponentProps {
   workflowId: string;
 }
 
-const WorkflowAgentsComponent: React.FC<WorkflowAgentsComponentProps> = ({ workflowId }) => {
+const WorkflowAgentsComponent = ({ workflowId }: WorkflowAgentsComponentProps) => {
   const { data: agents } = useListAgentsQuery({ workflow_id: workflowId });
   const { data: toolInstances } = useListToolInstancesQuery({ workflow_id: workflowId });
   const { data: mcpInstances } = useListMcpInstancesQuery({ workflow_id: workflowId });
@@ -180,7 +171,7 @@ const WorkflowAgentsComponent: React.FC<WorkflowAgentsComponentProps> = ({ workf
         description: `Agent ${agentName} has been successfully removed.`,
         placement: 'topRight',
       });
-    } catch (error) {
+    } catch (_error) {
       notificationApi.error({
         message: 'Error Removing Agent',
         description: 'There was an error removing the agent. Please try again.',
@@ -192,23 +183,9 @@ const WorkflowAgentsComponent: React.FC<WorkflowAgentsComponentProps> = ({ workf
   return (
     <>
       <SelectOrAddAgentModal workflowId={workflowId} />
-      <Layout
-        style={{
-          gap: '10px',
-          flexGrow: 0,
-          flexShrink: 0,
-          flexDirection: 'column',
-          background: 'transparent',
-        }}
-      >
-        <Layout
-          style={{
-            background: 'transparent',
-            flexDirection: 'row',
-            gap: 4,
-          }}
-        >
-          <Text style={{ fontSize: 16, fontWeight: 600 }}>Agents</Text>
+      <Layout className="gap-2.5 flex-grow-0 flex-shrink-0 flex-col bg-transparent">
+        <Layout className="bg-transparent flex-row gap-1">
+          <Text className="text-base font-semibold">Agents</Text>
           <Tooltip title="Agents are responsible for completing tasks." placement="right">
             <QuestionCircleOutlined />
           </Tooltip>
@@ -220,21 +197,11 @@ const WorkflowAgentsComponent: React.FC<WorkflowAgentsComponentProps> = ({ workf
             dispatch(updatedEditorAgentViewStep('Select'));
             dispatch(updatedEditorAgentViewAgent(undefined));
           }}
-          style={{
-            width: '100%',
-            height: 40,
-          }}
+          className="w-full h-10"
         >
-          <Layout
-            style={{
-              background: 'transparent',
-              flexDirection: 'row',
-              justifyContent: 'center',
-              gap: 11,
-            }}
-          >
+          <Layout className="bg-transparent flex-row justify-center gap-2.5">
             <PlusCircleOutlined />
-            <Text style={{ fontSize: 14, fontWeight: 400 }}>Create or Edit Agents</Text>
+            <Text className="text-sm font-normal">Create or Edit Agents</Text>
           </Layout>
         </Button>
 
@@ -247,57 +214,26 @@ const WorkflowAgentsComponent: React.FC<WorkflowAgentsComponentProps> = ({ workf
               return (
                 <List.Item>
                   <Layout
-                    style={{
-                      borderRadius: '4px',
-                      border: 'solid 1px #f0f0f0',
-                      backgroundColor: '#fff',
-                      width: '100%',
-                      height: '180px',
-                      margin: '0px 12px 16px 0px',
-                      padding: '0',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      cursor: 'pointer',
-                      transition: 'transform 0.2s, box-shadow 0.2s',
-                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'scale(1.03)';
-                      e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'scale(1)';
-                      e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
-                    }}
+                    className="
+                    rounded
+                    border border-[#f0f0f0]
+                    bg-white
+                    w-full
+                    h-[180px]
+                    mr-3 mb-4
+                    p-0
+                    flex flex-col
+                    cursor-pointer
+                    transition-transform transition-shadow duration-200
+                    shadow-[0_2px_4px_rgba(0,0,0,0.1)]
+                    hover:scale-[1.03]
+                    hover:shadow-[0_4px_8px_rgba(0,0,0,0.2)]
+                  "
                   >
-                    <Layout
-                      style={{
-                        flex: 1,
-                        background: 'transparent',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        overflow: 'auto',
-                      }}
-                    >
-                      <div
-                        style={{
-                          padding: '16px 24px',
-                          display: 'flex',
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          gap: '12px',
-                        }}
-                      >
+                    <Layout className="flex-1 bg-transparent flex flex-col overflow-auto">
+                      <div className="p-4 flex flex-row items-center gap-3">
                         <Avatar
-                          style={{
-                            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-                            backgroundColor: '#4b85d1',
-                            minWidth: '24px',
-                            minHeight: '24px',
-                            width: '24px',
-                            height: '24px',
-                            flex: '0 0 24px',
-                          }}
+                          className="shadow-md bg-[#4b85d1] min-w-6 min-h-6 w-6 h-6 flex-shrink-0"
                           size={24}
                           icon={
                             imageData[agent.agent_image_uri] ? (
@@ -308,62 +244,26 @@ const WorkflowAgentsComponent: React.FC<WorkflowAgentsComponentProps> = ({ workf
                           }
                         />
                         <Text
-                          style={{
-                            fontSize: '14px',
-                            fontWeight: 400,
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                          }}
+                          className="text-sm font-normal whitespace-nowrap overflow-hidden text-ellipsis"
                           title={agent.name}
                         >
                           {agent.name}
                         </Text>
                       </div>
-                      <Text
-                        style={{
-                          padding: '0 24px',
-                          fontSize: '11px',
-                          opacity: 0.45,
-                          fontWeight: 400,
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                      >
+                      <Text className="px-6 text-xs opacity-45 font-normal whitespace-nowrap overflow-hidden text-ellipsis">
                         Goal:{' '}
-                        <span style={{ color: 'black', fontWeight: 400 }}>
+                        <span className="text-black font-normal">
                           {agent.crew_ai_agent_metadata?.goal || 'N/A'}
                         </span>
                       </Text>
-                      <Text
-                        style={{
-                          padding: '0 24px',
-                          fontSize: '11px',
-                          opacity: 0.45,
-                          fontWeight: 400,
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          marginTop: '8px',
-                        }}
-                      >
+                      <Text className="px-6 text-xs opacity-45 font-normal whitespace-nowrap overflow-hidden text-ellipsis mt-2">
                         Backstory:{' '}
-                        <span style={{ color: 'black', fontWeight: 400 }}>
+                        <span className="text-black font-normal">
                           {agent.crew_ai_agent_metadata?.backstory || 'N/A'}
                         </span>
                       </Text>
                       {iconResourceIds.length > 0 && (
-                        <Space
-                          style={{
-                            marginTop: '12px',
-                            paddingLeft: '24px',
-                            paddingRight: '24px',
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: '10px',
-                          }}
-                        >
+                        <Space className="mt-3 px-6 flex flex-wrap gap-2.5">
                           {iconResourceIds.map((resourceId) => {
                             const toolInstance = toolInstancesMap[resourceId];
                             const mcpInstance = mcpInstancesMap[resourceId];
@@ -384,28 +284,14 @@ const WorkflowAgentsComponent: React.FC<WorkflowAgentsComponentProps> = ({ workf
                                 key={resourceId}
                                 placement="top"
                               >
-                                <div
-                                  style={{
-                                    width: '24px',
-                                    height: '24px',
-                                    borderRadius: '50%',
-                                    background: '#f1f1f1',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    cursor: 'pointer',
-                                  }}
-                                >
+                                <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer">
                                   <Image
                                     src={imageSrc}
                                     alt={toolInstance?.name || mcpInstance?.name}
                                     width={16}
                                     height={16}
                                     preview={false}
-                                    style={{
-                                      borderRadius: '2px',
-                                      objectFit: 'cover',
-                                    }}
+                                    className="rounded-sm object-cover"
                                   />
                                 </div>
                               </Tooltip>
@@ -414,20 +300,11 @@ const WorkflowAgentsComponent: React.FC<WorkflowAgentsComponentProps> = ({ workf
                         </Space>
                       )}
                     </Layout>
-                    <Divider style={{ flexGrow: 0, margin: '0px' }} type="horizontal" />
-                    <Layout
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        flexGrow: 0,
-                        background: 'transparent',
-                        justifyContent: 'space-around',
-                        alignItems: 'center',
-                      }}
-                    >
+                    <Divider className="flex-grow-0 m-0" type="horizontal" />
+                    <Layout className="flex flex-row flex-grow-0 bg-transparent justify-around items-center">
                       <Button
                         type="link"
-                        icon={<EditOutlined style={{ color: 'gray' }} />}
+                        icon={<EditOutlined className="text-gray-500" />}
                         onClick={() => {
                           dispatch(updatedEditorAgentViewOpen(true));
                           dispatch(updatedEditorAgentViewStep('Select'));
@@ -440,7 +317,7 @@ const WorkflowAgentsComponent: React.FC<WorkflowAgentsComponentProps> = ({ workf
                         okText="Yes"
                         cancelText="No"
                       >
-                        <Button type="link" icon={<DeleteOutlined style={{ color: 'red' }} />} />
+                        <Button type="link" icon={<DeleteOutlined className="text-red-500" />} />
                       </Popconfirm>
                     </Layout>
                   </Layout>
@@ -458,71 +335,22 @@ interface WorkflowManagerAgentsComponentProps {
   workflowId: string;
 }
 
-const WorkflowManagerAgentsComponent: React.FC<WorkflowManagerAgentsComponentProps> = ({
-  workflowId,
-}) => {
+const WorkflowManagerAgentsComponent = ({ workflowId }: WorkflowManagerAgentsComponentProps) => {
   const [isManagerModalOpen, setIsManagerModalOpen] = useState(false);
-  const tasksTooltip = `
-  A manager agent is responsible for delegating tasks to 
-  coworkers to complete a workflow. In conversational workflows, 
-  manager agents are also responsible for facilitating conversations
-  with users.
-  `;
+  // Removed unused tasksTooltip
 
   return (
     <>
-      <Layout
-        style={{
-          paddingTop: 4,
-          gap: '10px',
-          flexGrow: 0,
-          flexShrink: 0,
-          flexDirection: 'column',
-          background: 'transparent',
-        }}
-      >
-        <Layout
-          style={{
-            borderRadius: '4px',
-            border: 'solid 1px #f0f0f0',
-            backgroundColor: '#fff',
-            padding: '0px',
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <div
-            style={{
-              padding: '16px 24px',
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: '12px',
-            }}
-          >
+      <Layout className="pt-1 gap-2.5 flex-grow-0 flex-shrink-0 flex-col bg-transparent">
+        <Layout className="rounded border border-solid border-gray-200 bg-white p-0 flex flex-row justify-between items-center">
+          <div className="p-4 flex flex-row items-center gap-3">
             <Avatar
-              style={{
-                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-                backgroundColor: 'lightgrey',
-                minWidth: '24px',
-                minHeight: '24px',
-                width: '24px',
-                height: '24px',
-                flex: '0 0 24px',
-              }}
+              className="shadow-md bg-gray-300 min-w-6 min-h-6 w-6 h-6 flex-shrink-0"
               size={24}
               icon={<UsergroupAddOutlined />}
             />
             <Text
-              style={{
-                fontSize: '14px',
-                fontWeight: 400,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
+              className="text-sm font-normal whitespace-nowrap overflow-hidden text-ellipsis"
               title="Default Manager"
             >
               Default Manager
@@ -547,10 +375,7 @@ export interface ManagerAgentComponentProps {
   isDisabled: boolean;
 }
 
-const ManagerAgentCheckComponent: React.FC<ManagerAgentComponentProps> = ({
-  workflowId,
-  isDisabled,
-}) => {
+const ManagerAgentCheckComponent = ({ workflowId, isDisabled }: ManagerAgentComponentProps) => {
   const dispatch = useAppDispatch();
   const managerAgentId = useAppSelector(selectEditorWorkflowManagerAgentId);
   const taskIds = useAppSelector(selectEditorWorkflowTaskIds) ?? [];
@@ -649,12 +474,12 @@ const ManagerAgentCheckComponent: React.FC<ManagerAgentComponentProps> = ({
         checked={hasManagerAgent}
         onChange={(checked) => handleManagerAgentChange(checked)}
       ></Switch>
-      <Text style={{ fontSize: 16, fontWeight: 600 }}>Manager Agent</Text>
+      <Text className="text-base font-semibold">Manager Agent</Text>
       <Tooltip
         title="A manager agent is responsible for delegating tasks to coworkers to complete a workflow."
         placement="right"
       >
-        <QuestionCircleOutlined style={{ color: '#666' }} />
+        <QuestionCircleOutlined className="text-gray-600" />
       </Tooltip>
     </Space>
   );
@@ -664,7 +489,7 @@ interface SettingsComponentProps {
   workflowId: string;
 }
 
-const SettingsComponent: React.FC<SettingsComponentProps> = ({ workflowId }) => {
+const SettingsComponent = ({ workflowId }: SettingsComponentProps) => {
   const [isManagerModalOpen, setIsManagerModalOpen] = useState(false);
   const isConversational = useAppSelector(selectEditorWorkflowIsConversational);
   const dispatch = useAppDispatch();
@@ -705,7 +530,7 @@ const SettingsComponent: React.FC<SettingsComponentProps> = ({ workflowId }) => 
         description: `Manager agent ${agentName} has been removed and reset to default manager.`,
         placement: 'topRight',
       });
-    } catch (error) {
+    } catch (_error) {
       notificationApi.error({
         message: 'Error Resetting Manager',
         description: 'There was an error resetting to default manager. Please try again.',
@@ -716,15 +541,7 @@ const SettingsComponent: React.FC<SettingsComponentProps> = ({ workflowId }) => 
 
   return (
     <>
-      <Layout
-        style={{
-          gap: '10px',
-          flexGrow: 0,
-          flexShrink: 0,
-          flexDirection: 'column',
-          background: 'transparent',
-        }}
-      >
+      <Layout className="gap-2.5 flex-grow-0 flex-shrink-0 flex-col bg-transparent">
         <Space>
           <Switch
             checked={isConversational}
@@ -811,12 +628,12 @@ const SettingsComponent: React.FC<SettingsComponentProps> = ({ workflowId }) => 
               }
             }}
           ></Switch>
-          <Text style={{ fontSize: 16, fontWeight: 600 }}>Is Conversational</Text>
+          <Text className="text-base font-semibold">Is Conversational</Text>
           <Tooltip
             title="Enable this for workflows that involve back-and-forth conversations with users."
             placement="right"
           >
-            <QuestionCircleOutlined style={{ color: '#666' }} />
+            <QuestionCircleOutlined className="text-gray-600" />
           </Tooltip>
         </Space>
 
@@ -825,63 +642,18 @@ const SettingsComponent: React.FC<SettingsComponentProps> = ({ workflowId }) => 
           <WorkflowManagerAgentsComponent workflowId={workflowId} />
         )}
         {hasManagerAgent && managerAgentId && (
-          <Layout
-            style={{
-              gap: '10px',
-              flexGrow: 0,
-              flexShrink: 0,
-              flexDirection: 'column',
-              background: 'transparent',
-              width: '50%',
-            }}
-          >
+          <Layout className="gap-2.5 flex-grow-0 flex-shrink-0 flex-col bg-transparent w-1/2">
             {agents
               ?.filter((agent) => agent.id === managerAgentId)
               .map((agent) => (
                 <Layout
                   key={agent.id}
-                  style={{
-                    borderRadius: '4px',
-                    border: 'solid 1px #f0f0f0',
-                    backgroundColor: '#fff',
-                    width: '100%',
-                    height: '150px',
-                    padding: '0',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    cursor: 'pointer',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                  }}
+                  className="rounded border border-solid border-gray-200 bg-white w-full h-[150px] p-0 flex flex-col cursor-pointer transition-transform duration-200 ease-in-out shadow-md"
                 >
-                  <Layout
-                    style={{
-                      flex: 1,
-                      background: 'transparent',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      overflow: 'auto',
-                    }}
-                  >
-                    <div
-                      style={{
-                        padding: '16px 24px',
-                        display: 'flex',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: '12px',
-                      }}
-                    >
+                  <Layout className="flex-1 bg-transparent flex flex-col overflow-auto">
+                    <div className="p-4 flex flex-row items-center gap-3">
                       <Avatar
-                        style={{
-                          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-                          backgroundColor: 'lightgrey',
-                          minWidth: '24px',
-                          minHeight: '24px',
-                          width: '24px',
-                          height: '24px',
-                          flex: '0 0 24px',
-                        }}
+                        className="shadow-md bg-gray-300 min-w-6 min-h-6 w-6 h-6 flex-shrink-0"
                         size={24}
                         icon={
                           agent.agent_image_uri ? (
@@ -892,65 +664,28 @@ const SettingsComponent: React.FC<SettingsComponentProps> = ({ workflowId }) => 
                         }
                       />
                       <Text
-                        style={{
-                          fontSize: '14px',
-                          fontWeight: 400,
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
+                        className="text-sm font-normal whitespace-nowrap overflow-hidden text-ellipsis"
                         title={agent.name}
                       >
                         {agent.name}
                       </Text>
                     </div>
-                    <Text
-                      style={{
-                        padding: '0 24px',
-                        fontSize: '11px',
-                        opacity: 0.45,
-                        fontWeight: 400,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
-                    >
+                    <Text className="px-6 text-xs opacity-45 font-normal whitespace-nowrap overflow-hidden text-ellipsis">
                       Goal:{' '}
-                      <span style={{ color: 'black', fontWeight: 400 }}>
+                      <span className="text-black font-normal">
                         {agent.crew_ai_agent_metadata?.goal || 'N/A'}
                       </span>
                     </Text>
-                    <Text
-                      style={{
-                        padding: '0 24px',
-                        fontSize: '11px',
-                        opacity: 0.45,
-                        fontWeight: 400,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        marginTop: '8px',
-                      }}
-                    >
+                    <Text className="px-6 text-xs opacity-45 font-normal whitespace-nowrap overflow-hidden text-ellipsis mt-2">
                       Backstory:{' '}
-                      <span style={{ color: 'black', fontWeight: 400 }}>
+                      <span className="text-black font-normal">
                         {agent.crew_ai_agent_metadata?.backstory || 'N/A'}
                       </span>
                     </Text>
                   </Layout>
-                  <Divider style={{ flexGrow: 0, margin: '0px' }} type="horizontal" />
-                  <Layout
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'row',
-                      flexGrow: 0,
-                      background: 'transparent',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '8px 0',
-                    }}
-                  >
-                    <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+                  <Divider className="flex-grow-0 m-0" type="horizontal" />
+                  <Layout className="flex flex-row flex-grow-0 bg-transparent justify-between items-center py-2">
+                    <div className="flex-1 flex justify-center">
                       <Tooltip title="Edit Manager Agent">
                         <Button
                           type="link"
@@ -959,8 +694,8 @@ const SettingsComponent: React.FC<SettingsComponentProps> = ({ workflowId }) => 
                         />
                       </Tooltip>
                     </div>
-                    <Divider type="vertical" style={{ height: '20px', margin: 0 }} />
-                    <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+                    <Divider type="vertical" className="h-5 m-0" />
+                    <div className="flex-1 flex justify-center">
                       <Tooltip title="Reset to Default Manager">
                         <Button
                           type="link"
@@ -988,28 +723,13 @@ interface WorkflowEditorAgentInputsProps {
   workflowId: string;
 }
 
-const WorkflowEditorAgentInputs: React.FC<WorkflowEditorAgentInputsProps> = ({ workflowId }) => {
+const WorkflowEditorAgentInputs = ({ workflowId }: WorkflowEditorAgentInputsProps) => {
   return (
     <>
-      <Layout
-        style={{
-          flexDirection: 'column',
-          flexShrink: 0,
-          flexGrow: 0,
-          padding: '16px 24px',
-          width: '40%',
-          height: '100%',
-          background: 'transparent',
-          gap: '12px',
-          overflow: 'auto',
-        }}
-      >
+      <Layout className="flex flex-col flex-shrink-0 flex-grow-0 px-6 py-4 w-2/5 h-full bg-transparent gap-3 overflow-auto">
         <WorkflowDescriptionComponent />
         <SettingsComponent workflowId={workflowId} />
-        <Divider
-          type="horizontal"
-          style={{ marginTop: 0, marginBottom: 0, borderColor: 'lightgrey' }}
-        />
+        <Divider type="horizontal" className="mt-0 mb-0 border-gray-300" />
         <WorkflowAgentsComponent workflowId={workflowId} />
       </Layout>
     </>

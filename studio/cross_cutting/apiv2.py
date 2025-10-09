@@ -310,7 +310,13 @@ def get_deployed_workflows(
         return []
 
 
-def redeploy_single_workflow(workflow_id: str, cml: CMLServiceApi, dao: AgentStudioDao, logger: logging.Logger = None):
+def redeploy_single_workflow(
+    workflow_id: str,
+    cml: CMLServiceApi,
+    dao: AgentStudioDao,
+    logger: logging.Logger = None,
+    env_var_overrides: dict = {},
+):
     """Redeploy a single workflow"""
     if logger is None:
         logger = logging.getLogger(__name__)
@@ -331,7 +337,7 @@ def redeploy_single_workflow(workflow_id: str, cml: CMLServiceApi, dao: AgentStu
                 logger.error(f"No builds found for model {deployed_workflow.cml_deployed_model_id}")
                 return
 
-            latest_build = builds[0]
+            latest_build = sorted(builds, key=lambda x: x.created_at, reverse=True)[0]
             deployments = cml.list_model_deployments(
                 project_id=os.getenv("CDSW_PROJECT_ID"),
                 model_id=deployed_workflow.cml_deployed_model_id,
@@ -342,7 +348,7 @@ def redeploy_single_workflow(workflow_id: str, cml: CMLServiceApi, dao: AgentStu
                 logger.error(f"No deployments found for model {deployed_workflow.cml_deployed_model_id}")
                 return
 
-            current_deployment = deployments[0]
+            current_deployment = sorted(deployments, key=lambda x: x.created_at, reverse=True)[0]
 
             # Get environment vars - fail if we can't read them
             try:
@@ -352,6 +358,9 @@ def redeploy_single_workflow(workflow_id: str, cml: CMLServiceApi, dao: AgentStu
             except Exception as e:
                 logger.error(f"Failed to read environment variables from current deployment: {str(e)}")
                 return
+
+            # Update environment variables with overrides
+            env_vars.update(env_var_overrides)
 
             # Get API key using the method from apiv2
             key_id, key_value = get_api_key_from_env(cml, logger)
@@ -402,3 +411,36 @@ def redeploy_all_workflows(cml: CMLServiceApi, dao: AgentStudioDao, logger: logg
 
     except Exception as e:
         logger.error(f"Error redeploying workflows: {str(e)}")
+
+
+def upload_file_to_project(
+    client: cmlapi.CMLServiceApi, project_id: str, target_project_path: str, local_abs_path: str
+):
+    import time as _time
+
+    header_params = {"Content-Type": "multipart/form-data"}
+    files_payload = {target_project_path: local_abs_path}
+    try:
+        logging.debug(f"[AutoSync] delete_project_file before upload path={target_project_path}")
+        client.delete_project_file(project_id=project_id, path=target_project_path)
+    except Exception:
+        logging.debug("[AutoSync] delete_project_file ignored (not existing or not deletable)")
+    last_exc = None
+    for attempt in range(3):
+        try:
+            logging.debug(f"[AutoSync] upload attempt={attempt + 1} target={target_project_path} src={local_abs_path}")
+            client.api_client.call_api(
+                f"/api/v2/projects/{{project_id}}/files",
+                "POST",
+                path_params={"project_id": project_id},
+                header_params=header_params,
+                files=files_payload,
+                response_type=None,
+            )
+            return
+        except Exception as e:
+            last_exc = e
+            _time.sleep(1 + attempt)
+    if last_exc:
+        logging.exception(f"[AutoSync] upload failed target={target_project_path}")
+        raise last_exc

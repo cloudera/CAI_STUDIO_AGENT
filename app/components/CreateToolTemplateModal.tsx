@@ -5,17 +5,19 @@ interface CreateToolTemplateModalProps {
   isOpen: boolean;
   onCancel: () => void;
   onGenerate: (toolName: string) => void;
+  loading?: boolean;
 }
 
 const CreateToolTemplateModal: React.FC<CreateToolTemplateModalProps> = ({
   isOpen,
   onCancel,
   onGenerate,
+  loading = false,
 }) => {
   const [toolName, setToolName] = useState('');
 
   const handleGenerate = () => {
-    if (toolName.trim()) {
+    if (toolName.trim() && !loading) {
       onGenerate(toolName.trim());
       setToolName('');
     }
@@ -29,19 +31,15 @@ const CreateToolTemplateModal: React.FC<CreateToolTemplateModalProps> = ({
       onOk={handleGenerate}
       okText="Generate"
       cancelText="Cancel"
+      confirmLoading={loading}
     >
-      <div style={{ marginTop: '16px' }}>
+      <div className="mt-4">
         <Input
           placeholder="Enter Tool Name"
           value={toolName}
           onChange={(e) => setToolName(e.target.value)}
           onPressEnter={handleGenerate}
-          style={{
-            marginTop: '16px',
-            marginBottom: '16px',
-            padding: '8px 12px',
-            borderRadius: '4px',
-          }}
+          className="mt-4 mb-4 p-2 rounded"
         />
       </div>
     </Modal>

@@ -1,5 +1,7 @@
 import json
 import json
+import os
+from datetime import datetime, timezone
 
 from studio.db import model as db_model
 from studio.models.utils import get_studio_default_model_id
@@ -14,7 +16,10 @@ from sqlalchemy.orm.session import Session
 # will go away and workflow engine features will be available already.
 import sys
 
-sys.path.append("studio/workflow_engine/src")
+app_dir = os.getenv("APP_DIR")
+if not app_dir:
+    raise EnvironmentError("APP_DIR environment variable is not set.")
+sys.path.append(os.path.join(app_dir, "studio", "workflow_engine", "src"))
 
 import engine.types as input_types
 
@@ -165,7 +170,7 @@ def get_language_models(model_ids: set, session: Session):
     return inputs
 
 
-def create_input_workflow(workflow: Workflow, session: Session):
+def create_input_workflow(workflow: Workflow, session: Session, deployment_created_at=None):
     llm_provider_model_id = workflow.crew_ai_llm_provider_model_id
     if workflow.crew_ai_process == "hierarchical" and not workflow.crew_ai_manager_agent:
         llm_provider_model_id = (
@@ -182,10 +187,13 @@ def create_input_workflow(workflow: Workflow, session: Session):
         manager_agent_id=workflow.crew_ai_manager_agent or None,
         llm_provider_model_id=llm_provider_model_id,
         is_conversational=workflow.is_conversational,
+        created_at=deployment_created_at if deployment_created_at is not None else datetime.now(timezone.utc),
     )
 
 
-def create_collated_input(workflow: Workflow, session: Session) -> input_types.CollatedInput:
+def create_collated_input(
+    workflow: Workflow, session: Session, deployment_created_at=None
+) -> input_types.CollatedInput:
     default_llm = get_default_llm(session)
     task_inputs, agent_ids_from_tasks = get_tasks_for_workflow(workflow, session)
     agent_inputs, tool_ids, mcp_ids, language_model_ids = get_agents_for_workflow(
@@ -197,7 +205,7 @@ def create_collated_input(workflow: Workflow, session: Session) -> input_types.C
     tool_instance_inputs = get_tool_instances_for_agents(tool_ids, session)
     mcp_instance_inputs = get_mcp_instances_for_agents(mcp_ids, session)
     language_model_inputs = get_language_models(language_model_ids, session)
-    workflow_input = create_input_workflow(workflow, session)
+    workflow_input = create_input_workflow(workflow, session, deployment_created_at)
 
     return input_types.CollatedInput(
         default_language_model_id=default_llm.model_id,

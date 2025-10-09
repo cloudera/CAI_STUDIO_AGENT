@@ -2,8 +2,6 @@ import { useAppDispatch, useAppSelector } from '../../lib/hooks/hooks';
 import {
   selectEditorWorkflow,
   selectEditorWorkflowIsConversational,
-  selectEditorWorkflowManagerAgentId,
-  selectEditorWorkflowName as _selectEditorWorkflowName,
   selectEditorWorkflowTaskIds,
   addedEditorWorkflowTask,
   removedEditorWorkflowTask,
@@ -13,19 +11,7 @@ import {
   updatedEditorTaskEditingId,
   clearEditorTaskEditingState,
 } from '../../workflows/editorSlice';
-import {
-  Alert,
-  Button,
-  Divider,
-  Input,
-  Layout,
-  Select,
-  Space,
-  Tooltip,
-  notification,
-  Tag,
-  Avatar,
-} from 'antd';
+import { Alert, Button, Input, Layout, Select, Tooltip, Tag, Avatar } from 'antd';
 import { Typography } from 'antd';
 const { Header: _Header, Content: _Content } = Layout;
 const { Title: _Title } = Typography;
@@ -45,7 +31,7 @@ import {
   CloseOutlined,
 } from '@ant-design/icons';
 import { useListAgentsQuery } from '../../agents/agentApi';
-import { AgentMetadata, RemoveTaskRequest } from '@/studio/proto/agent_studio';
+import { RemoveTaskRequest } from '@/studio/proto/agent_studio';
 import {
   useListTasksQuery,
   useRemoveTaskMutation,
@@ -54,27 +40,10 @@ import {
 } from '../../tasks/tasksApi';
 import { useUpdateWorkflowMutation } from '../../workflows/workflowsApi';
 import { useState, useEffect } from 'react';
-import { createUpdateRequestFromEditor, createAddRequestFromEditor } from '../../lib/workflow';
+import { createUpdateRequestFromEditor } from '../../lib/workflow';
 import { useGlobalNotification } from '../Notifications';
 import React from 'react';
 const { Text } = Typography;
-
-const getTagColor = (agentName: string): string => {
-  const colors = [
-    '#ffeb3b', // Bright Yellow
-    '#40a9ff', // Bright Blue
-    '#ff85c0', // Bright Pink
-    '#b37feb', // Bright Purple
-  ];
-
-  // Create a simple hash of the agent name to get a consistent index
-  const hash = agentName.split('').reduce((acc, char) => {
-    return char.charCodeAt(0) + ((acc << 5) - acc);
-  }, 0);
-
-  // Use absolute value and modulo to get a positive index within array bounds
-  return colors[Math.abs(hash) % colors.length];
-};
 
 interface AlertsComponentProps {
   workflowId: string;
@@ -82,7 +51,6 @@ interface AlertsComponentProps {
 
 const AlertsComponent: React.FC<AlertsComponentProps> = ({ workflowId }) => {
   const isConversational = useAppSelector(selectEditorWorkflowIsConversational);
-  const managerAgentId = useAppSelector(selectEditorWorkflowManagerAgentId);
   const process = useAppSelector(selectEditorWorkflowProcess);
   const hasManagerAgent: boolean = process === 'hierarchical';
   const workflowTaskIds = useAppSelector(selectEditorWorkflowTaskIds) || [];
@@ -93,36 +61,18 @@ const AlertsComponent: React.FC<AlertsComponentProps> = ({ workflowId }) => {
     return task && !task.assigned_agent_id && !hasManagerAgent;
   });
 
-  const alertStyle = {
-    alignItems: 'flex-start',
-    justifyContent: 'flex-start',
-    padding: 12,
-    marginBottom: 12,
-  };
-
   // If there are unassigned tasks, show only the warning alert
   if (hasUnassignedTasks) {
     return (
       <Alert
-        style={alertStyle}
+        className="items-start justify-start p-3 mb-3"
         message={
-          <Layout
-            style={{ flexDirection: 'column', gap: 4, padding: 0, background: 'transparent' }}
-          >
-            <Layout
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 8,
-                background: 'transparent',
-              }}
-            >
-              <WarningOutlined style={{ fontSize: 16, color: '#faad14' }} />
-              <Text style={{ fontSize: 13, fontWeight: 600, background: 'transparent' }}>
-                Unassigned Tasks
-              </Text>
+          <Layout className="flex flex-col gap-1 p-0 bg-transparent">
+            <Layout className="flex flex-row items-center gap-2 bg-transparent">
+              <WarningOutlined className="text-base text-yellow-500" />
+              <Text className="text-sm font-semibold bg-transparent">Unassigned Tasks</Text>
             </Layout>
-            <Text style={{ fontSize: 13, fontWeight: 400, background: 'transparent' }}>
+            <Text className="text-sm font-normal bg-transparent">
               You need to assign tasks to an agent because there is no manager agent.
             </Text>
           </Layout>
@@ -139,25 +89,16 @@ const AlertsComponent: React.FC<AlertsComponentProps> = ({ workflowId }) => {
     <>
       {isConversational ? (
         <Alert
-          style={alertStyle}
+          className="items-start justify-start p-3 mb-3"
           message={
-            <Layout
-              style={{ flexDirection: 'column', gap: 4, padding: 0, background: 'transparent' }}
-            >
-              <Layout
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 8,
-                  background: 'transparent',
-                }}
-              >
-                <InfoCircleOutlined style={{ fontSize: 16, color: '#1890ff' }} />
-                <Text style={{ fontSize: 13, fontWeight: 600, background: 'transparent' }}>
+            <Layout className="flex flex-col gap-1 p-0 bg-transparent">
+              <Layout className="flex flex-row items-center gap-2 bg-transparent">
+                <InfoCircleOutlined className="text-base text-blue-500" />
+                <Text className="text-sm font-semibold bg-transparent">
                   This is a conversational workflow.
                 </Text>
               </Layout>
-              <Text style={{ fontSize: 13, fontWeight: 400, background: 'transparent' }}>
+              <Text className="text-sm font-normal bg-transparent">
                 Conversational workflows have one dedicated task that facilitates conversation.
               </Text>
             </Layout>
@@ -168,25 +109,14 @@ const AlertsComponent: React.FC<AlertsComponentProps> = ({ workflowId }) => {
         />
       ) : hasManagerAgent ? (
         <Alert
-          style={alertStyle}
+          className="items-start justify-start p-3 mb-3"
           message={
-            <Layout
-              style={{ flexDirection: 'column', gap: 4, padding: 0, background: 'transparent' }}
-            >
-              <Layout
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 8,
-                  background: 'transparent',
-                }}
-              >
-                <InfoCircleOutlined style={{ fontSize: 16, color: '#1890ff' }} />
-                <Text style={{ fontSize: 13, fontWeight: 600, background: 'transparent' }}>
-                  Manager Agent Assigned
-                </Text>
+            <Layout className="flex flex-col gap-1 p-0 bg-transparent">
+              <Layout className="flex flex-row items-center gap-2 bg-transparent">
+                <InfoCircleOutlined className="text-base text-blue-500" />
+                <Text className="text-sm font-semibold bg-transparent">Manager Agent Assigned</Text>
               </Layout>
-              <Text style={{ fontSize: 13, fontWeight: 400, background: 'transparent' }}>
+              <Text className="text-sm font-normal bg-transparent">
                 Tasks will be assigned automatically. If you wish to assign them individually,
                 please go back and remove your manager agent.
               </Text>
@@ -206,17 +136,6 @@ interface WorkflowTasksComponentProps {
 }
 
 const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflowId }) => {
-  const alertStyle = {
-    alignItems: 'flex-start',
-    justifyContent: 'flex-start',
-    padding: 12,
-    marginBottom: 12,
-  };
-  const iconStyle = {
-    fontSize: 16,
-    color: '#1890ff',
-  };
-
   const tasksTooltip = `
   Tasks are the "objectives" of the workflow. These tasks will be completed
   in order, with each task receiving the context of the previous tasks. Tasks
@@ -229,7 +148,6 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
   const workflowAgentIds = useAppSelector(selectEditorWorkflow).workflowMetadata.agentIds || [];
   const dispatch = useAppDispatch();
   const isConversational = useAppSelector(selectEditorWorkflowIsConversational);
-  const managerAgentId = useAppSelector(selectEditorWorkflowManagerAgentId);
   const process = useAppSelector(selectEditorWorkflowProcess);
   const hasManagerAgent = process === 'hierarchical';
   const [description, setDescription] = useState('');
@@ -430,7 +348,9 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
   };
 
   const handleSaveTask = async () => {
-    if (!editingTaskId) return;
+    if (!editingTaskId) {
+      return;
+    }
 
     if (!hasManagerAgent && !selectedAgentId) {
       notificationApi.error({
@@ -477,36 +397,17 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
   return (
     <>
       <AlertsComponent workflowId={workflowId} />
-      <Layout
-        style={{
-          gap: '10px',
-          flexGrow: 0,
-          flexShrink: 0,
-          flexDirection: 'column',
-          background: 'white',
-        }}
-      >
+      <Layout className="gap-2.5 flex-grow-0 flex-shrink-0 flex-col bg-white">
         {workflowTaskIds.length > 1 && (
           <Alert
-            style={alertStyle}
+            className="items-start justify-start p-3 mb-3"
             message={
-              <Layout
-                style={{ flexDirection: 'column', gap: 4, padding: 0, background: 'transparent' }}
-              >
-                <Layout
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 8,
-                    background: 'transparent',
-                  }}
-                >
-                  <InfoCircleOutlined style={{ fontSize: 16, color: '#1890ff' }} />
-                  <Text style={{ fontSize: 13, fontWeight: 600, background: 'transparent' }}>
-                    Task Execution Order
-                  </Text>
+              <Layout className="flex flex-col gap-1 p-0 bg-transparent">
+                <Layout className="flex flex-row items-center gap-2 bg-transparent">
+                  <InfoCircleOutlined className="text-base text-blue-500" />
+                  <Text className="text-sm font-semibold bg-transparent">Task Execution Order</Text>
                 </Layout>
-                <Text style={{ fontSize: 13, fontWeight: 400, background: 'transparent' }}>
+                <Text className="text-sm font-normal bg-transparent">
                   The following {workflowTaskIds.length} tasks will be executed in the order
                   specified below.
                 </Text>
@@ -518,22 +419,14 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
           />
         )}
 
-        <Layout
-          style={{
-            background: 'white',
-            flexDirection: 'row',
-            gap: 4,
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <Text style={{ fontSize: 13, fontWeight: 600 }}>Tasks</Text>
+        <Layout className="bg-white flex flex-row gap-1 justify-between items-center">
+          <div className="flex items-center gap-1">
+            <Text className="text-sm font-semibold">Tasks</Text>
             <Tooltip title={tasksTooltip} placement="right">
               <QuestionCircleOutlined />
             </Tooltip>
           </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div className="flex gap-2">
             {isReordering ? (
               <>
                 <Button
@@ -560,25 +453,16 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
 
         {workflowTaskIds.length === 0 && (
           <Alert
-            style={alertStyle}
+            className="items-start justify-start p-3 mb-3"
             message={
-              <Layout
-                style={{ flexDirection: 'column', gap: 4, padding: 0, background: 'transparent' }}
-              >
-                <Layout
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 8,
-                    background: 'transparent',
-                  }}
-                >
-                  <InfoCircleOutlined style={{ fontSize: 16, color: '#1890ff' }} />
-                  <Text style={{ fontSize: 13, fontWeight: 600, background: 'transparent' }}>
+              <Layout className="flex flex-col gap-1 p-0 bg-transparent">
+                <Layout className="flex flex-row items-center gap-2 bg-transparent">
+                  <InfoCircleOutlined className="text-base text-blue-500" />
+                  <Text className="text-sm font-semibold bg-transparent">
                     Tasks with Dynamic Input
                   </Text>
                 </Layout>
-                <Text style={{ fontSize: 13, fontWeight: 400, background: 'transparent' }}>
+                <Text className="text-sm font-normal bg-transparent">
                   {
                     'Setting the dynamic input in tasks allows you to run workflow during execution with same input. This means lets say you add a Task description saying "For a User Name: {User Name}, Greet him with this name". In this case the User Name in curly braces becomes the dynamic input for tasks.'
                   }
@@ -604,81 +488,32 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
           return (
             <Layout
               key={`task-${index}`}
-              style={{
-                position: 'relative',
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                height: 44,
-                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                borderWidth: 0,
-                gap: 6,
-                paddingLeft: 42,
-                paddingRight: 12,
-                background: 'white',
-              }}
+              className="relative flex flex-row items-center justify-between h-11 shadow-md border-0 gap-1.5 pl-10 pr-3 bg-white"
             >
               <Avatar
-                style={{
-                  position: 'absolute',
-                  left: 12,
-                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-                  backgroundColor: '#26bd67',
-                }}
+                className="absolute left-3 shadow-md bg-green-500"
                 size={24}
                 icon={<FileDoneOutlined />}
               />
-              <Text
-                ellipsis
-                style={{ flexBasis: '60%', fontSize: 13, fontWeight: 400, marginLeft: '4px' }}
-              >
-                <span style={{ fontWeight: 600 }}>{`Task ${index + 1}: `}</span>
+              <Text ellipsis className="flex-basis-[60%] text-sm font-normal ml-1">
+                <span className="font-semibold">{`Task ${index + 1}: `}</span>
                 {task.description}
               </Text>
               {!hasManagerAgent && (
-                <div
-                  style={{
-                    width: '30%',
-                    display: 'flex',
-                    justifyContent: 'flex-start',
-                    overflow: 'hidden',
-                  }}
-                >
+                <div className="w-[30%] flex justify-start overflow-hidden">
                   <Tooltip title={assignedAgent?.name || 'Unassigned'}>
                     <Tag
                       icon={<UserOutlined />}
-                      style={{
-                        maxWidth: '100%',
-                        fontSize: 11,
-                        fontWeight: 400,
-                        backgroundColor: '#add8e6',
-                        border: 'none',
-                        textOverflow: 'ellipsis',
-                        overflow: 'hidden',
-                        whiteSpace: 'nowrap',
-                        display: 'flex',
-                        alignItems: 'center',
-                        paddingLeft: 8,
-                        paddingRight: 8,
-                        gap: 4,
-                      }}
+                      className="max-w-full text-[11px] font-normal bg-blue-200 border-none text-ellipsis overflow-hidden whitespace-nowrap flex items-center px-2 gap-1"
                     >
-                      <span
-                        style={{
-                          maxWidth: '80%',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          display: 'block',
-                        }}
-                      >
+                      <span className="max-w-[80%] overflow-hidden text-ellipsis whitespace-nowrap block">
                         {assignedAgent?.name || 'Unassigned'}
                       </span>
                     </Tag>
                   </Tooltip>
                 </div>
               )}
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div className="flex gap-2">
                 {isReordering ? (
                   <>
                     <Button
@@ -704,8 +539,8 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
                     />
                     <Button
                       danger
-                      style={{ border: 'none' }}
-                      icon={<DeleteOutlined color="red" />}
+                      className="border-none"
+                      icon={<DeleteOutlined className="text-red-500" />}
                       disabled={isConversational}
                       onClick={() => handleDeleteTask(task_id)}
                     />
@@ -718,20 +553,12 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
 
         {!isConversational && !editingTaskId && (
           <>
-            <Layout
-              style={{
-                flexDirection: 'row',
-                gap: '10px',
-                marginBottom: '10px',
-                background: 'white',
-                marginTop: '10px',
-              }}
-            >
-              <Layout style={{ flex: 1, background: 'white', paddingBottom: '8px' }}>
-                <Text style={{ fontSize: 13, fontWeight: 600, marginBottom: '8px' }}>
+            <Layout className="flex flex-row gap-2.5 mb-2.5 bg-white mt-2.5">
+              <Layout className="flex-1 bg-white pb-2">
+                <Text className="text-sm font-semibold mb-2">
                   Task Description
                   <Tooltip title="Enter the task description here" placement="right">
-                    <QuestionCircleOutlined style={{ marginLeft: 4 }} />
+                    <QuestionCircleOutlined className="ml-1" />
                   </Tooltip>
                 </Text>
                 <Input.TextArea
@@ -742,11 +569,11 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
                   disabled={false}
                 />
               </Layout>
-              <Layout style={{ flex: 1, background: 'white', paddingBottom: '8px' }}>
-                <Text style={{ fontSize: 13, fontWeight: 600, marginBottom: '8px' }}>
+              <Layout className="flex-1 bg-white pb-2">
+                <Text className="text-sm font-semibold mb-2">
                   Expected Output
-                  <Tooltip title="Enter the expected output here" placement="right">
-                    <QuestionCircleOutlined style={{ marginLeft: 4 }} />
+                  <Tooltip title="Expected output" placement="right">
+                    <QuestionCircleOutlined className="ml-1" />
                   </Tooltip>
                 </Text>
                 <Input.TextArea
@@ -759,18 +586,18 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
               </Layout>
             </Layout>
             {!hasManagerAgent && (
-              <Layout style={{ background: 'white', paddingBottom: '8px' }}>
-                <Text style={{ fontSize: 13, fontWeight: 600, marginBottom: '8px' }}>
+              <Layout className="bg-white pb-2">
+                <Text className="text-sm font-semibold mb-2">
                   Select Agent
                   <Tooltip title="Select an agent to assign this task" placement="right">
-                    <QuestionCircleOutlined style={{ marginLeft: 4 }} />
+                    <QuestionCircleOutlined className="ml-1" />
                   </Tooltip>
                 </Text>
                 <Select
                   placeholder="Select Agent"
                   value={selectedAgentName}
                   onChange={(value) => setSelectedAgentId(value)}
-                  style={{ width: '100%', marginBottom: '10px' }}
+                  className="w-full mb-2.5"
                 >
                   {agents
                     ?.filter((agent) => workflowAgentIds.includes(agent.id))
@@ -786,7 +613,7 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
               type="default"
               icon={<PlusCircleOutlined />}
               onClick={handleAddTask}
-              style={{ marginBottom: '10px', width: 'auto' }}
+              className="mb-2.5 w-auto"
             >
               Add Task
             </Button>
@@ -795,20 +622,12 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
 
         {editingTaskId && (
           <>
-            <Layout
-              style={{
-                flexDirection: 'row',
-                gap: '10px',
-                marginBottom: '10px',
-                background: 'white',
-                marginTop: '10px',
-              }}
-            >
-              <Layout style={{ flex: 1, background: 'white', paddingBottom: '8px' }}>
-                <Text style={{ fontSize: 13, fontWeight: 600, marginBottom: '8px' }}>
+            <Layout className="flex flex-row gap-2.5 mb-2.5 bg-white mt-2.5">
+              <Layout className="flex-1 bg-white pb-2">
+                <Text className="text-sm font-semibold mb-2">
                   Task Description
                   <Tooltip title="Task description" placement="right">
-                    <QuestionCircleOutlined style={{ marginLeft: 4 }} />
+                    <QuestionCircleOutlined className="ml-1" />
                   </Tooltip>
                 </Text>
                 <Input.TextArea
@@ -819,11 +638,11 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
                   disabled={isConversational}
                 />
               </Layout>
-              <Layout style={{ flex: 1, background: 'white', paddingBottom: '8px' }}>
-                <Text style={{ fontSize: 13, fontWeight: 600, marginBottom: '8px' }}>
+              <Layout className="flex-1 bg-white pb-2">
+                <Text className="text-sm font-semibold mb-2">
                   Expected Output
                   <Tooltip title="Expected output" placement="right">
-                    <QuestionCircleOutlined style={{ marginLeft: 4 }} />
+                    <QuestionCircleOutlined className="ml-1" />
                   </Tooltip>
                 </Text>
                 <Input.TextArea
@@ -836,18 +655,18 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
               </Layout>
             </Layout>
             {!hasManagerAgent && (
-              <Layout style={{ background: 'white', paddingBottom: '8px' }}>
-                <Text style={{ fontSize: 13, fontWeight: 600, marginBottom: '8px' }}>
+              <Layout className="bg-white pb-2">
+                <Text className="text-sm font-semibold mb-2">
                   Select Agent
                   <Tooltip title="Select an agent to assign this task" placement="right">
-                    <QuestionCircleOutlined style={{ marginLeft: 4 }} />
+                    <QuestionCircleOutlined className="ml-1" />
                   </Tooltip>
                 </Text>
                 <Select
                   placeholder="Select Agent"
                   value={selectedAgentName}
                   onChange={(value) => setSelectedAgentId(value)}
-                  style={{ width: '100%', marginBottom: '10px' }}
+                  className="w-full mb-2.5"
                 >
                   {agents
                     ?.filter((agent) => workflowAgentIds.includes(agent.id))
@@ -863,7 +682,7 @@ const WorkflowTasksComponent: React.FC<WorkflowTasksComponentProps> = ({ workflo
               type="default"
               icon={<SaveOutlined />}
               onClick={handleSaveTask}
-              style={{ marginBottom: '10px', width: 'auto' }}
+              className="mb-2.5 w-auto"
             >
               Save Task
             </Button>
@@ -881,19 +700,7 @@ interface WorklfowEditorInputsProps {
 const WorkflowEditorInputs: React.FC<WorklfowEditorInputsProps> = ({ workflowId }) => {
   return (
     <>
-      <Layout
-        style={{
-          flexDirection: 'column',
-          flexShrink: 0,
-          flexGrow: 0,
-          padding: '16px 24px',
-          width: '40%',
-          height: '100%',
-          background: 'transparent',
-          gap: '24px',
-          overflow: 'auto',
-        }}
-      >
+      <Layout className="flex flex-col flex-shrink-0 flex-grow-0 p-4 md:px-6 w-2/5 h-full bg-transparent gap-6 overflow-auto">
         <WorkflowTasksComponent workflowId={workflowId} />
       </Layout>
     </>

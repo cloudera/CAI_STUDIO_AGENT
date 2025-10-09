@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Card, Input, Layout, Typography, Alert, Spin, Menu, Dropdown } from 'antd';
+import { Button, Input, Layout, Typography, Alert, Spin, Menu, Dropdown } from 'antd';
 import { getWorkflowInputs } from '@/app/lib/workflow';
-import { useGetWorkflowByIdQuery, useTestWorkflowMutation } from '@/app/workflows/workflowsApi';
-import { useListTasksQuery } from '@/app/tasks/tasksApi';
+import { useTestWorkflowMutation } from '@/app/workflows/workflowsApi';
 import { useAppDispatch, useAppSelector } from '@/app/lib/hooks/hooks';
 import {
   selectWorkflowAppStandardInputs,
@@ -14,27 +13,17 @@ import {
   updatedCrewOutput,
   selectCurrentEvents,
 } from '@/app/workflows/workflowAppSlice';
-import {
-  PauseCircleOutlined,
-  SendOutlined,
-  DownloadOutlined,
-  MoreOutlined,
-} from '@ant-design/icons';
+import { SendOutlined, DownloadOutlined, MoreOutlined } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
-import {
-  AgentMetadata,
-  CrewAITaskMetadata,
-  ToolInstance,
-  Workflow,
-} from '@/studio/proto/agent_studio';
+import { CrewAITaskMetadata, Workflow } from '@/studio/proto/agent_studio';
 import showdown from 'showdown';
 import {
   selectWorkflowConfiguration,
   selectWorkflowGenerationConfig,
 } from '@/app/workflows/editorSlice';
-import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
+import { useGetWorkflowDataQuery, useKickoffMutation } from '@/app/workflows/workflowAppApi';
 import { useGlobalNotification } from '../Notifications';
 
 const { Title, Text } = Typography;
@@ -58,6 +47,7 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
   const isRunning = useAppSelector(selectWorkflowIsRunning);
   const currentEvents = useAppSelector(selectCurrentEvents);
   const [testWorkflow] = useTestWorkflowMutation();
+  const [kickoff] = useKickoffMutation();
   const workflowGenerationConfig = useAppSelector(selectWorkflowGenerationConfig);
   const workflowConfiguration = useAppSelector(selectWorkflowConfiguration);
   const notificationApi = useGlobalNotification();
@@ -65,7 +55,6 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
   // If we haven't determined our application render type, then we don't render yet!
   const { data: workflowData, isLoading } = useGetWorkflowDataQuery();
   const renderMode = workflowData?.renderMode;
-  const workflowModelUrl = workflowData?.workflowModelUrl;
 
   const allEventsRef = React.useRef<any[]>([]);
   const [lastRun, setLastRun] = useState<{
@@ -109,10 +98,6 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
     );
   };
 
-  const base64Encode = (obj: any): string => {
-    return Buffer.from(JSON.stringify(obj)).toString('base64');
-  };
-
   const handleCrewKickoff = async () => {
     // Get all possible inputs and create a dictionary with empty strings as defaults
     const allInputs = getWorkflowInputs(workflow?.crew_ai_workflow_metadata, tasks);
@@ -145,20 +130,19 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
         return;
       }
     } else {
-      const kickoffResponse = await fetch(`${workflowModelUrl}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          request: {
-            action_type: 'kickoff',
-            kickoff_inputs: base64Encode(finalInputs), // Use finalInputs instead of inputs
-          },
-        }),
-      });
-      const kickoffResponseData = (await kickoffResponse.json()) as any;
-      traceId = kickoffResponseData.response.trace_id;
+      try {
+        const response = await kickoff({
+          inputs: finalInputs,
+        }).unwrap();
+        traceId = response.trace_id;
+      } catch (error) {
+        notificationApi.error({
+          message: 'Kickoff failed',
+          description: JSON.stringify(error),
+          placement: 'topRight',
+        });
+        return;
+      }
     }
 
     if (traceId) {
@@ -175,7 +159,9 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
   };
 
   const handleDownloadPDF = async () => {
-    if (!crewOutput) return;
+    if (!crewOutput) {
+      return;
+    }
 
     try {
       // Dynamically import html2pdf
@@ -238,7 +224,9 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
   };
 
   const handleDownloadLogs = () => {
-    if (!lastRun) return;
+    if (!lastRun) {
+      return;
+    }
     const log = [
       {
         User: lastRun.userInput,
@@ -259,7 +247,7 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
   const menu = (
     <Menu>
       <Menu.Item key="download" onClick={handleDownloadLogs}>
-        <DownloadOutlined style={{ marginRight: 8 }} />
+        <DownloadOutlined className="mr-2" />
         Log Bundle
       </Menu.Item>
     </Menu>
@@ -272,45 +260,19 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
 
   return (
     <>
-      <Layout
-        style={{
-          marginTop: '16px',
-          borderRadius: '1px',
-          flexDirection: 'column',
-          gap: 8,
-          padding: 12,
-          background: 'transparent',
-          display: 'flex',
-          height: '100%',
-          overflowY: 'auto',
-        }}
-      >
-        <div style={{ flexShrink: 0, marginBottom: '16px' }}>
+      <Layout className="mt-4 rounded border flex flex-col gap-2 p-3 bg-transparent h-full overflow-y-auto">
+        <div className="flex-shrink-0 mb-4">
           {getWorkflowInputs(workflow?.crew_ai_workflow_metadata, tasks).length > 0 ? (
             <>
               <Title level={5}>Inputs</Title>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div className="flex flex-col gap-2">
                 {/* Group inputs into pairs */}
                 {chunk(getWorkflowInputs(workflow?.crew_ai_workflow_metadata, tasks), 2).map(
                   (inputPair, rowIndex) => (
-                    <div
-                      key={rowIndex}
-                      style={{
-                        display: 'flex',
-                        gap: '16px',
-                      }}
-                    >
+                    <div key={rowIndex} className="flex gap-4">
                       {inputPair.map((input, index) => (
-                        <div
-                          key={index}
-                          style={{
-                            flex: 1,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '4px',
-                          }}
-                        >
-                          <Text style={{ fontSize: 13, fontWeight: 400 }}>{input}</Text>
+                        <div key={index} className="flex-1 flex flex-col gap-1">
+                          <Text className="text-sm font-normal">{input}</Text>
                           <Input
                             placeholder={`Enter ${input}`}
                             value={inputs[input]}
@@ -319,7 +281,7 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
                         </div>
                       ))}
                       {/* Add placeholder div if odd number of inputs */}
-                      {inputPair.length === 1 && <div style={{ flex: 1 }} />}
+                      {inputPair.length === 1 && <div className="flex-1" />}
                     </div>
                   ),
                 )}
@@ -330,12 +292,12 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
               message="No inputs required for this workflow."
               type="info"
               showIcon
-              style={{ marginBottom: '16px' }}
+              className="mb-4"
             />
           )}
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', flexShrink: 0, marginBottom: '16px' }}>
+        <div className="flex gap-2 flex-shrink-0 mb-4">
           <Button
             type="primary"
             icon={isRunning ? <Spin size="small" /> : <SendOutlined />}
@@ -343,9 +305,7 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
               await handleCrewKickoff();
             }}
             disabled={isRunning}
-            style={{
-              flex: 1,
-            }}
+            className="flex-1"
           >
             {isRunning ? 'Workflow Running...' : 'Run Workflow'}
           </Button>
@@ -354,34 +314,12 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
           </Dropdown>
         </div>
 
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            background: '#fff',
-            borderRadius: '8px',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
-            minHeight: '200px',
-            position: 'relative',
-            marginBottom: '16px',
-            alignSelf: 'stretch',
-            flex: '1 0 auto',
-          }}
-        >
+        <div className="flex flex-col bg-white rounded-lg shadow-lg relative mb-4 self-stretch flex-1 overflow-hidden">
           {crewOutput && (
             <>
               <div
                 id="crew-output-content"
-                className="prose prose-lg max-w-none"
-                style={{
-                  fontSize: '12px',
-                  padding: '16px',
-                  paddingBottom: '48px',
-                  width: '100%',
-                  lineHeight: '1.5',
-                  fontFamily:
-                    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-                }}
+                className="prose prose-lg max-w-none text-xs p-4 pb-12 w-full leading-relaxed font-sans overflow-y-auto flex-1"
               >
                 <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
                   {crewOutput}
@@ -391,20 +329,7 @@ const WorkflowAppInputsView: React.FC<WorkflowAppInputsViewProps> = ({ workflow,
                 type="text"
                 icon={<DownloadOutlined />}
                 onClick={handleDownloadPDF}
-                style={{
-                  position: 'absolute',
-                  bottom: '16px',
-                  right: '16px',
-                  background: 'white',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-                  borderRadius: '50%',
-                  width: '32px',
-                  height: '32px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: 'none',
-                }}
+                className="absolute bottom-4 right-4 bg-white shadow-lg rounded-full w-8 h-8 flex items-center justify-center border-none"
               />
             </>
           )}

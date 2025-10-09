@@ -1,49 +1,37 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Button, Card, Input, Layout, Typography, Alert, Spin } from 'antd';
-import { getWorkflowInputs } from '@/app/lib/workflow';
-import { useGetWorkflowByIdQuery, useTestWorkflowMutation } from '@/app/workflows/workflowsApi';
-import { useListTasksQuery } from '@/app/tasks/tasksApi';
+import React, { useEffect, useRef } from 'react';
+import { Layout } from 'antd';
+import { useTestWorkflowMutation } from '@/app/workflows/workflowsApi';
 import { useAppDispatch, useAppSelector } from '@/app/lib/hooks/hooks';
 import {
   addedChatMessage,
   selectWorkflowAppChatMessages,
   selectWorkflowAppChatUserInput,
-  selectWorkflowAppStandardInputs,
-  selectWorkflowCrewOutput,
   selectWorkflowIsRunning,
-  updatedAppInputs,
   updatedChatUserInput,
   updatedCurrentTraceId,
   updatedIsRunning,
   clearedChatMessages,
 } from '@/app/workflows/workflowAppSlice';
-import {
-  AgentMetadata,
-  CrewAITaskMetadata,
-  ToolInstance,
-  Workflow,
-} from '@/studio/proto/agent_studio';
+import { CrewAITaskMetadata, Workflow } from '@/studio/proto/agent_studio';
 import ChatMessages from '../ChatMessages';
 import {
   selectWorkflowConfiguration,
   selectWorkflowGenerationConfig,
 } from '@/app/workflows/editorSlice';
-import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
+import { useGetWorkflowDataQuery, useKickoffMutation } from '@/app/workflows/workflowAppApi';
 import { useGlobalNotification } from '../Notifications';
-
-const { Title, Text } = Typography;
 
 export interface WorkflowAppChatViewProps {
   workflow?: Workflow;
   tasks?: CrewAITaskMetadata[];
 }
 
-const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow, tasks }) => {
+const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow }) => {
   const userInput = useAppSelector(selectWorkflowAppChatUserInput);
   const dispatch = useAppDispatch();
   const isRunning = useAppSelector(selectWorkflowIsRunning);
   const [testWorkflow] = useTestWorkflowMutation();
-  const crewOutput = useAppSelector(selectWorkflowCrewOutput);
+  const [kickoff] = useKickoffMutation();
   const workflowGenerationConfig = useAppSelector(selectWorkflowGenerationConfig);
   const workflowConfiguration = useAppSelector(selectWorkflowConfiguration);
   const notificationApi = useGlobalNotification();
@@ -51,9 +39,8 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow, tas
   // If we haven't determined our application render type, then we don't render yet!
   const { data: workflowData, isLoading } = useGetWorkflowDataQuery();
   const renderMode = workflowData?.renderMode;
-  const workflowModelUrl = workflowData?.workflowModelUrl;
 
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const messages = useAppSelector(selectWorkflowAppChatMessages);
 
   const scrollToBottom = () => {
@@ -67,18 +54,6 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow, tas
   if (!workflow) {
     return <></>;
   }
-
-  const handleInputChange = (key: string, value: string) => {
-    dispatch(
-      updatedAppInputs({
-        [key]: value,
-      }),
-    );
-  };
-
-  const base64Encode = (obj: any): string => {
-    return Buffer.from(JSON.stringify(obj)).toString('base64');
-  };
 
   const handleCrewKickoff = async () => {
     // Create user_input and context from the messages and exsting input
@@ -112,23 +87,22 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow, tas
         return;
       }
     } else {
-      const kickoffResponse = await fetch(`${workflowModelUrl}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          request: {
-            action_type: 'kickoff',
-            kickoff_inputs: base64Encode({
-              user_input: userInput || '',
-              context: JSON.stringify(context),
-            }),
+      try {
+        const response = await kickoff({
+          inputs: {
+            user_input: userInput || '',
+            context: JSON.stringify(context),
           },
-        }),
-      });
-      const kickoffResponseData = (await kickoffResponse.json()) as any;
-      traceId = kickoffResponseData.response.trace_id;
+        }).unwrap();
+        traceId = response.trace_id;
+      } catch (error) {
+        notificationApi.error({
+          message: 'Kickoff failed',
+          description: JSON.stringify(error),
+          placement: 'topRight',
+        });
+        return;
+      }
     }
 
     if (traceId) {
@@ -162,18 +136,12 @@ const WorkflowAppChatView: React.FC<WorkflowAppChatViewProps> = ({ workflow, tas
 
   return (
     <>
-      <Layout
-        style={{
-          padding: 1,
-          background: 'transparent',
-          flex: 1,
-        }}
-      >
+      <Layout className="p-px bg-transparent flex-1">
         <ChatMessages
           messages={messages}
           handleTestWorkflow={handleCrewKickoff}
           isProcessing={isRunning || false}
-          messagesEndRef={messagesEndRef}
+          messagesEndRef={messagesEndRef as React.RefObject<HTMLDivElement>}
           clearMessages={handleClearMessages}
           workflowName={workflow.name}
         />

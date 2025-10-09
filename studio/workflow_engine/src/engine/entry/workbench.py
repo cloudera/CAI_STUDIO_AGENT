@@ -4,10 +4,32 @@ import os
 import sys
 import subprocess
 
+# Set UV_LINK_MODE to copy to avoid hardlinking issues on filesystems with link limits
+os.environ["UV_LINK_MODE"] = "copy"
+
 # Restore the original stdio file objects so the
 # jupyter kernel doesn't swallow our print statements
 sys.stdout = sys.__stdout__
 sys.stderr = sys.__stderr__
+
+# Configure virtual environment if in runtime mode
+if os.getenv("AGENT_STUDIO_DEPLOY_MODE", "amp").lower() == "runtime":
+    app_dir = os.getenv("APP_DIR")
+    venv_path = os.path.join(app_dir, "studio", "workflow_engine", ".venv")
+    print(f"venv_path----------: {venv_path}")
+    if os.path.exists(venv_path):
+        os.environ["VIRTUAL_ENV"] = venv_path
+        os.environ["PATH"] = f"{venv_path}/bin:{os.environ.get('PATH', '')}"
+        # Add site-packages for common Python versions
+        python_versions = ["python3.10", "python3.11", "python3.9"]
+        for py_version in python_versions:
+            site_packages = os.path.join(venv_path, "lib", py_version, "site-packages")
+            if os.path.exists(site_packages) and site_packages not in sys.path:
+                sys.path.insert(0, site_packages)
+                print(f"Added {py_version} site-packages to sys.path: {site_packages}")
+                break
+        print(f"Configured virtual environment: {venv_path}")
+
 
 # Extract workflow parameters from the environment
 WORFKLOW_ARTIFACT = os.environ.get("AGENT_STUDIO_WORKFLOW_ARTIFACT", "/home/cdsw/workflow/artifact.tar.gz")
@@ -18,6 +40,12 @@ CDSW_DOMAIN = os.getenv("CDSW_DOMAIN")
 # Specify where our workflows will be extracted to
 WORKFLOW_DIRECTORY = os.path.abspath("workflow")
 sys.path.append(WORKFLOW_DIRECTORY)
+
+# If we are running in runtime mode, our actual core logic is in the runtime
+# image itself which we need to ensure is on the path.
+if os.getenv("AGENT_STUDIO_DEPLOY_MODE", "amp").lower() == "runtime":
+    app_dir = os.getenv("APP_DIR")
+    sys.path.append(os.path.join(app_dir, "studio", "workflow_engine", "src"))
 
 # Install the cmlapi. This is a required dependency for cross-cutting util modules
 # and ops modules that are used in a workflow.
@@ -46,6 +74,7 @@ from datetime import datetime
 from typing import List, Dict, Union, Optional
 import json
 import base64
+from pydantic import BaseModel
 
 import engine.types as input_types
 from engine.crewai.mcp import get_mcp_tools_definitions
@@ -66,6 +95,7 @@ tracer = None  # keep this for CrewAI workflows
 if is_langgraph_workflow(WORKFLOW_DIRECTORY):
     LANGGRAPH_CALLABLES = load_langgraph_workflow(WORKFLOW_DIRECTORY)
 elif is_crewai_workflow(WORKFLOW_DIRECTORY):
+    collated_input: Optional[BaseModel] = None
     collated_input, tracer = load_crewai_workflow(WORKFLOW_DIRECTORY)
 else:
     raise ValueError("Unsupported workflow artifact type.")
@@ -164,7 +194,7 @@ def api_wrapper(args: Union[dict, str]) -> str:
 
         return {"trace_id": str(trace_id)}
     elif serve_workflow_parameters.action_type == input_types.DeployedWorkflowActions.GET_CONFIGURATION.value:
-        return {"configuration": collated_input.model_dump()}
+        return {"configuration": json.loads(collated_input.model_dump_json())}
     elif serve_workflow_parameters.action_type == input_types.DeployedWorkflowActions.GET_ASSET_DATA.value:
         unavailable_assets = list()
         asset_data: Dict[str, str] = dict()

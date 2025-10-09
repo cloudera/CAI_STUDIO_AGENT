@@ -15,7 +15,7 @@ import {
   Tag,
   Form,
 } from 'antd';
-import { WorkflowTemplateMetadata, AgentTemplateMetadata } from '@/studio/proto/agent_studio';
+import { WorkflowTemplateMetadata } from '@/studio/proto/agent_studio';
 import {
   UserOutlined,
   UsergroupAddOutlined,
@@ -74,7 +74,7 @@ const WorkflowTemplateDetails: React.FC<WorkflowTemplateDetailsProps> = ({ templ
   );
 
   return (
-    <Layout style={{ background: '#fff' }}>
+    <Layout className="bg-white">
       {/* Show Manager Agent Template if exists */}
       {managerAgentTemplate && (
         <>
@@ -84,93 +84,27 @@ const WorkflowTemplateDetails: React.FC<WorkflowTemplateDetailsProps> = ({ templ
             dataSource={[managerAgentTemplate]}
             renderItem={(agent) => (
               <List.Item>
-                <Layout
-                  style={{
-                    borderRadius: '4px',
-                    border: 'solid 1px #f0f0f0',
-                    backgroundColor: '#fff',
-                    width: '100%',
-                    height: '150px',
-                    padding: '0',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                  }}
-                >
-                  <Layout
-                    style={{
-                      flex: 1,
-                      background: 'transparent',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      overflow: 'auto',
-                    }}
-                  >
-                    <div
-                      style={{
-                        padding: '16px 24px',
-                        display: 'flex',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: '12px',
-                      }}
-                    >
+                <Layout className="rounded border border-[#f0f0f0] bg-white w-full h-[150px] p-0 flex flex-col shadow-[0_2px_4px_rgba(0,0,0,0.1)]">
+                  <Layout className="flex-1 bg-transparent flex flex-col overflow-auto">
+                    <div className="px-6 py-4 flex flex-row items-center gap-3">
                       <Avatar
-                        style={{
-                          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-                          backgroundColor: 'lightgrey',
-                          minWidth: '24px',
-                          minHeight: '24px',
-                          width: '24px',
-                          height: '24px',
-                          flex: '0 0 24px',
-                        }}
+                        className="shadow-[0_2px_4px_rgba(0,0,0,0.2)] bg-gray-300 min-w-[24px] min-h-[24px] w-6 h-6 flex-none"
                         size={24}
                         icon={<UsergroupAddOutlined />}
                       />
                       <Text
-                        style={{
-                          fontSize: '14px',
-                          fontWeight: 400,
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
+                        className="text-[14px] font-normal whitespace-nowrap overflow-hidden text-ellipsis"
                         title={agent.name}
                       >
                         {agent.name}
                       </Text>
                     </div>
-                    <Text
-                      style={{
-                        padding: '0 24px',
-                        fontSize: '11px',
-                        opacity: 0.45,
-                        fontWeight: 400,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
-                    >
-                      Goal:{' '}
-                      <span style={{ color: 'black', fontWeight: 400 }}>{agent.goal || 'N/A'}</span>
+                    <Text className="px-6 text-[11px] opacity-45 font-normal whitespace-nowrap overflow-hidden text-ellipsis">
+                      Goal: <span className="text-black font-normal">{agent.goal || 'N/A'}</span>
                     </Text>
-                    <Text
-                      style={{
-                        padding: '0 24px',
-                        fontSize: '11px',
-                        opacity: 0.45,
-                        fontWeight: 400,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        marginTop: '8px',
-                      }}
-                    >
+                    <Text className="px-6 text-[11px] opacity-45 font-normal whitespace-nowrap overflow-hidden text-ellipsis mt-2">
                       Backstory:{' '}
-                      <span style={{ color: 'black', fontWeight: 400 }}>
-                        {agent.backstory || 'N/A'}
-                      </span>
+                      <span className="text-black font-normal">{agent.backstory || 'N/A'}</span>
                     </Text>
                   </Layout>
                 </Layout>
@@ -195,51 +129,14 @@ const WorkflowTemplateDetails: React.FC<WorkflowTemplateDetailsProps> = ({ templ
             ]}
             renderItem={() => (
               <List.Item>
-                <Layout
-                  style={{
-                    borderRadius: '4px',
-                    border: 'solid 1px #f0f0f0',
-                    backgroundColor: '#fff',
-                    width: '100%',
-                    height: '40px',
-                    padding: '0',
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                  }}
-                >
-                  <div
-                    style={{
-                      padding: '8px 24px',
-                      display: 'flex',
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: '12px',
-                    }}
-                  >
+                <Layout className="rounded border border-[#f0f0f0] bg-white w-full h-10 p-0 flex flex-row items-center">
+                  <div className="px-6 py-2 flex flex-row items-center gap-3">
                     <Avatar
-                      style={{
-                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-                        backgroundColor: 'lightgrey',
-                        minWidth: '24px',
-                        minHeight: '24px',
-                        width: '24px',
-                        height: '24px',
-                        flex: '0 0 24px',
-                      }}
+                      className="shadow-[0_2px_4px_rgba(0,0,0,0.2)] bg-gray-300 min-w-[24px] min-h-[24px] w-6 h-6 flex-none"
                       size={24}
                       icon={<UsergroupAddOutlined />}
                     />
-                    <Text
-                      style={{
-                        fontSize: '14px',
-                        fontWeight: 400,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        lineHeight: '24px',
-                      }}
-                    >
+                    <Text className="text-[14px] font-normal whitespace-nowrap overflow-hidden text-ellipsis leading-6">
                       Default Manager
                     </Text>
                   </div>
@@ -251,7 +148,7 @@ const WorkflowTemplateDetails: React.FC<WorkflowTemplateDetailsProps> = ({ templ
       )}
 
       {/* Show Agent Templates */}
-      <Title level={5} style={{ marginTop: '20px' }}>
+      <Title level={5} className="mt-5">
         Agents
       </Title>
       <List
@@ -259,106 +156,31 @@ const WorkflowTemplateDetails: React.FC<WorkflowTemplateDetailsProps> = ({ templ
         dataSource={agentTemplateDetails}
         renderItem={(agent) => (
           <List.Item>
-            <Layout
-              style={{
-                borderRadius: '4px',
-                border: 'solid 1px #f0f0f0',
-                backgroundColor: '#fff',
-                width: '100%',
-                height: '150px',
-                padding: '0',
-                display: 'flex',
-                flexDirection: 'column',
-                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-              }}
-            >
-              <Layout
-                style={{
-                  flex: 1,
-                  background: 'transparent',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  overflow: 'auto',
-                }}
-              >
-                <div
-                  style={{
-                    padding: '16px 24px',
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: '12px',
-                  }}
-                >
+            <Layout className="rounded border border-[#f0f0f0] bg-white w-full h-[150px] p-0 flex flex-col shadow-[0_2px_4px_rgba(0,0,0,0.1)]">
+              <Layout className="flex-1 bg-transparent flex flex-col overflow-auto">
+                <div className="px-6 py-4 flex flex-row items-center gap-3">
                   <Avatar
-                    style={{
-                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-                      backgroundColor: '#4b85d1',
-                      minWidth: '24px',
-                      minHeight: '24px',
-                      width: '24px',
-                      height: '24px',
-                      flex: '0 0 24px',
-                    }}
+                    className="shadow-[0_2px_4px_rgba(0,0,0,0.2)] bg-[#4b85d1] min-w-[24px] min-h-[24px] w-6 h-6 flex-none"
                     size={24}
                     icon={<UserOutlined />}
                   />
                   <Text
-                    style={{
-                      fontSize: '14px',
-                      fontWeight: 400,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
+                    className="text-[14px] font-normal whitespace-nowrap overflow-hidden text-ellipsis"
                     title={agent?.name}
                   >
                     {agent?.name}
                   </Text>
                 </div>
-                <Text
-                  style={{
-                    padding: '0 24px',
-                    fontSize: '11px',
-                    opacity: 0.45,
-                    fontWeight: 400,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
-                  Goal:{' '}
-                  <span style={{ color: 'black', fontWeight: 400 }}>{agent?.goal || 'N/A'}</span>
+                <Text className="px-6 text-[11px] opacity-45 font-normal whitespace-nowrap overflow-hidden text-ellipsis">
+                  Goal: <span className="text-black font-normal">{agent?.goal || 'N/A'}</span>
                 </Text>
-                <Text
-                  style={{
-                    padding: '0 24px',
-                    fontSize: '11px',
-                    opacity: 0.45,
-                    fontWeight: 400,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    marginTop: '8px',
-                  }}
-                >
+                <Text className="px-6 text-[11px] opacity-45 font-normal whitespace-nowrap overflow-hidden text-ellipsis mt-2">
                   Backstory:{' '}
-                  <span style={{ color: 'black', fontWeight: 400 }}>
-                    {agent?.backstory || 'N/A'}
-                  </span>
+                  <span className="text-black font-normal">{agent?.backstory || 'N/A'}</span>
                 </Text>
                 {/* Add Tool Icons Section */}
                 {(agent!.tool_template_ids?.length ?? 0) > 0 && (
-                  <Space
-                    style={{
-                      marginTop: '12px',
-                      paddingLeft: '24px',
-                      paddingRight: '24px',
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: '10px',
-                    }}
-                  >
+                  <Space className="mt-3 px-6 flex flex-wrap gap-2.5">
                     {agent!.tool_template_ids?.map((toolTemplateId) => {
                       const toolTemplate = toolTemplatesMap[toolTemplateId];
                       const imageUri = toolTemplate?.tool_image_uri;
@@ -373,29 +195,14 @@ const WorkflowTemplateDetails: React.FC<WorkflowTemplateDetailsProps> = ({ templ
                           key={`template-${toolTemplateId}`}
                           placement="top"
                         >
-                          <div
-                            style={{
-                              width: '24px',
-                              height: '24px',
-                              borderRadius: '50%',
-                              background: '#f1f1f1',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              cursor: 'pointer',
-                              border: '1px dashed #d9d9d9',
-                            }}
-                          >
+                          <div className="w-6 h-6 rounded-full bg-[#f1f1f1] flex items-center justify-center cursor-pointer border border-dashed border-[#d9d9d9]">
                             <Image
                               src={imageSrc}
                               alt={toolTemplate?.name || toolTemplateId}
                               width={16}
                               height={16}
                               preview={false}
-                              style={{
-                                borderRadius: '2px',
-                                objectFit: 'cover',
-                              }}
+                              className="rounded object-cover w-4 h-4"
                             />
                           </div>
                         </Tooltip>
@@ -410,7 +217,7 @@ const WorkflowTemplateDetails: React.FC<WorkflowTemplateDetailsProps> = ({ templ
       />
 
       {/* Show Task Templates */}
-      <Title level={5} style={{ marginTop: '20px' }}>
+      <Title level={5} className="mt-5">
         Tasks
       </Title>
       <List
@@ -419,46 +226,18 @@ const WorkflowTemplateDetails: React.FC<WorkflowTemplateDetailsProps> = ({ templ
           const taskTemplate = taskTemplates?.find((t) => t.id === taskId);
           return (
             <List.Item>
-              <Layout
-                style={{
-                  position: 'relative',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  height: 44,
-                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                  borderWidth: 0,
-                  gap: 6,
-                  paddingLeft: 48,
-                  paddingRight: 12,
-                  background: 'white',
-                  width: '80%',
-                }}
-              >
+              <Layout className="relative flex flex-row items-center justify-between h-[44px] shadow-[0_2px_4px_rgba(0,0,0,0.1)] border-0 gap-1.5 pl-12 pr-3 bg-white w-4/5">
                 <Avatar
-                  style={{
-                    position: 'absolute',
-                    left: 24,
-                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-                    backgroundColor: '#26bd67',
-                    minWidth: '24px',
-                    minHeight: '24px',
-                    width: '24px',
-                    height: '24px',
-                    flex: '0 0 24px',
-                  }}
+                  className="absolute left-6 shadow-[0_2px_4px_rgba(0,0,0,0.2)] bg-[#26bd67] min-w-[24px] min-h-[24px] w-6 h-6 flex-none"
                   size={24}
                   icon={<FileDoneOutlined />}
                 />
-                <Text
-                  ellipsis
-                  style={{ flexBasis: '60%', fontSize: 13, fontWeight: 400, marginLeft: '12px' }}
-                >
-                  <span style={{ fontWeight: 600 }}>{`Task ${index + 1}: `}</span>
+                <Text ellipsis className="flex-basis-[60%] text-sm font-normal ml-3">
+                  <span className="font-semibold">{`Task ${index + 1}: `}</span>
                   {taskTemplate?.description || 'No description'}
                 </Text>
                 {taskTemplate?.assigned_agent_template_id && (
-                  <div style={{ width: '30%', display: 'flex', justifyContent: 'flex-start' }}>
+                  <div className="w-[30%] flex justify-start overflow-hidden">
                     <Tooltip
                       title={
                         agentTemplates?.find(
@@ -468,31 +247,9 @@ const WorkflowTemplateDetails: React.FC<WorkflowTemplateDetailsProps> = ({ templ
                     >
                       <Tag
                         icon={<UserOutlined />}
-                        style={{
-                          maxWidth: '100%',
-                          fontSize: 11,
-                          fontWeight: 400,
-                          backgroundColor: '#add8e6',
-                          border: 'none',
-                          textOverflow: 'ellipsis',
-                          overflow: 'hidden',
-                          whiteSpace: 'nowrap',
-                          display: 'flex',
-                          alignItems: 'center',
-                          paddingLeft: 8,
-                          paddingRight: 8,
-                          gap: 4,
-                        }}
+                        className="max-w-full text-[11px] font-normal bg-[#add8e6] border-none text-ellipsis overflow-hidden whitespace-nowrap flex items-center px-2 gap-1"
                       >
-                        <span
-                          style={{
-                            maxWidth: '80%',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            display: 'block',
-                          }}
-                        >
+                        <span className="max-w-[80%] overflow-hidden text-ellipsis whitespace-nowrap block">
                           {agentTemplates?.find(
                             (a) => a.id === taskTemplate.assigned_agent_template_id,
                           )?.name || 'Unassigned'}
@@ -528,59 +285,20 @@ const WorkflowTemplateCard: React.FC<WorkflowTemplateCardProps> = ({
   return (
     <Card
       key={template.id}
-      style={{
-        cursor: 'pointer',
-        boxShadow: selectedTemplate?.id === template.id ? '0 4px 8px rgba(0, 0, 0, 0.2)' : 'none',
-        backgroundColor: selectedTemplate?.id === template.id ? '#e6ffe6' : '#fff',
-        height: '180px',
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'relative',
-      }}
+      className={`cursor-pointer h-[180px] flex flex-col relative ${selectedTemplate?.id === template.id ? 'shadow-lg bg-green-100' : 'bg-white'}`}
       onClick={() => setSelectedTemplate(template)}
     >
-      <Layout
-        style={{
-          flex: 1,
-          background: 'transparent',
-          display: 'flex',
-          flexDirection: 'column',
-          paddingTop: '16px',
-        }}
-      >
+      <Layout className="flex-1 bg-transparent flex flex-col pt-4">
         <Text
-          style={{
-            fontSize: '14px',
-            fontWeight: 400,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
+          className="text-sm font-normal whitespace-nowrap overflow-hidden text-ellipsis"
           title={template.name}
         >
           {template.name}
         </Text>
-        <Text
-          style={{
-            fontSize: '11px',
-            opacity: 0.45,
-            marginTop: '4px',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
+        <Text className="text-[11px] opacity-45 mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
           {template.description}
         </Text>
-        <Space
-          style={{
-            marginBottom: 'auto',
-            marginTop: '24px',
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '6px',
-          }}
-        >
+        <Space className="mb-auto mt-6 flex flex-wrap gap-1.5">
           {template.agent_template_ids?.map((agentId, index) => {
             const agentIconsColorPalette = ['#a9ccb9', '#cca9a9', '#c4a9cc', '#ccc7a9'];
             const agentName =
@@ -588,16 +306,12 @@ const WorkflowTemplateCard: React.FC<WorkflowTemplateCardProps> = ({
             return (
               <Tooltip key={agentId} title={agentName}>
                 <Button
-                  style={{
-                    backgroundColor: agentIconsColorPalette[index % agentIconsColorPalette.length],
-                    color: 'black',
-                    fontSize: '10px',
-                    height: '20px',
-                    padding: '0 8px',
-                    borderRadius: '4px',
-                  }}
+                  className={`
+                    text-black text-[10px] h-5 px-2 rounded
+                    bg-[${agentIconsColorPalette[index % agentIconsColorPalette.length]}]
+                  `}
                 >
-                  <UserOutlined style={{ fontSize: '10px' }} />
+                  <UserOutlined className="text-[10px]" />
                 </Button>
               </Tooltip>
             );
@@ -613,6 +327,7 @@ interface WorkflowGetStartModalProps {
   onCancel: () => void;
   onCreateWorkflow: (name: string, templateId?: string) => void;
   workflowTemplates: WorkflowTemplateMetadata[];
+  loading?: boolean;
 }
 
 const WorkflowGetStartModal: React.FC<WorkflowGetStartModalProps> = ({
@@ -620,6 +335,7 @@ const WorkflowGetStartModal: React.FC<WorkflowGetStartModalProps> = ({
   onCancel,
   onCreateWorkflow,
   workflowTemplates,
+  loading = false,
 }) => {
   const [form] = Form.useForm();
   const [selectedTemplate, setSelectedTemplate] = useState<WorkflowTemplateMetadata | null>(null);
@@ -637,49 +353,36 @@ const WorkflowGetStartModal: React.FC<WorkflowGetStartModalProps> = ({
       onCancel={onCancel}
       centered
       width="98%"
-      style={{ height: '95vh', padding: '0px' }}
+      className="!h-[95vh] !p-0"
       footer={[
-        <Button key="cancel" onClick={onCancel}>
+        <Button key="cancel" onClick={onCancel} disabled={loading}>
           Cancel
         </Button>,
-        <Button key="create" type="primary" onClick={handleCreateWorkflow}>
+        <Button
+          key="create"
+          type="primary"
+          onClick={handleCreateWorkflow}
+          loading={loading}
+          disabled={loading}
+        >
           Create Workflow
         </Button>,
       ]}
     >
-      <div style={{ overflowY: 'auto', height: 'calc(95vh - 108px)' }}>
-        <Divider style={{ margin: 0, backgroundColor: '#f0f0f0' }} />
-        <Layout
-          style={{ display: 'flex', flexDirection: 'row', height: '100%', backgroundColor: '#fff' }}
-        >
-          <Layout style={{ flex: 1, overflowY: 'auto', padding: '16px', backgroundColor: '#fff' }}>
-            <Title level={5} style={{ marginBottom: '16px' }}>
+      <div className="overflow-y-auto h-[calc(95vh-108px)]">
+        <Divider className="m-0 bg-[#f0f0f0]" />
+        <Layout className="flex flex-row h-full bg-white">
+          <Layout className="flex-1 overflow-y-auto p-4 bg-white">
+            <Title level={5} className="mb-4">
               New
             </Title>
             <Card
-              style={{
-                marginBottom: 16,
-                cursor: 'pointer',
-                boxShadow: !selectedTemplate ? '0 4px 8px rgba(0, 0, 0, 0.2)' : 'none',
-                backgroundColor: !selectedTemplate ? '#e6ffe6' : '#fff',
-              }}
+              className={`mb-4 cursor-pointer ${!selectedTemplate ? 'shadow-[0_4px_8px_rgba(0,0,0,0.2)] bg-[#e6ffe6]' : 'bg-white'}`}
               onClick={() => setSelectedTemplate(null)}
             >
-              <div
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-              >
+              <div className="flex items-center justify-between">
                 <Space size={16}>
-                  <div
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: '50%',
-                      backgroundColor: '#edf7ff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
+                  <div className="w-8 h-8 rounded-full bg-[#edf7ff] flex items-center justify-center">
                     <Image
                       src="/icon-partition.svg"
                       alt="New Workflow"
@@ -689,20 +392,10 @@ const WorkflowGetStartModal: React.FC<WorkflowGetStartModalProps> = ({
                     />
                   </div>
                   <div>
-                    <div
-                      style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
-                    >
+                    <div className="whitespace-nowrap overflow-hidden text-ellipsis">
                       New Workflow
                     </div>
-                    <Text
-                      style={{
-                        fontSize: '11px',
-                        opacity: 0.45,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
-                    >
+                    <Text className="text-[11px] opacity-45 whitespace-nowrap overflow-hidden text-ellipsis">
                       Build your Agentic Workflow from scratch
                     </Text>
                   </div>
@@ -710,17 +403,10 @@ const WorkflowGetStartModal: React.FC<WorkflowGetStartModalProps> = ({
               </div>
             </Card>
 
-            <Title level={5} style={{ marginBottom: '16px' }}>
+            <Title level={5} className="mb-4">
               Templates
             </Title>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-                gap: 16,
-                marginTop: 8,
-              }}
-            >
+            <div className="grid [grid-template-columns:repeat(auto-fill,minmax(240px,1fr))] gap-4 mt-2">
               {workflowTemplates.map((template, index) => {
                 return (
                   <WorkflowTemplateCard
@@ -734,13 +420,10 @@ const WorkflowGetStartModal: React.FC<WorkflowGetStartModalProps> = ({
             </div>
           </Layout>
 
-          <Divider
-            type="vertical"
-            style={{ height: 'auto', backgroundColor: '#f0f0f0', margin: 0 }}
-          />
+          <Divider type="vertical" className="h-auto bg-[#f0f0f0] m-0" />
 
-          <Layout style={{ flex: 1, backgroundColor: '#fff', padding: '16px', overflowY: 'auto' }}>
-            <Title level={5} style={{ marginBottom: '16px' }}>
+          <Layout className="flex-1 bg-white p-4 overflow-y-auto">
+            <Title level={5} className="mb-4">
               Workflow Details
             </Title>
             <Form form={form} layout="vertical">
@@ -749,7 +432,7 @@ const WorkflowGetStartModal: React.FC<WorkflowGetStartModalProps> = ({
                   <Space>
                     Workflow Name
                     <Tooltip title="The name of your workflow">
-                      <QuestionCircleOutlined style={{ color: '#666' }} />
+                      <QuestionCircleOutlined className="text-[#666]" />
                     </Tooltip>
                   </Space>
                 }
@@ -763,7 +446,7 @@ const WorkflowGetStartModal: React.FC<WorkflowGetStartModalProps> = ({
             {selectedTemplate && <WorkflowTemplateDetails template={selectedTemplate} />}
           </Layout>
         </Layout>
-        <Divider style={{ margin: 0, backgroundColor: '#f0f0f0' }} />
+        <Divider className="m-0 bg-[#f0f0f0]" />
       </div>
     </Modal>
   );

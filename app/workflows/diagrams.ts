@@ -39,8 +39,7 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
   const managerAgentId = workflowData.workflowState.workflowMetadata.managerAgentId;
   const process = workflowData.workflowState.workflowMetadata.process;
   const hasManagerAgent: boolean = process === 'hierarchical';
-  const useDefaultManager: boolean =
-    hasManagerAgent && !Boolean(managerAgentId && managerAgentId.trim());
+  const useDefaultManager: boolean = hasManagerAgent && !(managerAgentId && managerAgentId.trim());
 
   const initialNodes: Node[] = [];
   const initialEdges: Edge[] = [];
@@ -134,7 +133,9 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
         label: `${agentName}`,
         name: agentName,
         manager: true,
-        iconData: '',
+        iconData: useDefaultManager
+          ? ''
+          : (workflowData.iconsData?.[agent?.agent_image_uri ?? ''] ?? ''),
         agentId: mId, // Add agent ID for consistency
         agentData: useDefaultManager ? undefined : agent, // Only set agentData for custom managers
         isDefaultManager: useDefaultManager, // Add flag to identify default manager
@@ -146,7 +147,7 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
   // TODO. Need a better way to organize
   // the diagram dynamically.
   let totalXWidth = 0;
-  workflowData.workflowState.workflowMetadata.agentIds?.forEach((agent_id, index) => {
+  workflowData.workflowState.workflowMetadata.agentIds?.forEach((agent_id, _index) => {
     const agent = workflowData.agents?.find((agent) => agent.id === agent_id);
     agent && (totalXWidth += 220 * Math.max(0, agent?.tools_id.length - 1));
     agent && (totalXWidth += 220 * Math.max(0, (agent?.mcp_instance_ids?.length || 0) - 1));
@@ -155,7 +156,7 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
 
   // Add agent nodes
   let xIndexOffset = -0.5 * totalXWidth + 0.5 * 220;
-  workflowData.workflowState.workflowMetadata.agentIds?.forEach((agent_id, index) => {
+  workflowData.workflowState.workflowMetadata.agentIds?.forEach((agent_id, _index) => {
     const agent = workflowData.agents?.find((agent) => agent.id === agent_id);
     agent &&
       initialNodes.push({
@@ -166,7 +167,7 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
         data: {
           label: `${agent.name}`,
           name: `${agent.name}`,
-          iconData: workflowData.iconsData[agent.agent_image_uri ?? ''] ?? '',
+          iconData: workflowData.iconsData?.[agent.agent_image_uri ?? ''] ?? '',
           agentId: agent.id, // Add agent ID
           agentData: agent, // Add full agent data for edit functionality
         },
@@ -189,7 +190,7 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
       }
 
       // Add nodes and edges of all the tools
-      agent.tools_id?.forEach((tool_ins_id, index2) => {
+      agent.tools_id?.forEach((tool_ins_id) => {
         // Find the appropriate tool from the tool instances
         const toolInstance = workflowData.toolInstances?.find(
           (toolInstance: ToolInstance) => toolInstance.id === tool_ins_id,
@@ -204,7 +205,7 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
             data: {
               label: `Tool: ${toolInstance?.name}`,
               name: toolInstance?.name,
-              iconData: workflowData.iconsData[toolInstance?.tool_image_uri ?? ''] ?? '',
+              iconData: workflowData.iconsData?.[toolInstance?.tool_image_uri ?? ''] ?? '',
               workflowId: workflowData.workflowState.workflowId,
               toolInstanceId: toolInstance.id,
               agentId: agent.id,
@@ -229,7 +230,7 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
       });
 
       // Add nodes and edges of all the MCP instances
-      agent.mcp_instance_ids?.forEach((mcp_instance_id, index2) => {
+      agent.mcp_instance_ids?.forEach((mcp_instance_id) => {
         // Find the appropriate MCP instance from the MCP instances
         const mcpInstance = workflowData.mcpInstances?.find(
           (mcpInstance: McpInstance) => mcpInstance.id === mcp_instance_id,
@@ -260,10 +261,14 @@ export const createDiagramStateFromWorkflow = (workflowData: DiagramStateInput) 
             position: { x: xIndexOffset, y: yIndex + 150 },
             data: {
               name: mcpInstance?.name,
-              iconData: workflowData.iconsData[mcpInstance?.image_uri ?? ''] ?? '',
+              iconData: workflowData.iconsData?.[mcpInstance?.image_uri ?? ''] ?? '',
               active: false,
               toolList: mcpTools,
               activeTool: '',
+              mcpInstances: agent.mcp_instance_ids,
+              mcpInstanceId: mcpInstance?.id,
+              agentId: agent.id,
+              workflowId: workflowData.workflowState.workflowId,
             },
           });
 

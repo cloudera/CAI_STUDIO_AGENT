@@ -15,7 +15,9 @@ def get_sqlite_db_location():
     """
     if os.environ.get("AGENT_STUDIO_SQLITE_DB"):
         return os.environ.get("AGENT_STUDIO_SQLITE_DB")
-    return DEFAULT_SQLITE_DB_LOCATION
+    is_composable: bool = os.getenv("IS_COMPOSABLE", "false").lower() == "true"
+    app_data_dir = os.getenv("APP_DATA_DIR", "/home/cdsw/agent-studio") if is_composable else "/home/cdsw"
+    return os.path.join(app_data_dir, DEFAULT_SQLITE_DB_LOCATION)
 
 
 def delete_database() -> None:

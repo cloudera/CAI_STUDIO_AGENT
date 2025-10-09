@@ -8,7 +8,6 @@ import {
   UpdateWorkflowRequest,
 } from '@/studio/proto/agent_studio';
 import { WorkflowState } from '../workflows/editorSlice';
-import AgentNode from '../components/diagram/AgentNode';
 
 export interface ActiveNodeState {
   id: string;
@@ -62,9 +61,9 @@ export const ASK_COWORKER_TOOL = 'Ask question to coworker';
 
 export const processEvents = (
   events: any[],
-  agents: AgentMetadata[],
-  tasks: CrewAITaskMetadata[],
-  toolInstances: ToolInstance[],
+  _agents: AgentMetadata[],
+  _tasks: CrewAITaskMetadata[],
+  _toolInstances: ToolInstance[],
   _mcpInstances: McpInstance[], // Prefixed with underscore as it's unused
   _manager_agent_id: string | undefined, // Prefixed with underscore as it's unused
   _process: string | undefined, // Prefixed with underscore as it's unused
@@ -115,9 +114,9 @@ export const processEvents = (
                 event?.tool_name === DELEGATE_TOOL ? InfoType.DELEGATE : InfoType.ASK_COWORKER,
             });
         } else if (event?.agent_studio_id) {
-          const toolId = event?.agent_studio_id;
-          activeNodes.set(toolId, {
-            id: toolId,
+          const toolOrMcpId = event?.agent_studio_id;
+          activeNodes.set(toolOrMcpId, {
+            id: toolOrMcpId,
             activeTool: event.tool_name,
             info: `${event.tool_args}`,
             infoType: InfoType.TOOL_INPUT,
@@ -209,6 +208,16 @@ export const getWorkflowInputs = (
     if (task) {
       task.inputs.forEach((input) => inputSet.add(input));
     }
+  });
+
+  return Array.from(inputSet);
+};
+
+export const getTaskInputs = (tasks?: CrewAITaskMetadata[]) => {
+  const inputSet = new Set<string>();
+
+  tasks?.forEach((task) => {
+    task.inputs.forEach((input) => inputSet.add(input));
   });
 
   return Array.from(inputSet);

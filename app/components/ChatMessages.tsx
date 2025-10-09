@@ -1,17 +1,14 @@
 'use client';
 
 import React from 'react';
-import { Input, Button, Avatar, Layout, Spin, Tooltip, Menu, Dropdown } from 'antd';
+import { Input, Button, Avatar, Layout, Spin, Menu, Dropdown } from 'antd';
 import {
   UserOutlined,
-  RobotOutlined,
   SendOutlined,
-  PauseCircleOutlined,
   DownloadOutlined,
   ClearOutlined,
   MoreOutlined,
 } from '@ant-design/icons';
-import { jsPDF } from 'jspdf';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -20,7 +17,6 @@ import {
   selectWorkflowAppChatUserInput,
   updatedChatUserInput,
 } from '../workflows/workflowAppSlice';
-import { marked } from 'marked';
 import showdown from 'showdown';
 
 const { TextArea } = Input;
@@ -141,11 +137,11 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   const menu = (
     <Menu>
       <Menu.Item key="clear" onClick={clearMessages}>
-        <ClearOutlined style={{ marginRight: 8 }} />
+        <ClearOutlined className="mr-2" />
         Clear Chat
       </Menu.Item>
       <Menu.Item key="download" onClick={handleDownloadLogs}>
-        <DownloadOutlined style={{ marginRight: 8 }} />
+        <DownloadOutlined className="mr-2" />
         Log Bundle
       </Menu.Item>
     </Menu>
@@ -153,132 +149,58 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
 
   return (
     <>
-      <div
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          marginBottom: '16px',
-          position: 'relative',
-        }}
-      >
+      <div className="flex-1 overflow-y-auto mb-4 relative">
         {messages.length === 0 && (
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              height: '100%',
-              color: '#d9d9d9',
-              fontSize: '24px',
-              fontWeight: 'lighter',
-            }}
-          >
+          <div className="flex justify-center items-center h-full text-[#d9d9d9] text-2xl font-extralight">
             Say Hello
           </div>
         )}
 
         {messages.map((message, index) => (
-          <div
-            key={index}
-            style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              marginBottom: '12px',
-            }}
-          >
+          <div key={index} className="flex items-start mb-3">
             <Avatar
               icon={message.role === 'user' ? <UserOutlined /> : <UserOutlined />}
-              style={{
-                marginRight: '8px',
-                backgroundColor: message.role === 'user' ? '#87d068' : '#1890ff',
-                width: '25px',
-                height: '25px',
-                minWidth: '25px',
-                minHeight: '25px',
-                fontSize: '15px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+              className={
+                message.role === 'user'
+                  ? 'bg-green-400 w-[25px] h-[25px] min-w-[25px] min-h-[25px] text-[15px] flex items-center justify-center mr-2'
+                  : 'bg-blue-500 w-[25px] h-[25px] min-w-[25px] min-h-[25px] text-[15px] flex items-center justify-center mr-2'
+              }
             />
             {message.role === 'assistant' && message.content.includes('is thinking') ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div className="flex items-center gap-2">
                 <span>{message.content}</span>
                 <Spin size="small" />
               </div>
             ) : message.role === 'assistant' ? (
-              <Layout
-                style={{
-                  background: '#fff',
-                  borderRadius: '8px',
-                  maxWidth: '95%',
-                  position: 'relative',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                }}
-              >
+              <Layout className="bg-white rounded-lg max-w-[95%] relative shadow">
                 <Button
                   type="text"
                   icon={<DownloadOutlined />}
                   onClick={() => handleDownloadPdf(message.content)}
-                  style={{
-                    position: 'absolute',
-                    bottom: '16px',
-                    right: '16px',
-                    background: 'white',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-                    borderRadius: '50%',
-                    width: '24px',
-                    height: '24px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    border: 'none',
-                  }}
+                  className="absolute bottom-4 right-4 bg-white shadow rounded-full w-6 h-6 flex items-center justify-center border-none"
                 />
-                <div
-                  className="prose prose-lg max-w-none m-4"
-                  style={{
-                    fontSize: '12px',
-                    padding: '0px',
-                    fontFamily:
-                      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-                  }}
-                >
+                <div className="prose prose-lg max-w-none m-4 text-sm p-0 font-sans">
                   <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
                     {message.content}
                   </ReactMarkdown>
                 </div>
               </Layout>
             ) : (
-              <Layout
-                style={{
-                  background: '#fff',
-                  maxWidth: '95%',
-                  position: 'relative',
-                }}
-              >
-                {message.content}
-              </Layout>
+              <Layout className="bg-white max-w-[95%] relative">{message.content}</Layout>
             )}
           </div>
         ))}
         <div ref={messagesEndRef} />
       </div>
 
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          marginTop: 'auto',
-        }}
-      >
+      <div className="flex items-center mt-auto">
         <TextArea
           placeholder="Type your message"
           autoSize={{ minRows: 1, maxRows: 10 }}
           value={userInput}
           onChange={(e) => dispatch(updatedChatUserInput(e.target.value))}
           onPressEnter={handleTestWorkflow}
-          style={{ flex: 1, marginRight: '8px' }}
+          className="flex-1 mr-2"
           disabled={isProcessing}
         />
         <Button
@@ -286,7 +208,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
           icon={isProcessing ? <Spin size="small" /> : <SendOutlined />}
           onClick={handleTestWorkflow}
           disabled={isProcessing}
-          style={{ marginRight: '8px' }}
+          className="mr-2"
         />
         <Dropdown overlay={menu} trigger={['click']} placement="bottomRight">
           <Button icon={<MoreOutlined />} />

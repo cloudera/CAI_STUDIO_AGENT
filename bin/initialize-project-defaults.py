@@ -4,7 +4,26 @@ import os
 import subprocess
 from pathlib import Path
 
+
+def ensure_correct_base_path():
+    is_composable: bool = os.getenv("IS_COMPOSABLE", "false").lower() == "true"
+    is_runtime = os.getenv("AGENT_STUDIO_DEPLOY_MODE", "amp").lower() == "runtime"
+    if is_composable:
+        app_data_dir = "/home/cdsw/agent-studio"
+    else:
+        app_data_dir = "/home/cdsw"
+
+    if is_runtime:
+        app_dir = os.getenv("APP_DIR")
+    else:
+        app_dir = app_data_dir
+
+    os.environ["APP_DIR"] = app_dir
+    os.environ["APP_DATA_DIR"] = app_data_dir
+
+
 def main():
+    ensure_correct_base_path()
     
     # Make the app state location if it's not yet created.
     os.makedirs(os.path.dirname(get_sqlite_db_location()), exist_ok=True)
@@ -18,7 +37,7 @@ def main():
     # pulled down agent studio and ran a fresh project-defaults. If the column does not exist, that 
     # means we are performing an upgrade.
     if Path(get_sqlite_db_location()).exists():
-        subprocess.run(["uv run alembic upgrade head"], shell=True, capture_output=True, text=True)
+        subprocess.run(["uv run --no-sync alembic upgrade head"], shell=True, capture_output=True, text=True)
 
     # Import project defaults.
     import_defaults()

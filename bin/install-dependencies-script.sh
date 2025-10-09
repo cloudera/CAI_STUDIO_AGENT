@@ -1,14 +1,23 @@
 #!/bin/bash
 
+# Script to install dependencies for Agent Studio. Note: this is only used in the AMP
+# installation. For Agent Studio runtimes, the environment is already preconfigured
+# with venvs and frontend builds.
+
 # In some slower network environments, UV timeouts will lead
 # to installation failures. We can increase this manually for
 # the duration of this script.
 export UV_HTTP_TIMEOUT=3600
 
+# Set UV_LINK_MODE to copy to avoid hardlinking issues on filesystems with link limits
+export UV_LINK_MODE=copy
+echo "UV_LINK_MODE set to: $UV_LINK_MODE"
+
 # Install python dependencies in uv created environment
 # This uses pyproject.toml & uv.lock file to install dependencies
 # this should create a subdirectory called .venv (if it doesn't exist)
 uv sync --all-extras
+uv pip install https://${CDSW_DOMAIN}/api/v2/python.tar.gz --trusted-host ${CDSW_DOMAIN}
 
 # Get node
 export NVM_DIR="$(pwd)/.nvm"
@@ -32,3 +41,4 @@ if [ ! -d ".venv" ]; then
     uv venv
 fi
 VIRTUAL_ENV=.venv uv sync --all-extras
+VIRTUAL_ENV=.venv uv pip install https://${CDSW_DOMAIN}/api/v2/python.tar.gz --trusted-host ${CDSW_DOMAIN}

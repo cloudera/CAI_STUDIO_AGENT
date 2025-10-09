@@ -8,6 +8,15 @@ import cmlapi
 import os
 import json
 from typing import Dict
+from dotenv import load_dotenv
+
+# Load environment variables from .env files
+load_dotenv()  # Load .env from current directory
+load_dotenv('.env.local')  # Load .env.local if it exists (for local overrides)
+
+# Agent studio operates from the APP_DATA_DIR. This is typically /home/cdsw/agent-studio
+# in several installation form factors, but /home/cdsw/ in just AMP form factor.
+os.chdir(os.getenv("APP_DATA_DIR"))
 
 def start_server(blocking: bool = False):
     port = DEFAULT_AS_GRPC_PORT

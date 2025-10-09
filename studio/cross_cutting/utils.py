@@ -15,7 +15,17 @@ def get_url_scheme() -> str:
     """
     Get the URL scheme for the current workspace.
     """
-    return "https" if os.getenv("AGENT_STUDIO_WORKBENCH_TLS_ENABLED", "false").lower() == "true" else "http"
+    # If the TLS environment variable is set, use it to determine the URL scheme.
+    tls_env_var = os.getenv("AGENT_STUDIO_WORKBENCH_TLS_ENABLED")
+    if tls_env_var:
+        return "https" if tls_env_var.lower() == "true" else "http"
+
+    # Otherwise, check the CDSW_PROJECT_URL environment variable.
+    project_url = os.getenv("CDSW_PROJECT_URL")
+    if project_url:
+        return "https" if project_url.startswith("https") else "http"
+
+    raise RuntimeError("No way to determine URL Scheme!")
 
 
 def create_slug_from_name(name: str) -> str:
@@ -87,12 +97,9 @@ def deploy_cml_model(
                 auto_deployment_config=deployment_config,
                 auto_deploy_model=True,
             )
-
         create_build_resp = cml.create_model_build(create_model_build_body, project_id=project_id, model_id=model_id)
-    except cmlapi.rest.ApiException as e:
-        raise RuntimeError(f"Failed to create model build: {e.body}") from e
     except Exception as e:
-        raise RuntimeError(f"Unexpected error during model build creation: {str(e)}") from e
+        raise RuntimeError(f"Unexpected error during model build: {str(e)}") from e
 
     build_id = create_build_resp.id
     return model_id, build_id
@@ -297,11 +304,16 @@ def get_job_by_name(cml: cmlapi.CMLServiceApi, name: str) -> Union[cmlapi.Job, N
 def get_deployed_workflow_runtime_identifier(cml: cmlapi.CMLServiceApi) -> Union[Any, None]:
     """
     Get a runtime ID to be used for deployed workflow CML models. For now, we will use
-    the same runtime ID as AI studio.
+    the same runtime ID as Agent Studio.
 
     Right now, we actually use the same base runtime image for both the CML model tasked
     with running our deployed workflows, as well as the standalone Workflow UI application.
     """
+
+    # Optional override via environment variable
+    if os.getenv("AGENT_STUDIO_RUNTIME_IDENTIFIER"):
+        return os.getenv("AGENT_STUDIO_RUNTIME_IDENTIFIER")
+
     application: cmlapi.Application = get_application_by_name(
         cml, consts.AGENT_STUDIO_SERVICE_APPLICATION_NAME, only_running=False
     )
@@ -310,23 +322,18 @@ def get_deployed_workflow_runtime_identifier(cml: cmlapi.CMLServiceApi) -> Union
 
 def get_studio_subdirectory() -> str:
     """
-    Get the subdirectory for the studio (if installed in IS_COMPOSABLE mode).
+    Get the project-relative directory of Agent Studio's data directory. It is assumed
+    that the data directory is within the project filesystem and is specified by an absolute
+    path of APP_DATA_DIR.
     """
-    if os.getenv("IS_COMPOSABLE", "false").lower() != "true":
-        return ""
-    relative_path = os.path.relpath(os.path.abspath(os.getcwd()), "/home/cdsw")
-    if relative_path.startswith("/"):
-        relative_path = relative_path[1:]
-    if relative_path.endswith("/"):
-        relative_path = relative_path[:-1]
-    return relative_path
 
+    if not os.getenv("APP_DATA_DIR"):
+        raise EnvironmentError("APP_DATA_DIR environment variable is not set")
 
-def get_agent_studio_install_path() -> str:
-    if os.getenv("IS_COMPOSABLE", "false").lower() == "true":
-        return "/home/cdsw/agent-studio"
-    else:
-        return "/home/cdsw"
+    relpath = os.path.relpath(os.getenv("APP_DATA_DIR"), "/home/cdsw")
+    if relpath == ".":
+        relpath = ""
+    return relpath
 
 
 def get_deployed_workflows_with_applications(
@@ -348,7 +355,9 @@ def get_deployed_workflows_with_applications(
 
                     # Find matching application
                     app_name = f"Workflow: {workflow_data['name']}"
-                    apps = cml.list_applications(os.getenv("CDSW_PROJECT_ID"), page_size=5000).applications
+                    apps: list[cmlapi.Application] = cml.list_applications(
+                        os.getenv("CDSW_PROJECT_ID"), page_size=5000
+                    ).applications
                     app = next((a for a in apps if a.name == app_name), None)
 
                     if app:

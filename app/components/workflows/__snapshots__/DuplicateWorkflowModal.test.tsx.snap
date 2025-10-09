@@ -1,0 +1,204 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`DuplicateWorkflowModal matches snapshot in loading state 1`] = `
+<div
+  data-testid="duplicate-workflow-modal"
+  role="dialog"
+>
+  <div>
+    Duplicate Workflow
+  </div>
+  <div
+    class="py-4"
+  >
+    <p
+      class="text-gray-600 mb-6 text-base"
+    >
+      You are making a copy of 
+      <span
+        class="font-bold italic"
+      >
+        Test Workflow
+      </span>
+    </p>
+    <div>
+      <label
+        class="text-base font-medium"
+      >
+        Enter a new workflow name:
+      </label>
+      <input
+        class="mt-2 w-full"
+        data-testid="workflow-name-input"
+        placeholder="Input"
+        value="Clone of Test Workflow"
+      />
+    </div>
+  </div>
+  <div>
+    <button
+      disabled=""
+    >
+      Cancel
+    </button>
+    <button
+      data-testid="duplicate-button"
+      disabled=""
+    >
+      Duplicating...
+    </button>
+  </div>
+</div>
+`;
+
+exports[`DuplicateWorkflowModal matches snapshot when not visible 1`] = `null`;
+
+exports[`DuplicateWorkflowModal matches snapshot when visible 1`] = `
+<div
+  data-testid="duplicate-workflow-modal"
+  role="dialog"
+>
+  <div>
+    Duplicate Workflow
+  </div>
+  <div
+    class="py-4"
+  >
+    <p
+      class="text-gray-600 mb-6 text-base"
+    >
+      You are making a copy of 
+      <span
+        class="font-bold italic"
+      >
+        Test Workflow
+      </span>
+    </p>
+    <div>
+      <label
+        class="text-base font-medium"
+      >
+        Enter a new workflow name:
+      </label>
+      <input
+        class="mt-2 w-full"
+        data-testid="workflow-name-input"
+        placeholder="Input"
+        value="Clone of Test Workflow"
+      />
+    </div>
+  </div>
+  <div>
+    <button>
+      Cancel
+    </button>
+    <button
+      data-testid="duplicate-button"
+    >
+      Duplicate
+    </button>
+  </div>
+</div>
+`;
+
+exports[`DuplicateWorkflowModal matches snapshot with different original workflow name 1`] = `
+<div
+  data-testid="duplicate-workflow-modal"
+  role="dialog"
+>
+  <div>
+    Duplicate Workflow
+  </div>
+  <div
+    class="py-4"
+  >
+    <p
+      class="text-gray-600 mb-6 text-base"
+    >
+      You are making a copy of 
+      <span
+        class="font-bold italic"
+      >
+        Custom Original Workflow
+      </span>
+    </p>
+    <div>
+      <label
+        class="text-base font-medium"
+      >
+        Enter a new workflow name:
+      </label>
+      <input
+        class="mt-2 w-full"
+        data-testid="workflow-name-input"
+        placeholder="Input"
+        value="Clone of Custom Original Workflow"
+      />
+    </div>
+  </div>
+  <div>
+    <button>
+      Cancel
+    </button>
+    <button
+      data-testid="duplicate-button"
+    >
+      Duplicate
+    </button>
+  </div>
+</div>
+`;
+
+exports[`DuplicateWorkflowModal matches snapshot with form error 1`] = `
+<div
+  data-testid="duplicate-workflow-modal"
+  role="dialog"
+>
+  <div>
+    Duplicate Workflow
+  </div>
+  <div
+    class="py-4"
+  >
+    <p
+      class="text-gray-600 mb-6 text-base"
+    >
+      You are making a copy of 
+      <span
+        class="font-bold italic"
+      >
+        Test Workflow
+      </span>
+    </p>
+    <div>
+      <label
+        class="text-base font-medium"
+      >
+        Enter a new workflow name:
+      </label>
+      <input
+        class="mt-2 w-full"
+        data-testid="workflow-name-input"
+        placeholder="Input"
+        value=""
+      />
+      <div
+        class="text-red-500 text-sm mt-1"
+        data-testid="form-error"
+      >
+        Please enter a workflow name
+      </div>
+    </div>
+  </div>
+  <div>
+    <button>
+      Cancel
+    </button>
+    <button
+      data-testid="duplicate-button"
+    >
+      Duplicate
+    </button>
+  </div>
+</div>
+`;

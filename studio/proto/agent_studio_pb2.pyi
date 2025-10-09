@@ -20,6 +20,7 @@ class Model(_message.Message):
         "api_base",
         "is_studio_default",
         "extra_headers",
+        "aws_region_name",
     )
     MODEL_ID_FIELD_NUMBER: _ClassVar[int]
     MODEL_NAME_FIELD_NUMBER: _ClassVar[int]
@@ -28,6 +29,7 @@ class Model(_message.Message):
     API_BASE_FIELD_NUMBER: _ClassVar[int]
     IS_STUDIO_DEFAULT_FIELD_NUMBER: _ClassVar[int]
     EXTRA_HEADERS_FIELD_NUMBER: _ClassVar[int]
+    AWS_REGION_NAME_FIELD_NUMBER: _ClassVar[int]
     model_id: str
     model_name: str
     provider_model: str
@@ -35,6 +37,7 @@ class Model(_message.Message):
     api_base: str
     is_studio_default: bool
     extra_headers: str
+    aws_region_name: str
     def __init__(
         self,
         model_id: _Optional[str] = ...,
@@ -44,6 +47,7 @@ class Model(_message.Message):
         api_base: _Optional[str] = ...,
         is_studio_default: bool = ...,
         extra_headers: _Optional[str] = ...,
+        aws_region_name: _Optional[str] = ...,
     ) -> None: ...
 
 class ListModelsRequest(_message.Message):
@@ -69,19 +73,38 @@ class GetModelResponse(_message.Message):
     def __init__(self, model_details: _Optional[_Union[Model, _Mapping]] = ...) -> None: ...
 
 class AddModelRequest(_message.Message):
-    __slots__ = ("model_name", "provider_model", "model_type", "api_base", "api_key", "extra_headers")
+    __slots__ = (
+        "model_name",
+        "provider_model",
+        "model_type",
+        "api_base",
+        "api_key",
+        "extra_headers",
+        "aws_region_name",
+        "aws_access_key_id",
+        "aws_secret_access_key",
+        "aws_session_token",
+    )
     MODEL_NAME_FIELD_NUMBER: _ClassVar[int]
     PROVIDER_MODEL_FIELD_NUMBER: _ClassVar[int]
     MODEL_TYPE_FIELD_NUMBER: _ClassVar[int]
     API_BASE_FIELD_NUMBER: _ClassVar[int]
     API_KEY_FIELD_NUMBER: _ClassVar[int]
     EXTRA_HEADERS_FIELD_NUMBER: _ClassVar[int]
+    AWS_REGION_NAME_FIELD_NUMBER: _ClassVar[int]
+    AWS_ACCESS_KEY_ID_FIELD_NUMBER: _ClassVar[int]
+    AWS_SECRET_ACCESS_KEY_FIELD_NUMBER: _ClassVar[int]
+    AWS_SESSION_TOKEN_FIELD_NUMBER: _ClassVar[int]
     model_name: str
     provider_model: str
     model_type: str
     api_base: str
     api_key: str
     extra_headers: str
+    aws_region_name: str
+    aws_access_key_id: str
+    aws_secret_access_key: str
+    aws_session_token: str
     def __init__(
         self,
         model_name: _Optional[str] = ...,
@@ -90,6 +113,10 @@ class AddModelRequest(_message.Message):
         api_base: _Optional[str] = ...,
         api_key: _Optional[str] = ...,
         extra_headers: _Optional[str] = ...,
+        aws_region_name: _Optional[str] = ...,
+        aws_access_key_id: _Optional[str] = ...,
+        aws_secret_access_key: _Optional[str] = ...,
+        aws_session_token: _Optional[str] = ...,
     ) -> None: ...
 
 class AddModelResponse(_message.Message):
@@ -109,19 +136,38 @@ class RemoveModelResponse(_message.Message):
     def __init__(self) -> None: ...
 
 class UpdateModelRequest(_message.Message):
-    __slots__ = ("model_id", "model_name", "provider_model", "api_base", "api_key", "extra_headers")
+    __slots__ = (
+        "model_id",
+        "model_name",
+        "provider_model",
+        "api_base",
+        "api_key",
+        "extra_headers",
+        "aws_region_name",
+        "aws_access_key_id",
+        "aws_secret_access_key",
+        "aws_session_token",
+    )
     MODEL_ID_FIELD_NUMBER: _ClassVar[int]
     MODEL_NAME_FIELD_NUMBER: _ClassVar[int]
     PROVIDER_MODEL_FIELD_NUMBER: _ClassVar[int]
     API_BASE_FIELD_NUMBER: _ClassVar[int]
     API_KEY_FIELD_NUMBER: _ClassVar[int]
     EXTRA_HEADERS_FIELD_NUMBER: _ClassVar[int]
+    AWS_REGION_NAME_FIELD_NUMBER: _ClassVar[int]
+    AWS_ACCESS_KEY_ID_FIELD_NUMBER: _ClassVar[int]
+    AWS_SECRET_ACCESS_KEY_FIELD_NUMBER: _ClassVar[int]
+    AWS_SESSION_TOKEN_FIELD_NUMBER: _ClassVar[int]
     model_id: str
     model_name: str
     provider_model: str
     api_base: str
     api_key: str
     extra_headers: str
+    aws_region_name: str
+    aws_access_key_id: str
+    aws_secret_access_key: str
+    aws_session_token: str
     def __init__(
         self,
         model_id: _Optional[str] = ...,
@@ -130,6 +176,10 @@ class UpdateModelRequest(_message.Message):
         api_base: _Optional[str] = ...,
         api_key: _Optional[str] = ...,
         extra_headers: _Optional[str] = ...,
+        aws_region_name: _Optional[str] = ...,
+        aws_access_key_id: _Optional[str] = ...,
+        aws_secret_access_key: _Optional[str] = ...,
+        aws_session_token: _Optional[str] = ...,
     ) -> None: ...
 
 class UpdateModelResponse(_message.Message):
@@ -1188,6 +1238,26 @@ class ListDeployedWorkflowsResponse(_message.Message):
     deployed_workflows: _containers.RepeatedCompositeFieldContainer[DeployedWorkflow]
     def __init__(self, deployed_workflows: _Optional[_Iterable[_Union[DeployedWorkflow, _Mapping]]] = ...) -> None: ...
 
+class SuspendDeployedWorkflowRequest(_message.Message):
+    __slots__ = ("deployed_workflow_id",)
+    DEPLOYED_WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
+    deployed_workflow_id: str
+    def __init__(self, deployed_workflow_id: _Optional[str] = ...) -> None: ...
+
+class SuspendDeployedWorkflowResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class ResumeDeployedWorkflowRequest(_message.Message):
+    __slots__ = ("deployed_workflow_id",)
+    DEPLOYED_WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
+    deployed_workflow_id: str
+    def __init__(self, deployed_workflow_id: _Optional[str] = ...) -> None: ...
+
+class ResumeDeployedWorkflowResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
 class RemoveWorkflowRequest(_message.Message):
     __slots__ = ("workflow_id",)
     WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
@@ -1198,6 +1268,20 @@ class RemoveWorkflowResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
 
+class CloneWorkflowRequest(_message.Message):
+    __slots__ = ("workflow_id", "name")
+    WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    workflow_id: str
+    name: str
+    def __init__(self, workflow_id: _Optional[str] = ..., name: _Optional[str] = ...) -> None: ...
+
+class CloneWorkflowResponse(_message.Message):
+    __slots__ = ("workflow_id",)
+    WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
+    workflow_id: str
+    def __init__(self, workflow_id: _Optional[str] = ...) -> None: ...
+
 class DeployedWorkflow(_message.Message):
     __slots__ = (
         "deployed_workflow_id",
@@ -1205,35 +1289,41 @@ class DeployedWorkflow(_message.Message):
         "workflow_name",
         "deployed_workflow_name",
         "cml_deployed_model_id",
-        "is_stale",
         "application_url",
         "application_status",
         "application_deep_link",
         "model_deep_link",
         "deployment_metadata",
+        "created_at",
+        "updated_at",
+        "stale",
     )
     DEPLOYED_WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
     WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
     WORKFLOW_NAME_FIELD_NUMBER: _ClassVar[int]
     DEPLOYED_WORKFLOW_NAME_FIELD_NUMBER: _ClassVar[int]
     CML_DEPLOYED_MODEL_ID_FIELD_NUMBER: _ClassVar[int]
-    IS_STALE_FIELD_NUMBER: _ClassVar[int]
     APPLICATION_URL_FIELD_NUMBER: _ClassVar[int]
     APPLICATION_STATUS_FIELD_NUMBER: _ClassVar[int]
     APPLICATION_DEEP_LINK_FIELD_NUMBER: _ClassVar[int]
     MODEL_DEEP_LINK_FIELD_NUMBER: _ClassVar[int]
     DEPLOYMENT_METADATA_FIELD_NUMBER: _ClassVar[int]
+    CREATED_AT_FIELD_NUMBER: _ClassVar[int]
+    UPDATED_AT_FIELD_NUMBER: _ClassVar[int]
+    STALE_FIELD_NUMBER: _ClassVar[int]
     deployed_workflow_id: str
     workflow_id: str
     workflow_name: str
     deployed_workflow_name: str
     cml_deployed_model_id: str
-    is_stale: bool
     application_url: str
     application_status: str
     application_deep_link: str
     model_deep_link: str
     deployment_metadata: str
+    created_at: str
+    updated_at: str
+    stale: bool
     def __init__(
         self,
         deployed_workflow_id: _Optional[str] = ...,
@@ -1241,12 +1331,14 @@ class DeployedWorkflow(_message.Message):
         workflow_name: _Optional[str] = ...,
         deployed_workflow_name: _Optional[str] = ...,
         cml_deployed_model_id: _Optional[str] = ...,
-        is_stale: bool = ...,
         application_url: _Optional[str] = ...,
         application_status: _Optional[str] = ...,
         application_deep_link: _Optional[str] = ...,
         model_deep_link: _Optional[str] = ...,
         deployment_metadata: _Optional[str] = ...,
+        created_at: _Optional[str] = ...,
+        updated_at: _Optional[str] = ...,
+        stale: bool = ...,
     ) -> None: ...
 
 class Workflow(_message.Message):
@@ -1257,7 +1349,6 @@ class Workflow(_message.Message):
         "is_valid",
         "is_ready",
         "is_conversational",
-        "is_draft",
         "description",
         "directory",
     )
@@ -1267,7 +1358,6 @@ class Workflow(_message.Message):
     IS_VALID_FIELD_NUMBER: _ClassVar[int]
     IS_READY_FIELD_NUMBER: _ClassVar[int]
     IS_CONVERSATIONAL_FIELD_NUMBER: _ClassVar[int]
-    IS_DRAFT_FIELD_NUMBER: _ClassVar[int]
     DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
     DIRECTORY_FIELD_NUMBER: _ClassVar[int]
     workflow_id: str
@@ -1276,7 +1366,6 @@ class Workflow(_message.Message):
     is_valid: bool
     is_ready: bool
     is_conversational: bool
-    is_draft: bool
     description: str
     directory: str
     def __init__(
@@ -1287,7 +1376,6 @@ class Workflow(_message.Message):
         is_valid: bool = ...,
         is_ready: bool = ...,
         is_conversational: bool = ...,
-        is_draft: bool = ...,
         description: _Optional[str] = ...,
         directory: _Optional[str] = ...,
     ) -> None: ...

@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
+import unittest.mock
 import os
 
 __import__('pysqlite3')
@@ -8,7 +9,8 @@ sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 from studio.workflow.utils import (
     compare_workbench_versions,
-    is_custom_model_root_dir_feature_enabled    
+    is_custom_model_root_dir_feature_enabled,
+    is_workbench_gteq_2_0_47
 )
 
 
@@ -55,7 +57,11 @@ def test_is_custom_model_root_dir_feature_enabled(enable_ai_studios, git_sha, ex
             result = is_custom_model_root_dir_feature_enabled()
             assert result == expected
 
-            # Optionally confirm requests.get was called with the expected URL
-            mock_get.assert_called_once_with(
-                "https://mock-domain.example.com/sense-bootstrap.json"
-            )
+            # Confirm requests.get was called twice - once by is_custom_model_root_dir_feature_enabled
+            # and once by is_workbench_gteq_2_0_47 which it calls internally
+            assert mock_get.call_count == 2
+            expected_url = "https://mock-domain.example.com/sense-bootstrap.json"
+            mock_get.assert_has_calls([
+                unittest.mock.call(expected_url),
+                unittest.mock.call(expected_url)
+            ])

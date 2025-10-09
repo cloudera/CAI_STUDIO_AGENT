@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Table, Button, Popconfirm, Switch, Tooltip } from 'antd';
 import {
   EditOutlined,
@@ -17,6 +17,7 @@ import {
   useTestModelMutation,
   useSetDefaultModelMutation,
 } from '@/app/models/modelsApi';
+import LargeCenterSpin from '../common/LargeCenterSpin';
 import { useGlobalNotification } from '../Notifications';
 import {
   setIsRegisterDrawerOpen,
@@ -32,7 +33,7 @@ import { asyncTestModelWithRetry } from '@/app/models/utils';
 interface ModelListProps {}
 
 const ModelList: React.FC<ModelListProps> = ({}) => {
-  const { data: models } = useListModelsQuery({});
+  const { data: models, isLoading } = useListModelsQuery({});
   const [removeModel] = useRemoveModelMutation();
   const [setDefaultModel] = useSetDefaultModelMutation();
   const [testModel] = useTestModelMutation();
@@ -98,23 +99,23 @@ const ModelList: React.FC<ModelListProps> = ({}) => {
       render: (_: string, record: Model) => {
         const status = modelTestStatus[record.model_id];
         return (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="flex items-center gap-2">
             {status === 'pending' && (
               <Tooltip title="Validating model...">
-                <ClockCircleOutlined style={{ color: '#faad14' }} />
+                <ClockCircleOutlined className="text-yellow-500" />
               </Tooltip>
             )}
             {status === 'failure' && (
               <Tooltip title="Model connectivity could not be validated.">
-                <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
+                <CloseCircleOutlined className="text-red-500" />
               </Tooltip>
             )}
             {status === 'success' && (
               <Tooltip title="Model connectivity validated.">
-                <CheckCircleOutlined style={{ color: '#52c41a' }} />
+                <CheckCircleOutlined className="text-green-500" />
               </Tooltip>
             )}
-            {!status && <QuestionCircleOutlined style={{ color: '#bfbfbf' }} />}
+            {!status && <QuestionCircleOutlined className="text-gray-400" />}
             {record.model_name}
           </div>
         );
@@ -137,6 +138,7 @@ const ModelList: React.FC<ModelListProps> = ({}) => {
           GEMINI: 'Google Gemini',
           ANTHROPIC: 'Anthropic',
           CAII: 'Cloudera AI Inference',
+          BEDROCK: 'AWS Bedrock',
         };
         const iconMap: Record<string, string> = {
           OPENAI: '/llm_providers/openai.svg',
@@ -145,14 +147,11 @@ const ModelList: React.FC<ModelListProps> = ({}) => {
           GEMINI: '/llm_providers/gemini.svg',
           ANTHROPIC: '/llm_providers/anthropic.svg',
           CAII: '/llm_providers/caii.svg',
+          BEDROCK: '/llm_providers/bedrock.svg',
         };
         return (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <img
-              src={iconMap[modelType]}
-              alt={typeMap[modelType]}
-              style={{ width: '16px', height: '16px' }}
-            />
+          <div className="flex items-center gap-2">
+            <img src={iconMap[modelType]} alt={typeMap[modelType]} className="w-4 h-4" />
             {typeMap[modelType] || modelType}
           </div>
         );
@@ -172,9 +171,7 @@ const ModelList: React.FC<ModelListProps> = ({}) => {
             }
           }}
           disabled={record.is_studio_default} // Disable if already default
-          style={{
-            backgroundColor: record.is_studio_default ? '#52c41a' : undefined,
-          }}
+          className={record.is_studio_default ? 'bg-[#52c41a]' : ''}
         />
       ),
     },
@@ -182,7 +179,7 @@ const ModelList: React.FC<ModelListProps> = ({}) => {
       title: 'Actions',
       key: 'actions',
       render: (_: any, record: Model) => (
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div className="flex gap-2">
           <Tooltip title="Edit Model">
             <Button
               type="link"
@@ -219,6 +216,10 @@ const ModelList: React.FC<ModelListProps> = ({}) => {
       ),
     },
   ];
+
+  if (isLoading) {
+    return <LargeCenterSpin message="Loading models..." />;
+  }
 
   return (
     <Table columns={columns} dataSource={models} rowKey="model_id" pagination={{ pageSize: 5 }} />

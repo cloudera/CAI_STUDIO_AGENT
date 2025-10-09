@@ -39,7 +39,10 @@ def start_phoenix_server():
     """
     
     print("Starting up the Phoenix ops platform server...")
-    out = subprocess.run([f"bash ./bin/start-agent-ops-phoenix.sh"], shell=True, check=True)
+    app_dir = os.getenv("APP_DIR")
+    if app_dir is None:
+        raise ValueError("APP_DIR environment variable must be set.")
+    out = subprocess.run([f"bash {os.path.join(app_dir, 'bin/start-agent-ops-phoenix.sh')}"], shell=True, check=True)
 
 
 def set_ops_server_discovery():
@@ -155,7 +158,7 @@ class ProxyHandler(http.server.BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self.end_headers()
-        self.wfile.write(json.dumps(messages).encode("utf-8"))
+        self.wfile.write(json.dumps({"events": messages}).encode("utf-8"))
 
 
 

@@ -18,8 +18,12 @@ from studio.agents.agent_templates import (
 from studio.workflow.test_and_deploy_workflow import (
     test_workflow,
     deploy_workflow,
+)
+from studio.workflow.deployed_workflows import (
     undeploy_workflow,
     list_deployed_workflows,
+    suspend_deployed_workflow,
+    resume_deployed_workflow,
 )
 from studio.workflow.workflow import (
     list_workflows,
@@ -27,6 +31,7 @@ from studio.workflow.workflow import (
     get_workflow,
     update_workflow,
     remove_workflow,
+    clone_workflow,
 )
 from studio.task.task import list_tasks, add_task, get_task, update_task, remove_task
 from studio.cross_cutting.methods import (
@@ -477,6 +482,12 @@ class AgentStudioApp(AgentStudioServicer):
         """
         return remove_workflow(request, self.cml, dao=self.dao)
 
+    def CloneWorkflow(self, request, context):
+        """
+        Clone an existing workflow by its ID.
+        """
+        return clone_workflow(request, self.cml, dao=self.dao)
+
     def TestWorkflow(self, request, context):
         """
         Test an existing workflow by its ID.
@@ -500,6 +511,18 @@ class AgentStudioApp(AgentStudioServicer):
         List all deployed workflows.
         """
         return list_deployed_workflows(request, self.cml, dao=self.dao)
+
+    def SuspendDeployedWorkflow(self, request, context):
+        """
+        Suspend an existing deployed workflow by its ID.
+        """
+        return suspend_deployed_workflow(request, self.cml, dao=self.dao)
+
+    def ResumeDeployedWorkflow(self, request, context):
+        """
+        Resume an existing deployed workflow by its ID.
+        """
+        return resume_deployed_workflow(request, self.cml, dao=self.dao)
 
     def ListAgentTemplates(self, request, context):
         return list_agent_templates(request, self.cml, dao=self.dao)

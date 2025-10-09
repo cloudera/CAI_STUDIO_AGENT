@@ -13,6 +13,8 @@ Cloudera AI's Agent Studio is a platform for building, testing, and deploying AI
 - Users can create custom agents, tools and workflows. Test the workflows in the Studio. Save them as templates for reuse.
 - Workflows can be deployed as long-running endpoints ready for production use.
 
+### [Release Notes](./docs/release_notes.md)
+
 ## Getting Started
 
 ### User Guides
@@ -38,3 +40,7 @@ These docs are targeted for individuals who are building custom Agent Studio too
 These docs are targetted towards individuals looking to connect MCP servers to agents in workflows.
  - [MCP User Guide](./docs/user_guide/mcp.md)
  - [Barebones example of using a MCP Server in Agent Studio](./docs/user_guide/mcp_example.md)
+
+### Airgapped Environment Support
+
+Installation in airgapped environment has been simplified by publishing the agent studio as a custom runtime image. You can read more about setup in airgapped environment here: [Airgap Setup](./docs/user_guide/airgap_installation.md) 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { WorkflowGenerationConfig, LocalStorageState } from './types';
+import { LocalStorageState } from './types';
 import Link from 'next/link';
 import { Button } from 'antd';
 
@@ -36,7 +36,7 @@ export const INITIAL_LOCAL_STORAGE_STAGE: LocalStorageState = {
 export const NO_DEFAULT_LLM_NOTIFICATION: React.ReactNode = (
   <>
     Agent Studio needs a default LLM model to run workflows. Please{' '}
-    <Link href="/models?promptNewModelRegistration=true" style={{ textDecoration: 'underline' }}>
+    <Link href="/models?promptNewModelRegistration=true" className="underline">
       register a model
     </Link>{' '}
     to get started.
@@ -87,7 +87,7 @@ export const VERSION_WARNING_OUT_OF_DATE = (openModal: () => void) => {
 export const API_KEY_ROTATION_NEEDED = (onRotateClick: () => void): React.ReactNode => (
   <>
     The CML API keys that Agent Studio uses are not valid.{' '}
-    <Button type="link" onClick={onRotateClick} style={{ padding: 0 }}>
+    <Button type="link" onClick={onRotateClick} className="p-0">
       Rotate Keys
     </Button>{' '}
     to address this issue.
@@ -118,7 +118,11 @@ export const MODEL_IDENTIFIER_OPTIONS: Record<string, { value: string; label: st
     { value: 'claude-3-5-sonnet-latest', label: 'claude-3-5-sonnet-latest' },
     { value: 'claude-3-5-haiku-latest', label: 'claude-3-5-haiku-latest' },
   ],
+  // Note: BEDROCK options are sourced at runtime from app/data/bedrock_models.json
 };
+
+// AWS Bedrock regions commonly available across major model providers
+// No BEDROCK_REGIONS export; regions are model-specific from bedrock_models.json
 
 export const DEFAULT_MODEL_TEST_MESSAGE = 'Greet me in 5 different languages.';
 
@@ -160,7 +164,10 @@ Examples of effective backstories:
 
   
 Please generate the agent properties in the following XML format:<agent><role>Role</role><goal>Goal</goal><backstory>Backstory</backstory></agent>
-If the user's description is not clear, just do not generate the requested XML. Instead give a short error message.
+Always make sure that you generate the proper XML, even if the user's description is not clear or is lacking in details. Never mention that the user's description is too vague; instead, make sure you always generate 
+the XML to the best of your ability.
+
+### 
 
 USER DESCRIPTION: ${description.replace(/\n/g, ' ')}
 `;

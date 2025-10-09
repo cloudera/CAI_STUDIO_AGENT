@@ -27,10 +27,10 @@ def deploy_artifact_to_langgraph_server(
         shutil.rmtree(deployable_application_dir)
     os.makedirs(deployable_application_dir)
 
-    shutil.copy(artifact.project_location, deployable_application_dir)
+    shutil.copy(artifact.artifact_path, deployable_application_dir)
 
     # Take the tar.gz and extract it into the deployable workflow directory
-    with tarfile.open(artifact.project_location, "r:gz") as tar:
+    with tarfile.open(artifact.artifact_path, "r:gz") as tar:
         tar.extractall(deployable_application_dir)
 
     deployment_metadata = json.loads(deployment.deployment_metadata)
@@ -46,12 +46,16 @@ def deploy_artifact_to_langgraph_server(
     # gRPC server changes, we need to reach out to all deployed workflows and deployed applications
     # and update the respective environment variables. We shouldn't have to do this once we
     # fix the env var copying issue.
+    if os.getenv("AGENT_STUDIO_DEPLOY_MODE", "amp").lower() == "runtime":
+        basepath = os.getenv("APP_DIR")
+    else:
+        basepath = cc_utils.get_studio_subdirectory()
     application: cmlapi.Application = cml.create_application(
         cmlapi.CreateApplicationRequest(
             name=get_application_name_for_deployed_workflow(deployment),
             subdomain=f"workflow-{deployment.id}",
             description=f"Workflow UI for workflow {deployment.name}",
-            script=os.path.join(cc_utils.get_studio_subdirectory(), "bin", "start-langgraph-app.py"),
+            script=os.path.join(basepath, "bin", "start-langgraph-app.py"),
             cpu=2,
             memory=4,
             nvidia_gpu=0,

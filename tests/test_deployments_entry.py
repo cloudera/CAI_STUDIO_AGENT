@@ -33,7 +33,8 @@ from studio.deployments.entry import (
 @patch('studio.deployments.entry.deploy_artifact')
 @patch('studio.deployments.entry.package_workflow_target')
 @patch('studio.deployments.entry.initialize_deployment')
-def test_deploy_success(mock_initialize, mock_package, mock_deploy_artifact):
+@patch('studio.deployments.entry.set_workflow_deployment_stale_status')
+def test_deploy_success(mock_set_workflow_deployment_stale_status, mock_initialize, mock_package, mock_deploy_artifact):
     test_dao = AgentStudioDao(engine_url="sqlite:///:memory:", echo=False)
     payload = MagicMock(spec=DeploymentPayload)
     cml = MagicMock(spec=CMLServiceApi)
@@ -41,15 +42,17 @@ def test_deploy_success(mock_initialize, mock_package, mock_deploy_artifact):
     # Setup deployment instance and artifact mock
     deployment = MagicMock(spec=DeployedWorkflowInstance)
     deployment.status = None
+    deployment.workflow_id = "test-workflow-id"
     mock_initialize.return_value = deployment
     artifact = MagicMock()
-    mock_package.return_value = artifact
+    mock_package.return_value = artifact    
 
     with test_dao.get_session() as session:
         deploy(payload, session, cml)
 
         # Assertions for the success path
         mock_initialize.assert_called_once_with(payload, session, cml)
+        mock_set_workflow_deployment_stale_status.assert_called_once_with(deployment.workflow_id, False)
         mock_package.assert_called_once_with(payload, deployment, session, cml)
         mock_deploy_artifact.assert_called_once_with(artifact, payload, deployment, session, cml)
         assert deployment.status == DeploymentStatus.DEPLOYED
@@ -59,7 +62,8 @@ def test_deploy_success(mock_initialize, mock_package, mock_deploy_artifact):
 @patch('studio.deployments.entry.deploy_artifact', side_effect=Exception("boom"))
 @patch('studio.deployments.entry.package_workflow_target')
 @patch('studio.deployments.entry.initialize_deployment')
-def test_deploy_failure(mock_initialize, mock_package, mock_deploy, mock_update_metadata):
+@patch('studio.deployments.entry.set_workflow_deployment_stale_status')
+def test_deploy_failure(mock_set_workflow_deployment_stale_status, mock_initialize, mock_package, mock_deploy, mock_update_metadata):
     test_dao = AgentStudioDao(engine_url="sqlite:///:memory:", echo=False)
     payload = MagicMock(spec=DeploymentPayload)
     cml = MagicMock(spec=CMLServiceApi)
@@ -67,9 +71,10 @@ def test_deploy_failure(mock_initialize, mock_package, mock_deploy, mock_update_
     # Setup deployment instance and artifact mock
     deployment = MagicMock(spec=DeployedWorkflowInstance)
     deployment.status = None
+    deployment.workflow_id = "test-workflow-id"
     mock_initialize.return_value = deployment
     artifact = MagicMock()
-    mock_package.return_value = artifact
+    mock_package.return_value = artifact    
 
     with test_dao.get_session() as session:
         with pytest.raises(RuntimeError, match="Deployment Failed"):
@@ -77,6 +82,7 @@ def test_deploy_failure(mock_initialize, mock_package, mock_deploy, mock_update_
 
         # Assertions for the failure path
         mock_initialize.assert_called_once_with(payload, session, cml)
+        mock_set_workflow_deployment_stale_status.assert_called_once_with(deployment.workflow_id, False)
         mock_package.assert_called_once_with(payload, deployment, session, cml)
         mock_deploy.assert_called_once()
         assert deployment.status == DeploymentStatus.FAILED
@@ -123,7 +129,7 @@ def test_package_workflow_target_type_artifact():
         artifact = package_workflow_target(payload, deployment, session, cml)
 
         assert isinstance(artifact, DeploymentArtifact)
-        assert artifact.project_location == "/my/project/location"
+        assert artifact.artifact_path == "/my/project/location"
         assert deployment.status == DeploymentStatus.PACKAGED
 
 

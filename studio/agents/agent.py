@@ -11,9 +11,10 @@ from studio.tools.tool_instance import get_tool_instance
 from studio.tools.tool_template import get_tool_template
 from studio.as_mcp.mcp_instances import get_mcp_instance, create_mcp_instance
 from cmlapi import CMLServiceApi
-from studio.workflow.utils import invalidate_workflow
 from studio.proto.utils import is_field_set
 from studio.tools.tool_instance import create_tool_instance, remove_tool_instance
+from studio.workflow.utils import set_workflow_deployment_stale_status
+from studio.cross_cutting.global_thread_pool import get_thread_pool
 
 
 def list_agents(
@@ -231,6 +232,8 @@ def _add_agent_from_template(
     )
     db_session.add(agent)
 
+    get_thread_pool().submit(set_workflow_deployment_stale_status, request.workflow_id, True)
+
     return AddAgentResponse(agent_id=new_agent_id)
 
 
@@ -332,6 +335,8 @@ def _add_agent_impl(request: AddAgentRequest, cml: CMLServiceApi, session: DbSes
             agent_image_path=agent_image_path,
         )
         session.add(agent)
+
+        get_thread_pool().submit(set_workflow_deployment_stale_status, request.workflow_id, True)
 
         return AddAgentResponse(agent_id=new_agent_id)
     except SQLAlchemyError as e:
@@ -477,7 +482,7 @@ def _update_agent_impl(request: UpdateAgentRequest, cml: CMLServiceApi, session:
             if metadata.max_iter is not None:
                 agent.crew_ai_max_iter = metadata.max_iter
 
-        invalidate_workflow(session, db_model.Workflow.crew_ai_agents.contains([agent.id]))
+        get_thread_pool().submit(set_workflow_deployment_stale_status, agent.workflow_id, True)
 
         return UpdateAgentResponse()
     except SQLAlchemyError as e:
@@ -520,9 +525,6 @@ def remove_agent(
             agent = session.query(db_model.Agent).filter_by(id=request.agent_id).one_or_none()
             if not agent:
                 raise ValueError(f"Agent with ID '{request.agent_id}' not found.")
-
-            invalidate_workflow(session, db_model.Workflow.crew_ai_agents.contains([agent.id]))
-
             # Try to remove tool instances but continue even if they fail
             for tool_instance_id in agent.tool_ids:
                 try:
@@ -545,8 +547,10 @@ def remove_agent(
                 except Exception as e:
                     print(f"Failed to delete agent image: {e}")
 
+            workflow_id = agent.workflow_id
             session.delete(agent)
             session.commit()
+            get_thread_pool().submit(set_workflow_deployment_stale_status, workflow_id, True)
 
         return RemoveAgentResponse()
     except SQLAlchemyError as e:

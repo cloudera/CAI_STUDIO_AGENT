@@ -81,11 +81,14 @@ service AgentStudio {
   rpc UpdateWorkflow (UpdateWorkflowRequest) returns (UpdateWorkflowResponse) {}
   rpc TestWorkflow (TestWorkflowRequest) returns (TestWorkflowResponse) {}
   rpc RemoveWorkflow (RemoveWorkflowRequest) returns (RemoveWorkflowResponse) {}
+  rpc CloneWorkflow (CloneWorkflowRequest) returns (CloneWorkflowResponse) {}
   
   // Deployed Workflow Operations
   rpc DeployWorkflow (DeployWorkflowRequest) returns (DeployWorkflowResponse) {}
   rpc UndeployWorkflow (UndeployWorkflowRequest) returns (UndeployWorkflowResponse) {}
   rpc ListDeployedWorkflows (ListDeployedWorkflowsRequest) returns (ListDeployedWorkflowsResponse) {}
+  rpc SuspendDeployedWorkflow (SuspendDeployedWorkflowRequest) returns (SuspendDeployedWorkflowResponse) {}
+  rpc ResumeDeployedWorkflow (ResumeDeployedWorkflowRequest) returns (ResumeDeployedWorkflowResponse) {}
 
   // Utility functions
   rpc TemporaryFileUpload (stream FileChunk) returns (FileUploadResponse) {}
@@ -149,6 +152,9 @@ message Model {
 
   // Serialized dict of extra headers to pass to the LLM provider
   string extra_headers = 7;
+
+  // AWS Region for Bedrock models (not secret). Only relevant when model_type == "BEDROCK"
+  string aws_region_name = 8;
 }
 
 // Model Messages
@@ -187,6 +193,16 @@ message AddModelRequest {
 
   // Serialized dict of extra headers to pass to the LLM provider
   optional string extra_headers = 6;
+
+  // The following fields are only used for AWS Bedrock models and will be stored in Project_env_vars per model
+  // AWS Region for Bedrock
+  optional string aws_region_name = 7;
+  // AWS Access Key ID for Bedrock
+  optional string aws_access_key_id = 8;
+  // AWS Secret Access Key for Bedrock
+  optional string aws_secret_access_key = 9;
+  // Optional AWS Session Token for Bedrock
+  optional string aws_session_token = 10;
 }
 
 message AddModelResponse {
@@ -219,6 +235,16 @@ message UpdateModelRequest {
 
   // Serialized dict of extra headers to pass to the LLM provider
   optional string extra_headers = 6;
+
+  // The following fields are only used for AWS Bedrock models and will be stored in Project_env_vars per model
+  // AWS Region for Bedrock
+  optional string aws_region_name = 7;
+  // AWS Access Key ID for Bedrock
+  optional string aws_access_key_id = 8;
+  // AWS Secret Access Key for Bedrock
+  optional string aws_secret_access_key = 9;
+  // Optional AWS Session Token for Bedrock
+  optional string aws_session_token = 10;
 }
 
 message UpdateModelResponse {
@@ -745,6 +771,20 @@ message ListDeployedWorkflowsResponse {
   repeated DeployedWorkflow deployed_workflows = 1;
 }
 
+message SuspendDeployedWorkflowRequest {
+  // ID of the deployed workflow to suspend
+  string deployed_workflow_id = 1;
+}
+
+message SuspendDeployedWorkflowResponse {}
+
+message ResumeDeployedWorkflowRequest {
+  // ID of the deployed workflow to resume
+  string deployed_workflow_id = 1;
+}
+
+message ResumeDeployedWorkflowResponse {}
+
 // Messages for removing workflows
 message RemoveWorkflowRequest {
   // ID of the workflow to remove
@@ -752,6 +792,18 @@ message RemoveWorkflowRequest {
 }
 
 message RemoveWorkflowResponse {}
+
+message CloneWorkflowRequest {
+  // ID of the workflow to clone
+  string workflow_id = 1;
+  // Name of the new workflow
+  optional string name = 2;
+}
+
+message CloneWorkflowResponse {
+  // ID of the newly created workflow
+  string workflow_id = 1;
+}
 
 message DeployedWorkflow {
   // ID of the deployed workflow
@@ -764,18 +816,22 @@ message DeployedWorkflow {
   string deployed_workflow_name = 4;
   // ID of the CML model
   string cml_deployed_model_id = 5;
-  // Revision of the workflow that was deployed
-  bool is_stale = 6;
   // Application URL for the deployed workflow
-  string application_url = 7;
+  string application_url = 6;
   // Application status for the deployed workflow
-  string application_status = 8;
+  string application_status = 7;
   // Deep link to the CML application
-  string application_deep_link = 9;
+  string application_deep_link = 8;
   // Deep link to the CML model
-  string model_deep_link = 10;
+  string model_deep_link = 9;
   // Deployment payload metadata
-  optional string deployment_metadata = 11;
+  optional string deployment_metadata = 10;
+  // Timestamp when the deployment was created
+  string created_at = 11;
+  // Timestamp when the deployment was last updated
+  string updated_at = 12;
+  // Has the deployment diverged from the parent workflow
+  bool stale = 13;
 }
 
 // Workflow metadata
@@ -792,12 +848,10 @@ message Workflow {
   bool is_ready = 5;
   // Workflow is Conversational or not
   bool is_conversational = 6;
-  // Workflow state
-  bool is_draft = 7;
   // Workflow description
-  string description = 8;
+  string description = 7;
   // Directory
-  optional string directory = 9;
+  optional string directory = 8;
 }
 
 message CrewAIWorkflowMetadata {

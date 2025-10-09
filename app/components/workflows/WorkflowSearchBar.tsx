@@ -1,6 +1,7 @@
 import React from 'react';
 import { Input, Space } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
+import i18n from '@/app/utils/i18n';
 
 const { Search } = Input;
 
@@ -10,9 +11,9 @@ interface SearchBarProps {
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onChange }) => (
-  <Space direction="vertical" style={{ width: '100%', marginBottom: 16 }}>
+  <Space direction="vertical" className="w-full mb-4">
     <Search
-      placeholder="Search workflows by name"
+      placeholder={i18n.t('workflow.search.placeholder')}
       allowClear
       enterButton={<SearchOutlined />}
       onSearch={onSearch}

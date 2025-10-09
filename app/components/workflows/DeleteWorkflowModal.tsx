@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Modal, Button, Alert, Layout, Typography } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { useListDeployedWorkflowsQuery } from '@/app/workflows/deployedWorkflowsApi';
-import { DeployedWorkflow } from '@/studio/proto/agent_studio';
+import i18n from '@/app/utils/i18n';
 
 const { Text } = Typography;
 
@@ -21,7 +21,6 @@ const DeleteWorkflowModal: React.FC<DeleteWorkflowModalProps> = ({
   onCancel,
   onDelete,
   workflowId,
-  workflowTemplateId,
 }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const { data: deployedWorkflows = [] } = useListDeployedWorkflowsQuery({});
@@ -46,46 +45,35 @@ const DeleteWorkflowModal: React.FC<DeleteWorkflowModalProps> = ({
   return (
     <Modal
       open={visible}
-      title={`Delete Workflow${resourceType === 'workflowTemplate' ? ' Template' : ''}`}
+      title={
+        resourceType === 'workflowTemplate'
+          ? i18n.t('workflow.deleteTemplate.title')
+          : i18n.t('workflow.delete.title')
+      }
       onCancel={onCancel}
       centered
       footer={[
         <Button key="cancel" onClick={onCancel}>
-          Cancel
+          {i18n.t('common.cancel')}
         </Button>,
         <Button key="delete" type="primary" danger onClick={handleDelete} loading={isDeleting}>
-          Delete
+          {i18n.t('common.delete')}
         </Button>,
       ]}
     >
       {hasDeployments && (
         <Alert
-          style={{
-            alignItems: 'flex-start',
-            justifyContent: 'flex-start',
-            padding: 12,
-            marginBottom: 12,
-          }}
+          className="items-start justify-start p-3 mb-3"
           message={
-            <Layout
-              style={{ flexDirection: 'column', gap: 4, padding: 0, background: 'transparent' }}
-            >
-              <Layout
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 8,
-                  background: 'transparent',
-                }}
-              >
-                <InfoCircleOutlined style={{ fontSize: 16, color: '#faad14' }} />
-                <Text style={{ fontSize: 13, fontWeight: 600, background: 'transparent' }}>
-                  Warning: Deployed Workflow
+            <Layout className="flex flex-col gap-1 p-0 bg-transparent">
+              <Layout className="flex flex-row items-center gap-2 bg-transparent">
+                <InfoCircleOutlined className="text-base text-yellow-500" />
+                <Text className="text-sm font-semibold bg-transparent">
+                  {i18n.t('workflow.delete.warningTitle')}
                 </Text>
               </Layout>
-              <Text style={{ fontSize: 13, fontWeight: 400, background: 'transparent' }}>
-                You have an existing deployment running for this workflow. Deleting this workflow
-                will also delete its deployment.
+              <Text className="text-sm font-normal bg-transparent">
+                {i18n.t('workflow.delete.warningDesc')}
               </Text>
             </Layout>
           }
@@ -95,8 +83,9 @@ const DeleteWorkflowModal: React.FC<DeleteWorkflowModalProps> = ({
         />
       )}
       <p>
-        Are you sure you want to delete this workflow
-        {resourceType === 'workflowTemplate' ? ' template' : ''}?
+        {resourceType === 'workflowTemplate'
+          ? i18n.t('workflow.deleteTemplate.confirm')
+          : i18n.t('workflow.delete.confirm')}
       </p>
     </Modal>
   );

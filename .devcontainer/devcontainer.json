@@ -1,0 +1,74 @@
+{
+  "name": "agent-studio-dev",
+  "build": {
+    "dockerfile": "../Dockerfile.dev",
+    "context": "..",
+    "args": {
+      "BUILDPLATFORM": "linux/amd64"
+    },
+    "options": ["--platform=linux/amd64"]
+  },
+  "runArgs": [
+    "--platform=linux/amd64"
+  ],
+  "workspaceMount": "source=${localWorkspaceFolder},target=/home/cdsw/agent-studio,type=bind",
+  "workspaceFolder": "/home/cdsw/agent-studio",
+  "remoteUser": "cdsw",
+  "containerEnv": {
+    "APP_DIR": "/home/cdsw/agent-studio",
+    "APP_DATA_DIR": "/home/cdsw/agent-studio",
+    "IS_COMPOSABLE": "true",
+    "AGENT_STUDIO_DEPLOY_MODE": "runtime",
+    "REQUESTS_CA_BUNDLE": "/etc/ssl/certs/ca-certificates.crt",
+    "SSL_CERT_FILE": "/etc/ssl/certs/ca-certificates.crt",
+    "CDSW_IP_ADDRESS": "127.0.0.1",
+    "CHOKIDAR_USEPOLLING": "false",
+    "WATCHPACK_POLLING": "false"
+  },
+  "mounts": [
+    "type=bind,source=${localWorkspaceFolder}/ca-certificates.crt,target=/etc/ssl/certs/ca-certificates.crt"
+  ],
+  "portsAttributes": {
+    "8090": {
+      "label": "CDSW App Port"
+    },
+    "50051": {
+      "label": "gRPC Server"
+    },
+    "50052": {
+      "label": "Phoenix Ops main Server"
+    },
+    "8123": {
+      "label": "Phoenix Ops UI"
+    },
+    "5678": {
+      "label": "Python Debugger"
+    },
+    "51000": {
+      "label": "Workflow Runner 1"
+    },
+    "51001": {
+      "label": "Workflow Runner 2"
+    },
+    "51002": {
+      "label": "Workflow Runner 3"
+    },
+    "51003": {
+      "label": "Workflow Runner 4"
+    },
+    "51004": {
+      "label": "Workflow Runner 5"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.debugpy",
+        "bradlc.vscode-tailwindcss",
+        "esbenp.prettier-vscode",
+        "ms-vscode.vscode-typescript-next"
+      ]
+    }
+  }
+}

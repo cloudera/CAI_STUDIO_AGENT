@@ -7,6 +7,7 @@ import '../globals.css';
 import FeedbackContent from './FeedbackContent';
 import * as semver from 'semver';
 import { useCheckStudioUpgradeStatusQuery } from '../lib/crossCuttingApi';
+import i18n from '../utils/i18n';
 
 const { Text, Title } = Typography;
 const { Header } = Layout;
@@ -21,9 +22,10 @@ const StudioTopNav: React.FC = () => {
   };
 
   const menuItems = [
-    { key: '/workflows', label: 'Agentic Workflows' },
-    { key: '/tools', label: 'Tools Catalog' },
-    { key: '/models', label: 'LLMs' },
+    { key: '/workflows', label: i18n.t('nav.agenticWorkflows') },
+    { key: '/tools', label: i18n.t('nav.toolsCatalog') },
+    { key: '/models', label: i18n.t('nav.llms') },
+    { key: '/ops', label: i18n.t('nav.ops') },
     {
       key: '/feedback',
       label: (
@@ -31,14 +33,14 @@ const StudioTopNav: React.FC = () => {
           content={<FeedbackContent />}
           trigger="click"
           title={
-            <div style={{ textAlign: 'center' }}>
-              <Text style={{ fontSize: 16, fontWeight: 500, background: 'transparent' }}>
-                Please Provide Feedback
+            <div className="text-center">
+              <Text className="text-base font-medium bg-transparent">
+                {i18n.t('feedback.title')}
               </Text>
             </div>
           }
         >
-          Feedback
+          {i18n.t('nav.feedback')}
         </Popover>
       ),
     },
@@ -48,6 +50,7 @@ const StudioTopNav: React.FC = () => {
     '/workflows': () => router.push('/workflows'),
     '/tools': () => router.push('/tools?section=tools'),
     '/models': () => router.push('/models'),
+    '/ops': () => router.push('/ops'),
     '/feedback': () => {},
   };
 
@@ -68,64 +71,19 @@ const StudioTopNav: React.FC = () => {
   return (
     <>
       {/* Header component with logo, text, and menu items */}
-      <Header
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          position: 'sticky',
-          width: '100%',
-          padding: '16px 24px',
-          backgroundColor: '#132329',
-        }}
-      >
+      <Header className="flex items-center justify-between sticky w-full p-4 bg-[#132329]">
         {/* Flex layout of the image logo and the text logo */}
-        <Layout
-          style={{
-            alignItems: 'top',
-            justifyContent: 'flex-start',
-            display: 'flex',
-            height: '100%',
-            flexDirection: 'row',
-            backgroundColor: 'transparent',
-            gap: 12,
-            flexGrow: 1,
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'flex-end',
-            }}
-          >
+        <Layout className="items-start justify-start flex h-full flex-row bg-transparent gap-3 flex-grow">
+          <div className="flex flex-col justify-end">
             <Title
               level={1}
-              style={{
-                fontSize: 20,
-                color: 'white',
-                fontWeight: 400,
-                padding: 0,
-                margin: 0,
-                flexGrow: 0,
-              }}
-              className="font-sans"
+              className="text-white font-normal p-0 m-0 flex-grow-0 font-sans text-lg"
             >
               Agent Studio
             </Title>
           </div>
-          <div
-            style={{
-              display: 'flex',
-              height: '100%',
-              flexDirection: 'column',
-              justifyContent: 'flex-end',
-            }}
-          >
-            <Title
-              level={4}
-              style={{ padding: 0, margin: 0, fontWeight: 200, fontSize: 14, flexGrow: 0 }}
-            >
+          <div className="flex h-full flex-col justify-end">
+            <Title level={4} className="p-0 m-0 font-light text-sm flex-grow-0">
               {isValidSemver(upgradeStatus?.local_version) && <i>{upgradeStatus?.local_version}</i>}
             </Title>
           </div>
@@ -138,13 +96,7 @@ const StudioTopNav: React.FC = () => {
           selectedKeys={[getSelectedKey()]} // Highlight the current route
           items={menuItems}
           onClick={(e) => menuItemActions[e.key]()} // Navigate using Next.js router
-          style={{
-            flex: 1,
-            fontWeight: 'normal',
-            padding: 0,
-            justifyContent: 'flex-end',
-            backgroundColor: '#132329',
-          }}
+          className="flex-1 font-normal p-0 justify-end bg-[#132329]"
         />
       </Header>
     </>

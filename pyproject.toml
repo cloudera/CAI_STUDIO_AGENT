@@ -5,8 +5,10 @@ description = "Cloudera AI Agent Studio"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "aiohttp==3.12.14",
     "arize-phoenix==8.20.0",
     "arize-phoenix-otel==0.9.0",
+    "boto3>=1.34.0",
     "crewai==0.119.0",
     "gql==3.5.0",
     "grpcio==1.71.0",
@@ -21,12 +23,15 @@ dependencies = [
     "protobuf==5.29.4",
     "psutil==7.0.0",
     "pydantic==2.11.1",
+    "python-dotenv==1.0.1",
     "pysqlite3-binary==0.5.4; platform_system == 'Linux'",
     "sqlalchemy==2.0.40",
     "uv==0.5.29",
     "alembic==1.15.2",
     "kombu==5.5.2",
     "openinference-instrumentation-langchain>=0.1.43",
+    "requests-toolbelt>=1.0.0",
+    "h11==0.16.0",
 ]
 
 [dependency-groups]

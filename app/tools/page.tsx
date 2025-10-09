@@ -21,23 +21,34 @@ import {
   useListGlobalMcpTemplatesQuery,
 } from '../mcp/mcpTemplatesApi';
 import MCPTemplateList from '../components/MCPTemplateList';
-import { useGetWorkflowDataQuery } from '../workflows/workflowAppApi';
+import i18n from '../utils/i18n';
+import LargeCenterSpin from '../components/common/LargeCenterSpin';
+
 const { Text } = Typography;
 const { TabPane } = Tabs;
 
 const ToolsTabContent = () => {
-  const { data: tools } = useListGlobalToolTemplatesQuery({});
+  const {
+    data: tools,
+    isLoading: isToolsLoading,
+    isFetching: _isToolsFetching,
+  } = useListGlobalToolTemplatesQuery({});
   const [removeToolTemplate] = useRemoveToolTemplateMutation();
   const [addToolTemplate] = useAddToolTemplateMutation();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, _setSearchQuery] = useState('');
+  const [creatingTool, setCreatingTool] = useState(false);
 
   const notificationApi = useGlobalNotification();
   const router = useRouter();
 
   const handleGenerateToolTemplate = async (toolName: string) => {
+    if (creatingTool) {
+      return;
+    }
     try {
+      setCreatingTool(true);
       notificationApi.info({
         message: 'Adding Tool Template',
         description: 'Creating tool template...',
@@ -75,6 +86,8 @@ const ToolsTabContent = () => {
         description: errorMessage,
         placement: 'topRight',
       });
+    } finally {
+      setCreatingTool(false);
     }
   };
 
@@ -107,74 +120,33 @@ const ToolsTabContent = () => {
     router.push(`/tools/view/${templateId}?edit=true`);
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
-
   const filteredTools = tools?.filter((tool) =>
     tool.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
+  if (isToolsLoading) {
+    return <LargeCenterSpin message="Loading tools..." />;
+  }
+
   return (
     <>
-      <Layout
-        style={{
-          background: '#fff',
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexGrow: 0,
-          padding: '16px',
-        }}
-      >
-        <div
-          style={{
-            width: '66px',
-            height: '66px',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            overflow: 'hidden',
-            backgroundColor: '#fff4cd',
-            margin: '0px',
-          }}
-        >
+      <Layout className="bg-white flex flex-row items-center justify-between flex-grow-0 p-4">
+        <div className="w-16 h-16 rounded-full flex items-center justify-center overflow-hidden bg-yellow-100 m-0">
           <Image src="/ic-brand-tools.svg" alt="Tool Template Icon" />
         </div>
-        <Layout
-          style={{
-            background: 'transparent',
-            flex: 1,
-            marginLeft: '12px',
-            flexDirection: 'column',
-            display: 'flex',
-          }}
-        >
-          <Text style={{ fontWeight: 600, fontSize: '18px' }}>Create Tool Template</Text>
-          <Text style={{ fontWeight: 350 }}>
-            Build custom Python tools to enhance your AI agents capabilities and supercharge your
-            workflows.
-          </Text>
+        <Layout className="bg-transparent flex-1 ml-3 flex-col flex">
+          <Text className="font-semibold text-lg">{i18n.t('tools.createTemplate')}</Text>
+          <Text className="font-light">{i18n.t('tools.createTemplateDesc')}</Text>
         </Layout>
         <Button
           type="primary"
-          style={{
-            marginLeft: '20px',
-            marginRight: '16px',
-            marginTop: '20px',
-            marginBottom: '20px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            flexDirection: 'row-reverse',
-          }}
+          className="ml-5 mr-4 mt-5 mb-5 flex items-center justify-center gap-2 flex-row-reverse"
           icon={<ArrowRightOutlined />}
           onClick={() => setIsModalOpen(true)}
+          loading={creatingTool}
+          disabled={creatingTool}
         >
-          Create
+          {i18n.t('tools.create')}
         </Button>
       </Layout>
       &nbsp;
@@ -187,6 +159,7 @@ const ToolsTabContent = () => {
         isOpen={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
         onGenerate={handleGenerateToolTemplate}
+        loading={creatingTool}
       />
     </>
   );
@@ -196,8 +169,13 @@ const MCPTabContent = () => {
   const [addMcpTemplate] = useAddMcpTemplateMutation();
   const [removeMcpTemplate] = useRemoveMcpTemplateMutation();
   const [shouldPoll, setShouldPoll] = useState(false);
+  const [creatingMcp, setCreatingMcp] = useState(false);
 
-  const { data: mcps } = useListGlobalMcpTemplatesQuery(
+  const {
+    data: mcps,
+    isLoading: isMcpsLoading,
+    isFetching: _isMcpsFetching,
+  } = useListGlobalMcpTemplatesQuery(
     {},
     {
       pollingInterval: shouldPoll ? 3000 : 0,
@@ -212,7 +190,6 @@ const MCPTabContent = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const notificationApi = useGlobalNotification();
-  const router = useRouter();
 
   const handleRegisterMCP = async (
     mcpName: string,
@@ -221,7 +198,11 @@ const MCPTabContent = () => {
     envNames: string[],
     iconPath: string,
   ) => {
+    if (creatingMcp) {
+      return;
+    }
     try {
+      setCreatingMcp(true);
       notificationApi.info({
         message: 'Adding MCP Template',
         description: 'Registering MCP template...',
@@ -235,16 +216,13 @@ const MCPTabContent = () => {
         .map((arg) => arg.trim());
 
       // Call the addToolTemplate mutation and wait for the response
-      const response = await addMcpTemplate({
+      await addMcpTemplate({
         name: mcpName,
         type: mcpType,
         args: mcpArgsArray,
         env_names: envNames,
         tmp_mcp_image_path: iconPath,
       }).unwrap();
-
-      // Extract tool_template_id from the response
-      const mcp_template_id = response;
 
       // Notify success and close the modal
       notificationApi.success({
@@ -261,6 +239,8 @@ const MCPTabContent = () => {
         description: errorMessage,
         placement: 'topRight',
       });
+    } finally {
+      setCreatingMcp(false);
     }
   };
 
@@ -286,46 +266,20 @@ const MCPTabContent = () => {
     }
   };
 
+  if (isMcpsLoading) {
+    return <LargeCenterSpin message="Loading MCP servers..." />;
+  }
+
   return (
     <>
-      <Layout
-        style={{
-          background: '#fff',
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexGrow: 0,
-          padding: '16px',
-        }}
-      >
-        <div
-          style={{
-            width: '66px',
-            height: '66px',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            overflow: 'hidden',
-            backgroundColor: '#cdd5ff',
-            margin: '0px',
-          }}
-        >
-          <Image src="/mcp-icon.svg" alt="MCP Icon" style={{ padding: '12px' }} />
+      <Layout className="bg-white flex flex-row items-center justify-between flex-grow-0 p-4">
+        <div className="w-[66px] h-[66px] rounded-full flex items-center justify-center overflow-hidden bg-[#cdd5ff] m-0">
+          <Image src="/mcp-icon.svg" alt="MCP Icon" className="p-3" />
         </div>
-        <Layout
-          style={{
-            background: 'transparent',
-            flex: 1,
-            marginLeft: '12px',
-            flexDirection: 'column',
-            display: 'flex',
-          }}
-        >
-          <Text style={{ fontWeight: 600, fontSize: '18px' }}>Register a MCP Server</Text>
-          <Text style={{ fontWeight: 350 }}>
-            Register a MCP Server to use in your AI agents. Learn more about Model Context Protocol{' '}
+        <Layout className="bg-transparent flex-1 ml-3 flex-col flex">
+          <Text className="font-semibold text-lg">{i18n.t('tools.registerMCP')}</Text>
+          <Text className="font-light">
+            {i18n.t('tools.registerMCPDesc')}{' '}
             <a
               href="https://modelcontextprotocol.io/introduction"
               target="_blank"
@@ -338,21 +292,13 @@ const MCPTabContent = () => {
         </Layout>
         <Button
           type="primary"
-          style={{
-            marginLeft: '20px',
-            marginRight: '16px',
-            marginTop: '20px',
-            marginBottom: '20px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            flexDirection: 'row-reverse',
-          }}
+          className="ml-5 mr-4 mt-5 mb-5 flex items-center justify-center gap-2 flex-row-reverse"
           icon={<ArrowRightOutlined />}
           onClick={() => setIsModalOpen(true)}
+          loading={creatingMcp}
+          disabled={creatingMcp}
         >
-          Register
+          {i18n.t('tools.register')}
         </Button>
       </Layout>
       &nbsp;
@@ -364,6 +310,7 @@ const MCPTabContent = () => {
         isOpen={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
         onRegister={handleRegisterMCP}
+        loading={creatingMcp}
       />
     </>
   );
@@ -391,13 +338,13 @@ const ToolsPageContent = () => {
   }
 
   return (
-    <Layout style={{ flex: 1, padding: '16px 24px 22px', flexDirection: 'column' }}>
-      <CommonBreadCrumb items={[{ title: 'Tools Catalog' }]} />
-      <Tabs activeKey={section} style={{ marginTop: '0px' }} onChange={handleTabChange}>
-        <TabPane tab="Agent Studio Tools" key="tools">
+    <Layout className="flex-1 p-4 pt-4 pb-[22px] flex flex-col">
+      <CommonBreadCrumb items={[{ title: i18n.t('tools.title') }]} />
+      <Tabs activeKey={section} className="mt-0" onChange={handleTabChange}>
+        <TabPane tab={i18n.t('tools.tabTools')} key="tools">
           <ToolsTabContent />
         </TabPane>
-        <TabPane tab="MCP Servers" key="mcp">
+        <TabPane tab={i18n.t('tools.tabMCP')} key="mcp">
           <MCPTabContent />
         </TabPane>
       </Tabs>

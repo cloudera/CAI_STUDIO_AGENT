@@ -1,19 +1,7 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import {
-  Layout,
-  Spin,
-  Typography,
-  Slider,
-  Alert,
-  Button,
-  Tooltip,
-  Input,
-  Collapse,
-  Card,
-  Divider,
-} from 'antd';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Layout, Spin, Typography, Slider, Button, Tooltip, Input, Collapse } from 'antd';
 import WorkflowAppInputsView from './WorkflowAppInputsView';
 import { useAppDispatch, useAppSelector } from '@/app/lib/hooks/hooks';
 import {
@@ -45,7 +33,7 @@ import {
 import WorkflowAppChatView from './WorkflowAppChatView';
 import { CloseOutlined, DashboardOutlined } from '@ant-design/icons';
 import { useGetDefaultModelQuery } from '@/app/models/modelsApi';
-import { useGetEventsMutation } from '@/app/ops/opsApi';
+import { useGetEventsMutation } from '@/app/workflows/workflowAppApi';
 import { useUpdateWorkflowMutation } from '@/app/workflows/workflowsApi';
 import { useTestModelMutation } from '@/app/models/modelsApi';
 import { useGlobalNotification } from '../Notifications';
@@ -53,7 +41,7 @@ import { renderAlert } from '@/app/lib/alertUtils';
 import { hasValidToolConfiguration } from '@/app/components/workflowEditor/WorkflowEditorConfigureInputs';
 import { TOOL_PARAMS_ALERT } from '@/app/lib/constants';
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 export interface WorkflowAppProps {
   workflow: Workflow;
@@ -65,7 +53,7 @@ export interface WorkflowAppProps {
   renderMode: 'studio' | 'workflow';
 }
 
-const WorkflowApp: React.FC<WorkflowAppProps> = ({
+const WorkflowApp = ({
   workflow,
   refetchWorkflow,
   agents,
@@ -73,14 +61,15 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
   mcpInstances,
   tasks,
   renderMode,
-}) => {
+}: WorkflowAppProps) => {
   const isRunning = useAppSelector(selectWorkflowIsRunning);
   const currentTraceId = useAppSelector(selectWorkflowCurrentTraceId);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const workflowPollingRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const workflowPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const dispatch = useAppDispatch();
   const currentEvents = useAppSelector(selectCurrentEvents);
   const workflowState = useAppSelector(selectEditorWorkflow);
+  const isWorkflowMode = renderMode === 'workflow';
 
   const [getEvents] = useGetEventsMutation();
 
@@ -92,7 +81,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
   // the results of this api call if we are rendering in workflow app mode.
   // TODO: pull this out to either a prop to the component or maybe even
   // set somewhere in redux state.
-  const { data: defaultModel } = useGetDefaultModelQuery();
+  const { data: defaultModel } = useGetDefaultModelQuery(undefined, { skip: isWorkflowMode });
 
   const notificationApi = useGlobalNotification();
   const [sliderValue, setSliderValue] = useState<number>(0);
@@ -168,7 +157,9 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
   };
 
   const handleGenerateDescription = async () => {
-    if (!workflow) return;
+    if (!workflow) {
+      return;
+    }
 
     if (!defaultModel) {
       notificationApi.error({
@@ -254,7 +245,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
     const fetchEvents = async () => {
       try {
         const { events: newEvents } = await getEvents({
-          traceId: currentTraceId,
+          trace_id: currentTraceId,
         }).unwrap();
         dispatch(addedCurrentEvents(newEvents));
 
@@ -270,7 +261,6 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
             stopPolling();
             dispatch(updatedCrewOutput(crewCompleteEvent.output || crewCompleteEvent.error));
             dispatch(updatedIsRunning(false));
-            dispatch(addedCurrentEvents(newEvents));
 
             if (workflow?.is_conversational) {
               dispatch(
@@ -291,7 +281,9 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
     };
 
     const startPolling = () => {
-      if (intervalRef.current) return; // Prevent duplicate polling
+      if (intervalRef.current) {
+        return;
+      } // Prevent duplicate polling
       intervalRef.current = setInterval(fetchEvents, 1000);
       setSliderValue(0);
       dispatch(updatedCrewOutput(undefined));
@@ -317,8 +309,31 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
   useEffect(() => {
     if (!workflow?.is_ready && refetchWorkflow) {
       const startWorkflowPolling = () => {
-        if (workflowPollingRef.current) return;
-        workflowPollingRef.current = setInterval(refetchWorkflow, 2000);
+        if (workflowPollingRef.current) {
+          return;
+        }
+        workflowPollingRef.current = setInterval(() => {
+          // Double-check workflow is still not ready before refetching
+          if (workflow?.is_ready) {
+            if (workflowPollingRef.current) {
+              clearInterval(workflowPollingRef.current);
+              workflowPollingRef.current = null;
+            }
+            return;
+          }
+          refetchWorkflow();
+        }, 2000);
+        workflowPollingRef.current = setInterval(() => {
+          // Double-check workflow is still not ready before refetching
+          if (workflow?.is_ready) {
+            if (workflowPollingRef.current) {
+              clearInterval(workflowPollingRef.current);
+              workflowPollingRef.current = null;
+            }
+            return;
+          }
+          refetchWorkflow();
+        }, 2000);
       };
 
       const stopWorkflowPolling = () => {
@@ -333,6 +348,18 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
       return () => {
         stopWorkflowPolling();
       };
+    }
+
+    // Clean up polling when workflow becomes ready
+    if (workflow?.is_ready && workflowPollingRef.current) {
+      clearInterval(workflowPollingRef.current);
+      workflowPollingRef.current = null;
+    }
+
+    // Clean up polling when workflow becomes ready
+    if (workflow?.is_ready && workflowPollingRef.current) {
+      clearInterval(workflowPollingRef.current);
+      workflowPollingRef.current = null;
     }
   }, [workflow?.is_ready, refetchWorkflow]);
 
@@ -374,12 +401,16 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
   const workflowConfiguration = useAppSelector(selectWorkflowConfiguration);
 
   // Update the hasValidTools check to use workflowConfiguration from redux
-  const hasValidTools = React.useMemo(() => {
+  const hasValidTools = useMemo(() => {
     // Always return true if in workflow mode
-    if (renderMode === 'workflow') return true;
+    if (renderMode === 'workflow') {
+      return true;
+    }
 
     // Otherwise do the normal validation
-    if (!workflow) return true;
+    if (!workflow) {
+      return true;
+    }
     return hasValidToolConfiguration(
       workflow.workflow_id,
       agents,
@@ -394,7 +425,9 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
     toolInstances: ToolInstance[] | undefined,
     workflowId: string | undefined,
   ) => {
-    if (!agents || !toolInstances || !workflowId) return [];
+    if (!agents || !toolInstances || !workflowId) {
+      return [];
+    }
 
     const invalidTools: { name: string; status: string }[] = [];
 
@@ -425,14 +458,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
   // Don't display anything if workflowId is nonexistent
   if (!workflow) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100%',
-        }}
-      >
+      <div className="flex justify-center items-center h-full">
         <Spin size="large" />
       </div>
     );
@@ -452,38 +478,23 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
 
   return (
     <>
-      <Layout
-        style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'row',
-          backgroundColor: 'white',
-          borderRadius: 4,
-          position: 'relative',
-        }}
-      >
+      <Layout className="flex-1 flex flex-row bg-white rounded relative">
         {/* Left side - Workflow Inputs */}
         <Layout
-          style={{
-            background: 'transparent',
-            flexDirection: 'column',
-            width: showMonitoring ? '40%' : '100%',
-            flexShrink: 0,
-            height: '100%',
-            transition: 'width 0.3s ease',
-            padding: '16px',
-          }}
+          className={`bg-transparent flex-col flex-shrink-0 h-full transition-all duration-300 ease-in-out p-4 ${
+            showMonitoring ? 'w-[40%]' : 'w-full'
+          }`}
         >
           <Collapse
             bordered={false}
-            style={{ marginBottom: '24px' }}
+            className="mb-1"
             items={[
               {
                 key: '1',
                 label: 'Capability Guide',
                 children:
                   renderMode === 'studio' ? (
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <div className="flex items-center">
                       <Input.TextArea
                         placeholder="Description"
                         value={workflowDescription}
@@ -497,14 +508,10 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
                             <img
                               src="/ai-assistant.svg"
                               alt="AI Assistant"
-                              style={{
-                                filter: 'invert(70%) sepia(80%) saturate(1000%) hue-rotate(360deg)',
-                                width: '20px',
-                                height: '20px',
-                              }}
+                              className="w-5 h-5 filter invert-[70%] sepia-[80%] saturate-[1000%] hue-rotate-[360deg]"
                             />
                           }
-                          style={{ padding: '2px', marginLeft: '8px' }}
+                          className="p-0.5 ml-2"
                           onClick={handleGenerateDescription}
                         />
                       </Tooltip>
@@ -564,64 +571,24 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
         {!showMonitoring && (
           <Tooltip title="Show Visual & Logs">
             <Button
-              icon={<DashboardOutlined style={{ color: 'white' }} />}
+              icon={<DashboardOutlined className="text-white" />}
               type="text"
               onClick={() => setShowMonitoring(true)}
-              style={{
-                position: 'absolute',
-                top: '16px',
-                right: '16px',
-                background: '#1890ff',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-                borderRadius: '50%',
-                width: '32px',
-                height: '32px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: 'none',
-              }}
-              className="monitoring-button"
+              className="absolute top-4 right-4 bg-blue-500 shadow-lg rounded-full w-8 h-8 flex items-center justify-center border-none monitoring-button"
             />
           </Tooltip>
         )}
 
         {/* Right side - Monitoring View */}
         {showMonitoring && (
-          <Layout
-            style={{
-              background: 'transparent',
-              flexDirection: 'column',
-              width: '60%',
-              display: 'flex',
-              flexShrink: 0,
-              height: '100%',
-              margin: 0,
-              paddingLeft: 12,
-              paddingRight: 12,
-              position: 'relative',
-            }}
-          >
+          <Layout className="bg-transparent flex-col w-[60%] flex-shrink-0 h-full m-0 pl-3 pr-3 relative">
             {/* Close button for monitoring view */}
             <Tooltip title="Close Visual & Logs">
               <Button
                 icon={<CloseOutlined />}
                 type="text"
                 onClick={() => setShowMonitoring(false)}
-                style={{
-                  position: 'absolute',
-                  top: '16px',
-                  right: '16px',
-                  zIndex: 1,
-                  background: 'white',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-                  borderRadius: '50%',
-                  width: '24px',
-                  height: '24px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
+                className="absolute top-4 right-4 z-10 bg-white shadow-lg rounded-full w-6 h-6 flex items-center justify-center"
               />
             </Tooltip>
 
@@ -636,19 +603,7 @@ const WorkflowApp: React.FC<WorkflowAppProps> = ({
               renderMode={renderMode}
             />
 
-            <Layout
-              style={{
-                backgroundColor: 'transparent',
-                margin: '12px',
-                padding: '16px',
-                border: '1px solid #grey',
-                borderRadius: '5px',
-                flexShrink: 0,
-                flexGrow: 1,
-                paddingLeft: 48,
-                paddingRight: 48,
-              }}
-            >
+            <Layout className="bg-transparent m-3 p-4 border border-gray-400 rounded flex-shrink-0 flex-grow pl-12 pr-12">
               <Title level={5}>Playback</Title>
               <Slider
                 min={0}

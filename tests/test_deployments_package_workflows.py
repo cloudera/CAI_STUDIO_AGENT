@@ -70,13 +70,13 @@ def test_package_workflow_for_deployment(
     artifact = workflows.package_workflow_for_deployment(payload, deployment, session, cml)
 
     assert isinstance(artifact, DeploymentArtifact)
-    assert artifact.project_location.endswith("artifact.tar.gz")
+    assert artifact.artifact_path.endswith("artifact.tar.gz")
 
     mock_os_makedirs.assert_called()
     mock_copytree.assert_called()
     mock_yaml_dump.assert_called()
     mock_json_dump.assert_called()
-    mock_create_collated_input.assert_called_once_with(workflow, session)
+    mock_create_collated_input.assert_called_once_with(workflow, session, deployment.created_at)
 
     added_files = [call[0][0] for call in mock_tar.add.call_args_list]
     assert any("workflow.yaml" in f for f in added_files)

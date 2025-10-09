@@ -80,6 +80,7 @@ export const toolInstancesApi = apiSlice.injectEndpoints({
       },
       invalidatesTags: (result, error, { tool_instance_id }) => [
         { type: 'ToolInstance', id: tool_instance_id },
+        { type: 'ToolInstance', id: 'LIST' },
       ],
     }),
 

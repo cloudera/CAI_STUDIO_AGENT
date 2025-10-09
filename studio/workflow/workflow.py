@@ -13,7 +13,10 @@ from studio.agents.agent import remove_agent, add_agent
 from studio.tools.tool_instance import remove_tool_instance
 from studio.cross_cutting.global_thread_pool import get_thread_pool
 import studio.workflow.utils as workflow_utils
+from studio.workflow.utils import set_workflow_deployment_stale_status
 import studio.as_mcp.utils as mcp_utils
+import studio.agents.utils as agent_utils
+
 from cmlapi import CMLServiceApi
 from typing import List
 from crewai import Process
@@ -133,7 +136,6 @@ def add_workflow_from_template(
         workflow.description = workflow_template.description
         workflow.crew_ai_process = workflow_template.process
         workflow.is_conversational = workflow_template.is_conversational
-        workflow.is_draft = True
         wf_dir = workflow_utils.get_fresh_workflow_directory(workflow.name)
         workflow.directory = wf_dir
         os.makedirs(wf_dir, exist_ok=True)
@@ -262,7 +264,6 @@ def add_workflow(request: AddWorkflowRequest, cml: CMLServiceApi, dao: AgentStud
                 crew_ai_manager_agent=manager_agent_id,
                 crew_ai_llm_provider_model_id=manager_llm_model_provider_id,
                 is_conversational=request.is_conversational,
-                is_draft=True,
                 directory=wf_dir,
             )
             session.add(workflow)
@@ -304,7 +305,6 @@ def list_workflows(
                         ),
                         is_ready=False,
                         is_conversational=workflow.is_conversational or False,
-                        is_draft=workflow.is_draft or False,
                         directory=workflow.directory or "",
                     )
                 )
@@ -341,7 +341,6 @@ def get_workflow(request: GetWorkflowRequest, cml: CMLServiceApi, dao: AgentStud
                 ),
                 is_ready=workflow_utils.is_workflow_ready(workflow.id, session),
                 is_conversational=workflow.is_conversational or False,
-                is_draft=workflow.is_draft or False,
                 directory=workflow.directory or "",
             )
             return GetWorkflowResponse(workflow=workflow_metadata)
@@ -417,18 +416,10 @@ def update_workflow(
                     _validate_process(metadata, cml, dao)
                     workflow.crew_ai_process = metadata.process
 
-            # Workflow enters draft mode after committing a change to the workflow. If the
-            # workflow is published, that published workflow then goes stale.
-            workflow.is_draft = True
-
-            # Any deployed workflow instances have now entered a stale state.
-            deployed_workflow_instances = (
-                session.query(db_model.DeployedWorkflowInstance).filter_by(workflow_id=workflow.id).all()
-            )
-            for deployed_workflow_instance in deployed_workflow_instances:
-                deployed_workflow_instance.is_stale = True
-
             session.commit()
+
+            # Mark workflow deployments as stale since the workflow has been updated
+            get_thread_pool().submit(set_workflow_deployment_stale_status, workflow.id, True)
 
             # Update all tools for the workflow
             workflow_utils.prepare_tools_for_workflow(workflow.id, session)
@@ -499,3 +490,112 @@ def remove_workflow(
             return RemoveWorkflowResponse()
     except SQLAlchemyError as e:
         raise RuntimeError(f"Failed to remove workflow: {str(e)}")
+
+
+def _clone_workflow_components(
+    original_workflow: db_model.Workflow, new_workflow_id: str, session
+) -> tuple[dict, list, str]:
+    """
+    Clone all workflow components: agents, tasks, and manager agent.
+    Returns: (agent_id_mapping, cloned_task_ids, manager_agent_id)
+    """
+    agent_id_mapping = {}
+    cloned_task_ids = []
+    manager_agent_id = None
+
+    # Clone all agents
+    if original_workflow.crew_ai_agents:
+        for original_agent_id in original_workflow.crew_ai_agents:
+            # Use the clone_agent function to create a deep copy
+            new_agent_id = agent_utils.clone_agent(original_agent_id, new_workflow_id, session)
+            agent_id_mapping[original_agent_id] = new_agent_id
+
+    # Clone manager agent if exists
+    if original_workflow.crew_ai_manager_agent:
+        # Use the clone_agent function for manager agent as well
+        manager_agent_id = agent_utils.clone_agent(original_workflow.crew_ai_manager_agent, new_workflow_id, session)
+
+    # Clone all tasks
+    if original_workflow.crew_ai_tasks:
+        for original_task_id in original_workflow.crew_ai_tasks:
+            original_task: db_model.Task = session.query(db_model.Task).filter_by(id=original_task_id).one()
+
+            new_task_id = str(uuid4())
+
+            # Map assigned agent ID if it exists
+            assigned_agent_id = None
+            if original_task.assigned_agent_id and (original_task.assigned_agent_id in agent_id_mapping):
+                assigned_agent_id = agent_id_mapping[original_task.assigned_agent_id]
+
+            # Create cloned task
+            cloned_task = db_model.Task(
+                id=new_task_id,
+                name=original_task.name,
+                workflow_id=new_workflow_id,
+                description=original_task.description,
+                expected_output=original_task.expected_output,
+                assigned_agent_id=assigned_agent_id,
+            )
+            session.add(cloned_task)
+            cloned_task_ids.append(new_task_id)
+
+    return agent_id_mapping, cloned_task_ids, manager_agent_id
+
+
+def clone_workflow(
+    request: CloneWorkflowRequest, cml: CMLServiceApi, dao: AgentStudioDao = None
+) -> CloneWorkflowResponse:
+    """
+    Makes a deep copy of an existing workflow.
+    Deep copies the workflow, tasks, manager agent (if present), agents, tool instances, and MCP instances.
+    """
+    try:
+        if not request.workflow_id:
+            raise ValueError("Workflow ID is required.")
+
+        with dao.get_session() as session:
+            # Get the original workflow
+            original_workflow = session.query(db_model.Workflow).filter_by(id=request.workflow_id).one_or_none()
+            if not original_workflow:
+                raise ValueError(f"Workflow with ID '{request.workflow_id}' not found.")
+
+            # Generate new workflow ID and determine name
+            new_workflow_id = str(uuid4())
+            new_workflow_name = request.name or original_workflow.name
+
+            # Create new workflow directory
+            wf_dir = workflow_utils.get_fresh_workflow_directory(new_workflow_name)
+            os.makedirs(wf_dir, exist_ok=True)
+
+            # Clone the base workflow
+            cloned_workflow = db_model.Workflow(
+                id=new_workflow_id,
+                name=new_workflow_name,
+                description=original_workflow.description,
+                crew_ai_process=original_workflow.crew_ai_process,
+                is_conversational=original_workflow.is_conversational,
+                directory=wf_dir,
+            )
+            session.add(cloned_workflow)
+            session.commit()
+
+            # Clone agents, tasks, and manager agent
+            agent_id_mapping, cloned_task_ids, manager_agent_id = _clone_workflow_components(
+                original_workflow, new_workflow_id, session
+            )
+
+            # Update workflow with cloned references
+            cloned_workflow.crew_ai_agents = list(agent_id_mapping.values())
+            cloned_workflow.crew_ai_tasks = cloned_task_ids
+            cloned_workflow.crew_ai_manager_agent = manager_agent_id
+            cloned_workflow.crew_ai_llm_provider_model_id = original_workflow.crew_ai_llm_provider_model_id
+
+            session.commit()
+            return CloneWorkflowResponse(workflow_id=new_workflow_id)
+
+    except SQLAlchemyError as e:
+        raise RuntimeError(f"Failed to clone workflow: {str(e)}")
+    except ValueError as ve:
+        raise RuntimeError(f"Validation error: {str(ve)}")
+    except Exception as e:
+        raise RuntimeError(f"Unexpected error while cloning workflow: {str(e)}")

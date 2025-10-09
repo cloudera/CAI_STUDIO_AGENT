@@ -6,17 +6,9 @@ export interface LargeCenterSpinProps {
   message?: string;
 }
 
-const LargeCenterSpin: React.FC<LargeCenterSpinProps> = ({ message }) => {
+const LargeCenterSpin = ({ message }: LargeCenterSpinProps) => {
   return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100%',
-        flexDirection: 'column',
-      }}
-    >
+    <div className="flex justify-center items-center h-full flex-col">
       <Spin size="large" />
       {message && <Text>{message}</Text>}
     </div>

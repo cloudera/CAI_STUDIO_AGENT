@@ -15,7 +15,7 @@ interface WorkflowEditorAgentViewProps {
   workflowId: string;
 }
 
-const WorkflowEditorAgentView: React.FC<WorkflowEditorAgentViewProps> = ({ workflowId }) => {
+const WorkflowEditorAgentView = ({ workflowId }: WorkflowEditorAgentViewProps) => {
   const dispatch = useAppDispatch();
   const workflowState = useAppSelector(selectEditorWorkflow);
   const [getWorkflow] = useGetWorkflowMutation();
@@ -37,20 +37,15 @@ const WorkflowEditorAgentView: React.FC<WorkflowEditorAgentViewProps> = ({ workf
     }
   }, [workflowId, workflowState.workflowId, dispatch, getWorkflow]);
 
-  if (!workflowState.workflowId) return null;
+  if (!workflowState.workflowId) {
+    return null;
+  }
 
   return (
     <>
-      <Layout
-        style={{
-          flex: 1,
-          flexDirection: 'row',
-          backgroundColor: 'white',
-          borderRadius: 4,
-        }}
-      >
+      <Layout className="flex-1 flex flex-row bg-white rounded">
         <WorkflowEditorAgentInputs workflowId={workflowId} />
-        <Divider type="vertical" style={{ height: '100%', flexGrow: 0, flexShrink: 0 }} />
+        <Divider type="vertical" className="h-full flex-grow-0 flex-shrink-0" />
         <WorkflowDiagramView
           workflowState={workflowState}
           toolInstances={toolInstances}

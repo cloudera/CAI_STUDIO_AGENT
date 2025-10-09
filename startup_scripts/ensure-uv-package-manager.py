@@ -2,6 +2,11 @@
 
 import subprocess
 import sys
+from startup_scripts.startup_utils import load_dotenv_file, ensure_correct_base_path
+
+# Load environment and execution directory.
+load_dotenv_file()
+ensure_correct_base_path()
 
 def check_uv_installed():
     """Check if uv package manager is installed."""

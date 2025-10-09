@@ -4,7 +4,6 @@ import {
   GetAssetDataResponse,
   GetParentProjectDetailsRequest,
   GetParentProjectDetailsResponse,
-  DownloadTemporaryFileRequest,
   HealthCheckResponse,
   CmlApiCheckResponse,
 } from '@/studio/proto/agent_studio';
@@ -31,14 +30,14 @@ export const crossCuttingApi = apiSlice.injectEndpoints({
       }),
     }),
     checkStudioUpgradeStatus: builder.query<CheckStudioUpgradeStatusResponse, void>({
-      query: (request) => ({
+      query: () => ({
         url: '/grpc/checkStudioUpgradeStatus',
         method: 'POST',
         body: {},
       }),
     }),
     upgradeStudio: builder.mutation<void, void>({
-      query: (request) => ({
+      query: (_request) => ({
         url: '/grpc/upgradeStudio',
         method: 'POST',
         body: {},

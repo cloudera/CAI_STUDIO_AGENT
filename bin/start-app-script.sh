@@ -1,9 +1,52 @@
 #!/bin/bash
 
-# Ensure proper node usage
-export NVM_DIR="$(pwd)/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-nvm use 22
+# ===========================================================
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+#
+#                        Agent Studio
+#
+# Main entrypoint for Agent Studio. Will spin up appropraite
+# studio or workflow application with corresponding gRPC server,
+# and ops server, all based on environment variables.
+#
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+# ===========================================================
+
+
+# Function to clean up background processes
+cleanup() {
+    # kill all processes whose parent is this process
+    pkill -P $$
+}
+
+for sig in INT QUIT HUP TERM; do
+  trap "
+    cleanup
+    trap - $sig EXIT
+    kill -s $sig "'"$$"' "$sig"
+done
+trap cleanup EXIT
+
+# The app directory containing source and frontend build artifacts
+# is the main runtime directory of agent studio. Many components of
+# agent studio (such as the gRPC service) begin by immediately changing
+# the working directory to $APP_DATA_DIR. However, we ensure that python
+# and frontend process are started from $APP_DIR to give us extra features,
+# like file watching for FastAPI and Node builds.
+cd $APP_DIR
+export PYTHONPATH=$APP_DIR:$PYTHONPATH
+
+# Load environment variables from .env files if they exist
+if [ -f "$APP_DIR/.env" ]; then
+    echo "Loading environment variables from .env"
+    export $(grep -v '^#' "$APP_DIR/.env" | xargs)
+fi
+
+# Load local overrides if they exist
+if [ -f "$APP_DIR/.env.local" ]; then
+    echo "Loading environment variables from .env.local"
+    export $(grep -v '^#' "$APP_DIR/.env.local" | xargs)
+fi
 
 # Specify either "enabled" or "disabled" to determine the type
 # of gRPC deployment. If develpoing in "enabled" mode, a gRPC server starts up
@@ -13,7 +56,7 @@ nvm use 22
 export AGENT_STUDIO_GRPC_MODE=${AGENT_STUDIO_GRPC_MODE:-enabled}
 echo "AGENT_STUDIO_GRPC_MODE: $AGENT_STUDIO_GRPC_MODE"
 
-# We share the same dependencies from one app to another that are built in react. 
+# We share the same frontend build for deployed workflows as we do the main studio. 
 # Then, based on whether this is rendering the studio or rendering the workflow, we change the content of the page.
 export AGENT_STUDIO_RENDER_MODE=${AGENT_STUDIO_RENDER_MODE:-studio}
 echo "AGENT_STUDIO_RENDER_MODE: $AGENT_STUDIO_RENDER_MODE"
@@ -23,10 +66,48 @@ export AGENT_STUDIO_DEPLOYMENT_CONFIG=${AGENT_STUDIO_DEPLOYMENT_CONFIG:-prod}
 echo "AGENT_STUDIO_DEPLOYMENT_CONFIG: $AGENT_STUDIO_DEPLOYMENT_CONFIG"
 
 # Default ops platform. Currently, only phoenix is supported.
-export AGENT_STUDIO_OPS_PROVIDER=phoenix
+export AGENT_STUDIO_OPS_PROVIDER=${AGENT_STUDIO_OPS_PROVIDER:-phoenix}
+echo "AGENT_STUDIO_OPS_PROVIDER: $AGENT_STUDIO_OPS_PROVIDER"
 
 # Number of agent studio workflow runners to spin up for workflow testing purposes.
 export AGENT_STUDIO_NUM_WORKFLOW_RUNNERS=${AGENT_STUDIO_NUM_WORKFLOW_RUNNERS:-5}
+echo "AGENT_STUDIO_NUM_WORKFLOW_RUNNERS: $AGENT_STUDIO_NUM_WORKFLOW_RUNNERS"
+
+# Agent studio deployment mode. Currently either "amp" or "runtime" based on the installation form factor.
+export AGENT_STUDIO_DEPLOY_MODE=${AGENT_STUDIO_DEPLOY_MODE:-amp}
+echo "AGENT_STUDIO_DEPLOY_MODE: $AGENT_STUDIO_DEPLOY_MODE"
+
+# Disable CrewAI telemetry.
+export CREWAI_DISABLE_TELEMETRY=${CREWAI_DISABLE_TELEMETRY:-true}
+echo "CREWAI_DISABLE_TELEMETRY: $CREWAI_DISABLE_TELEMETRY"
+
+# Default ports
+export DEFAULT_AS_GRPC_PORT=${DEFAULT_AS_GRPC_PORT:-50051}
+export DEFAULT_AS_PHOENIX_OPS_PLATFORM_PORT=${DEFAULT_AS_PHOENIX_OPS_PLATFORM_PORT:-50052}
+export DEFAULT_WORKFLOW_RUNNER_STARTING_PORT=${DEFAULT_WORKFLOW_RUNNER_STARTING_PORT:-51000}
+export DEFAULT_AS_DEBUG_PORT=${DEFAULT_AS_DEBUG_PORT:-5678}
+export DEFAULT_WORKFLOW_RUNNER_DEBUG_PORT=${DEFAULT_WORKFLOW_RUNNER_DEBUG_PORT:-5679}
+
+# Checking for uv installation.
+echo "Confirming uv installation..."
+if ! uv --version > /dev/null 2>&1; then
+  echo "uv is not installed. Installing uv..."
+  python startup_scripts/ensure-uv-package-manager.py
+fi
+
+# Set UV_LINK_MODE to copy to avoid hardlinking issues on filesystems with link limits
+export UV_LINK_MODE=copy
+echo "UV_LINK_MODE set to: $UV_LINK_MODE"
+
+# If UV_DEFAULT_INDEX is not set, that means we are running in non air gapped environment and we can sync uv dependencies.
+# We dont want to sync uv dependencies in air gapped environment as we already have .venv directory.
+if [ -z "$UV_DEFAULT_INDEX" ]; then
+  cd $APP_DIR
+  VIRTUAL_ENV=.venv uv sync
+  cd $APP_DIR/studio/workflow_engine
+  VIRTUAL_ENV=.venv uv sync
+  cd $APP_DIR
+fi
 
 # Export a variable indicating whether the parent workbench is TLS-enabled or not.
 # Check if CDSW_PROJECT_URL uses HTTPS scheme (same logic as pre_install_check.py)
@@ -36,57 +117,79 @@ else
   export AGENT_STUDIO_WORKBENCH_TLS_ENABLED=false
 fi
 
+# Install the cmlapi package in both environments.
+if [[ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]]; then
+  echo "Installing cmlapi in both the base and workflow engine venvs..."
+  cd $APP_DIR 
+  VIRTUAL_ENV=.venv uv pip install https://${CDSW_DOMAIN}/api/v2/python.tar.gz --trusted-host ${CDSW_DOMAIN}
+  cd $APP_DIR/studio/workflow_engine
+  VIRTUAL_ENV=.venv uv pip install https://${CDSW_DOMAIN}/api/v2/python.tar.gz --trusted-host ${CDSW_DOMAIN}
+  cd $APP_DIR
+fi
+
+# Default ops endpoint. This is specifically used in studio mode where the workflow engine
+# sidecars can write to the local ops endpoint. For deployed workflows, start-app-script.sh
+# is never ran and the ops endpoint is set purely by the deployed environemnt. 
+export AGENT_STUDIO_OPS_ENDPOINT=http://127.0.0.1:$DEFAULT_AS_PHOENIX_OPS_PLATFORM_PORT
+
+# Initialization logic for studio mode.
+if [ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]; then
+
+  # Initialize the project defaults by copying $APP_DIR/studio-data into $APP_DATA_DIR/studio-data.
+  # this only happens if APP_DIR is different from APP_DATA_DIR. Also check and make sure that
+  # AGENT_STUDIO_RENDER_MODE is equal to studio.
+  if [[ "$APP_DIR" != "$APP_DATA_DIR" ]]; then
+      echo "Copying studio-data from $APP_DIR/studio-data to $APP_DATA_DIR/studio-data..."
+      mkdir -p $APP_DATA_DIR/studio-data/
+      cp -ar $APP_DIR/studio-data/* $APP_DATA_DIR/studio-data/
+  fi
+
+  # Initialize project defaults. These defaults ship with Agent Studio and the user
+  # does not have the ability to override them.
+  echo "Initializing project defaults..."
+  cd $APP_DIR
+  VIRTUAL_ENV=.venv uv run --no-sync startup_scripts/uv_initialize-project-defaults.py
+
+  # Run alembic upgrades once to ensure we are at head.
+  echo "Upgrading DB..."
+  VIRTUAL_ENV=.venv uv run --no-sync python -m alembic upgrade head
+
+fi
+
+# Activate the node environment that currently ships with the app. In the future,
+# Node will become optional (and only used for Node-based MCPs), at which point
+# this logic will be updated to optionally install node within APP_DATA_DIR, which
+# will be reflected into the project's filesystem.
+export NVM_DIR="$APP_DIR/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+nvm use 22
+
 # Array to hold runner process IDs.
 declare -a RUNNER_PIDS=()
 
-# Disable CrewAI telemetry.
-export CREWAI_DISABLE_TELEMETRY=true
-
-# Function to clean up background processes
-cleanup() {
-  echo "Shutting down services..."
-  pkill -f "bin/start-grpc-server.py"
-  pkill -f "bin/start-ops-proxy.py"
-  pkill -f "npm run dev"
-  pkill -f "npm run start"
-
-  # Kill our workflow runner processes.
-  if [ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]; then
-    for pid in "${RUNNER_PIDS[@]}"; do
-      if ps -p "$pid" > /dev/null; then
-        echo "Killing workflow runner with PID: $pid"
-        kill "$pid"
-      fi
-    done
-  fi
-
-  exit
-}
-
-# Trap SIGINT and SIGTERM signals to run the cleanup function
-trap cleanup SIGINT SIGTERM
-
-# Depending on the deployment or development mode, this may
-# be injected and used from the value in the project environment.
-echo "Current AGENT_STUDIO_SERVICE_IP: $AGENT_STUDIO_SERVICE_IP"
-
 # Spin up workflow runners.
+cd $APP_DIR/studio/workflow_engine
 if [ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]; then
-  DEFAULT_WORKFLOW_RUNNER_STARTING_PORT=51000
   for (( i=0; i<AGENT_STUDIO_NUM_WORKFLOW_RUNNERS; i++ )); do
     PORT_NUM=$((DEFAULT_WORKFLOW_RUNNER_STARTING_PORT + i))
+    DEBUG_PORT_NUM=$((DEFAULT_WORKFLOW_RUNNER_DEBUG_PORT + i))
     echo "Starting workflow runner on port $PORT_NUM..."
+    if [ "$AGENT_STUDIO_DEPLOYMENT_CONFIG" = "dev" ]; then
+      echo "Starting workflow runner with a debug port at $DEBUG_PORT_NUM..."
+      VIRTUAL_ENV=.venv uv run --no-sync -m debugpy --listen $DEBUG_PORT_NUM -m uvicorn src.engine.entry.runner:app --port "$PORT_NUM" --host "0.0.0.0" &
+    else
+      # Launch the runner using the virtual environment's python.
+      echo "Starting workflow runner using the virtual environment's python..."
+      VIRTUAL_ENV=.venv uv run --no-sync python -m uvicorn \
+       src.engine.entry.runner:app --port "$PORT_NUM" &
+    fi
     
-    # Launch the runner using the virtual environment's python
-    studio/workflow_engine/.venv/bin/python -m uvicorn \
-      studio.workflow_engine.src.engine.entry.runner:app \
-      --port "$PORT_NUM" &
     
     # Save the process PID.
     RUNNER_PIDS+=($!)
   done
 fi
-
+cd $APP_DIR
 
 # If we are starting up the main app (not the workflow app), then we also want to 
 # start up the gRPC server that hosts all application logic.
@@ -94,19 +197,14 @@ if [ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]; then
   echo "Starting up studio UI."
 
   if [ "$AGENT_STUDIO_GRPC_MODE" = "enabled" ]; then
-    
-    # Only start up the gRPC server if we are in full development mode.
-    # gRPC server will spawn on 50051
-    PORT=50051
 
     { # Try to start up the server
-
       if [ "$AGENT_STUDIO_DEPLOYMENT_CONFIG" = "dev" ]; then
-        echo "Starting up the gRPC server with a debug port at 5678..."
-        uv run -m debugpy --listen 5678 bin/start-grpc-server.py &
+        echo "Starting up the gRPC server with a debug port at $DEFAULT_AS_DEBUG_PORT..."
+        VIRTUAL_ENV=.venv uv run --no-sync -m debugpy --listen $DEFAULT_AS_DEBUG_PORT $APP_DIR/bin/start-grpc-server.py &
       else 
         echo "Starting up the gRPC server..."
-        PYTHONUNBUFFERED=1 uv run bin/start-grpc-server.py & 
+        VIRTUAL_ENV=.venv PYTHONUNBUFFERED=1 uv run --no-sync $APP_DIR/bin/start-grpc-server.py &
       fi
     } || {
       echo "gRPC server initialization script failed. Is there already a local server running in the pod?"
@@ -115,9 +213,15 @@ if [ "$AGENT_STUDIO_RENDER_MODE" = "studio" ]; then
     # Even though we've updated the project environment variables, we still need to update 
     # the local environment variables. This is because the FINE_TUNING_SERVICE_IP/PORT 
     # local env variables are still stale from the previous application dashboard environment,
-    # if this application is restarting.
+    # if this application is restarting. As this is updated every time the pod starts, and
+    # written to the project environment, other pods in the same namespace can access the
+    # gRPC serveri directly via $AGENT_STUDIO_SERVICE_IP:$AGENT_STUDIO_SERVICE_PORT. 
+    #
+    # These parameters are also set in the project environment variables as part of start-grpc-server.py,
+    # but we also set them here to ensure that the Node gRPC client can access the proper pod without
+    # having to collect IPs from the CML project.
     export AGENT_STUDIO_SERVICE_IP=$CDSW_IP_ADDRESS
-    export AGENT_STUDIO_SERVICE_PORT=$PORT
+    export AGENT_STUDIO_SERVICE_PORT=$DEFAULT_AS_GRPC_PORT
 
     echo New AGENT_STUDIO_SERVICE_IP: $AGENT_STUDIO_SERVICE_IP
 
@@ -128,23 +232,29 @@ else
   echo "Starting up workflow app UI."
 fi 
 
-# For local development, we need to set up an http proxy to the ops server.
-# For both production and development builds, whenever we iframe content, we need to make sure that:
-#  1. the iframed application runs in the same domain as the main application, and
-#  2. transport layer security matches (either HTTP or HTTPS)
-# For this reason, for local dev, we need to iframe from the samme origin (127.0.0.1).
-# In production CML application, we need to get the full application URL.
-if [ "$AGENT_STUDIO_DEPLOYMENT_CONFIG" = "dev" ]; then
-  echo "Starting ops proxy server..."
-  PYTHONUNBUFFERED=1 uv run bin/start-ops-proxy.py &
+# Start up the ops server. 
+if [[ "$AGENT_STUDIO_OPS_PROVIDER" = "phoenix" ]]; then
+  echo "Starting up embedded Phoenix ops server..."
+  VIRTUAL_ENV=.venv uv run --no-sync python $APP_DIR/bin/start-agent-ops-server-embedded.py $DEFAULT_AS_PHOENIX_OPS_PLATFORM_PORT &
 fi
 
 # If running in development mode, run the dev server so we get live
 # updates. If in production mode, build the optimized server and serve it.
 if [ "$AGENT_STUDIO_DEPLOYMENT_CONFIG" = "dev" ]; then
   echo "Starting up Next.js development server..."
-  npm run dev
+  npm run dev --prefix $APP_DIR
 else 
   echo "Running production server..."
-  npm run start
+  npm run start --prefix $APP_DIR
+fi
+
+# If we hit this point in the script, then something went wrong with our
+# npm server (this behavior has only been observed in dev mode). Please
+# kill your application with ctrl+C and try again.
+echo "================================================"
+echo "Something went wrong with our npm server."
+if [ "$AGENT_STUDIO_DEPLOYMENT_CONFIG" = "dev" ]; then
+  echo "Please kill your application with ctrl+C and try again."
+  echo "Waiting for kill signal..."
+  wait
 fi

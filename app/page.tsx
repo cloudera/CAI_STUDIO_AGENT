@@ -21,10 +21,10 @@ import LargeCenterSpin from './components/common/LargeCenterSpin';
  * to the /workflows page.
  */
 const HomePage: React.FC = () => {
-  // Make a call to /api/wflow in the node server to get rendering information.
+  // Make a call to /api/workflow in the node server to get rendering information.
   // note that RTK will cache this and there is nothing invalidating this, so
   // it will only be called once.
-  const { data: wflowData, isLoading } = useGetWorkflowDataQuery();
+  const { data: workflowData, isLoading } = useGetWorkflowDataQuery();
   const [viewSettings, setViewSettings] = useState<ViewSettings>();
   const router = useRouter();
 
@@ -36,28 +36,29 @@ const HomePage: React.FC = () => {
     setViewSettings(readViewSettingsFromLocalStorage());
   }, []);
 
+  useEffect(() => {
+    if (viewSettings?.displayIntroPage === false) {
+      router.push('/workflows');
+    }
+  }, [viewSettings]);
+
   if (isLoading === true) {
     // Show a loading spinner while data is being fetched
     return <LargeCenterSpin message="Retrieving workflow and render mode..." />;
   }
 
   // Show loading if the render mode is not returning proper information.
-  if (!wflowData || !wflowData?.renderMode) {
+  if (!workflowData || !workflowData?.renderMode) {
     return (
       <LargeCenterSpin message="Issue retrieving workflow and render mode (is the deployed model running?)" />
     );
   }
 
   // Render workflow app.
-  if (wflowData.renderMode === 'workflow') {
+  if (workflowData.renderMode === 'workflow') {
     return (
-      <Layout
-        style={{
-          padding: 36,
-          flexDirection: 'column',
-        }}
-      >
-        <WorkflowAppDeployed workflowData={wflowData} />
+      <Layout className="p-[36px] flex flex-col">
+        <WorkflowAppDeployed workflowData={workflowData} />
       </Layout>
     );
   }
@@ -71,7 +72,6 @@ const HomePage: React.FC = () => {
   // route to the /workflows page
   if (viewSettings.displayIntroPage === false) {
     // Show a loading spinner while we wait for workflows page.
-    router.push('/workflows');
     return <LargeCenterSpin message="Loading workflows..." />;
   }
 

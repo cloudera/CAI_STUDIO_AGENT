@@ -1,4 +1,5 @@
 from pydantic import BaseModel, ConfigDict
+from datetime import datetime
 from typing import Optional, List, Literal, Dict
 from enum import Enum
 from crewai import Agent, Crew, Task, Process
@@ -52,6 +53,11 @@ class Input__LanguageModelConfig(BaseModel):
     api_base: Optional[str] = None
     api_key: Optional[str] = None
     extra_headers: Optional[Dict[str, str]] = None
+    # AWS Bedrock specific fields
+    aws_region_name: Optional[str] = None
+    aws_access_key_id: Optional[str] = None
+    aws_secret_access_key: Optional[str] = None
+    aws_session_token: Optional[str] = None
 
 
 class Input__LanguageModel(BaseModel):
@@ -115,6 +121,7 @@ class Input__Workflow(BaseModel):
     manager_agent_id: Optional[str] = None
     llm_provider_model_id: Optional[str] = None
     is_conversational: bool
+    created_at: Optional[datetime] = None
 
 
 class CollatedInput(BaseModel):

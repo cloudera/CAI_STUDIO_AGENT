@@ -25,6 +25,22 @@ export interface WorkflowData {
   mcpInstances: McpInstance[];
 }
 
+export interface WorkflowKickoffRequest {
+  inputs: Record<string, any>;
+}
+
+export interface WorkflowKickoffResponse {
+  trace_id: string;
+}
+
+export interface GetOpsEventsRequest {
+  trace_id: string;
+}
+
+export interface GetOpsEventsResponse {
+  events: any[];
+}
+
 /**
  * Tool configuration for a specific tool in a specific workflow,
  * stored in the local storage.

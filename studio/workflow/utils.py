@@ -1,6 +1,6 @@
 # No top level studio.db imports allowed to support wokrflow model deployment
 
-from typing import List
+from typing import List, Optional
 import os
 import requests
 
@@ -8,13 +8,18 @@ from cmlapi import CMLServiceApi
 
 from studio.cross_cutting import utils as cc_utils
 from studio import consts
+from studio.db.dao import AgentStudioDao
 from studio.cross_cutting.global_thread_pool import get_thread_pool
-from studio.db.model import Workflow, Model, Agent, ToolInstance
+from studio.db.model import Workflow, Model, Agent, ToolInstance, DeployedWorkflowInstance
 from studio.api.types import ToolInstanceStatus
 from sqlalchemy.orm.session import Session
 
-from studio.models.utils import get_model_api_key_from_env, get_model_extra_headers_from_env
-from studio.tools.tool_instance import prepare_tool_instance
+from studio.models.utils import (
+    get_model_api_key_from_env,
+    get_model_extra_headers_from_env,
+    get_model_aws_credentials_from_env,
+)
+from studio.tools.utils import prepare_tool_instance
 
 
 def get_llm_config_for_workflow(workflow: Workflow, session: Session, cml: CMLServiceApi) -> dict:
@@ -49,7 +54,8 @@ def get_llm_config_for_workflow(workflow: Workflow, session: Session, cml: CMLSe
 
         # Get API key from environment with error handling
         api_key = get_model_api_key_from_env(language_model_db_model.model_id, cml)
-        if not api_key:
+        # For Bedrock, API key is not required as we use AWS credentials/role
+        if not api_key and language_model_db_model.model_type != "BEDROCK":
             raise ValueError(
                 f"API key is required but not found for model {language_model_db_model.model_name} "
                 f"({language_model_db_model.model_id}). Please configure the API key in project environment variables."
@@ -57,14 +63,49 @@ def get_llm_config_for_workflow(workflow: Workflow, session: Session, cml: CMLSe
 
         # Get extra headers from environment
         extra_headers = get_model_extra_headers_from_env(language_model_db_model.model_id, cml)
+        # For Bedrock, ensure we do NOT pass AWS credentials as HTTP headers
+        if language_model_db_model.model_type == "BEDROCK" and extra_headers:
+            extra_headers = {
+                k: v
+                for k, v in extra_headers.items()
+                if k not in {"aws_secret_access_key", "aws_access_key_id", "aws_region_name", "aws_session_token"}
+            }
 
-        model_config[lm_id] = {
+        # Construct base model config
+        config_entry = {
             "provider_model": language_model_db_model.provider_model,
             "model_type": language_model_db_model.model_type,
-            "api_base": language_model_db_model.api_base or None,
-            "api_key": api_key,
+            # For Bedrock we no longer misuse api_base; leave None
+            "api_base": (language_model_db_model.api_base or None)
+            if language_model_db_model.model_type != "BEDROCK"
+            else None,
+            "api_key": api_key if language_model_db_model.model_type != "BEDROCK" else None,
             "extra_headers": extra_headers or None,
         }
+
+        # For Bedrock, include AWS credentials from environment so LiteLLM can authenticate
+        if language_model_db_model.model_type == "BEDROCK":
+            try:
+                aws_credentials = get_model_aws_credentials_from_env(language_model_db_model.model_id, cml) or {}
+                if aws_credentials:
+                    config_entry.update(
+                        {
+                            "aws_access_key_id": aws_credentials.get("aws_access_key_id"),
+                            "aws_secret_access_key": aws_credentials.get("aws_secret_access_key"),
+                            "aws_region_name": aws_credentials.get("aws_region_name"),
+                            "aws_session_token": aws_credentials.get("aws_session_token"),
+                        }
+                    )
+                else:
+                    # Fallback: use global env if set (IAM role case)
+                    fallback_region = os.getenv("AWS_REGION_NAME") or os.getenv("AWS_REGION")
+                    if fallback_region:
+                        config_entry["aws_region_name"] = fallback_region
+            except Exception:
+                # If fetching AWS creds fails, leave them unset so caller gets a clear auth error
+                pass
+
+        model_config[lm_id] = config_entry
 
     return model_config
 
@@ -108,6 +149,19 @@ def compare_workbench_versions(a: str, b: str) -> int:
     return 0
 
 
+def is_workbench_gteq_2_0_47() -> bool:
+    """
+    Check if the workbench version is greater than or equal to 2.0.47. There were two features
+    released in 2.0.47 that Agent Studio have specific features depending on:
+    - Call applications authenticated with APIv2 keys
+    - AI Studios feature
+    - Custom model root dir feature for model deployments in a workbench
+    """
+    scheme = cc_utils.get_url_scheme()
+    bootstrap_data: dict = requests.get(f"{scheme}://{os.getenv('CDSW_DOMAIN')}/sense-bootstrap.json").json()
+    return compare_workbench_versions(bootstrap_data.get("gitSha", "0.0.0"), "2.0.47") >= 0
+
+
 def is_custom_model_root_dir_feature_enabled() -> bool:
     """
     Currently custom model root dirs for Workbench models are hidden behind
@@ -124,7 +178,7 @@ def is_custom_model_root_dir_feature_enabled() -> bool:
     # is translated upstream from ML_ENABLE_COMPOSABLE_AMPS, which is the
     # entitlement that blocks the model root dir feature.
     composable_amp_entitlement_enabled = bootstrap_data.get("enable_ai_studios", False)
-    workbench_gteq_2_0_47 = compare_workbench_versions(bootstrap_data.get("gitSha", "0.0.0"), "2.0.47") >= 0
+    workbench_gteq_2_0_47 = is_workbench_gteq_2_0_47()
 
     return composable_amp_entitlement_enabled and workbench_gteq_2_0_47
 
@@ -178,20 +232,19 @@ def prepare_tools_for_workflow(workflow_id: str, session: Session) -> None:
         )
 
 
-def invalidate_workflow(preexisting_db_session, condition) -> None:
-    """
-    Move dependent workflows to draft mode and mark any dependent deployed workflows as stale.
-    """
-    from studio.db import model as db_model, DbSession
+def set_workflow_deployment_stale_status(parent_workflow_id: Optional[str], is_stale: bool) -> None:
+    if not parent_workflow_id:
+        return
 
-    session: DbSession = preexisting_db_session
-
-    dependent_workflows = session.query(db_model.Workflow).filter(condition).all()
-    for workflow in dependent_workflows:
-        workflow.is_draft = True
-        deployed_workflows: List[db_model.DeployedWorkflowInstance] = (
-            session.query(db_model.DeployedWorkflowInstance).filter_by(workflow_id=workflow.id).all()
-        )
-        for deployed_workflow in deployed_workflows:
-            deployed_workflow.is_stale = True
-    return
+    dao: AgentStudioDao = AgentStudioDao()
+    try:
+        with dao.get_session() as session:
+            deployed_workflows = session.query(DeployedWorkflowInstance).filter_by(workflow_id=parent_workflow_id).all()
+            if not deployed_workflows:
+                print(f"Workflow deployment with parent workflow ID '{parent_workflow_id}' not found.")
+                return
+            for deployed_workflow in deployed_workflows:
+                deployed_workflow.stale = is_stale
+            session.commit()
+    except Exception as e:
+        print(f"Error marking workflow deployment as stale: {str(e)}")

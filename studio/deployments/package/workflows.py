@@ -7,6 +7,7 @@ import tarfile
 
 from cmlapi import CMLServiceApi
 
+from studio import consts
 from studio.deployments.types import DeploymentArtifact, DeploymentPayload
 from studio.deployments.package.collated_input import create_collated_input
 
@@ -19,11 +20,21 @@ from studio.db.model import DeployedWorkflowInstance, Workflow
 # will go away and workflow engine features will be available already.
 import sys
 
-sys.path.append("studio/workflow_engine/src")
+app_dir = os.getenv("APP_DIR")
+if not app_dir:
+    raise EnvironmentError("APP_DIR environment variable is not set.")
+sys.path.append(os.path.join(app_dir, "studio", "workflow_engine", "src"))
+
 import engine.types as input_types
 
 
 def studio_data_workflow_ignore_factory(workflow_directory_name: str):
+    """
+    Ignore function for packing workflow artifacts. In the future, if we
+    decide to allow packaging up pre-build tool venvs, we should update
+    the ignore logic appropriately.
+    """
+
     def ignore(src, names):
         base = os.path.basename(src)
         if base == "studio-data":
@@ -56,12 +67,13 @@ def package_workflow_for_deployment(
     # Grab the corresponding workflow for this deployed workflow instance
     workflow: Workflow = deployment.workflow
 
-    # Ignore logic for copying over our studio-data/ directory
+    # Ignore logic for copying over our studio-data/ directory. NOTE: this is currently an issue with how we store
+    # workflows in our DB. We assume that consts.ALL_STUDIO_DATA_LOCATION is the root of the workflow, so we need
+    # some complex ignore logic to ensure we are only copying the workflow data directly.
     ignore_fn = studio_data_workflow_ignore_factory(os.path.basename(workflow.directory))
-    shutil.copytree("studio-data", os.path.join(packaging_directory, "studio-data"), ignore=ignore_fn)
-
+    shutil.copytree(consts.ALL_STUDIO_DATA_LOCATION, os.path.join(packaging_directory, "studio-data"), ignore=ignore_fn)
     # Create the collated input.
-    collated_input: input_types.CollatedInput = create_collated_input(workflow, session)
+    collated_input: input_types.CollatedInput = create_collated_input(workflow, session, deployment.updated_at or None)
 
     # Force override generational config. These generational configs
     # are set to default values and can optionally be overriden (currently
@@ -73,7 +85,7 @@ def package_workflow_for_deployment(
     # Write collated input to our packaging directory.
     collated_input_file_path = os.path.join(packaging_directory, "collated_input.json")
     with open(collated_input_file_path, "w") as f:
-        json.dump(collated_input.model_dump(), f, indent=2)
+        json.dump(collated_input.model_dump(), f, indent=2, default=str)
 
     # Package everything up into an archive.
     deployment_artifact_path = os.path.join(packaging_directory, "artifact.tar.gz")
@@ -89,4 +101,4 @@ def package_workflow_for_deployment(
                 tar.add(full_path, arcname=arcname)
 
     # Return the packaged artifact.
-    return DeploymentArtifact(project_location=deployment_artifact_path)
+    return DeploymentArtifact(artifact_path=deployment_artifact_path)

@@ -1,0 +1,461 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`WorkflowAddToolModal matches snapshot when modal is closed 1`] = `
+<div
+  data-testid="workflow-add-tool-modal"
+>
+  Tool Modal (Closed)
+  <div>
+    Workflow ID: 
+    test-workflow-id
+  </div>
+</div>
+`;
+
+exports[`WorkflowAddToolModal matches snapshot when modal is open 1`] = `
+<div
+  data-testid="workflow-add-tool-modal"
+  role="dialog"
+>
+  <div>
+    Create or Edit Tools
+  </div>
+  <hr />
+  <div
+    class="flex flex-row h-full bg-white"
+  >
+    <div
+      class="flex-1 overflow-y-auto p-4 bg-white"
+    >
+      <div
+        class="mb-4 cursor-pointer border rounded p-4 shadow-lg bg-blue-50"
+      >
+        <div>
+          Create New Tool
+        </div>
+        <div
+          class="text-sm opacity-45"
+        >
+          Create a new custom tool from scratch
+        </div>
+      </div>
+      <div
+        class="flex flex-row bg-white mb-2"
+      >
+        <div
+          class="flex-1 bg-white pr-4"
+        >
+          <div>
+            Edit Agent Tools
+          </div>
+          <input
+            data-testid="search-tools-input"
+            placeholder="Search tools..."
+            value=""
+          />
+          <div
+            class="p-4 border rounded cursor-pointer bg-white"
+          >
+            <div
+              class="font-semibold"
+            >
+              My Email Tool
+            </div>
+            <div
+              class="text-sm opacity-45"
+            >
+              Custom email tool
+            </div>
+            <button>
+              Delete
+            </button>
+          </div>
+        </div>
+        <div
+          class="flex-1 bg-white pl-4"
+        >
+          <div>
+            Create Tool From Template
+          </div>
+          <input
+            data-testid="search-templates-input"
+            placeholder="Search templates..."
+            value=""
+          />
+          <div
+            class="p-4 border rounded cursor-pointer bg-white"
+          >
+            <div
+              class="font-semibold"
+            >
+              Email Tool
+            </div>
+            <div
+              class="text-sm opacity-45"
+            >
+              Send emails
+            </div>
+          </div>
+          <div
+            class="p-4 border rounded cursor-pointer bg-white"
+          >
+            <div
+              class="font-semibold"
+            >
+              File Tool
+            </div>
+            <div
+              class="text-sm opacity-45"
+            >
+              File operations
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <hr />
+    <div
+      class="flex-1 bg-white p-4"
+    >
+      <div>
+        <div>
+          Tool Details
+        </div>
+        <label>
+          Tool Name
+        </label>
+        <input
+          data-testid="new-tool-name-input"
+          placeholder="Enter tool name"
+          value=""
+        />
+        <div>
+          Default Code
+        </div>
+        <div
+          data-testid="monaco-editor"
+        >
+          default python code
+        </div>
+        <div
+          data-testid="monaco-editor"
+        >
+          default requirements
+        </div>
+      </div>
+    </div>
+  </div>
+  <div>
+    <button>
+      Close
+    </button>
+    <button
+      data-testid="create-tool-button"
+    >
+      Create New Tool
+    </button>
+  </div>
+  <div>
+    Workflow ID: 
+    test-workflow-id
+  </div>
+</div>
+`;
+
+exports[`WorkflowAddToolModal matches snapshot with template selected 1`] = `
+<div
+  data-testid="workflow-add-tool-modal"
+  role="dialog"
+>
+  <div>
+    Create or Edit Tools
+  </div>
+  <hr />
+  <div
+    class="flex flex-row h-full bg-white"
+  >
+    <div
+      class="flex-1 overflow-y-auto p-4 bg-white"
+    >
+      <div
+        class="mb-4 cursor-pointer border rounded p-4 bg-white"
+      >
+        <div>
+          Create New Tool
+        </div>
+        <div
+          class="text-sm opacity-45"
+        >
+          Create a new custom tool from scratch
+        </div>
+      </div>
+      <div
+        class="flex flex-row bg-white mb-2"
+      >
+        <div
+          class="flex-1 bg-white pr-4"
+        >
+          <div>
+            Edit Agent Tools
+          </div>
+          <input
+            data-testid="search-tools-input"
+            placeholder="Search tools..."
+            value=""
+          />
+          <div
+            class="p-4 border rounded cursor-pointer bg-white"
+          >
+            <div
+              class="font-semibold"
+            >
+              My Email Tool
+            </div>
+            <div
+              class="text-sm opacity-45"
+            >
+              Custom email tool
+            </div>
+            <button>
+              Delete
+            </button>
+          </div>
+        </div>
+        <div
+          class="flex-1 bg-white pl-4"
+        >
+          <div>
+            Create Tool From Template
+          </div>
+          <input
+            data-testid="search-templates-input"
+            placeholder="Search templates..."
+            value=""
+          />
+          <div
+            class="p-4 border rounded cursor-pointer bg-green-50"
+          >
+            <div
+              class="font-semibold"
+            >
+              Email Tool
+            </div>
+            <div
+              class="text-sm opacity-45"
+            >
+              Send emails
+            </div>
+          </div>
+          <div
+            class="p-4 border rounded cursor-pointer bg-white"
+          >
+            <div
+              class="font-semibold"
+            >
+              File Tool
+            </div>
+            <div
+              class="text-sm opacity-45"
+            >
+              File operations
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <hr />
+    <div
+      class="flex-1 bg-white p-4"
+    >
+      <div>
+        <div>
+          Tool Details
+        </div>
+        <div>
+          Tool Name: 
+          Email Tool
+        </div>
+        <div
+          data-testid="monaco-editor"
+        >
+          template python code
+        </div>
+        <div
+          data-testid="monaco-editor"
+        >
+          template requirements
+        </div>
+      </div>
+    </div>
+  </div>
+  <div>
+    <button>
+      Close
+    </button>
+    <button
+      data-testid="create-from-template-button"
+    >
+      Create Tool from Template
+    </button>
+  </div>
+  <div>
+    Workflow ID: 
+    test-workflow-id
+  </div>
+</div>
+`;
+
+exports[`WorkflowAddToolModal matches snapshot with tool instance selected 1`] = `
+<div
+  data-testid="workflow-add-tool-modal"
+  role="dialog"
+>
+  <div>
+    Create or Edit Tools
+  </div>
+  <hr />
+  <div
+    class="flex flex-row h-full bg-white"
+  >
+    <div
+      class="flex-1 overflow-y-auto p-4 bg-white"
+    >
+      <div
+        class="mb-4 cursor-pointer border rounded p-4 bg-white"
+      >
+        <div>
+          Create New Tool
+        </div>
+        <div
+          class="text-sm opacity-45"
+        >
+          Create a new custom tool from scratch
+        </div>
+      </div>
+      <div
+        class="flex flex-row bg-white mb-2"
+      >
+        <div
+          class="flex-1 bg-white pr-4"
+        >
+          <div>
+            Edit Agent Tools
+          </div>
+          <input
+            data-testid="search-tools-input"
+            placeholder="Search tools..."
+            value=""
+          />
+          <div
+            class="p-4 border rounded cursor-pointer bg-green-50"
+          >
+            <div
+              class="font-semibold"
+            >
+              My Email Tool
+            </div>
+            <div
+              class="text-sm opacity-45"
+            >
+              Custom email tool
+            </div>
+            <button>
+              Delete
+            </button>
+          </div>
+        </div>
+        <div
+          class="flex-1 bg-white pl-4"
+        >
+          <div>
+            Create Tool From Template
+          </div>
+          <input
+            data-testid="search-templates-input"
+            placeholder="Search templates..."
+            value=""
+          />
+          <div
+            class="p-4 border rounded cursor-pointer bg-white"
+          >
+            <div
+              class="font-semibold"
+            >
+              Email Tool
+            </div>
+            <div
+              class="text-sm opacity-45"
+            >
+              Send emails
+            </div>
+          </div>
+          <div
+            class="p-4 border rounded cursor-pointer bg-white"
+          >
+            <div
+              class="font-semibold"
+            >
+              File Tool
+            </div>
+            <div
+              class="text-sm opacity-45"
+            >
+              File operations
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <hr />
+    <div
+      class="flex-1 bg-white p-4"
+    >
+      <div>
+        <div>
+          Tool Details
+        </div>
+        <div>
+          Tool Name: 
+          My Email Tool
+        </div>
+        <label>
+          <input
+            type="checkbox"
+          />
+          Playground
+        </label>
+        <div>
+          Tool Icon
+        </div>
+        <button>
+          Upload File
+        </button>
+        <div
+          data-testid="monaco-editor"
+        >
+          instance python code
+        </div>
+        <div
+          data-testid="monaco-editor"
+        >
+          instance requirements
+        </div>
+      </div>
+    </div>
+  </div>
+  <div>
+    <button>
+      Close
+    </button>
+    <button
+      data-testid="save-tool-button"
+    >
+      Save Tool
+    </button>
+  </div>
+  <div>
+    Workflow ID: 
+    test-workflow-id
+  </div>
+</div>
+`;

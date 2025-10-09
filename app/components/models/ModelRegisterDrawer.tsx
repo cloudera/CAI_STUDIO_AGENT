@@ -36,11 +36,31 @@ import {
   setModelRegisterApiKey,
   setModelRegisterSetAsDefault,
   updateModelStatus,
+  // Bedrock-specific selectors and actions
+  selectModelRegisterAwsRegionName,
+  selectModelRegisterAwsAccessKeyId,
+  selectModelRegisterAwsSecretAccessKey,
+  selectModelRegisterAwsSessionToken,
+  setModelRegisterAwsRegionName,
+  setModelRegisterAwsAccessKeyId,
+  setModelRegisterAwsSecretAccessKey,
+  setModelRegisterAwsSessionToken,
 } from '@/app/models/modelsSlice';
 import { MODEL_IDENTIFIER_OPTIONS } from '@/app/lib/constants';
 import { asyncTestModelWithRetry } from '@/app/models/utils';
 
 const { Option } = Select;
+
+interface BedrockCatalogModel {
+  model_id: string;
+  model_name?: string;
+  regions?: string[];
+}
+
+interface BedrockCatalog {
+  models: BedrockCatalogModel[];
+  regions: string[];
+}
 
 interface ModelRegisterDrawerProps {}
 
@@ -62,23 +82,80 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
   const modelRegisterApiKey = useAppSelector(selectModelRegisterApiKey);
   const modelRegisterExtraHeaders = useAppSelector(selectModelRegisterExtraHeaders);
   const setAsDefault = useAppSelector(selectModelRegisterSetAsDefault);
+  // Bedrock-specific state
+  const bedrockAwsRegionName = useAppSelector(selectModelRegisterAwsRegionName);
+  const bedrockAwsAccessKeyId = useAppSelector(selectModelRegisterAwsAccessKeyId);
+  const bedrockAwsSecretAccessKey = useAppSelector(selectModelRegisterAwsSecretAccessKey);
+  const bedrockAwsSessionToken = useAppSelector(selectModelRegisterAwsSessionToken);
 
   const dispatch = useAppDispatch();
 
   const [drawerMode, setDrawerMode] = useState<'register' | 'edit'>('register');
   // Add notification API
   const notificationsApi = useGlobalNotification();
+  const [submitting, setSubmitting] = useState(false);
+  const [bedrockCatalog, setBedrockCatalog] = useState<BedrockCatalog>({
+    models: [],
+    regions: [],
+  });
+  const [bedrockModelRegions, setBedrockModelRegions] = useState<string[]>([]);
+  const [bedrockUseCustomModelId, setBedrockUseCustomModelId] = useState<boolean>(false);
+
+  // Load Bedrock catalog once
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch('/data/bedrock_models.json', { cache: 'no-store' });
+        if (!res.ok) {
+          throw new Error('Failed loading bedrock_models.json');
+        }
+        const data = await res.json();
+        setBedrockCatalog({ models: data.models || [], regions: data.regions || [] });
+      } catch (_e) {
+        // Show a friendly error; Bedrock UI depends on this file per requirements
+        notificationsApi.error({
+          message: 'Bedrock Catalog Missing',
+          description:
+            'Could not load app/data/bedrock_models.json. Run bin/sync-bedrock-models.py and reload.',
+          placement: 'topRight',
+        });
+      }
+    };
+    load();
+  }, []);
+
+  // When provider model changes, compute its region list
+  useEffect(() => {
+    if (modelRegisterType !== 'BEDROCK') {
+      setBedrockModelRegions([]);
+      return;
+    }
+
+    const found = modelRegisterProviderModel
+      ? bedrockCatalog.models.find((m) => m.model_id === modelRegisterProviderModel)
+      : undefined;
+
+    let regions: string[] = [];
+    if (found && !bedrockUseCustomModelId) {
+      regions = found.regions || [];
+    } else {
+      // Custom identifier or not found -> show all supported regions from catalog
+      regions = bedrockCatalog.regions || [];
+    }
+
+    setBedrockModelRegions(regions);
+    if (regions.length && (!bedrockAwsRegionName || !regions.includes(bedrockAwsRegionName))) {
+      dispatch(setModelRegisterAwsRegionName(regions[0]));
+    }
+  }, [modelRegisterType, modelRegisterProviderModel, bedrockCatalog, bedrockUseCustomModelId]);
 
   // If editing an existing model, populate the fields with existing model
   // information whenever the model ID field changes.
   useEffect(() => {
-    console.log('modelRegisterId', modelRegisterId);
     const populateModelDetails = async () => {
       if (modelRegisterId && Boolean(modelRegisterId.trim())) {
         setDrawerMode('edit');
         const model: Model = await getModel({ model_id: modelRegisterId }).unwrap();
-        console.log('model', model);
-        console.log('populateModelRegisterDetails');
         dispatch(populateModelRegisterDetails(model));
       } else {
         setDrawerMode('register');
@@ -89,19 +166,36 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
     populateModelDetails();
   }, [modelRegisterId]);
 
-  const onSubmit = async (values: any) => {
+  const onSubmit = async (_values: any) => {
+    if (submitting) {
+      return;
+    }
     try {
+      setSubmitting(true);
       if (drawerMode === 'edit') {
-        if (!modelRegisterId) throw new Error('Model ID not specified for updating model.');
+        if (!modelRegisterId) {
+          throw new Error('Model ID not specified for updating model.');
+        }
 
-        await updateModel({
+        const updatePayload: any = {
           model_id: modelRegisterId,
           model_name: modelRegisterName || '',
           provider_model: modelRegisterProviderModel || '',
           api_base: modelRegisterApiBase || '',
           api_key: modelRegisterApiKey || '',
           extra_headers: JSON.stringify(modelRegisterExtraHeaders || {}),
-        });
+        };
+        if (modelRegisterType === 'BEDROCK') {
+          updatePayload.api_base = '';
+          updatePayload.api_key = '';
+          updatePayload.aws_region_name = bedrockAwsRegionName || '';
+          updatePayload.aws_access_key_id = bedrockAwsAccessKeyId || '';
+          updatePayload.aws_secret_access_key = bedrockAwsSecretAccessKey || '';
+          if (bedrockAwsSessionToken) {
+            updatePayload.aws_session_token = bedrockAwsSessionToken;
+          }
+        }
+        await updateModel(updatePayload);
 
         notificationsApi.success({
           message: 'Model Updated',
@@ -114,27 +208,47 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
         // Trigger revalidation of the model
         asyncTestModelWithRetry(modelRegisterId, dispatch, testModel, updateModelStatus);
       } else {
+        const isBedrock = modelRegisterType === 'BEDROCK';
+        const missingCommon = !modelRegisterName || !modelRegisterType;
+        const missingApiBase =
+          ['OPENAI_COMPATIBLE', 'AZURE_OPENAI', 'CAII'].includes(modelRegisterType || '') &&
+          !modelRegisterApiBase;
+        const missingAzureCaiiProvider =
+          ['AZURE_OPENAI', 'CAII'].includes(modelRegisterType || '') && !modelRegisterProviderModel;
+        const missingBedrockCreds =
+          isBedrock &&
+          (!bedrockAwsRegionName || !bedrockAwsAccessKeyId || !bedrockAwsSecretAccessKey);
+        const missingApiKeyForOthers = !isBedrock && !modelRegisterApiKey;
         if (
-          !modelRegisterName ||
-          !modelRegisterApiKey ||
-          !modelRegisterType ||
-          (['OPENAI_COMPATIBLE', 'AZURE_OPENAI', 'CAII'].includes(modelRegisterType || '') &&
-            !modelRegisterApiBase) ||
-          (['AZURE_OPENAI', 'CAII'].includes(modelRegisterType || '') &&
-            !modelRegisterProviderModel)
+          missingCommon ||
+          missingApiBase ||
+          missingAzureCaiiProvider ||
+          missingBedrockCreds ||
+          missingApiKeyForOthers
         ) {
           throw new Error('Please fill in all required fields.');
         }
 
         try {
-          const modelId = await addModel({
+          const addPayload: any = {
             model_name: modelRegisterName,
             model_type: modelRegisterType,
             provider_model: modelRegisterProviderModel || '',
             api_base: modelRegisterApiBase || '',
             api_key: modelRegisterApiKey,
             extra_headers: JSON.stringify(modelRegisterExtraHeaders || {}),
-          }).unwrap();
+          };
+          if (isBedrock) {
+            addPayload.api_base = '';
+            addPayload.api_key = '';
+            addPayload.aws_region_name = bedrockAwsRegionName || '';
+            addPayload.aws_access_key_id = bedrockAwsAccessKeyId || '';
+            addPayload.aws_secret_access_key = bedrockAwsSecretAccessKey || '';
+            if (bedrockAwsSessionToken) {
+              addPayload.aws_session_token = bedrockAwsSessionToken;
+            }
+          }
+          const modelId = await addModel(addPayload).unwrap();
 
           if (setAsDefault && modelId) {
             await setDefaultModel({ model_id: modelId });
@@ -174,6 +288,8 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
         description: errorMessage,
         placement: 'topRight',
       });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -181,14 +297,7 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
     const type = modelRegisterType;
     const modelIdentifierHeader = (
       <>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            paddingTop: '16px',
-            paddingBottom: '8px',
-          }}
-        >
+        <div className="flex items-center pt-4 pb-2">
           Model Identifier
           <Tooltip
             title={
@@ -199,7 +308,7 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
                   : 'Enter the provider-specific model identifier (e.g., gpt-4o for OpenAI).'
             }
           >
-            <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+            <QuestionCircleOutlined className="ml-2 cursor-pointer" />
           </Tooltip>
         </div>
       </>
@@ -244,12 +353,56 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
       );
     }
 
+    if (type === 'BEDROCK') {
+      const bedrockOptions = bedrockCatalog.models.map((m) => ({
+        value: m.model_id,
+        label: `${m.model_name} — ${m.model_id}`,
+      }));
+      return (
+        <>
+          {modelIdentifierHeader}
+          <div className="flex items-center gap-2 pb-2">
+            <Switch
+              checked={bedrockUseCustomModelId}
+              onChange={(v) => setBedrockUseCustomModelId(v)}
+            />
+            <span>Use custom model identifier</span>
+            <Tooltip title="If the model is not on-demand and requires an inference profile, enter the inference profile ID here as the model identifier.">
+              <QuestionCircleOutlined className="ml-1 cursor-pointer" />
+            </Tooltip>
+          </div>
+          {bedrockUseCustomModelId ? (
+            <Input
+              placeholder="Enter provider model identifier (e.g., anthropic.claude-... or meta.llama...)"
+              value={modelRegisterProviderModel}
+              onChange={(e) => dispatch(setModelRegisterProviderModel(e.target.value))}
+            />
+          ) : (
+            <Select
+              className="w-full"
+              placeholder="Select the Bedrock model"
+              value={modelRegisterProviderModel}
+              onChange={(value) => dispatch(setModelRegisterProviderModel(value))}
+              showSearch
+              optionFilterProp="label"
+            >
+              {bedrockOptions.map((opt) => (
+                <Option key={opt.value} value={opt.value} label={opt.label}>
+                  {opt.label}
+                </Option>
+              ))}
+            </Select>
+          )}
+        </>
+      );
+    }
+
     if (type && MODEL_IDENTIFIER_OPTIONS[type]) {
       return (
         <>
           {modelIdentifierHeader}
           <Select
-            style={{ width: '100%' }}
+            className="w-full"
             placeholder="Select the model identifier"
             value={modelRegisterProviderModel}
             onChange={(value) => dispatch(setModelRegisterProviderModel(value))}
@@ -275,10 +428,16 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
   return (
     <Drawer
       title={
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="flex justify-between items-center">
           <span>{drawerMode === 'edit' ? 'Edit Model' : 'Register Model'}</span>
           {(drawerMode === 'register' || drawerMode === 'edit') && (
-            <Button type="primary" htmlType="submit" onClick={onSubmit}>
+            <Button
+              type="primary"
+              htmlType="submit"
+              onClick={onSubmit}
+              loading={submitting}
+              disabled={submitting}
+            >
               {drawerMode === 'edit' ? 'Save Changes' : 'Register'}
             </Button>
           )}
@@ -289,16 +448,14 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
       footer={null}
       width={600}
     >
-      <div
-        style={{ display: 'flex', alignItems: 'center', paddingTop: '16px', paddingBottom: '8px' }}
-      >
+      <div className="flex items-center pt-4 pb-2">
         Model Provider
-        <Tooltip title="Choose the model provider, such as OpenAI, OpenAI Compatible, Azure OpenAI, Google Gemini, Anthropic, or Cloudera AI Inference.">
-          <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+        <Tooltip title="Choose the model provider, such as OpenAI, OpenAI Compatible, Azure OpenAI, Google Gemini, Anthropic, AWS Bedrock, or Cloudera AI Inference.">
+          <QuestionCircleOutlined className="ml-2 cursor-pointer" />
         </Tooltip>
       </div>
       <Select
-        style={{ width: '100%' }}
+        className="w-full"
         disabled={drawerMode === 'edit'}
         value={modelRegisterType}
         onChange={(value: string) => {
@@ -308,74 +465,58 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
         }}
       >
         <Option value="CAII">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <img
-              src="/llm_providers/caii.svg"
-              alt="Cloudera AI Inference"
-              style={{ width: '16px', height: '16px' }}
-            />
+          <div className="flex items-center gap-2">
+            <img src="/llm_providers/caii.svg" alt="Cloudera AI Inference" className="w-4 h-4" />
             Cloudera AI Inference
           </div>
         </Option>
         <Option value="OPENAI">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <img
-              src="/llm_providers/openai.svg"
-              alt="OpenAI"
-              style={{ width: '16px', height: '16px' }}
-            />
+          <div className="flex items-center gap-2">
+            <img src="/llm_providers/openai.svg" alt="OpenAI" className="w-4 h-4" />
             OpenAI
           </div>
         </Option>
         <Option value="OPENAI_COMPATIBLE">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <img
-              src="/llm_providers/generic-llm.svg"
-              alt="OpenAI Compatible"
-              style={{ width: '16px', height: '16px' }}
-            />
+          <div className="flex items-center gap-2">
+            <img src="/llm_providers/generic-llm.svg" alt="OpenAI Compatible" className="w-4 h-4" />
             OpenAI Compatible
           </div>
         </Option>
         <Option value="AZURE_OPENAI">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <img
-              src="/llm_providers/azure-openai.svg"
-              alt="Azure OpenAI"
-              style={{ width: '16px', height: '16px' }}
-            />
+          <div className="flex items-center gap-2">
+            <img src="/llm_providers/azure-openai.svg" alt="Azure OpenAI" className="w-4 h-4" />
             Azure OpenAI
           </div>
         </Option>
         <Option value="GEMINI">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <img
-              src="/llm_providers/gemini.svg"
-              alt="Google Gemini"
-              style={{ width: '16px', height: '16px' }}
-            />
+          <div className="flex items-center gap-2">
+            <img src="/llm_providers/gemini.svg" alt="Google Gemini" className="w-4 h-4" />
             Google Gemini
           </div>
         </Option>
         <Option value="ANTHROPIC">
+          <div className="flex items-center gap-2">
+            <img src="/llm_providers/anthropic.svg" alt="Anthropic" className="w-4 h-4" />
+            Anthropic
+          </div>
+        </Option>
+        <Option value="BEDROCK">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <img
-              src="/llm_providers/anthropic.svg"
-              alt="Anthropic"
+              src="/llm_providers/bedrock.svg"
+              alt="AWS Bedrock"
               style={{ width: '16px', height: '16px' }}
             />
-            Anthropic
+            AWS Bedrock
           </div>
         </Option>
       </Select>
 
       {/* Model Alias */}
-      <div
-        style={{ display: 'flex', alignItems: 'center', paddingTop: '16px', paddingBottom: '8px' }}
-      >
+      <div className="flex items-center pt-4 pb-2">
         Model Alias
         <Tooltip title="Enter a unique name for your model to be referenced across the studio.">
-          <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+          <QuestionCircleOutlined className="ml-2 cursor-pointer" />
         </Tooltip>
       </div>
       <Input
@@ -391,17 +532,10 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
       {/* API Base */}
       {(modelRegisterType === 'OPENAI_COMPATIBLE' || modelRegisterType === 'AZURE_OPENAI') && (
         <>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              paddingTop: '16px',
-              paddingBottom: '8px',
-            }}
-          >
+          <div className="flex items-center pt-4 pb-2">
             API Base
             <Tooltip title="Enter the base URL for the model's API.">
-              <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+              <QuestionCircleOutlined className="ml-2 cursor-pointer" />
             </Tooltip>
           </div>
           <Input
@@ -416,17 +550,10 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
       {/* CAII API Base */}
       {modelRegisterType === 'CAII' && (
         <>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              paddingTop: '16px',
-              paddingBottom: '8px',
-            }}
-          >
+          <div className="flex items-center pt-4 pb-2">
             API Base
             <Tooltip title="Go to the Cloudera AI Model Endpoint details page to find the endpoint URL">
-              <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+              <QuestionCircleOutlined className="ml-2 cursor-pointer" />
             </Tooltip>
           </div>
           <Input
@@ -439,37 +566,8 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
         </>
       )}
 
-      {/* API Key */}
-      <div
-        style={{ display: 'flex', alignItems: 'center', paddingTop: '16px', paddingBottom: '8px' }}
-      >
-        API Key
-        <Tooltip
-          title={
-            modelRegisterType === 'CAII'
-              ? 'Generate a long-lived JWT token on the Knox Gateway Server in the Data Lake environment. Copy the CDP Token from the Cloudera AI Model Endpoint Code Sample page'
-              : "Provide the API key for accessing the model's service."
-          }
-        >
-          <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
-        </Tooltip>
-      </div>
-      <Input.Password
-        placeholder={
-          modelRegisterType === 'CAII'
-            ? 'Enter JWT token'
-            : drawerMode === 'register'
-              ? 'Enter API key'
-              : 'Enter new API key (optional)'
-        }
-        value={modelRegisterApiKey}
-        onChange={(e) => {
-          dispatch(setModelRegisterApiKey(e.target.value));
-        }}
-      />
-
-      {/* Set as default toggle (Only in case of new model registration) */}
-      {drawerMode === 'register' && (
+      {/* AWS Region for Bedrock (model-specific) */}
+      {modelRegisterType === 'BEDROCK' && (
         <>
           <div
             style={{
@@ -479,25 +577,129 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
               paddingBottom: '8px',
             }}
           >
-            Default Model
-            <Tooltip title="Set this model as the default model for the studio">
+            AWS Region
+            <Tooltip title="Select the AWS region where your Bedrock models are available (e.g., us-east-1, us-west-2)">
               <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
             </Tooltip>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Select
+            style={{ width: '100%' }}
+            placeholder={bedrockModelRegions.length ? 'Select AWS region' : 'Select a model first'}
+            value={bedrockAwsRegionName}
+            onChange={(value) => dispatch(setModelRegisterAwsRegionName(value))}
+            showSearch
+            optionFilterProp="label"
+          >
+            {bedrockModelRegions.map((r) => (
+              <Option key={r} value={r} label={r}>
+                {r}
+              </Option>
+            ))}
+          </Select>
+        </>
+      )}
+
+      {/* API Key or Access Key */}
+      <div
+        style={{ display: 'flex', alignItems: 'center', paddingTop: '16px', paddingBottom: '8px' }}
+      >
+        {modelRegisterType === 'BEDROCK' ? 'AWS Access Key ID' : 'API Key'}
+        <Tooltip
+          title={
+            modelRegisterType === 'BEDROCK'
+              ? 'Your AWS Access Key ID. You can also use IAM roles or environment variables for authentication.'
+              : modelRegisterType === 'CAII'
+                ? 'Generate a long-lived JWT token on the Knox Gateway Server in the Data Lake environment. Copy the CDP Token from the Cloudera AI Model Endpoint Code Sample page'
+                : "Provide the API key for accessing the model's service."
+          }
+        >
+          <QuestionCircleOutlined className="ml-2 cursor-pointer" />
+        </Tooltip>
+      </div>
+      <Input.Password
+        placeholder={
+          modelRegisterType === 'BEDROCK'
+            ? 'Enter AWS Access Key ID'
+            : modelRegisterType === 'CAII'
+              ? 'Enter JWT token'
+              : drawerMode === 'register'
+                ? 'Enter API key'
+                : 'Enter new API key (optional)'
+        }
+        value={
+          modelRegisterType === 'BEDROCK' ? bedrockAwsAccessKeyId || '' : modelRegisterApiKey || ''
+        }
+        onChange={(e) => {
+          if (modelRegisterType === 'BEDROCK') {
+            dispatch(setModelRegisterAwsAccessKeyId(e.target.value));
+          } else {
+            dispatch(setModelRegisterApiKey(e.target.value));
+          }
+        }}
+      />
+
+      {/* AWS Secret Access Key for Bedrock */}
+      {modelRegisterType === 'BEDROCK' && (
+        <>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              paddingTop: '16px',
+              paddingBottom: '8px',
+            }}
+          >
+            AWS Secret Access Key
+            <Tooltip title="Your AWS Secret Access Key (will be stored securely)">
+              <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+            </Tooltip>
+          </div>
+          <Input.Password
+            placeholder="Enter AWS Secret Access Key"
+            value={bedrockAwsSecretAccessKey || ''}
+            onChange={(e) => dispatch(setModelRegisterAwsSecretAccessKey(e.target.value))}
+          />
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              paddingTop: '16px',
+              paddingBottom: '8px',
+            }}
+          >
+            AWS Session Token (optional)
+            <Tooltip title="If using temporary credentials, provide the session token.">
+              <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+            </Tooltip>
+          </div>
+          <Input.Password
+            placeholder="Enter AWS Session Token (optional)"
+            value={bedrockAwsSessionToken || ''}
+            onChange={(e) => dispatch(setModelRegisterAwsSessionToken(e.target.value))}
+          />
+        </>
+      )}
+
+      {/* Set as default toggle (Only in case of new model registration) */}
+      {drawerMode === 'register' && (
+        <>
+          <div className="flex items-center pt-4 pb-2">
+            Default Model
+            <Tooltip title="Set this model as the default model for the studio">
+              <QuestionCircleOutlined className="ml-2 cursor-pointer" />
+            </Tooltip>
+          </div>
+          <div className="flex items-center gap-2">
             <Switch
               checked={setAsDefault || (models && models.length === 0)}
               onChange={(checked) => dispatch(setModelRegisterSetAsDefault(checked))}
               disabled={models && models.length === 0}
-              style={{
-                backgroundColor:
-                  setAsDefault || (models && models.length === 0) ? '#52c41a' : undefined,
-              }}
+              className={`${setAsDefault || (models && models.length === 0) ? 'bg-green-500' : ''}`}
             />
             <span>Set as default</span>
             {models && models.length === 0 && (
               <Tooltip title="First model is automatically set as default">
-                <QuestionCircleOutlined style={{ cursor: 'pointer' }} />
+                <QuestionCircleOutlined className="cursor-pointer" />
               </Tooltip>
             )}
           </div>
@@ -507,20 +709,11 @@ const ModelRegisterDrawer: React.FC<ModelRegisterDrawerProps> = ({}) => {
       <Collapse
         bordered={false}
         ghost
-        style={{
-          margin: -10,
-          padding: 0,
-          paddingTop: '16px',
-          backgroundColor: 'transparent',
-        }}
+        className="-m-2 p-0 pt-4 bg-transparent"
         items={[
           {
             key: '1',
-            style: {
-              margin: 0,
-              padding: 0,
-              backgroundColor: 'transparent',
-            },
+            className: 'm-0 p-0 bg-transparent',
             label: (
               <>
                 <h4>Advanced Options</h4>

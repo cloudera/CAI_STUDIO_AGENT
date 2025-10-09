@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Drawer, Input, Select, Tooltip, Button } from 'antd';
+import { Drawer, Input, Tooltip, Button } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { useAppDispatch, useAppSelector } from '@/app/lib/hooks/hooks';
 import {
@@ -31,7 +31,9 @@ const ModelTestDrawer: React.FC<ModelTestDrawerProps> = () => {
   const notificationsApi = useGlobalNotification();
 
   const handleTestModel = async (message: string) => {
-    if (!modelId) return;
+    if (!modelId) {
+      return;
+    }
     try {
       setIsTesting(true);
       const response = await testModel({
@@ -76,7 +78,7 @@ const ModelTestDrawer: React.FC<ModelTestDrawerProps> = () => {
   return (
     <Drawer
       title={
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="flex justify-between items-center">
           <span>{'Test Model'}</span>
         </div>
       }
@@ -85,43 +87,39 @@ const ModelTestDrawer: React.FC<ModelTestDrawerProps> = () => {
       footer={null}
       width={600}
     >
-      <div
-        style={{ display: 'flex', alignItems: 'center', paddingTop: '16px', paddingBottom: '8px' }}
-      >
+      <div className="flex items-center pt-4 pb-2">
         Test Input
         <Tooltip title="Enter a sample input to test the model.">
-          <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+          <QuestionCircleOutlined className="ml-2 cursor-pointer" />
         </Tooltip>
       </div>
       <Input.TextArea
         placeholder="Give a short prompt to test the model."
         value={testMessage}
         onChange={(e) => dispatch(setModelTestMessage(e.target.value))}
-        style={{ height: 150 }}
+        className="h-36"
       />
       <Button
         type="primary"
         variant="outlined"
         onClick={() => handleTestModel(testMessage || '')}
         block
-        style={{ marginTop: '16px' }}
+        className="mt-4"
         loading={isTesting}
         disabled={!testMessage}
       >
         Test Model
       </Button>
-      <div
-        style={{ display: 'flex', alignItems: 'center', paddingTop: '16px', paddingBottom: '8px' }}
-      >
+      <div className="flex items-center pt-4 pb-2">
         Test Output
         <Tooltip title="View the response from the model based on the test input.">
-          <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+          <QuestionCircleOutlined className="ml-2 cursor-pointer" />
         </Tooltip>
       </div>
       <Input.TextArea
         value={testResponse || ''}
         readOnly
-        style={{ height: 150 }}
+        className="h-36"
         placeholder="The model's response will appear here."
       />
     </Drawer>

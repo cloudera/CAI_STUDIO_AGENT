@@ -1,0 +1,240 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`WorkflowEditorAgentView matches snapshot showing layout structure 1`] = `
+<div
+  data-testid="workflow-editor-agent-view"
+>
+  <div
+    class="flex-1 flex flex-row bg-white rounded"
+  >
+    <div
+      data-testid="workflow-editor-agent-inputs"
+    >
+      <div>
+        Agents
+      </div>
+      <div>
+        Create or Edit Agents
+      </div>
+      <div>
+        Capability Guide
+      </div>
+      <div>
+        Is Conversational
+      </div>
+      <div>
+        Manager Agent
+      </div>
+      <div>
+        Agent Settings
+      </div>
+    </div>
+    <hr
+      class="h-full flex-grow-0 flex-shrink-0"
+      role="separator"
+    />
+    <div
+      data-testid="workflow-diagram-view"
+    >
+      <div>
+        Workflow Diagram
+      </div>
+      <div>
+        Agents: 0
+      </div>
+      <div>
+        Tasks: 0
+      </div>
+      <div>
+        Tools: 0
+      </div>
+      <div>
+        MCP Instances: 0
+      </div>
+    </div>
+  </div>
+  <div>
+    Workflow ID: 
+    test-workflow-id
+  </div>
+</div>
+`;
+
+exports[`WorkflowEditorAgentView matches snapshot with default state 1`] = `
+<div
+  data-testid="workflow-editor-agent-view"
+>
+  <div
+    class="flex-1 flex flex-row bg-white rounded"
+  >
+    <div
+      data-testid="workflow-editor-agent-inputs"
+    >
+      <div>
+        Agents
+      </div>
+      <div>
+        Create or Edit Agents
+      </div>
+      <div>
+        Capability Guide
+      </div>
+      <div>
+        Is Conversational
+      </div>
+      <div>
+        Manager Agent
+      </div>
+      <div>
+        Agent Settings
+      </div>
+    </div>
+    <hr
+      class="h-full flex-grow-0 flex-shrink-0"
+      role="separator"
+    />
+    <div
+      data-testid="workflow-diagram-view"
+    >
+      <div>
+        Workflow Diagram
+      </div>
+      <div>
+        Agents: 0
+      </div>
+      <div>
+        Tasks: 0
+      </div>
+      <div>
+        Tools: 0
+      </div>
+      <div>
+        MCP Instances: 0
+      </div>
+    </div>
+  </div>
+  <div>
+    Workflow ID: 
+    test-workflow-id
+  </div>
+</div>
+`;
+
+exports[`WorkflowEditorAgentView matches snapshot with different workflow ID 1`] = `
+<div
+  data-testid="workflow-editor-agent-view"
+>
+  <div
+    class="flex-1 flex flex-row bg-white rounded"
+  >
+    <div
+      data-testid="workflow-editor-agent-inputs"
+    >
+      <div>
+        Agents
+      </div>
+      <div>
+        Create or Edit Agents
+      </div>
+      <div>
+        Capability Guide
+      </div>
+      <div>
+        Is Conversational
+      </div>
+      <div>
+        Manager Agent
+      </div>
+      <div>
+        Agent Settings
+      </div>
+    </div>
+    <hr
+      class="h-full flex-grow-0 flex-shrink-0"
+      role="separator"
+    />
+    <div
+      data-testid="workflow-diagram-view"
+    >
+      <div>
+        Workflow Diagram
+      </div>
+      <div>
+        Agents: 0
+      </div>
+      <div>
+        Tasks: 0
+      </div>
+      <div>
+        Tools: 0
+      </div>
+      <div>
+        MCP Instances: 0
+      </div>
+    </div>
+  </div>
+  <div>
+    Workflow ID: 
+    snapshot-test-workflow
+  </div>
+</div>
+`;
+
+exports[`WorkflowEditorAgentView matches snapshot with empty workflow ID 1`] = `
+<div
+  data-testid="workflow-editor-agent-view"
+>
+  <div
+    class="flex-1 flex flex-row bg-white rounded"
+  >
+    <div
+      data-testid="workflow-editor-agent-inputs"
+    >
+      <div>
+        Agents
+      </div>
+      <div>
+        Create or Edit Agents
+      </div>
+      <div>
+        Capability Guide
+      </div>
+      <div>
+        Is Conversational
+      </div>
+      <div>
+        Manager Agent
+      </div>
+      <div>
+        Agent Settings
+      </div>
+    </div>
+    <hr
+      class="h-full flex-grow-0 flex-shrink-0"
+      role="separator"
+    />
+    <div
+      data-testid="workflow-diagram-view"
+    >
+      <div>
+        Workflow Diagram
+      </div>
+      <div>
+        Agents: 0
+      </div>
+      <div>
+        Tasks: 0
+      </div>
+      <div>
+        Tools: 0
+      </div>
+      <div>
+        MCP Instances: 0
+      </div>
+    </div>
+  </div>
+  <div>
+    Workflow ID: 
+  </div>
+</div>
+`;

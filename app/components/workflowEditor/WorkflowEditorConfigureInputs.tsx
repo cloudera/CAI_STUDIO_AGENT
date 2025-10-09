@@ -1,26 +1,13 @@
 'use client';
 
-import {
-  Alert,
-  Card,
-  Input,
-  Layout,
-  Typography,
-  Tag,
-  Divider,
-  Tooltip,
-  Slider,
-  InputNumber,
-} from 'antd';
+import { Alert, Card, Input, Layout, Typography, Tag, Tooltip, Slider, InputNumber } from 'antd';
 import { useListToolInstancesQuery } from '../../tools/toolInstancesApi';
 import { ToolInstance, AgentMetadata, McpInstance } from '@/studio/proto/agent_studio';
 import { useListAgentsQuery } from '../../agents/agentApi';
 import { useAppDispatch, useAppSelector } from '../../lib/hooks/hooks';
 import {
-  selectEditorWorkflowId,
   selectWorkflowConfiguration,
   selectWorkflowGenerationConfig,
-  updatedWorkflowConfiguration,
   updatedWorkflowGenerationConfig,
   updatedWorkflowToolParameter,
   updatedWorkflowMcpInstanceParameter,
@@ -37,7 +24,6 @@ import React from 'react';
 import { TOOL_PARAMS_ALERT } from '../../lib/constants';
 import { renderAlert } from '../../lib/alertUtils';
 import { useListMcpInstancesQuery } from '@/app/mcp/mcpInstancesApi';
-import { useGetWorkflowDataQuery } from '@/app/workflows/workflowAppApi';
 
 const { Title, Text } = Typography;
 const { Password } = Input;
@@ -155,7 +141,9 @@ const getInvalidTools = (
   toolInstances: ToolInstance[] | undefined,
   workflowId: string | undefined,
 ) => {
-  if (!agents || !toolInstances || !workflowId) return [];
+  if (!agents || !toolInstances || !workflowId) {
+    return [];
+  }
 
   const invalidTools: { name: string; status: string }[] = [];
 
@@ -193,19 +181,6 @@ const ToolConfigurationComponent: React.FC<ToolConfigurationComponentProps> = ({
     parameters: {},
   };
 
-  // Check if all required parameters are set
-  const hasAllRequiredParams = React.useMemo(() => {
-    if (!instanceMetadata.user_params_metadata) return true;
-
-    return Object.entries(instanceMetadata.user_params_metadata).every(([param, metadata]) => {
-      if (metadata.required) {
-        const value = toolConfiguration.parameters[param];
-        return value !== undefined && value !== '';
-      }
-      return true;
-    });
-  }, [instanceMetadata.user_params_metadata, toolConfiguration.parameters]);
-
   if (!instanceMetadata.user_params || instanceMetadata.user_params.length == 0) {
     return <></>;
   }
@@ -214,62 +189,30 @@ const ToolConfigurationComponent: React.FC<ToolConfigurationComponentProps> = ({
     <>
       <Card
         title={
-          <Layout
-            style={{
-              background: 'transparent',
-              flexGrow: 0,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 12,
-            }}
-          >
-            <Tag style={{ background: '#c3d4fa', margin: 0 }}>
-              <Text style={{ fontSize: 9, fontWeight: 400 }}>tool</Text>
+          <Layout className="bg-transparent flex-grow-0 flex-row items-center gap-3">
+            <Tag className="bg-[#c3d4fa] m-0">
+              <Text className="text-xs font-normal">tool</Text>
             </Tag>
-            <Text style={{ fontSize: 13, fontWeight: 600 }}>{toolInstance.name}</Text>
-            <Tag style={{ background: '#add8e6', margin: 0 }}>
-              <Layout
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 4,
-                  background: 'transparent',
-                  padding: 4,
-                }}
-              >
+            <Text className="text-sm font-semibold">{toolInstance.name}</Text>
+            <Tag className="bg-[#add8e6] m-0">
+              <Layout className="flex-row items-center gap-1 bg-transparent p-1">
                 <UserOutlined />
-                <Text style={{ fontSize: 11, fontWeight: 400 }}>Agent: {agentName}</Text>
+                <Text className="text-xs font-normal">Agent: {agentName}</Text>
               </Layout>
             </Tag>
           </Layout>
         }
-        style={{
-          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-        }}
+        className="shadow-md"
       >
-        <Layout
-          style={{
-            background: 'transparent',
-            flexGrow: 0,
-            flexDirection: 'column',
-            gap: 8,
-          }}
-        >
+        <Layout className="bg-transparent flex-grow-0 flex-col gap-2">
           {instanceMetadata.user_params?.map((param, index) => {
             const isRequired = instanceMetadata.user_params_metadata?.[param]?.required ?? false;
             const isEmpty = !toolConfiguration.parameters[param];
             const showError = isRequired && isEmpty;
 
             return (
-              <Layout
-                key={index}
-                style={{
-                  flexDirection: 'column',
-                  flexGrow: 0,
-                  background: 'transparent',
-                }}
-              >
-                <Text style={{ fontSize: 13, fontWeight: 400 }}>
+              <Layout key={index} className="flex-col flex-grow-0 bg-transparent">
+                <Text className="text-sm font-normal">
                   {param} {isRequired && <Text type="danger">*</Text>}
                 </Text>
                 <Password
@@ -295,7 +238,7 @@ const ToolConfigurationComponent: React.FC<ToolConfigurationComponentProps> = ({
                   }}
                 />
                 {showError && (
-                  <Text type="danger" style={{ fontSize: '12px' }}>
+                  <Text type="danger" className="text-xs">
                     This field is required
                   </Text>
                 )}
@@ -329,57 +272,25 @@ const McpConfigurationComponent: React.FC<McpConfigurationComponentProps> = ({
     <>
       <Card
         title={
-          <Layout
-            style={{
-              background: 'transparent',
-              flexGrow: 0,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 12,
-            }}
-          >
-            <Tag style={{ background: '#c3fac3', margin: 0 }}>
-              <Text style={{ fontSize: 9, fontWeight: 400 }}>MCP</Text>
+          <Layout className="bg-transparent flex-grow-0 flex-row items-center gap-3">
+            <Tag className="bg-[#c3fac3] m-0">
+              <Text className="text-xs font-normal">MCP</Text>
             </Tag>
-            <Text style={{ fontSize: 13, fontWeight: 600 }}>{mcpInstance.name}</Text>
-            <Tag style={{ background: '#ffd700', margin: 0 }}>
-              <Layout
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 4,
-                  background: 'transparent',
-                  padding: 4,
-                }}
-              >
+            <Text className="text-sm font-semibold">{mcpInstance.name}</Text>
+            <Tag className="bg-[#ffd700] m-0">
+              <Layout className="flex-row items-center gap-1 bg-transparent p-1">
                 <UserOutlined />
-                <Text style={{ fontSize: 11, fontWeight: 400 }}>Agent: {agentName}</Text>
+                <Text className="text-xs font-normal">Agent: {agentName}</Text>
               </Layout>
             </Tag>
           </Layout>
         }
-        style={{
-          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-        }}
+        className="shadow-md"
       >
-        <Layout
-          style={{
-            background: 'transparent',
-            flexGrow: 0,
-            flexDirection: 'column',
-            gap: 8,
-          }}
-        >
+        <Layout className="bg-transparent flex-grow-0 flex-col gap-2">
           {mcpInstance.env_names.map((envName, index) => (
-            <Layout
-              key={index}
-              style={{
-                flexDirection: 'column',
-                flexGrow: 0,
-                background: 'transparent',
-              }}
-            >
-              <Text style={{ fontSize: 13, fontWeight: 400 }}>{envName}</Text>
+            <Layout key={index} className="flex-col flex-grow-0 bg-transparent">
+              <Text className="text-sm font-normal">{envName}</Text>
               <Password
                 placeholder={envName}
                 value={mcpConfiguration.parameters[envName] || ''}
@@ -419,14 +330,15 @@ const WorkflowEditorConfigureInputs: React.FC<WorkflowEditorConfigureInputsProps
   const { data: agents } = useListAgentsQuery({ workflow_id: workflowId });
   const { data: toolInstances } = useListToolInstancesQuery({ workflow_id: workflowId });
   const { data: mcpInstances } = useListMcpInstancesQuery({ workflow_id: workflowId });
-  const { data: wflowData } = useGetWorkflowDataQuery();
   const workflowConfiguration = useAppSelector(selectWorkflowConfiguration);
   const workflowGenerationConfig = useAppSelector(selectWorkflowGenerationConfig);
   const dispatch = useAppDispatch();
 
   // Check if all required parameters are set across all tools
   const hasAllRequiredParams = React.useMemo(() => {
-    if (!agents || !toolInstances) return true;
+    if (!agents || !toolInstances) {
+      return true;
+    }
 
     return agents
       .filter((agent) => agent.workflow_id === workflowId)
@@ -438,7 +350,9 @@ const WorkflowEditorConfigureInputs: React.FC<WorkflowEditorConfigureInputsProps
 
         return workflowTools.every((toolInstance) => {
           const metadata: ToolInstanceMetadataProps = JSON.parse(toolInstance.tool_metadata);
-          if (!metadata.user_params_metadata) return true;
+          if (!metadata.user_params_metadata) {
+            return true;
+          }
 
           const toolConfig = workflowConfiguration.toolConfigurations[toolInstance.id] || {
             parameters: {},
@@ -478,59 +392,16 @@ const WorkflowEditorConfigureInputs: React.FC<WorkflowEditorConfigureInputsProps
   const invalidTools = getInvalidTools(agents, toolInstances, workflowId);
 
   return (
-    <Layout
-      style={{
-        flexDirection: 'column',
-        padding: '16px 24px',
-        width: '40%',
-        height: '100%',
-        background: 'transparent',
-        overflow: 'auto',
-        display: 'flex',
-        flexShrink: 0,
-        flexGrow: 0,
-      }}
-    >
-      <Layout
-        style={{
-          background: 'transparent',
-          width: '100%',
-          flexShrink: 0,
-          marginBottom: '24px',
-        }}
-      >
-        <Title level={4} style={{ marginBottom: '16px', fontSize: 13, fontWeight: 600 }}>
+    <Layout className="flex-col p-4 w-[40%] h-full bg-transparent overflow-auto flex-shrink-0 flex-grow-0">
+      <Layout className="bg-transparent w-full flex-shrink-0 mb-6">
+        <Title level={4} className="mb-4 text-sm font-semibold">
           Agents & Managers
         </Title>
-        <Card title={<Text style={{ fontWeight: 600, fontSize: 13 }}>Generation</Text>}>
-          <Layout
-            style={{
-              background: 'transparent',
-              flexDirection: 'column',
-              display: 'flex',
-              flexGrow: 0,
-              gap: 14,
-            }}
-          >
-            <Layout
-              style={{
-                background: 'transparent',
-                display: 'flex',
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <div
-                style={{
-                  justifyContent: 'flex-start',
-                  alignItems: 'center',
-                  display: 'flex',
-                  flexGrow: 0,
-                  gap: 4,
-                }}
-              >
-                <Text style={{ fontSize: 13, fontWeight: 400 }}>Max New Tokens</Text>
+        <Card title={<Text className="font-semibold text-sm">Generation</Text>}>
+          <Layout className="bg-transparent flex-col flex gap-3.5">
+            <Layout className="bg-transparent flex-row justify-between items-center">
+              <div className="justify-start items-center flex-grow-0 flex gap-1">
+                <Text className="text-sm font-normal">Max New Tokens</Text>
                 <Tooltip
                   title="Determines how many new tokens the agents and manager agent can generate while making LLM calls. There may be LLM endpoint restrictions on this value."
                   placement="right"
@@ -550,30 +421,12 @@ const WorkflowEditorConfigureInputs: React.FC<WorkflowEditorConfigureInputsProps
                     },
                   });
                 }}
-                style={{
-                  width: 80,
-                }}
+                className="w-20"
               />
             </Layout>
-            <Layout
-              style={{
-                background: 'transparent',
-                display: 'flex',
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <div
-                style={{
-                  justifyContent: 'flex-start',
-                  alignItems: 'center',
-                  display: 'flex',
-                  flexGrow: 0,
-                  gap: 4,
-                }}
-              >
-                <Text style={{ fontSize: 13, fontWeight: 400 }}>Temperature</Text>
+            <Layout className="bg-transparent flex-row justify-between items-center">
+              <div className="justify-start items-center flex-grow-0 flex gap-1">
+                <Text className="text-sm font-normal">Temperature</Text>
                 <Tooltip
                   title={
                     <>
@@ -607,35 +460,17 @@ const WorkflowEditorConfigureInputs: React.FC<WorkflowEditorConfigureInputsProps
                     },
                   });
                 }}
-                style={{
-                  flexGrow: 1,
-                  marginLeft: 24,
-                }}
+                className="flex-grow ml-6"
               />
             </Layout>
           </Layout>
         </Card>
       </Layout>
 
-      <Layout
-        style={{
-          background: 'transparent',
-          width: '100%',
-          flexGrow: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px',
-        }}
-      >
+      <Layout className="bg-transparent w-full flex-grow flex-col gap-4">
         {/* Show invalid tools alert if any invalid tools exist */}
         {invalidTools.length > 0 ? (
-          <Layout
-            style={{
-              background: 'transparent',
-              width: '100%',
-              flexShrink: 0,
-            }}
-          >
+          <Layout className="bg-transparent w-full flex-shrink-0">
             {renderAlert(
               'Invalid Tools Detected',
               `The following tools are invalid: ${invalidTools.map((t) => `${t.name} (${t.status})`).join(', ')}. Please go to Create or Edit Agent Modal to fix or delete these tools.`,
@@ -646,59 +481,27 @@ const WorkflowEditorConfigureInputs: React.FC<WorkflowEditorConfigureInputsProps
           <>
             {/* Show required params alert and tool configuration only if no invalid tools */}
             {!hasAllRequiredParams && (
-              <Layout
-                style={{
-                  background: 'transparent',
-                  width: '100%',
-                  flexShrink: 0,
-                }}
-              >
+              <Layout className="bg-transparent w-full flex-shrink-0">
                 {renderAlert(TOOL_PARAMS_ALERT.message, TOOL_PARAMS_ALERT.description, 'warning')}
               </Layout>
             )}
 
-            <Layout
-              style={{
-                background: 'transparent',
-                width: '100%',
-                flexGrow: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '16px',
-              }}
-            >
-              <Title level={4} style={{ marginBottom: '16px', fontSize: 13, fontWeight: 600 }}>
+            <Layout className="bg-transparent w-full flex-grow flex-col gap-4">
+              <Title level={4} className="mb-4 text-sm font-semibold">
                 Tools and MCPs
               </Title>
               {!hasConfigurableTools && !hasConfigurableMcpInstances && (
                 <Alert
-                  style={{
-                    marginBottom: '16px',
-                    flexShrink: 0,
-                  }}
+                  className="mb-4 flex-shrink-0"
                   message={
-                    <Layout
-                      style={{
-                        flexDirection: 'column',
-                        gap: 4,
-                        padding: 0,
-                        background: 'transparent',
-                      }}
-                    >
-                      <Layout
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          gap: 8,
-                          background: 'transparent',
-                        }}
-                      >
-                        <InfoCircleOutlined style={{ color: '#1890ff' }} />
-                        <Text style={{ fontSize: 13, fontWeight: 600, background: 'transparent' }}>
+                    <Layout className="flex-col gap-1 p-0 bg-transparent">
+                      <Layout className="flex-row items-center gap-2 bg-transparent">
+                        <InfoCircleOutlined className="text-[#1890ff]" />
+                        <Text className="text-sm font-semibold bg-transparent">
                           No Configuration Required
                         </Text>
                       </Layout>
-                      <Text style={{ fontSize: 13, fontWeight: 400, background: 'transparent' }}>
+                      <Text className="text-sm font-normal bg-transparent">
                         This workflow has no tools or MCPs that require configuration. You can
                         proceed to test and deploy the workflow.
                       </Text>
@@ -709,15 +512,10 @@ const WorkflowEditorConfigureInputs: React.FC<WorkflowEditorConfigureInputsProps
                   closable={false}
                 />
               )}
-              <Layout
-                style={{
-                  gap: '16px',
-                  flexGrow: 1,
-                }}
-              >
+              <Layout className="gap-4 flex-grow bg-transparent">
                 {agents
                   ?.filter((agent) => agent.workflow_id === workflowId)
-                  .map((agent, index) => {
+                  .map((agent, _index) => {
                     const toolInstanceIds = agent.tools_id;
                     const worklfowTools = toolInstances?.filter((toolInstance) =>
                       toolInstanceIds.includes(toolInstance.id),
@@ -778,7 +576,9 @@ export const hasValidToolConfiguration = (
     return workflowTools.every((toolInstance) => {
       const metadata: ToolInstanceMetadataProps = JSON.parse(toolInstance.tool_metadata);
 
-      if (!metadata.user_params_metadata) return true;
+      if (!metadata.user_params_metadata) {
+        return true;
+      }
 
       const toolConfig = workflowConfiguration.toolConfigurations[toolInstance.id] || {
         parameters: {},

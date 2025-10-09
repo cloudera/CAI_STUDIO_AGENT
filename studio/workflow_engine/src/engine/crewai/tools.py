@@ -310,6 +310,19 @@ def _prepare_virtual_env_for_tool_impl(
     try:
         if with_ == "uv":
             pip_install_command = [uv_bin, "pip", "install", "-r", requirements_file_path]
+            # Honor PyPI mirror if provided
+            default_index = os.environ.get("UV_DEFAULT_INDEX")
+            insecure_host = os.environ.get("UV_INSECURE_HOST")
+            print(f"default_index: {default_index}")
+            print(f"insecure_host: {insecure_host}")
+            if default_index:
+                pip_install_command.extend(["--index-url", default_index])
+            if insecure_host:
+                pip_install_command.extend(["--trusted-host", insecure_host])
+            https_proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy")
+            print(f"https_proxy: {https_proxy}")
+            http_proxy = os.environ.get("HTTP_PROXY") or os.environ.get("http_proxy")
+            print(f"http_proxy: {http_proxy}")
         else:
             python_exe = os.path.join(venv_dir, "bin", "python")
             pip_install_command = [
@@ -321,12 +334,21 @@ def _prepare_virtual_env_for_tool_impl(
                 "-r",
                 requirements_file_path,
             ]
+        subprocess_env = os.environ.copy()
+        if with_ == "uv":
+            subprocess_env["VIRTUAL_ENV"] = venv_dir
+            if https_proxy:
+                subprocess_env["HTTPS_PROXY"] = https_proxy
+                subprocess_env["https_proxy"] = https_proxy
+            if http_proxy:
+                subprocess_env["HTTP_PROXY"] = http_proxy
+                subprocess_env["http_proxy"] = http_proxy
         result = subprocess.run(
             pip_install_command,
             check=True,
             text=True,
             capture_output=True,  # Capture stdout/stderr
-            env={"VIRTUAL_ENV": venv_dir} if with_ == "uv" else None,
+            env=subprocess_env,
         )
     except subprocess.CalledProcessError as e:
         # We're not raising error as this will bring down the whole studio, as it's running in a thread

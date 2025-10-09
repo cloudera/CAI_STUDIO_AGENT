@@ -1,18 +1,27 @@
 import subprocess
 import sys
+import os
+from startup_scripts.startup_utils import load_dotenv_file, ensure_correct_base_path
 
-def ensure_correct_base_path():
-    import os
-    is_composable: bool = os.getenv("IS_COMPOSABLE", "false").lower() == "true"
-    if is_composable:
-        subdirectory = "agent-studio"
-        working_dir = os.path.join("/home/cdsw", subdirectory)
-        print(f"Changing working directory to '{working_dir}'")
-        os.chdir(working_dir)
-ensure_correct_base_path()
+# Initialize project defaults. This is a wrapper around the main initialization script. This
+# wrapper is primarily used to set the correct working directory (to APP_DATA_DIR) for the
+# script execution. NOTE: this script is only used in the AMP installation. For Agent Studio
+# runtimes, project defaults are initialized in the app initialization logic directly.
+
+# Load environment and execution directory.
+load_dotenv_file()
+app_data_dir, app_dir = ensure_correct_base_path()
+os.environ["APP_DIR"] = app_dir
+os.environ["APP_DATA_DIR"] = app_data_dir
 
 try:        
-    out = subprocess.run(["uv run bin/initialize-project-defaults.py"], shell=True, capture_output=True, text=True)
+    os.chdir(app_dir)
+    out = subprocess.run(
+        [f"VIRTUAL_ENV=.venv uv run --no-sync bin/initialize-project-defaults.py"], 
+        shell=True, 
+        capture_output=True, 
+        text=True
+    )
     print(out.stdout)
     print(out.stderr)
     if out.returncode != 0:

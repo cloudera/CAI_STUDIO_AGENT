@@ -2,7 +2,8 @@ import shutil
 import os
 from uuid import uuid4
 import json
-from typing import Union
+from typing import Union, Any
+from datetime import datetime, timezone
 
 import cmlapi
 from cmlapi import CMLServiceApi
@@ -22,7 +23,10 @@ from studio.db.model import DeployedWorkflowInstance, Workflow
 # will go away and workflow engine features will be available already.
 import sys
 
-sys.path.append("studio/workflow_engine/src")
+app_dir = os.getenv("APP_DIR")
+if not app_dir:
+    raise EnvironmentError("APP_DIR environment variable is not set.")
+sys.path.append(os.path.join(app_dir, "studio", "workflow_engine", "src"))
 
 
 def copy_workflow_engine(target_dir: str) -> None:
@@ -41,7 +45,7 @@ def copy_workflow_engine(target_dir: str) -> None:
         return {".venv", ".ruff_cache", "__pycache__"}
 
     shutil.copytree(
-        os.path.join("studio", "workflow_engine"),
+        os.path.join(os.getenv("APP_DIR"), "studio", "workflow_engine"),
         target_dir,
         dirs_exist_ok=True,
         ignore=workflow_engine_ignore,
@@ -60,6 +64,15 @@ def update_deployment_metadata(deployment: DeployedWorkflowInstance, updated_met
     return
 
 
+def delete_key_from_deployment_metadata(deployment: DeployedWorkflowInstance, key: str) -> Any:
+    metadata: dict = json.loads(deployment.deployment_metadata) if deployment.deployment_metadata else {}
+    deleted_value = metadata.get(key)
+    if key in metadata:
+        del metadata[key]
+    deployment.deployment_metadata = json.dumps(metadata)
+    return deleted_value
+
+
 def create_new_deployed_workflow_instance(
     payload: DeploymentPayload, workflow: Workflow, cml: CMLServiceApi
 ) -> DeployedWorkflowInstance:
@@ -68,6 +81,7 @@ def create_new_deployed_workflow_instance(
         name=f"{workflow.name}_{get_random_compact_string()}",
         type=payload.deployment_target.type,
         workflow=workflow,
+        created_at=datetime.now(timezone.utc),
     )
 
 
@@ -132,7 +146,8 @@ def initialize_deployment(payload: DeploymentPayload, session: Session, cml: CML
     workflow: Workflow = get_or_create_workflow(payload, session, cml)
     deployment: DeployedWorkflowInstance = get_or_create_deployment(workflow, payload, session, cml)
     deployment.status = DeploymentStatus.INITIALIZED
-    deployment.is_stale = False
+    deployment.updated_at = datetime.now(timezone.utc)
+    deployment.stale = False
     session.commit()
 
     # Initialize deployment metadata if it does not exist yet

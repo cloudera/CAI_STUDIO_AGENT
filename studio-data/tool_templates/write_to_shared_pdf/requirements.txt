@@ -1,3 +1,4 @@
 pydantic
 pandas
-markdown-pdf
+markdown-it-py
+weasyprint

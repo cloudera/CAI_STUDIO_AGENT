@@ -4,7 +4,7 @@ Writes markdown content to a PDF file relative to the shared workflow directory.
 
 ## Description
 
-This tool converts markdown content into professionally formatted PDF documents within the Agent Studio workflow environment. It uses the markdown-pdf library to render markdown syntax into high-quality PDF output with optimized formatting and layout.
+This tool converts markdown content into professionally formatted PDF documents within the Agent Studio workflow environment. It uses the markdown-it-py and weasyprint library to render markdown syntax into high-quality PDF output with optimized formatting and layout.
 
 ## Parameters
 
