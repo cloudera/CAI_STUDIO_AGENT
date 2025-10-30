@@ -373,6 +373,13 @@ def upgrade_studio_runtime_mode(cml: CMLServiceApi) -> UpgradeStudioResponse:
     """
 
     try:
+        app_dir = "/studio_app"
+        app_data_dir = "/home/cdsw/agent-studio"
+        os.environ["APP_DIR"] = app_dir
+        os.environ["APP_DATA_DIR"] = app_data_dir
+        os.environ["AGENT_STUDIO_DEPLOY_MODE"] = "runtime"
+        os.environ["IS_COMPOSABLE"] = "true"
+        
         current_app = get_application_by_name(cml, AGENT_STUDIO_SERVICE_APPLICATION_NAME, only_running=True)
         print(f"Creating runtime upgrade job for application: {current_app.name}")
         runtime_upgrade_job_name = f"{AGENT_STUDIO_UPGRADE_JOB_NAME} - Runtime"
