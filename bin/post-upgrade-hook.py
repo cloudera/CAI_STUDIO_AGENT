@@ -286,6 +286,11 @@ def run_post_upgrade_tasks():
             upgrade_studio_runtime_mode(cml)
         except Exception as e:
             print(f"Error during runtime upgrade: {str(e)}")
+            print(f"Error during runtime upgrade: {str(e)}")
+            current_app = get_application_by_name(cml, AGENT_STUDIO_SERVICE_APPLICATION_NAME, only_running=False)
+            if current_app:
+                cml.stop_application(os.getenv("CDSW_PROJECT_ID"), current_app.id)
+            raise e
 
     # Task 4: Restart deployed workflow applications that are running in AMP mode
     restart_deployed_workflow_applications()
