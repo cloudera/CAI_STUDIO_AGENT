@@ -27,9 +27,21 @@ else
     nvm use 22
     if [ -d "/home/cdsw/agent-studio" ]; then
         echo "agent-studio/ directory exists but model root dir feature is disabled."
-        pip install /home/cdsw/agent-studio/studio/workflow_engine/
+        cd /home/cdsw/agent-studio/studio/workflow_engine/
+        uv export --frozen --no-hashes > /tmp/requirements.txt
+        pip install -r /tmp/requirements.txt
+        rm /tmp/requirements.txt
+        # CRITICAL: Also install the workflow_engine package itself (not just dependencies)
+        pip install --no-deps .
+        cd -
     else
         echo "model root dir feature is disabled AND agent studio was installed as an AMP."
-        pip install /home/cdsw/studio/workflow_engine/
+        cd /home/cdsw/studio/workflow_engine/
+        uv export --frozen --no-hashes > /tmp/requirements.txt
+        pip install -r /tmp/requirements.txt
+        rm /tmp/requirements.txt
+        # CRITICAL: Also install the workflow_engine package itself (not just dependencies)
+        pip install --no-deps .
+        cd -
     fi
 fi
