@@ -24,6 +24,12 @@ tar -xzvf workflow_engine.tar.gz -C .
 echo "Workflow engine extracted successfully"
 
 if [ $AGENT_STUDIO_DEPLOY_MODE != "runtime" ]; then
-    # Install engine code
-    pip install .
+    # Install engine code using uv with locked dependencies into system Python
+    # Export locked requirements and install with pip (has proper permissions in Docker)
+    uv export --frozen --no-hashes > /tmp/requirements.txt
+    pip install -r /tmp/requirements.txt
+    rm /tmp/requirements.txt
+    
+    # CRITICAL: Also install the workflow_engine package itself (not just dependencies)
+    pip install --no-deps .
 fi
