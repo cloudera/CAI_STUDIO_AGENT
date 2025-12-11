@@ -214,8 +214,8 @@ def get_agent_studio_runtimes(cml: CMLServiceApi) -> List[Dict[str, str]]:
     Get all agent-studio runtimes from the catalog with their versions and full identifiers.
     Uses search filter for efficient filtering and returns sorted list.
     """
-    runtime_kernel = os.getenv("ML_RUNTIME_KERNEL", AGENT_STUDIO_RUNTIME_KERNEL)
-    runtime_edition = os.getenv("ML_RUNTIME_EDITION", AGENT_STUDIO_RUNTIME_EDITION)
+    runtime_kernel = AGENT_STUDIO_RUNTIME_KERNEL
+    runtime_edition = AGENT_STUDIO_RUNTIME_EDITION
 
     search_filter = json.dumps({"kernel": runtime_kernel, "edition": runtime_edition})
 
@@ -373,6 +373,13 @@ def upgrade_studio_runtime_mode(cml: CMLServiceApi) -> UpgradeStudioResponse:
     """
 
     try:
+        app_dir = "/studio_app"
+        app_data_dir = "/home/cdsw/agent-studio"
+        os.environ["APP_DIR"] = app_dir
+        os.environ["APP_DATA_DIR"] = app_data_dir
+        os.environ["AGENT_STUDIO_DEPLOY_MODE"] = "runtime"
+        os.environ["IS_COMPOSABLE"] = "true"
+
         current_app = get_application_by_name(cml, AGENT_STUDIO_SERVICE_APPLICATION_NAME, only_running=True)
         print(f"Creating runtime upgrade job for application: {current_app.name}")
         runtime_upgrade_job_name = f"{AGENT_STUDIO_UPGRADE_JOB_NAME} - Runtime"
