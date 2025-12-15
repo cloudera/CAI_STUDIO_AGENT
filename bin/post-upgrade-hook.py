@@ -60,7 +60,6 @@ from studio.cross_cutting.apiv2 import (
     cml_api_check,
     rotate_cml_api
 )
-from studio.cross_cutting.upgrades import upgrade_studio_runtime_mode
 
 # Import engine code manually. Eventually when this code becomes
 # a separate git repo, or a custom runtime image, this path call
@@ -279,20 +278,7 @@ def run_post_upgrade_tasks():
     # Task 2: Perform legacy Ops & Metrics application migration 
     perform_legacy_ops_metrics_application_migration()
     
-    if os.getenv("IS_COMPOSABLE", "false").lower() == "true":
-    # Task 3: Migrate Agent Studio to runtime mode
-        cml = cmlapi.default_client()
-        try:
-            upgrade_studio_runtime_mode(cml)
-        except Exception as e:
-            print(f"Error during runtime upgrade: {str(e)}")
-            print(f"Error during runtime upgrade: {str(e)}")
-            current_app = get_application_by_name(cml, AGENT_STUDIO_SERVICE_APPLICATION_NAME, only_running=False)
-            if current_app:
-                cml.stop_application(os.getenv("CDSW_PROJECT_ID"), current_app.id)
-            raise e
-
-    # Task 4: Restart deployed workflow applications that are running in AMP mode
+    # Task 3: Restart deployed workflow applications that are running in AMP mode
     restart_deployed_workflow_applications()
 
     print("Post-upgrade tasks completed")
