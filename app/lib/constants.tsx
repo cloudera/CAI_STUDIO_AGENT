@@ -94,6 +94,13 @@ export const API_KEY_ROTATION_NEEDED = (onRotateClick: () => void): React.ReactN
   </>
 );
 
+export const DEPLOY_MODE_DEPRECATION_NOTICE: React.ReactNode = (
+  <>
+    <b>Deprecation Notice:</b> Agent Studio is running in legacy deployment mode. The AMP deployment
+    mode is deprecated and will be removed in a future release. Please install agent studio using the <Link href="https://docs.cloudera.com/machine-learning/cloud/use-ai-studios/topics/ml-agent-studio-deploy-runtime-image.html">runtime image</Link> for continued support and access to the latest features.
+  </>
+);
+
 export const MODEL_IDENTIFIER_OPTIONS: Record<string, { value: string; label: string }[]> = {
   OPENAI: [
     { value: 'gpt-4.1', label: 'gpt-4.1' },

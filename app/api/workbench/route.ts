@@ -15,6 +15,7 @@ export async function GET(_request: NextRequest) {
   const responseData = (await response.json()) as Record<string, unknown>;
   const out = {
     ...responseData,
+    deploy_mode: process.env.AGENT_STUDIO_DEPLOY_MODE || 'amp',
   };
   return NextResponse.json(out);
 }
