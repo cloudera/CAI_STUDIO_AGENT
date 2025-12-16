@@ -1,3 +1,9 @@
+> [!WARNING]
+> ## DEPRECATION NOTICE: Agent Studio AMP
+> The latest release of Agent Studio will no longer be available as an AMP. Agent Studio now ships only as a prebuilt ML runtime image instead of raw source code.
+> To access the latest release, you can request your account team to turn on AI Studio entitlement or install Agent Studio as a Runtime using the steps in the guide below:
+> https://docs.cloudera.com/machine-learning/cloud/use-ai-studios/topics/ml-agent-studio-deploy-runtime-image.html
+
 > IMPORTANT: Please read the following before proceeding. This AMP includes or otherwise depends on certain third party software packages. Information about such third party software packages are made available in the notice file associated with this AMP. By configuring and launching this AMP, you will cause such third party software packages to be downloaded and installed into your environment, in some instances, from third parties' websites. For each third party software package, please see the notice file and the applicable websites for more information, including the applicable license terms.
 
 > If you do not wish to download and install the third party software packages, do not configure, launch or otherwise use this AMP. By configuring, launching or otherwise using the AMP, you acknowledge the foregoing statement and agree that Cloudera is not responsible or liable in any way for the third party software packages.

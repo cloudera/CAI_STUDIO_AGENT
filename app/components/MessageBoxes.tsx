@@ -8,6 +8,7 @@ import {
   NO_DEFAULT_LLM_NOTIFICATION,
   VERSION_WARNING_OUT_OF_DATE,
   API_KEY_ROTATION_NEEDED,
+  DEPLOY_MODE_DEPRECATION_NOTICE,
 } from '../lib/constants';
 import {
   useCheckStudioUpgradeStatusQuery,
@@ -208,6 +209,14 @@ const MessageBoxes: React.FC = () => {
       messageTrigger: isOutOfDate(upgradeStatus) || true,
       message: VERSION_WARNING_OUT_OF_DATE(() => setIsOpen(true)),
     });
+  
+    // Show deprecation warning if not in runtime mode
+  if (workbench?.deploy_mode && workbench.deploy_mode !== 'runtime') {
+    currentWarningMessages.push({
+      messageTrigger: true,
+      message: DEPLOY_MODE_DEPRECATION_NOTICE,
+    });
+  }
 
   const handleRotateKeys = async () => {
     try {
